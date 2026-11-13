@@ -24,8 +24,11 @@ fn mpv_path(explicit: Option<PathBuf>) -> PathBuf {
     if let Ok(exe) = std::env::current_exe() {
         roots.extend(exe.ancestors().skip(1).take(3).map(PathBuf::from));
     }
-    roots.into_iter().map(|root| root.join("tools/mpv").join(filename))
-        .find(|path| path.is_file()).unwrap_or_else(|| "mpv".into())
+    roots
+        .into_iter()
+        .map(|root| root.join("tools/mpv").join(filename))
+        .find(|path| path.is_file())
+        .unwrap_or_else(|| "mpv".into())
 }
 
 fn main() -> Result<()> {
