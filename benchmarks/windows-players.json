@@ -48,7 +48,8 @@
       "paths": [
         "tools/mpv/mpv.exe",
         "mpv.exe",
-        "{LOCALAPPDATA}/Microsoft/WinGet/Links/mpv.exe"
+        "{LOCALAPPDATA}/Microsoft/WinGet/Links/mpv.exe",
+        "{ProgramFiles}/WinGet/Links/mpv.exe"
       ],
       "platforms": [
         "windows",

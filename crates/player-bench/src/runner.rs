@@ -202,12 +202,18 @@ fn one(args: &RunArgs, prime: bool, index: u32) -> Result<bool> {
             "--keep-open=yes".into(),
             format!("--script={}", dir.join("bench.lua").display()),
         ],
-        Player::Vlc => vec![
-            "--ignore-config".into(),
-            "--no-one-instance".into(),
-            "--no-video-title-show".into(),
-            "--play-and-exit".into(),
-        ],
+        Player::Vlc => {
+            let mut options = vec![
+                "--ignore-config".into(),
+                "--no-video-title-show".into(),
+                "--play-and-exit".into(),
+            ];
+            // The native macOS VLC build does not expose this Qt/Windows option.
+            if !cfg!(target_os = "macos") {
+                options.push("--no-one-instance".into());
+            }
+            options
+        }
         Player::External => vec![],
     };
     if args.tuned {

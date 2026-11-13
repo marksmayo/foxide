@@ -18,6 +18,13 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def windows_mpv_candidates():
+    roots = [Path(os.environ.get('ProgramFiles', 'C:/Program Files')) / 'WinGet/Links']
+    if os.environ.get('LOCALAPPDATA'):
+        roots.append(Path(os.environ['LOCALAPPDATA']) / 'Microsoft/WinGet/Links')
+    return [root / 'mpv.exe' for root in roots]
+
+
 def locate(player):
     suffix = '.exe' if os.name == 'nt' else ''
     if player == 'iina':
@@ -26,6 +33,9 @@ def locate(player):
     candidates = []
     if player == 'mpv':
         candidates.append(ROOT / ('tools/mpv/mpv' + suffix))
+        if os.name == 'nt':
+            # Elevated WinGet installs on hosted Windows VMs use machine scope.
+            candidates.extend(windows_mpv_candidates())
     if player == 'vlc':
         candidates += [Path('/Applications/VLC.app/Contents/MacOS/VLC'),
                        Path(os.environ.get('ProgramFiles', 'C:/Program Files')) / 'VideoLAN/VLC/vlc.exe']
@@ -106,6 +116,7 @@ def main():
                 case.update(status='runner error', error=str(exc))
                 failed |= player != 'iina'
         record['cases'].append(case)
+        print(player + ': ' + case['status'], flush=True)
         (output / 'hosted.json').write_text(json.dumps(record, indent=2), encoding='utf-8')
     build_reports(record, output)
     print(output / 'summary.md')

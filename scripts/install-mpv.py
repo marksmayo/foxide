@@ -15,6 +15,7 @@ import shutil
 import stat
 import subprocess
 import sys
+import sysconfig
 import urllib.request
 from uuid import uuid4
 import zipfile
@@ -77,7 +78,9 @@ def main():
     p.add_argument('--archive', type=Path, help='Use an existing pinned zip instead of downloading')
     p.add_argument('--output', type=Path, default=ROOT / 'results/local/mpv-installation.json')
     args = p.parse_args()
-    if os.name != 'nt' or platform.machine().lower() not in ('amd64', 'x86_64'):
+    # The build tag remains reliable when a restricted launcher omits the
+    # PROCESSOR_ARCHITECTURE environment variable used by platform.machine().
+    if os.name != 'nt' or sysconfig.get_platform().lower() != 'win-amd64':
         p.error('The pinned package is for Windows x64; macOS CI uses Homebrew')
     package = json.loads((ROOT / 'benchmarks/mpv-windows.json').read_text('utf-8'))
     tools = ROOT / 'tools'

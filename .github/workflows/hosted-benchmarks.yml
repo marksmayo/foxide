@@ -5,7 +5,7 @@ on:
       extended:
         description: Install the expanded Windows player field (installation coverage, not validated playback for every frontend)
         type: boolean
-        default: false
+        default: true
   push:
     branches: [main]
     paths: ['crates/**', 'scripts/**', 'benchmarks/**', '.github/workflows/hosted-benchmarks.yml', 'Cargo.toml', 'Cargo.lock']
@@ -44,16 +44,20 @@ jobs:
             winget install --exact --id Gyan.FFmpeg --source winget --silent --disable-interactivity --accept-source-agreements --accept-package-agreements
             if ($LASTEXITCODE -ne 0) { throw 'FFmpeg installation failed' }
           }
-          $env:PATH += ';' + (Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Links')
-          "$(Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Links')" >> $env:GITHUB_PATH
+          $userLinks = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Links'
+          $machineLinks = Join-Path $env:ProgramFiles 'WinGet\Links'
+          $env:PATH += ";$userLinks;$machineLinks"
+          $userLinks >> $env:GITHUB_PATH
+          $machineLinks >> $env:GITHUB_PATH
       - name: Install expanded Windows field when requested
-        if: runner.os == 'Windows' && inputs.extended == true
+        if: runner.os == 'Windows' && (github.event_name == 'push' || inputs.extended == true)
         shell: pwsh
         run: |
           python scripts/install-players.py --install --output results/local/hosted/expanded-installation.json
           if ($LASTEXITCODE -ne 0) {
             Write-Output '::warning::Some extended players could not install; see expanded-installation.json. This is not a playback pass.'
           }
+          exit 0
       - name: Install macOS players including IINA
         if: runner.os == 'macOS'
         shell: bash
