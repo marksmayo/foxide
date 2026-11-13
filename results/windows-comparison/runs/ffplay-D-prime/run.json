@@ -1,0 +1,196 @@
+{
+  "id": "ffplay-D-prime",
+  "player": "ffplay",
+  "fixture": "D",
+  "prime": true,
+  "command": [
+    "C:\\Users\\markm\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
+    "-hide_banner",
+    "-loglevel",
+    "info",
+    "-stats",
+    "-autoexit",
+    "-x",
+    "1280",
+    "-y",
+    "720",
+    "-i",
+    "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac"
+  ],
+  "duration_seconds": 3,
+  "warmup_seconds": 0,
+  "sample_interval_ms": 250,
+  "cache": "priming",
+  "started_utc": "2026-11-13T01:44:27.849386+00:00",
+  "samples": [
+    {
+      "elapsed_ms": 28.970399987883866,
+      "rss_bytes": 11558912,
+      "cpu_percent_one_core": null,
+      "process_count": 1,
+      "gpu_dedicated_bytes": null,
+      "gpu_shared_bytes": null,
+      "gpu_engine_percent": null
+    },
+    {
+      "elapsed_ms": 286.9609999470413,
+      "rss_bytes": 23236608,
+      "cpu_percent_one_core": 78.07203114299442,
+      "process_count": 1,
+      "gpu_dedicated_bytes": null,
+      "gpu_shared_bytes": null,
+      "gpu_engine_percent": null
+    },
+    {
+      "elapsed_ms": 575.8797000162303,
+      "rss_bytes": 72699904,
+      "cpu_percent_one_core": 48.4719696407714,
+      "process_count": 1,
+      "gpu_dedicated_bytes": null,
+      "gpu_shared_bytes": null,
+      "gpu_engine_percent": null
+    },
+    {
+      "elapsed_ms": 819.7606999892741,
+      "rss_bytes": 75505664,
+      "cpu_percent_one_core": 0.0,
+      "process_count": 1,
+      "gpu_dedicated_bytes": null,
+      "gpu_shared_bytes": null,
+      "gpu_engine_percent": null
+    },
+    {
+      "elapsed_ms": 1074.7458999976516,
+      "rss_bytes": 95174656,
+      "cpu_percent_one_core": 35.45714375220992,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 19283968.0,
+      "gpu_engine_percent": null
+    },
+    {
+      "elapsed_ms": 1331.9348000222817,
+      "rss_bytes": 95707136,
+      "cpu_percent_one_core": 0.0,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 19283968.0,
+      "gpu_engine_percent": null
+    },
+    {
+      "elapsed_ms": 1588.2887999759987,
+      "rss_bytes": 95711232,
+      "cpu_percent_one_core": 0.0,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 19283968.0,
+      "gpu_engine_percent": null
+    },
+    {
+      "elapsed_ms": 1836.4899000152946,
+      "rss_bytes": 95719424,
+      "cpu_percent_one_core": 0.0,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 19283968.0,
+      "gpu_engine_percent": null
+    },
+    {
+      "elapsed_ms": 2112.0580999413505,
+      "rss_bytes": 95834112,
+      "cpu_percent_one_core": 0.0,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 19283968.0,
+      "gpu_engine_percent": {
+        "3D": 0.0,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 2360.939700040035,
+      "rss_bytes": 95838208,
+      "cpu_percent_one_core": 0.0,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 19283968.0,
+      "gpu_engine_percent": {
+        "3D": 0.0,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 2622.4592999788,
+      "rss_bytes": 95842304,
+      "cpu_percent_one_core": 0.0,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 19283968.0,
+      "gpu_engine_percent": {
+        "3D": 0.0,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 2880.0006000092253,
+      "rss_bytes": 95846400,
+      "cpu_percent_one_core": 6.016974606648477,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 19283968.0,
+      "gpu_engine_percent": {
+        "3D": 0.0,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    }
+  ],
+  "window_ready_ms": 841.8359999777749,
+  "ttff_display_ms": null,
+  "seek_display_ms": null,
+  "power_watts": null,
+  "frame_pacing_ms": null,
+  "status": "sampled",
+  "gpu_counter_errors": {},
+  "notes": [
+    "RSS tree sum can count shared pages more than once.",
+    "Window-ready measures an enumerated visible window, not video TTFF.",
+    "GPU memory counts allocation, not exclusively resident VRAM. No CPU-power attribution."
+  ],
+  "pid": 49100,
+  "windows": [
+    {
+      "pid": 49100,
+      "title": "Benchmark Track 1 - C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac",
+      "class": "SDL_app"
+    }
+  ],
+  "terminated_by_harness": true,
+  "events": [],
+  "playback_evidence": {
+    "verified": true,
+    "method": "FFplay advancing A/V clock in runtime stats; not screen presentation",
+    "last_clock_seconds": 2.15,
+    "hardware": "Default FFplay configuration; no hardware decode requested"
+  },
+  "rss_steady_bytes": 79056213.33333333,
+  "cpu_steady_percent": 15.274374467511292,
+  "gpu_dedicated_steady_bytes": 0.0,
+  "gpu_shared_steady_bytes": 19283968.0,
+  "rss_peak_bytes": 95846400
+}

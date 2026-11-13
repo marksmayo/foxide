@@ -1,0 +1,27 @@
+[workspace]
+members = ["crates/player-core", "crates/player-bench", "crates/player-cli", "crates/player-ui"]
+resolver = "2"
+
+[workspace.package]
+version = "0.0.1"
+edition = "2024"
+rust-version = "1.99"
+publish = false
+
+[workspace.dependencies]
+anyhow = "1.0"
+clap = { version = "4.6", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+player-core = { path = "crates/player-core" }
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = "debuginfo"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = "warn"

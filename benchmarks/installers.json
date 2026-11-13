@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "windows": [
+    {"player":"mpv","id":"mpv-player.mpv-CI.MSVC","source":"winget","manifest":"https://github.com/microsoft/winget-pkgs/tree/master/manifests/m/mpv-player/mpv-CI/MSVC"},
+    {"player":"potplayer","id":"Daum.PotPlayer","source":"winget","manifest":"https://github.com/microsoft/winget-pkgs/tree/master/manifests/d/Daum/PotPlayer"},
+    {"player":"mpc-hc","id":"clsid2.mpc-hc","source":"winget","manifest":"https://github.com/microsoft/winget-pkgs/tree/master/manifests/c/clsid2/mpc-hc"},
+    {"player":"mpc-be","id":"MPC-BE.MPC-BE","source":"winget","manifest":"https://github.com/microsoft/winget-pkgs/tree/master/manifests/m/MPC-BE/MPC-BE"},
+    {"player":"kodi","id":"XBMCFoundation.Kodi","source":"winget","manifest":"https://github.com/microsoft/winget-pkgs/tree/master/manifests/x/XBMCFoundation/Kodi"},
+    {"player":"plex","id":"Plex.Plex","source":"winget","manifest":"https://github.com/microsoft/winget-pkgs/tree/master/manifests/p/Plex/Plex","note":"Desktop player, not Plex Media Server. Account/library setup is not automated."},
+    {"player":"smplayer","id":"SMPlayer.SMPlayer","source":"winget","manifest":"https://github.com/microsoft/winget-pkgs/tree/master/manifests/s/SMPlayer/SMPlayer"},
+    {"player":"foobar2000","id":"PeterPawlowski.foobar2000","source":"winget","manifest":"https://github.com/microsoft/winget-pkgs/tree/master/manifests/p/PeterPawlowski/foobar2000","media_types":["audio"]},
+    {"player":"gom","id":"GOMLab.GOMPlayer","source":"winget","manifest":"https://github.com/microsoft/winget-pkgs/tree/master/manifests/g/GOMLab/GOMPlayer"},
+    {"player":"vlc","id":"VideoLAN.VLC","source":"winget","manifest":"https://github.com/microsoft/winget-pkgs/tree/master/manifests/v/VideoLAN/VLC"},
+    {"player":"wmp-modern","id":"9WZDNCRFJ3PT","source":"msstore","note":"Modern Windows Media Player; Microsoft Store installation may require a supported signed-in Windows session."}
+  ],
+  "manual": [
+    {"player":"kmplayer","platforms":["windows"],"status":"package-unverified","reason":"No exact current WinGet package was verified. The KDE KMPlayer application is a different product; do not substitute it.","source":"https://www.kmplayer.com/"},
+    {"player":"infuse","platforms":["macos"],"status":"app-store-required","reason":"Apple-platform app distributed through the App Store. Provision it on an authorized self-hosted Mac; no Apple credentials are added to Actions.","source":"https://support.firecore.com/hc/en-us/articles/29544574023063-Installing-and-Updating-Infuse"},
+    {"player":"iina","platforms":["macos"],"status":"homebrew-cask","command":["brew","install","--cask","iina"],"source":"https://formulae.brew.sh/cask/iina"}
+  ]
+}

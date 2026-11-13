@@ -1,0 +1,1114 @@
+{
+  "A": {
+    "players": {
+      "vlc": {
+        "n": 3,
+        "metrics": {
+          "memory": {
+            "median": 381.1916082974138,
+            "min": 378.06977370689657,
+            "max": 384.7986260775862,
+            "p95": 384.7986260775862,
+            "n": 3,
+            "eligible": true
+          },
+          "peak": {
+            "median": 382.0625,
+            "min": 378.46484375,
+            "max": 385.19921875,
+            "p95": 385.19921875,
+            "n": 3,
+            "eligible": true
+          },
+          "cpu": {
+            "median": 5.753877060877519,
+            "min": 3.937420251075371,
+            "max": 10.367469690199327,
+            "p95": 10.367469690199327,
+            "n": 3,
+            "eligible": true
+          },
+          "gpu": {
+            "median": 0.0,
+            "min": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "n": 3,
+            "eligible": true
+          },
+          "window": {
+            "median": 154.4751999899745,
+            "min": 148.1443999800831,
+            "max": 179.09059999510646,
+            "p95": 179.09059999510646,
+            "n": 3,
+            "eligible": true
+          },
+          "gpu-shared": {
+            "median": 249.73828125,
+            "min": 246.734375,
+            "max": 252.74609375,
+            "p95": 252.74609375,
+            "n": 3,
+            "eligible": true
+          }
+        },
+        "trial_ids": [
+          "vlc-A-1",
+          "vlc-A-2",
+          "vlc-A-3"
+        ],
+        "hardware": [
+          "D3D11VA reported"
+        ]
+      },
+      "ffplay": {
+        "n": 3,
+        "metrics": {
+          "memory": {
+            "median": 237.0851836622807,
+            "min": 236.55879934210526,
+            "max": 237.7391567887931,
+            "p95": 237.7391567887931,
+            "n": 3,
+            "eligible": true
+          },
+          "peak": {
+            "median": 237.6328125,
+            "min": 237.03125,
+            "max": 238.33203125,
+            "p95": 238.33203125,
+            "n": 3,
+            "eligible": true
+          },
+          "cpu": {
+            "median": 53.94229431485287,
+            "min": 50.55074719572931,
+            "max": 56.930132212246306,
+            "p95": 56.930132212246306,
+            "n": 3,
+            "eligible": true
+          },
+          "gpu": {
+            "median": 0.0,
+            "min": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "n": 3,
+            "eligible": true
+          },
+          "window": {
+            "median": 886.0050999792293,
+            "min": 845.991599955596,
+            "max": 1018.2367999805138,
+            "p95": 1018.2367999805138,
+            "n": 3,
+            "eligible": true
+          },
+          "gpu-shared": {
+            "median": 23.64453125,
+            "min": 23.6328125,
+            "max": 23.84388469827586,
+            "p95": 23.84388469827586,
+            "n": 3,
+            "eligible": true
+          }
+        },
+        "trial_ids": [
+          "ffplay-A-1",
+          "ffplay-A-2",
+          "ffplay-A-3"
+        ],
+        "hardware": [
+          "Default FFplay configuration; no hardware decode requested"
+        ]
+      }
+    },
+    "rankings": {
+      "memory": [
+        {
+          "player": "ffplay",
+          "median": 237.0851836622807,
+          "min": 236.55879934210526,
+          "max": 237.7391567887931,
+          "p95": 237.7391567887931,
+          "n": 3,
+          "eligible": true,
+          "rank": 1,
+          "medal": "gold"
+        },
+        {
+          "player": "vlc",
+          "median": 381.1916082974138,
+          "min": 378.06977370689657,
+          "max": 384.7986260775862,
+          "p95": 384.7986260775862,
+          "n": 3,
+          "eligible": true,
+          "rank": 2,
+          "medal": "silver"
+        }
+      ],
+      "peak": [
+        {
+          "player": "ffplay",
+          "median": 237.6328125,
+          "min": 237.03125,
+          "max": 238.33203125,
+          "p95": 238.33203125,
+          "n": 3,
+          "eligible": true,
+          "rank": 1,
+          "medal": "gold"
+        },
+        {
+          "player": "vlc",
+          "median": 382.0625,
+          "min": 378.46484375,
+          "max": 385.19921875,
+          "p95": 385.19921875,
+          "n": 3,
+          "eligible": true,
+          "rank": 2,
+          "medal": "silver"
+        }
+      ],
+      "cpu": [
+        {
+          "player": "vlc",
+          "median": 5.753877060877519,
+          "min": 3.937420251075371,
+          "max": 10.367469690199327,
+          "p95": 10.367469690199327,
+          "n": 3,
+          "eligible": true,
+          "rank": 1,
+          "medal": "gold"
+        },
+        {
+          "player": "ffplay",
+          "median": 53.94229431485287,
+          "min": 50.55074719572931,
+          "max": 56.930132212246306,
+          "p95": 56.930132212246306,
+          "n": 3,
+          "eligible": true,
+          "rank": 2,
+          "medal": "silver"
+        }
+      ],
+      "gpu": [
+        {
+          "player": "vlc",
+          "median": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "p95": 0.0,
+          "n": 3,
+          "eligible": true,
+          "rank": 1,
+          "medal": "gold"
+        },
+        {
+          "player": "ffplay",
+          "median": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "p95": 0.0,
+          "n": 3,
+          "eligible": true,
+          "rank": 1,
+          "medal": "gold"
+        }
+      ],
+      "window": [
+        {
+          "player": "vlc",
+          "median": 154.4751999899745,
+          "min": 148.1443999800831,
+          "max": 179.09059999510646,
+          "p95": 179.09059999510646,
+          "n": 3,
+          "eligible": true,
+          "rank": 1,
+          "medal": "gold"
+        },
+        {
+          "player": "ffplay",
+          "median": 886.0050999792293,
+          "min": 845.991599955596,
+          "max": 1018.2367999805138,
+          "p95": 1018.2367999805138,
+          "n": 3,
+          "eligible": true,
+          "rank": 2,
+          "medal": "silver"
+        }
+      ],
+      "gpu-shared": [
+        {
+          "player": "ffplay",
+          "median": 23.64453125,
+          "min": 23.6328125,
+          "max": 23.84388469827586,
+          "p95": 23.84388469827586,
+          "n": 3,
+          "eligible": true,
+          "rank": 1,
+          "medal": "gold"
+        },
+        {
+          "player": "vlc",
+          "median": 249.73828125,
+          "min": 246.734375,
+          "max": 252.74609375,
+          "p95": 252.74609375,
+          "n": 3,
+          "eligible": true,
+          "rank": 2,
+          "medal": "silver"
+        }
+      ],
+      "cold-ttff": [],
+      "warm-ttff": [],
+      "seek": [],
+      "power": [],
+      "pacing": [],
+      "footprint": []
+    }
+  },
+  "B": {
+    "players": {
+      "vlc": {
+        "n": 3,
+        "metrics": {
+          "memory": {
+            "median": 1556.9740705818965,
+            "min": 1549.8938459429824,
+            "max": 1567.7234644396551,
+            "p95": 1567.7234644396551,
+            "n": 3,
+            "eligible": true
+          },
+          "peak": {
+            "median": 1557.23828125,
+            "min": 1550.0390625,
+            "max": 1567.8359375,
+            "p95": 1567.8359375,
+            "n": 3,
+            "eligible": true
+          },
+          "cpu": {
+            "median": 11.33270080672776,
+            "min": 11.05146147251062,
+            "max": 13.357595573137106,
+            "p95": 13.357595573137106,
+            "n": 3,
+            "eligible": true
+          },
+          "gpu": {
+            "median": 0.0,
+            "min": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "n": 3,
+            "eligible": true
+          },
+          "window": {
+            "median": 176.51009990368038,
+            "min": 165.62300000805408,
+            "max": 206.62129996344447,
+            "p95": 206.62129996344447,
+            "n": 3,
+            "eligible": true
+          },
+          "gpu-shared": {
+            "median": 1293.7890625,
+            "min": 1287.5346765350878,
+            "max": 1306.3125,
+            "p95": 1306.3125,
+            "n": 3,
+            "eligible": true
+          }
+        },
+        "trial_ids": [
+          "vlc-B-1",
+          "vlc-B-2",
+          "vlc-B-3"
+        ],
+        "hardware": [
+          "D3D11VA reported"
+        ]
+      },
+      "ffplay": {
+        "n": 3,
+        "metrics": {
+          "memory": {
+            "median": 930.1281524122807,
+            "min": 930.0333059210526,
+            "max": 955.3246822033898,
+            "p95": 955.3246822033898,
+            "n": 3,
+            "eligible": true
+          },
+          "peak": {
+            "median": 932.65625,
+            "min": 932.4375,
+            "max": 959.1015625,
+            "p95": 959.1015625,
+            "n": 3,
+            "eligible": true
+          },
+          "cpu": {
+            "median": 807.2121015106565,
+            "min": 731.6429226366381,
+            "max": 816.9654941125747,
+            "p95": 816.9654941125747,
+            "n": 3,
+            "eligible": true
+          },
+          "gpu": {
+            "median": 0.0,
+            "min": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "n": 3,
+            "eligible": true
+          },
+          "window": {
+            "median": 1070.3380999621004,
+            "min": 1007.3018999537453,
+            "max": 1093.5705000301823,
+            "p95": 1093.5705000301823,
+            "n": 3,
+            "eligible": true
+          },
+          "gpu-shared": {
+            "median": 43.09361293859649,
+            "min": 42.84037341101695,
+            "max": 44.70593475877193,
+            "p95": 44.70593475877193,
+            "n": 3,
+            "eligible": true
+          }
+        },
+        "trial_ids": [
+          "ffplay-B-1",
+          "ffplay-B-2",
+          "ffplay-B-3"
+        ],
+        "hardware": [
+          "Default FFplay configuration; no hardware decode requested"
+        ]
+      }
+    },
+    "rankings": {
+      "memory": [
+        {
+          "player": "ffplay",
+          "median": 930.1281524122807,
+          "min": 930.0333059210526,
+          "max": 955.3246822033898,
+          "p95": 955.3246822033898,
+          "n": 3,
+          "eligible": true,
+          "rank": 1,
+          "medal": "gold"
+        },
+        {
+          "player": "vlc",
+          "median": 1556.9740705818965,
+          "min": 1549.8938459429824,
+          "max": 1567.7234644396551,
+          "p95": 1567.7234644396551,
+          "n": 3,
+          "eligible": true,
+          "rank": 2,
+          "medal": "silver"
+        }
+      ],
+      "peak": [
+        {
+          "player": "ffplay",
+          "median": 932.65625,
+          "min": 932.4375,
+          "max": 959.1015625,
+          "p95": 959.1015625,
+          "n": 3,
+          "eligible": true,
+          "rank": 1,
+          "medal": "gold"
+        },
+        {
+          "player": "vlc",
+          "median": 1557.23828125,
+          "min": 1550.0390625,
+          "max": 1567.8359375,
+          "p95": 1567.8359375,
+          "n": 3,
+          "eligible": true,
+          "rank": 2,
+          "medal": "silver"
+        }
+      ],
+      "cpu": [
+        {
+          "player": "vlc",
+          "median": 11.33270080672776,
+          "min": 11.05146147251062,
+          "max": 13.357595573137106,
+          "p95": 13.357595573137106,
+          "n": 3,
+          "eligible": true,
+          "rank": 1,
+          "medal": "gold"
+        },
+        {
+          "player": "ffplay",
+          "median": 807.2121015106565,
+          "min": 731.6429226366381,
+          "max": 816.9654941125747,
+          "p95": 816.9654941125747,
+          "n": 3,
+          "eligible": true,
+          "rank": 2,
+          "medal": "silver"
+        }
+      ],
+      "gpu": [
+        {
+          "player": "vlc",
+          "median": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "p95": 0.0,
+          "n": 3,
+          "eligible": true,
+          "rank": 1,
+          "medal": "gold"
+        },
+        {
+          "player": "ffplay",
+          "median": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "p95": 0.0,
+          "n": 3,
+          "eligible": true,
+          "rank": 1,
+          "medal": "gold"
+        }
+      ],
+      "window": [
+        {
+          "player": "vlc",
+          "median": 176.51009990368038,
+          "min": 165.62300000805408,
+          "max": 206.62129996344447,
+          "p95": 206.62129996344447,
+          "n": 3,
+          "eligible": true,
+          "rank": 1,
+          "medal": "gold"
+        },
+        {
+          "player": "ffplay",
+          "median": 1070.3380999621004,
+          "min": 1007.3018999537453,
+          "max": 1093.5705000301823,
+          "p95": 1093.5705000301823,
+          "n": 3,
+          "eligible": true,
+          "rank": 2,
+          "medal": "silver"
+        }
+      ],
+      "gpu-shared": [
+        {
+          "player": "ffplay",
+          "median": 43.09361293859649,
+          "min": 42.84037341101695,
+          "max": 44.70593475877193,
+          "p95": 44.70593475877193,
+          "n": 3,
+          "eligible": true,
+          "rank": 1,
+          "medal": "gold"
+        },
+        {
+          "player": "vlc",
+          "median": 1293.7890625,
+          "min": 1287.5346765350878,
+          "max": 1306.3125,
+          "p95": 1306.3125,
+          "n": 3,
+          "eligible": true,
+          "rank": 2,
+          "medal": "silver"
+        }
+      ],
+      "cold-ttff": [],
+      "warm-ttff": [],
+      "seek": [],
+      "power": [],
+      "pacing": [],
+      "footprint": []
+    }
+  },
+  "C": {
+    "players": {
+      "vlc": {
+        "n": 3,
+        "metrics": {
+          "memory": {
+            "median": 839.6701912715517,
+            "min": 828.4372209821429,
+            "max": 839.7808388157895,
+            "p95": 839.7808388157895,
+            "n": 3,
+            "eligible": true
+          },
+          "peak": {
+            "median": 841.75,
+            "min": 830.76171875,
+            "max": 842.00390625,
+            "p95": 842.00390625,
+            "n": 3,
+            "eligible": true
+          },
+          "cpu": {
+            "median": 12.833213099750877,
+            "min": 11.473568501171064,
+            "max": 13.9820872683481,
+            "p95": 13.9820872683481,
+            "n": 3,
+            "eligible": true
+          },
+          "gpu": {
+            "median": 0.0,
+            "min": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "n": 3,
+            "eligible": true
+          },
+          "window": {
+            "median": 152.7548999292776,
+            "min": 150.45700001064688,
+            "max": 160.16369999852031,
+            "p95": 160.16369999852031,
+            "n": 3,
+            "eligible": true
+          },
+          "gpu-shared": {
+            "median": 723.3258351293103,
+            "min": 712.671875,
+            "max": 723.3259320175439,
+            "p95": 723.3259320175439,
+            "n": 3,
+            "eligible": true
+          }
+        },
+        "trial_ids": [
+          "vlc-C-1",
+          "vlc-C-2",
+          "vlc-C-3"
+        ],
+        "hardware": [
+          "D3D11VA reported"
+        ]
+      },
+      "ffplay": {
+        "n": 3,
+        "metrics": {
+          "memory": {
+            "median": 817.7047012061404,
+            "min": 817.1949084051724,
+            "max": 817.889528508772,
+            "p95": 817.889528508772,
+            "n": 3,
+            "eligible": true
+          },
+          "peak": {
+            "median": 820.99609375,
+            "min": 820.21875,
+            "max": 822.09375,
+            "p95": 822.09375,
+            "n": 3,
+            "eligible": true
+          },
+          "cpu": {
+            "median": 737.0831073134419,
+            "min": 626.0284286067852,
+            "max": 793.9001232064104,
+            "p95": 793.9001232064104,
+            "n": 3,
+            "eligible": true
+          },
+          "gpu": {
+            "median": 0.0,
+            "min": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "n": 3,
+            "eligible": true
+          },
+          "window": {
+            "median": 991.149100009352,
+            "min": 882.5985000003129,
+            "max": 1085.7878000242636,
+            "p95": 1085.7878000242636,
+            "n": 3,
+            "eligible": true
+          },
+          "gpu-shared": {
+            "median": 44.842927631578945,
+            "min": 44.23464439655172,
+            "max": 44.90768914473684,
+            "p95": 44.90768914473684,
+            "n": 3,
+            "eligible": true
+          }
+        },
+        "trial_ids": [
+          "ffplay-C-1",
+          "ffplay-C-2",
+          "ffplay-C-3"
+        ],
+        "hardware": [
+          "Default FFplay configuration; no hardware decode requested"
+        ]
+      }
+    },
+    "rankings": {
+      "memory": [
+        {
+          "player": "ffplay",
+          "median": 817.7047012061404,
+          "min": 817.1949084051724,
+          "max": 817.889528508772,
+          "p95": 817.889528508772,
+          "n": 3,
+          "eligible": true,
+          "rank": 1,
+          "medal": "gold"
+        },
+        {
+          "player": "vlc",
+          "median": 839.6701912715517,
+          "min": 828.4372209821429,
+          "max": 839.7808388157895,
+          "p95": 839.7808388157895,
+          "n": 3,
+          "eligible": true,
+          "rank": 2,
+          "medal": "silver"
+        }
+      ],
+      "peak": [
+        {
+          "player": "ffplay",
+          "median": 820.99609375,
+          "min": 820.21875,
+          "max": 822.09375,
+          "p95": 822.09375,
+          "n": 3,
+          "eligible": true,
+          "rank": 1,
+          "medal": "gold"
+        },
+        {
+          "player": "vlc",
+          "median": 841.75,
+          "min": 830.76171875,
+          "max": 842.00390625,
+          "p95": 842.00390625,
+          "n": 3,
+          "eligible": true,
+          "rank": 2,
+          "medal": "silver"
+        }
+      ],
+      "cpu": [
+        {
+          "player": "vlc",
+          "median": 12.833213099750877,
+          "min": 11.473568501171064,
+          "max": 13.9820872683481,
+          "p95": 13.9820872683481,
+          "n": 3,
+          "eligible": true,
+          "rank": 1,
+          "medal": "gold"
+        },
+        {
+          "player": "ffplay",
+          "median": 737.0831073134419,
+          "min": 626.0284286067852,
+          "max": 793.9001232064104,
+          "p95": 793.9001232064104,
+          "n": 3,
+          "eligible": true,
+          "rank": 2,
+          "medal": "silver"
+        }
+      ],
+      "gpu": [
+        {
+          "player": "vlc",
+          "median": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "p95": 0.0,
+          "n": 3,
+          "eligible": true,
+          "rank": 1,
+          "medal": "gold"
+        },
+        {
+          "player": "ffplay",
+          "median": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "p95": 0.0,
+          "n": 3,
+          "eligible": true,
+          "rank": 1,
+          "medal": "gold"
+        }
+      ],
+      "window": [
+        {
+          "player": "vlc",
+          "median": 152.7548999292776,
+          "min": 150.45700001064688,
+          "max": 160.16369999852031,
+          "p95": 160.16369999852031,
+          "n": 3,
+          "eligible": true,
+          "rank": 1,
+          "medal": "gold"
+        },
+        {
+          "player": "ffplay",
+          "median": 991.149100009352,
+          "min": 882.5985000003129,
+          "max": 1085.7878000242636,
+          "p95": 1085.7878000242636,
+          "n": 3,
+          "eligible": true,
+          "rank": 2,
+          "medal": "silver"
+        }
+      ],
+      "gpu-shared": [
+        {
+          "player": "ffplay",
+          "median": 44.842927631578945,
+          "min": 44.23464439655172,
+          "max": 44.90768914473684,
+          "p95": 44.90768914473684,
+          "n": 3,
+          "eligible": true,
+          "rank": 1,
+          "medal": "gold"
+        },
+        {
+          "player": "vlc",
+          "median": 723.3258351293103,
+          "min": 712.671875,
+          "max": 723.3259320175439,
+          "p95": 723.3259320175439,
+          "n": 3,
+          "eligible": true,
+          "rank": 2,
+          "medal": "silver"
+        }
+      ],
+      "cold-ttff": [],
+      "warm-ttff": [],
+      "seek": [],
+      "power": [],
+      "pacing": [],
+      "footprint": []
+    }
+  },
+  "D": {
+    "players": {
+      "vlc": {
+        "n": 3,
+        "metrics": {
+          "memory": {
+            "median": 66.43126370614036,
+            "min": 66.4142645474138,
+            "max": 66.8273711622807,
+            "p95": 66.8273711622807,
+            "n": 3,
+            "eligible": true
+          },
+          "peak": {
+            "median": 66.5234375,
+            "min": 66.515625,
+            "max": 66.96875,
+            "p95": 66.96875,
+            "n": 3,
+            "eligible": true
+          },
+          "cpu": {
+            "median": 2.601387373767055,
+            "min": 1.258266872190284,
+            "max": 2.854648590812549,
+            "p95": 2.854648590812549,
+            "n": 3,
+            "eligible": true
+          },
+          "gpu": {
+            "median": 0.0,
+            "min": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "n": 3,
+            "eligible": true
+          },
+          "window": {
+            "median": 156.7632999503985,
+            "min": 140.92799997888505,
+            "max": 157.86080004181713,
+            "p95": 157.86080004181713,
+            "n": 3,
+            "eligible": true
+          },
+          "gpu-shared": {
+            "median": 0.0,
+            "min": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "n": 3,
+            "eligible": true
+          }
+        },
+        "trial_ids": [
+          "vlc-D-1",
+          "vlc-D-2",
+          "vlc-D-3"
+        ],
+        "hardware": [
+          "Not established"
+        ]
+      },
+      "ffplay": {
+        "n": 3,
+        "metrics": {
+          "memory": {
+            "median": 89.70429002192982,
+            "min": 88.9030975877193,
+            "max": 89.83305921052632,
+            "p95": 89.83305921052632,
+            "n": 3,
+            "eligible": true
+          },
+          "peak": {
+            "median": 91.5234375,
+            "min": 90.671875,
+            "max": 91.640625,
+            "p95": 91.640625,
+            "n": 3,
+            "eligible": true
+          },
+          "cpu": {
+            "median": 0.314946200425065,
+            "min": 0.20173570272578112,
+            "max": 0.7381064080622467,
+            "p95": 0.7381064080622467,
+            "n": 3,
+            "eligible": true
+          },
+          "gpu": {
+            "median": 0.0,
+            "min": 0.0,
+            "max": 0.0,
+            "p95": 0.0,
+            "n": 3,
+            "eligible": true
+          },
+          "window": {
+            "median": 865.9413999412209,
+            "min": 807.9942999174818,
+            "max": 952.2686999989673,
+            "p95": 952.2686999989673,
+            "n": 3,
+            "eligible": true
+          },
+          "gpu-shared": {
+            "median": 18.390625,
+            "min": 18.38671875,
+            "max": 18.390625,
+            "p95": 18.390625,
+            "n": 3,
+            "eligible": true
+          }
+        },
+        "trial_ids": [
+          "ffplay-D-1",
+          "ffplay-D-2",
+          "ffplay-D-3"
+        ],
+        "hardware": [
+          "Default FFplay configuration; no hardware decode requested"
+        ]
+      }
+    },
+    "rankings": {
+      "memory": [
+        {
+          "player": "vlc",
+          "median": 66.43126370614036,
+          "min": 66.4142645474138,
+          "max": 66.8273711622807,
+          "p95": 66.8273711622807,
+          "n": 3,
+          "eligible": true,
+          "rank": 1,
+          "medal": "gold"
+        },
+        {
+          "player": "ffplay",
+          "median": 89.70429002192982,
+          "min": 88.9030975877193,
+          "max": 89.83305921052632,
+          "p95": 89.83305921052632,
+          "n": 3,
+          "eligible": true,
+          "rank": 2,
+          "medal": "silver"
+        }
+      ],
+      "peak": [
+        {
+          "player": "vlc",
+          "median": 66.5234375,
+          "min": 66.515625,
+          "max": 66.96875,
+          "p95": 66.96875,
+          "n": 3,
+          "eligible": true,
+          "rank": 1,
+          "medal": "gold"
+        },
+        {
+          "player": "ffplay",
+          "median": 91.5234375,
+          "min": 90.671875,
+          "max": 91.640625,
+          "p95": 91.640625,
+          "n": 3,
+          "eligible": true,
+          "rank": 2,
+          "medal": "silver"
+        }
+      ],
+      "cpu": [
+        {
+          "player": "ffplay",
+          "median": 0.314946200425065,
+          "min": 0.20173570272578112,
+          "max": 0.7381064080622467,
+          "p95": 0.7381064080622467,
+          "n": 3,
+          "eligible": true,
+          "rank": 1,
+          "medal": "gold"
+        },
+        {
+          "player": "vlc",
+          "median": 2.601387373767055,
+          "min": 1.258266872190284,
+          "max": 2.854648590812549,
+          "p95": 2.854648590812549,
+          "n": 3,
+          "eligible": true,
+          "rank": 2,
+          "medal": "silver"
+        }
+      ],
+      "gpu": [
+        {
+          "player": "vlc",
+          "median": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "p95": 0.0,
+          "n": 3,
+          "eligible": true,
+          "rank": 1,
+          "medal": "gold"
+        },
+        {
+          "player": "ffplay",
+          "median": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "p95": 0.0,
+          "n": 3,
+          "eligible": true,
+          "rank": 1,
+          "medal": "gold"
+        }
+      ],
+      "window": [
+        {
+          "player": "vlc",
+          "median": 156.7632999503985,
+          "min": 140.92799997888505,
+          "max": 157.86080004181713,
+          "p95": 157.86080004181713,
+          "n": 3,
+          "eligible": true,
+          "rank": 1,
+          "medal": "gold"
+        },
+        {
+          "player": "ffplay",
+          "median": 865.9413999412209,
+          "min": 807.9942999174818,
+          "max": 952.2686999989673,
+          "p95": 952.2686999989673,
+          "n": 3,
+          "eligible": true,
+          "rank": 2,
+          "medal": "silver"
+        }
+      ],
+      "gpu-shared": [
+        {
+          "player": "vlc",
+          "median": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "p95": 0.0,
+          "n": 3,
+          "eligible": true,
+          "rank": 1,
+          "medal": "gold"
+        },
+        {
+          "player": "ffplay",
+          "median": 18.390625,
+          "min": 18.38671875,
+          "max": 18.390625,
+          "p95": 18.390625,
+          "n": 3,
+          "eligible": true,
+          "rank": 2,
+          "medal": "silver"
+        }
+      ],
+      "cold-ttff": [],
+      "warm-ttff": [],
+      "seek": [],
+      "power": [],
+      "pacing": [],
+      "footprint": []
+    }
+  }
+}

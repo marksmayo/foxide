@@ -1,0 +1,56 @@
+name: Physical baseline capture (not release certification)
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+concurrency:
+  group: physical-baselines-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  baseline:
+    # Provision PRIVATE dedicated physical runners with a logged-in display,
+    # power permissions and immutable full media/tools at FOXIDE_MEDIA/FOXIDE_MPV/FOXIDE_VLC.
+    # Never attach these runners to untrusted pull_request jobs.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [Windows, macOS, Linux]
+        player: [mpv, vlc]
+        fixture: [A-avc-1080p.mp4, B-hevc-4k60-pq.mkv, C-av1-4k60.mkv, D-flac-track-01.flac, D-flac-track-02.flac, D-flac-track-03.flac]
+    runs-on: [self-hosted, foxide-bench, '${{ matrix.os }}']
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - run: cargo build --release --locked -p player-bench
+      - name: Capture immutable suite and bench build manifest
+        shell: bash
+        run: |
+          mkdir -p results/local/release
+          python scripts/session-manifest.py --media "$FOXIDE_MEDIA" --output results/local/release/session.json --tool "$FOXIDE_MPV" --tool "$FOXIDE_VLC" --tool target/release/player-bench${{ matrix.os == 'Windows' && '.exe' || '' }}
+      - name: Windows process baselines
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $playerExe = if ('${{ matrix.player }}' -eq 'mpv') { $env:FOXIDE_MPV } else { $env:FOXIDE_VLC }
+          python scripts/generate-media.py --verify-only --output $env:FOXIDE_MEDIA
+          if ($LASTEXITCODE -ne 0) { throw 'Fixture verification failed' }
+          ./target/release/player-bench.exe run --player '${{ matrix.player }}' --exe $playerExe --media (Join-Path $env:FOXIDE_MEDIA '${{ matrix.fixture }}') --cache warm --repeat 5 --duration 630 --warmup 30 --output results/local/release/runs
+          if ($LASTEXITCODE -ne 0) { throw 'Benchmark incomplete' }
+          ./target/release/player-bench.exe report results/local/release/runs --output results/local/release/comparison.md
+      - name: macOS and Linux process baselines
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          export FOXIDE_PYTHON=python3
+          if [[ '${{ matrix.player }}' == mpv ]]; then player_exe="$FOXIDE_MPV"; else player_exe="$FOXIDE_VLC"; fi
+          python3 scripts/generate-media.py --verify-only --output "$FOXIDE_MEDIA"
+          target/release/player-bench run --player '${{ matrix.player }}' --exe "$player_exe" --media "$FOXIDE_MEDIA/${{ matrix.fixture }}" --cache warm --repeat 5 --duration 630 --warmup 30 --output results/local/release/runs
+          target/release/player-bench report results/local/release/runs --output results/local/release/comparison.md
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: baselines-${{ runner.os }}-${{ matrix.player }}-${{ matrix.fixture }}-${{ github.sha }}
+          path: results/local/release/
+          if-no-files-found: error

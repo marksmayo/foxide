@@ -1,0 +1,8 @@
+/target/
+/media/generated/
+/results/local/
+/tools/
+__pycache__/
+*.etl
+*.trace
+*.dSYM/

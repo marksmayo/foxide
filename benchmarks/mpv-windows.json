@@ -1,0 +1,8 @@
+{
+  "version": "0.41.0",
+  "architecture": "x64",
+  "url": "https://github.com/mpv-player/mpv/releases/download/v0.41.0/mpv-v0.41.0-x86_64-pc-windows-msvc.zip",
+  "sha256": "4e197f729f5071c6772f35fffd96e0f36e3e8a044bd9479b136bb09b7c6a80ff",
+  "provenance": "https://github.com/microsoft/winget-pkgs/blob/master/manifests/m/mpv-player/mpv-CI/MSVC/0.41.0/mpv-player.mpv-CI.MSVC.installer.yaml",
+  "distribution": "First-party Windows MSVC CLI build; this is not a bundled libmpv FFI distribution."
+}

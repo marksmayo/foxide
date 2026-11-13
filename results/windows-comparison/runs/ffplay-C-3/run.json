@@ -1,0 +1,1220 @@
+{
+  "id": "ffplay-C-3",
+  "player": "ffplay",
+  "fixture": "C",
+  "prime": false,
+  "command": [
+    "C:\\Users\\markm\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
+    "-hide_banner",
+    "-loglevel",
+    "info",
+    "-stats",
+    "-autoexit",
+    "-x",
+    "1280",
+    "-y",
+    "720",
+    "-i",
+    "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\C-av1-4k60.mkv"
+  ],
+  "duration_seconds": 20.0,
+  "warmup_seconds": 5.0,
+  "sample_interval_ms": 250,
+  "cache": "warm-primed",
+  "started_utc": "2026-11-13T01:43:44.400762+00:00",
+  "samples": [
+    {
+      "elapsed_ms": 25.787699967622757,
+      "rss_bytes": 11554816,
+      "cpu_percent_one_core": null,
+      "process_count": 1,
+      "gpu_dedicated_bytes": null,
+      "gpu_shared_bytes": null,
+      "gpu_engine_percent": null
+    },
+    {
+      "elapsed_ms": 287.14140004012734,
+      "rss_bytes": 23887872,
+      "cpu_percent_one_core": 97.08225117011008,
+      "process_count": 1,
+      "gpu_dedicated_bytes": null,
+      "gpu_shared_bytes": null,
+      "gpu_engine_percent": null
+    },
+    {
+      "elapsed_ms": 536.0114000504836,
+      "rss_bytes": 73007104,
+      "cpu_percent_one_core": 68.73094779622461,
+      "process_count": 1,
+      "gpu_dedicated_bytes": null,
+      "gpu_shared_bytes": null,
+      "gpu_engine_percent": null
+    },
+    {
+      "elapsed_ms": 794.6871999884024,
+      "rss_bytes": 73023488,
+      "cpu_percent_one_core": 0.0,
+      "process_count": 1,
+      "gpu_dedicated_bytes": null,
+      "gpu_shared_bytes": null,
+      "gpu_engine_percent": null
+    },
+    {
+      "elapsed_ms": 1095.7332999678329,
+      "rss_bytes": 753434624,
+      "cpu_percent_one_core": 384.93754775861066,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": null
+    },
+    {
+      "elapsed_ms": 1353.7252000533044,
+      "rss_bytes": 807546880,
+      "cpu_percent_one_core": 749.6635797750527,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": null
+    },
+    {
+      "elapsed_ms": 1599.3690000614151,
+      "rss_bytes": 833200128,
+      "cpu_percent_one_core": 455.59815687803643,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": null
+    },
+    {
+      "elapsed_ms": 1859.3279999913648,
+      "rss_bytes": 833368064,
+      "cpu_percent_one_core": 730.5767940777307,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": null
+    },
+    {
+      "elapsed_ms": 2126.750700059347,
+      "rss_bytes": 834629632,
+      "cpu_percent_one_core": 564.0404303897132,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 56037376.0,
+      "gpu_engine_percent": {
+        "3D": 8.608571494503318,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 2388.2270000176504,
+      "rss_bytes": 835366912,
+      "cpu_percent_one_core": 416.9147014591671,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 56037376.0,
+      "gpu_engine_percent": {
+        "3D": 8.608571494503318,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 2655.200600042008,
+      "rss_bytes": 836263936,
+      "cpu_percent_one_core": 461.1288745751799,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 56037376.0,
+      "gpu_engine_percent": {
+        "3D": 8.608571494503318,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 2906.5444000298157,
+      "rss_bytes": 838320128,
+      "cpu_percent_one_core": 388.91393060414816,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 56037376.0,
+      "gpu_engine_percent": {
+        "3D": 8.608571494503318,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 3181.971300044097,
+      "rss_bytes": 840187904,
+      "cpu_percent_one_core": 449.61720815641684,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 8.739744119221319,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 3435.1031000260264,
+      "rss_bytes": 840581120,
+      "cpu_percent_one_core": 537.6910302663024,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 8.739744119221319,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 3719.6272000437602,
+      "rss_bytes": 843485184,
+      "cpu_percent_one_core": 1052.1348034564683,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 8.739744119221319,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 3971.109800040722,
+      "rss_bytes": 846487552,
+      "cpu_percent_one_core": 643.7504198746547,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 8.739744119221319,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 4259.543400024995,
+      "rss_bytes": 846782464,
+      "cpu_percent_one_core": 834.413076058267,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 56037376.0,
+      "gpu_engine_percent": {
+        "3D": 8.622278434599114,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 4488.572200061753,
+      "rss_bytes": 847060992,
+      "cpu_percent_one_core": 340.32936675944734,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 56037376.0,
+      "gpu_engine_percent": {
+        "3D": 8.622278434599114,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 4755.684899981134,
+      "rss_bytes": 845967360,
+      "cpu_percent_one_core": 625.2828011573185,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 56037376.0,
+      "gpu_engine_percent": {
+        "3D": 8.622278434599114,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 5004.7397000016645,
+      "rss_bytes": 846925824,
+      "cpu_percent_one_core": 412.81245536330624,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 56037376.0,
+      "gpu_engine_percent": {
+        "3D": 8.622278434599114,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 5242.77410004288,
+      "rss_bytes": 847495168,
+      "cpu_percent_one_core": 411.6961625962138,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 8.4990455757724,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 5505.332799977623,
+      "rss_bytes": 847826944,
+      "cpu_percent_one_core": 556.2599939049015,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 8.4990455757724,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 5770.406799972989,
+      "rss_bytes": 850477056,
+      "cpu_percent_one_core": 715.831494339874,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 8.4990455757724,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 6037.666999967769,
+      "rss_bytes": 851320832,
+      "cpu_percent_one_core": 630.2370966599899,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 8.4990455757724,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 6295.616899966262,
+      "rss_bytes": 851632128,
+      "cpu_percent_one_core": 661.1621128607256,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 8.23619607249741,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 6617.138899979182,
+      "rss_bytes": 852561920,
+      "cpu_percent_one_core": 1207.7290022098043,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 8.23619607249741,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 6878.920000046492,
+      "rss_bytes": 854945792,
+      "cpu_percent_one_core": 387.5100038534706,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 8.23619607249741,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 7272.183499997482,
+      "rss_bytes": 853770240,
+      "cpu_percent_one_core": 1083.7010027091658,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 8.23619607249741,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 7408.709599985741,
+      "rss_bytes": 854560768,
+      "cpu_percent_one_core": 513.1012624134911,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 7.984732202363276,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 7650.01950005535,
+      "rss_bytes": 855404544,
+      "cpu_percent_one_core": 861.1681763973794,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 7.984732202363276,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 7925.048200064339,
+      "rss_bytes": 855629824,
+      "cpu_percent_one_core": 916.4473263491586,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 7.984732202363276,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 8242.395799956284,
+      "rss_bytes": 854519808,
+      "cpu_percent_one_core": 1254.4096190939915,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 7.984732202363276,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 8443.07200005278,
+      "rss_bytes": 854757376,
+      "cpu_percent_one_core": 574.79192528885,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43499520.0,
+      "gpu_engine_percent": {
+        "3D": 8.203882301030536,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 8709.9845999619,
+      "rss_bytes": 854253568,
+      "cpu_percent_one_core": 833.7480456520915,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43499520.0,
+      "gpu_engine_percent": {
+        "3D": 8.203882301030536,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 8970.586500014178,
+      "rss_bytes": 855314432,
+      "cpu_percent_one_core": 739.1939698844732,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43499520.0,
+      "gpu_engine_percent": {
+        "3D": 8.203882301030536,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 9280.453899991699,
+      "rss_bytes": 855502848,
+      "cpu_percent_one_core": 923.4431432687987,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43499520.0,
+      "gpu_engine_percent": {
+        "3D": 8.203882301030536,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 9510.277100023814,
+      "rss_bytes": 855810048,
+      "cpu_percent_one_core": 1053.2792746938026,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 7.643928303377222,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 9824.144699960016,
+      "rss_bytes": 857247744,
+      "cpu_percent_one_core": 1130.0806154048412,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 7.643928303377222,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 10040.873400052078,
+      "rss_bytes": 857399296,
+      "cpu_percent_one_core": 730.9080957687102,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 7.643928303377222,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 10309.944699984044,
+      "rss_bytes": 858173440,
+      "cpu_percent_one_core": 683.2425562954887,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 7.643928303377222,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 10593.125600018539,
+      "rss_bytes": 857468928,
+      "cpu_percent_one_core": 1058.1210297451885,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 56037376.0,
+      "gpu_engine_percent": {
+        "3D": 8.33666587720967,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 10855.037900037132,
+      "rss_bytes": 857108480,
+      "cpu_percent_one_core": 1063.9596283559517,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 56037376.0,
+      "gpu_engine_percent": {
+        "3D": 8.33666587720967,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 11079.477400053293,
+      "rss_bytes": 857698304,
+      "cpu_percent_one_core": 462.4158279904061,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 56037376.0,
+      "gpu_engine_percent": {
+        "3D": 8.33666587720967,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 11336.712499964051,
+      "rss_bytes": 857817088,
+      "cpu_percent_one_core": 567.1272329784651,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 56037376.0,
+      "gpu_engine_percent": {
+        "3D": 8.33666587720967,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 11594.668200006709,
+      "rss_bytes": 857911296,
+      "cpu_percent_one_core": 555.873982154503,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 56037376.0,
+      "gpu_engine_percent": {
+        "3D": 7.682758641343981,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 11862.062099971808,
+      "rss_bytes": 858361856,
+      "cpu_percent_one_core": 1112.4474458491559,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 56037376.0,
+      "gpu_engine_percent": {
+        "3D": 7.682758641343981,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 12151.450200006366,
+      "rss_bytes": 858095616,
+      "cpu_percent_one_core": 1073.800750367222,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 56037376.0,
+      "gpu_engine_percent": {
+        "3D": 7.682758641343981,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 12430.36600004416,
+      "rss_bytes": 858968064,
+      "cpu_percent_one_core": 777.1868075901133,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 56037376.0,
+      "gpu_engine_percent": {
+        "3D": 7.682758641343981,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 12676.569600007497,
+      "rss_bytes": 859840512,
+      "cpu_percent_one_core": 762.1719224203379,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 7.581508401283449,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 12911.454000044614,
+      "rss_bytes": 860282880,
+      "cpu_percent_one_core": 733.9788493596843,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 7.581508401283449,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 13184.247700031847,
+      "rss_bytes": 860430336,
+      "cpu_percent_one_core": 940.2750228228311,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 7.581508401283449,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 13490.388700040057,
+      "rss_bytes": 859316224,
+      "cpu_percent_one_core": 1174.1035273006928,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 7.581508401283449,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 13763.64600006491,
+      "rss_bytes": 860106752,
+      "cpu_percent_one_core": 620.4229177222063,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43499520.0,
+      "gpu_engine_percent": {
+        "3D": 8.032348815594288,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 13973.2164000161,
+      "rss_bytes": 858906624,
+      "cpu_percent_one_core": 678.7400635714239,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43499520.0,
+      "gpu_engine_percent": {
+        "3D": 8.032348815594288,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 14235.835100058466,
+      "rss_bytes": 859648000,
+      "cpu_percent_one_core": 404.5942192717211,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43499520.0,
+      "gpu_engine_percent": {
+        "3D": 8.032348815594288,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 14559.360699960962,
+      "rss_bytes": 859734016,
+      "cpu_percent_one_core": 1045.5161574076096,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43499520.0,
+      "gpu_engine_percent": {
+        "3D": 8.032348815594288,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 14775.61540005263,
+      "rss_bytes": 859512832,
+      "cpu_percent_one_core": 586.2887752954331,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 53936128.0,
+      "gpu_engine_percent": {
+        "3D": 8.29066568055371,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 15036.912200041115,
+      "rss_bytes": 859648000,
+      "cpu_percent_one_core": 830.6795578077116,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 53936128.0,
+      "gpu_engine_percent": {
+        "3D": 8.29066568055371,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 15308.804900036193,
+      "rss_bytes": 860131328,
+      "cpu_percent_one_core": 645.6795000036359,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 53936128.0,
+      "gpu_engine_percent": {
+        "3D": 8.29066568055371,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 15573.431199998595,
+      "rss_bytes": 860356608,
+      "cpu_percent_one_core": 636.3685506388551,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 53936128.0,
+      "gpu_engine_percent": {
+        "3D": 8.29066568055371,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 15890.539700048976,
+      "rss_bytes": 861016064,
+      "cpu_percent_one_core": 1063.1159473573045,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 56037376.0,
+      "gpu_engine_percent": {
+        "3D": 7.650617027441832,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 16102.304300060496,
+      "rss_bytes": 861016064,
+      "cpu_percent_one_core": 364.4092267659881,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 56037376.0,
+      "gpu_engine_percent": {
+        "3D": 7.650617027441832,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 16383.632899960503,
+      "rss_bytes": 861331456,
+      "cpu_percent_one_core": 801.0274261482142,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 56037376.0,
+      "gpu_engine_percent": {
+        "3D": 7.650617027441832,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 16680.30530004762,
+      "rss_bytes": 862027776,
+      "cpu_percent_one_core": 1177.2878206507464,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 56037376.0,
+      "gpu_engine_percent": {
+        "3D": 7.650617027441832,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 16900.189400068484,
+      "rss_bytes": 862027776,
+      "cpu_percent_one_core": 719.394827560013,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 8.40778052397823,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 17158.03449996747,
+      "rss_bytes": 862027776,
+      "cpu_percent_one_core": 883.0049981270305,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 8.40778052397823,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 17440.918499953113,
+      "rss_bytes": 861024256,
+      "cpu_percent_one_core": 726.1719101205742,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 8.40778052397823,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 17828.602400026284,
+      "rss_bytes": 859365376,
+      "cpu_percent_one_core": 1059.4757236613757,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 8.40778052397823,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 18047.36219998449,
+      "rss_bytes": 859979776,
+      "cpu_percent_one_core": 615.1019244395767,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 7.846570644640565,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 18317.50780006405,
+      "rss_bytes": 859992064,
+      "cpu_percent_one_core": 627.6923738908008,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 7.846570644640565,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 18483.774699969217,
+      "rss_bytes": 860635136,
+      "cpu_percent_one_core": 724.1220323747449,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 7.846570644640565,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 18728.223399957642,
+      "rss_bytes": 861278208,
+      "cpu_percent_one_core": 782.0541425991283,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 7.846570644640565,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 18991.33970006369,
+      "rss_bytes": 861278208,
+      "cpu_percent_one_core": 738.5479704249952,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 7.951703283499296,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 19239.988500019535,
+      "rss_bytes": 861278208,
+      "cpu_percent_one_core": 1129.9254320749221,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 7.951703283499296,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 19536.485100048594,
+      "rss_bytes": 861278208,
+      "cpu_percent_one_core": 1010.641896297985,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 7.951703283499296,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 19770.170300034806,
+      "rss_bytes": 861872128,
+      "cpu_percent_one_core": 819.8282666103145,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 43495424.0,
+      "gpu_engine_percent": {
+        "3D": 7.951703283499296,
+        "LegacyOverlay": 0.0,
+        "": 0.0,
+        "VideoDecode": 0.0,
+        "Copy": 0.0,
+        "VideoProcessing": 0.0
+      }
+    }
+  ],
+  "window_ready_ms": 882.5985000003129,
+  "ttff_display_ms": null,
+  "seek_display_ms": null,
+  "power_watts": null,
+  "frame_pacing_ms": null,
+  "status": "sampled",
+  "gpu_counter_errors": {},
+  "notes": [
+    "RSS tree sum can count shared pages more than once.",
+    "Window-ready measures an enumerated visible window, not video TTFF.",
+    "GPU memory counts allocation, not exclusively resident VRAM. No CPU-power attribution."
+  ],
+  "pid": 33020,
+  "windows": [
+    {
+      "pid": 33020,
+      "title": "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\C-av1-4k60.mkv",
+      "class": "SDL_app"
+    }
+  ],
+  "terminated_by_harness": true,
+  "events": [],
+  "playback_evidence": {
+    "verified": true,
+    "method": "FFplay advancing A/V clock in runtime stats; not screen presentation",
+    "last_clock_seconds": 19.27,
+    "hardware": "Default FFplay configuration; no hardware decode requested"
+  },
+  "rss_steady_bytes": 857619330.245614,
+  "cpu_steady_percent": 793.9001232064104,
+  "gpu_dedicated_steady_bytes": 0.0,
+  "gpu_shared_steady_bytes": 47089125.05263158,
+  "rss_peak_bytes": 862027776
+}

@@ -1,0 +1,488 @@
+[0000027e152a83d0] main libvlc debug: VLC media player - 3.0.24 Vetinari
+[0000027e152a83d0] main libvlc debug: Copyright © 1996-2026 the VideoLAN team
+[0000027e152a83d0] main libvlc debug: revision 3.0.24-rc1-0-g6de05adcba
+[0000027e152a83d0] main libvlc debug: configured with /builds/videolan/vlc/extras/package/win32/../../../configure  '--enable-lua' '--enable-faad' '--enable-flac' '--enable-theora' '--enable-avcodec' '--enable-merge-ffmpeg' '--enable-mpc' '--enable-libass' '--enable-live555' '--enable-shout' '--enable-goom' '--enable-sse' '--enable-mmx' '--enable-libcddb' '--enable-zvbi' '--disable-telx' '--enable-nls' '--host=x86_64-w64-mingw32' '--with-contrib=../contrib/x86_64-w64-mingw32' '--with-breakpad=https://win.crashes.videolan.org' '--enable-qt' '--enable-skins2' '--enable-update-check' '--enable-dvdread' '--enable-caca' 'host_alias=x86_64-w64-mingw32' 'CFLAGS= -D__MSVCRT_VERSION__=0x700 -D_WIN32_WINNT=0x0502 -DWINVER=0x0502  -g' 'CPPFLAGS= -D__MSVCRT_VERSION__=0x700 -D_WIN32_WINNT=0x0502 -DWINVER=0x0502' 'CXXFLAGS= -D__MSVCRT_VERSION__=0x700 -D_WIN32_WINNT=0x0502 -DWINVER=0x0502  -g' 'PKG_CONFIG=pkg-config' 'PKG_CONFIG_LIBDIR=/usr/x86_64-w64-mingw32/lib/pkgconfig:/usr/lib/x86_64-w64-mingw32/pkgconfig'
+[0000027e152a83d0] main libvlc debug: using multimedia timers as clock source
+[0000027e152a83d0] main libvlc debug:  min period: 1 ms, max period: 1000000 ms
+[0000027e152a83d0] main libvlc debug: searching plug-in modules
+[0000027e152a83d0] main libvlc debug: loading plugins cache file C:\Program Files\VideoLAN\VLC\plugins\plugins.dat
+[0000027e152a83d0] main libvlc debug: recursively browsing `C:\Program Files\VideoLAN\VLC\plugins'
+[0000027e152a83d0] main libvlc debug: plug-ins loaded: 493 modules
+[0000027e152a85b0] main logger debug: looking for logger module matching "any": 2 candidates
+[0000027e152a85b0] main logger debug: using logger module "console"
+[0000027e152a83d0] main libvlc debug: translation test: code is "C"
+[0000027e16e3a270] main keystore debug: looking for keystore module matching "memory": 3 candidates
+[0000027e16e3a270] main keystore debug: using keystore module "memory"
+[0000027e152a83d0] main libvlc debug: CPU has capabilities MMX MMXEXT SSE SSE2 SSE3 SSSE3 SSE4.1 SSE4.2 FPU 
+[0000027e16f42e00] main input debug: Creating an input for 'Media Library'
+[0000027e16f42e00] main input debug: Input is a meta file: disabling unneeded options
+[0000027e16f42e00] main input debug: using timeshift granularity of 50 MiB
+[0000027e16f42e00] main input debug: using timeshift path: C:\Users\markm\AppData\Local\Temp
+[0000027e16f42e00] main input debug: `file/directory:///C:/Users/markm/AppData/Roaming/vlc/ml.xspf' gives access `file' demux `directory' path `/C:/Users/markm/AppData/Roaming/vlc/ml.xspf'
+[0000027e152aa8f0] main input source debug: creating demux: access='file' demux='directory' location='/C:/Users/markm/AppData/Roaming/vlc/ml.xspf' file='C:\Users\markm\AppData\Roaming\vlc\ml.xspf'
+[0000027e16f17ac0] main demux debug: looking for access_demux module matching "file": 15 candidates
+[0000027e16f17ac0] main demux debug: no access_demux modules matched
+[0000027e16f193d0] main stream debug: creating access: file:///C:/Users/markm/AppData/Roaming/vlc/ml.xspf
+[0000027e16f193d0] main stream debug:  (path: C:\Users\markm\AppData\Roaming\vlc\ml.xspf)
+[0000027e16f193d0] main stream debug: looking for access module matching "file": 26 candidates
+[0000027e16f193d0] main stream debug: using access module "filesystem"
+[0000027e16f19250] main stream debug: looking for stream_filter module matching "prefetch,cache_read": 24 candidates
+[0000027e16f19250] cache_read stream debug: Using stream method for AStream*
+[0000027e16f19250] cache_read stream debug: starting pre-buffering
+[0000027e16f19250] cache_read stream debug: received first data after 0 ms
+[0000027e16f19250] cache_read stream debug: pre-buffering done 304 bytes in 0s - 296875 KiB/s
+[0000027e16f19250] main stream debug: using stream_filter module "cache_read"
+[0000027e16f18c50] main stream debug: looking for stream_filter module matching "any": 24 candidates
+[0000027e16f18c50] playlist stream debug: using XSPF playlist reader
+[0000027e16f18c50] main stream debug: using stream_filter module "playlist"
+[0000027e16f18c50] main stream debug: stream filter added to 0000027e16f19250
+[0000027e16f19550] main stream debug: looking for stream_filter module matching "any": 24 candidates
+[0000027e16f19550] main stream debug: no stream_filter modules matched
+[0000027e16f1bab0] main stream_directory debug: looking for stream_directory module matching "any": 1 candidates
+[0000027e16f1bab0] main stream_directory debug: no stream_directory modules matched
+[0000027e152aa8f0] main input source debug: attachment of directory-extractor failed for file:///C:/Users/markm/AppData/Roaming/vlc/ml.xspf
+[0000027e16f19550] main stream debug: looking for stream_filter module matching "record": 24 candidates
+[0000027e16f19550] main stream debug: using stream_filter module "record"
+[0000027e152aa8f0] main input source debug: creating demux: access='file' demux='directory' location='/C:/Users/markm/AppData/Roaming/vlc/ml.xspf' file='C:\Users\markm\AppData\Roaming\vlc\ml.xspf'
+[0000027e16f18150] main demux debug: looking for demux module matching "directory": 56 candidates
+[0000027e16f18150] main demux debug: using demux module "directory"
+[0000027e16eebf40] main demux meta debug: looking for meta reader module matching "any": 2 candidates
+[0000027e16eebf40] lua demux meta debug: Trying Lua scripts in C:\Users\markm\AppData\Roaming\vlc\lua\meta\reader
+[0000027e16eebf40] lua demux meta debug: Trying Lua scripts in C:\Program Files\VideoLAN\VLC\lua\meta\reader
+[0000027e16eebf40] lua demux meta debug: Trying Lua playlist script C:\Program Files\VideoLAN\VLC\lua\meta\reader\filename.luac
+[0000027e16eebf40] main demux meta debug: no meta reader modules matched
+[0000027e16f42e00] main input debug: `file/directory:///C:/Users/markm/AppData/Roaming/vlc/ml.xspf' successfully opened
+[0000027e16f1cd30] main xml reader debug: looking for xml reader module matching "any": 1 candidates
+[0000027e16f1cd30] main xml reader debug: using xml reader module "xml"
+[0000027e16f42e00] main input debug: EOF reached
+[0000027e16f18150] main demux debug: removing module "directory"
+[0000027e16f19550] main stream debug: removing module "record"
+[0000027e16f18c50] main stream debug: removing module "playlist"
+[0000027e16f19250] main stream debug: removing module "cache_read"
+[0000027e16f193d0] main stream debug: removing module "filesystem"
+[0000027e152a9f70] main playlist debug: creating audio output
+[0000027e16f57be0] main audio output debug: looking for audio output module matching "any": 6 candidates
+[0000027e16f57be0] mmdevice audio output debug: using default device
+[0000027e16f57be0] main audio output debug: using audio output module "mmdevice"
+[0000027e152a9f70] main playlist debug: keeping audio output
+[0000027e16f174b0] main interface debug: looking for interface module matching "hotkeys,none": 16 candidates
+[0000027e16f1e340] main input debug: Creating an input for preparsing 'A-avc-1080p.mp4'
+[0000027e16f57be0] mmdevice audio output debug: version 2 session control unavailable
+[0000027e16f174b0] main interface debug: using interface module "hotkeys"
+[0000027e16f57be0] mmdevice audio output debug: volume from -65.250000 dB to +0.000000 dB with 0.031250 dB increments
+[0000027e16f15eb0] main interface debug: looking for interface module matching "globalhotkeys,none": 16 candidates
+[0000027e16f15eb0] main interface debug: using interface module "win32"
+[0000027e152a83d0] main libvlc: Running vlc with the default interface. Use 'cvlc' to use vlc without interface.
+[0000027e16f163b0] main interface debug: looking for interface module matching "any": 16 candidates
+[0000027e152aac30] main meta fetcher debug: looking for meta fetcher module matching "any": 1 candidates
+[0000027e152aac30] lua meta fetcher debug: Trying Lua scripts in C:\Users\markm\AppData\Roaming\vlc\lua\meta\fetcher
+[0000027e152aac30] lua meta fetcher debug: Trying Lua scripts in C:\Program Files\VideoLAN\VLC\lua\meta\fetcher
+[0000027e152aac30] main meta fetcher debug: no meta fetcher modules matched
+[0000027e16f64980] main art finder debug: looking for art finder module matching "any": 2 candidates
+[0000027e16f64980] lua art finder debug: Trying Lua scripts in C:\Users\markm\AppData\Roaming\vlc\lua\meta\art
+[0000027e16f64980] lua art finder debug: Trying Lua scripts in C:\Program Files\VideoLAN\VLC\lua\meta\art
+[0000027e16f64980] lua art finder debug: Trying Lua playlist script C:\Program Files\VideoLAN\VLC\lua\meta\art\00_musicbrainz.luac
+[0000027e16f64980] lua art finder debug: skipping script (unmatched scope) C:\Program Files\VideoLAN\VLC\lua\meta\art\00_musicbrainz.luac
+[0000027e16f64980] lua art finder debug: Trying Lua playlist script C:\Program Files\VideoLAN\VLC\lua\meta\art\01_googleimage.luac
+[0000027e16f64980] lua art finder debug: skipping script (unmatched scope) C:\Program Files\VideoLAN\VLC\lua\meta\art\01_googleimage.luac
+[0000027e16f64980] lua art finder debug: Trying Lua playlist script C:\Program Files\VideoLAN\VLC\lua\meta\art\02_frenchtv.luac
+[0000027e16f64980] lua art finder debug: skipping script (unmatched scope) C:\Program Files\VideoLAN\VLC\lua\meta\art\02_frenchtv.luac
+[0000027e16f64980] lua art finder debug: Trying Lua playlist script C:\Program Files\VideoLAN\VLC\lua\meta\art\03_lastfm.luac
+[0000027e16f64980] lua art finder debug: skipping script (unmatched scope) C:\Program Files\VideoLAN\VLC\lua\meta\art\03_lastfm.luac
+[0000027e16f64980] main art finder debug: no art finder modules matched
+[0000027e16f163b0] qt interface debug: Boring first Run Wizard
+[0000027e170eac50] main generic debug: looking for extension module matching "any": 1 candidates
+[0000027e170eac50] lua generic debug: Opening Lua Extension module
+[0000027e170eac50] lua generic debug: Trying Lua scripts in C:\Users\markm\AppData\Roaming\vlc\lua\extensions
+[0000027e170eac50] lua generic debug: Trying Lua scripts in C:\Program Files\VideoLAN\VLC\lua\extensions
+[0000027e170eac50] lua generic debug: Trying Lua playlist script C:\Program Files\VideoLAN\VLC\lua\extensions\VLSub.luac
+[0000027e170eac50] lua generic debug: Scanning Lua script C:\Program Files\VideoLAN\VLC\lua\extensions\VLSub.luac
+[0000027e170eac50] lua generic debug: Script C:\Program Files\VideoLAN\VLC\lua\extensions\VLSub.luac has the following capability flags: 0x5
+[0000027e170eac50] main generic debug: using extension module "lua"
+[0000027e16f163b0] main interface debug: using interface module "qt"
+[0000027e152a9f70] main playlist debug: processing request item: null, node: Playlist, skip: 0
+[0000027e152a9f70] main playlist debug: rebuilding array of current - root Playlist
+[0000027e152a9f70] main playlist debug: rebuild done - 1 items, index -1
+[0000027e152a9f70] main playlist debug: starting playback of new item
+[0000027e152a9f70] main playlist debug: resyncing on A-avc-1080p.mp4
+[0000027e152a9f70] main playlist debug: A-avc-1080p.mp4 is at 0
+[0000027e152a9f70] main playlist debug: creating new input thread
+[0000027e1781f440] main input debug: Creating an input for 'A-avc-1080p.mp4'
+[0000027e152a9f70] main playlist debug: requesting art for new input thread
+[0000027e1781f440] main input debug: using timeshift granularity of 50 MiB
+[0000027e16f65080] main meta fetcher debug: looking for meta fetcher module matching "any": 1 candidates
+[0000027e1781f440] main input debug: using timeshift path: C:\Users\markm\AppData\Local\Temp
+[0000027e16f65080] lua meta fetcher debug: Trying Lua scripts in C:\Users\markm\AppData\Roaming\vlc\lua\meta\fetcher
+[0000027e1781f440] main input debug: `file:///C:/Users/markm/Github/foxide/media/generated/comparison/A-avc-1080p.mp4' gives access `file' demux `any' path `/C:/Users/markm/Github/foxide/media/generated/comparison/A-avc-1080p.mp4'
+[0000027e16f65080] lua meta fetcher debug: Trying Lua scripts in C:\Program Files\VideoLAN\VLC\lua\meta\fetcher
+[0000027e16f65080] main meta fetcher debug: no meta fetcher modules matched
+[0000027e16f655c0] main art finder debug: looking for art finder module matching "any": 2 candidates
+[0000027e16f1b3f0] main input source debug: creating demux: access='file' demux='any' location='/C:/Users/markm/Github/foxide/media/generated/comparison/A-avc-1080p.mp4' file='C:\Users\markm\Github\foxide\media\generated\comparison\A-avc-1080p.mp4'
+[0000027e16f65fb0] main demux debug: looking for access_demux module matching "file": 15 candidates
+[0000027e16f655c0] lua art finder debug: Trying Lua scripts in C:\Users\markm\AppData\Roaming\vlc\lua\meta\art
+[0000027e16f655c0] lua art finder debug: Trying Lua scripts in C:\Program Files\VideoLAN\VLC\lua\meta\art
+[0000027e16f65fb0] main demux debug: no access_demux modules matched
+[0000027e16f655c0] lua art finder debug: Trying Lua playlist script C:\Program Files\VideoLAN\VLC\lua\meta\art\00_musicbrainz.luac
+[0000027e16f19550] main stream debug: creating access: file:///C:/Users/markm/Github/foxide/media/generated/comparison/A-avc-1080p.mp4
+[0000027e16f19550] main stream debug:  (path: C:\Users\markm\Github\foxide\media\generated\comparison\A-avc-1080p.mp4)
+[0000027e16f655c0] lua art finder debug: skipping script (unmatched scope) C:\Program Files\VideoLAN\VLC\lua\meta\art\00_musicbrainz.luac
+[0000027e16f19550] main stream debug: looking for access module matching "file": 26 candidates
+[0000027e16f655c0] lua art finder debug: Trying Lua playlist script C:\Program Files\VideoLAN\VLC\lua\meta\art\01_googleimage.luac
+[0000027e16f19550] main stream debug: using access module "filesystem"
+[0000027e16f18dd0] main stream debug: looking for stream_filter module matching "prefetch,cache_read": 24 candidates
+[0000027e16f18dd0] cache_read stream debug: Using stream method for AStream*
+[0000027e16f655c0] lua art finder debug: skipping script (unmatched scope) C:\Program Files\VideoLAN\VLC\lua\meta\art\01_googleimage.luac
+[0000027e16f18dd0] cache_read stream debug: starting pre-buffering
+[0000027e16f655c0] lua art finder debug: Trying Lua playlist script C:\Program Files\VideoLAN\VLC\lua\meta\art\02_frenchtv.luac
+[0000027e16f18dd0] cache_read stream debug: received first data after 1 ms
+[0000027e16f18dd0] cache_read stream debug: pre-buffering done 1024 bytes in 0s - 999 KiB/s
+[0000027e16f655c0] lua art finder debug: skipping script (unmatched scope) C:\Program Files\VideoLAN\VLC\lua\meta\art\02_frenchtv.luac
+[0000027e16f18dd0] main stream debug: using stream_filter module "cache_read"
+[0000027e16f655c0] lua art finder debug: Trying Lua playlist script C:\Program Files\VideoLAN\VLC\lua\meta\art\03_lastfm.luac
+[0000027e16f18f50] main stream debug: looking for stream_filter module matching "any": 24 candidates
+[0000027e16f655c0] lua art finder debug: skipping script (unmatched scope) C:\Program Files\VideoLAN\VLC\lua\meta\art\03_lastfm.luac
+[0000027e16f18f50] lua stream debug: Trying Lua scripts in C:\Users\markm\AppData\Roaming\vlc\lua\playlist
+[0000027e16f655c0] main art finder debug: no art finder modules matched
+[0000027e16f18f50] lua stream debug: Trying Lua scripts in C:\Program Files\VideoLAN\VLC\lua\playlist
+[0000027e16f18f50] lua stream debug: Trying Lua playlist script C:\Program Files\VideoLAN\VLC\lua\playlist\anevia_streams.luac
+[0000027e16f18f50] lua stream debug: Trying Lua playlist script C:\Program Files\VideoLAN\VLC\lua\playlist\anevia_xml.luac
+[0000027e16f18f50] lua stream debug: Trying Lua playlist script C:\Program Files\VideoLAN\VLC\lua\playlist\appletrailers.luac
+[0000027e16f18f50] lua stream debug: Trying Lua playlist script C:\Program Files\VideoLAN\VLC\lua\playlist\bbc_co_uk.luac
+[0000027e16f18f50] lua stream debug: Trying Lua playlist script C:\Program Files\VideoLAN\VLC\lua\playlist\cue.luac
+[0000027e16f18f50] lua stream debug: Trying Lua playlist script C:\Program Files\VideoLAN\VLC\lua\playlist\dailymotion.luac
+[0000027e16f18f50] lua stream debug: Trying Lua playlist script C:\Program Files\VideoLAN\VLC\lua\playlist\jamendo.luac
+[0000027e16f18f50] lua stream debug: Trying Lua playlist script C:\Program Files\VideoLAN\VLC\lua\playlist\koreus.luac
+[0000027e16f18f50] lua stream debug: Trying Lua playlist script C:\Program Files\VideoLAN\VLC\lua\playlist\liveleak.luac
+[0000027e16f18f50] lua stream debug: Trying Lua playlist script C:\Program Files\VideoLAN\VLC\lua\playlist\newgrounds.luac
+[0000027e16f18f50] lua stream debug: Trying Lua playlist script C:\Program Files\VideoLAN\VLC\lua\playlist\rockbox_fm_presets.luac
+[0000027e16f18f50] lua stream debug: Trying Lua playlist script C:\Program Files\VideoLAN\VLC\lua\playlist\soundcloud.luac
+[0000027e16f18f50] lua stream debug: Trying Lua playlist script C:\Program Files\VideoLAN\VLC\lua\playlist\twitch.luac
+[0000027e16f18f50] lua stream debug: Trying Lua playlist script C:\Program Files\VideoLAN\VLC\lua\playlist\vimeo.luac
+[0000027e16f18f50] lua stream debug: Trying Lua playlist script C:\Program Files\VideoLAN\VLC\lua\playlist\vocaroo.luac
+[0000027e16f18f50] main stream debug: no stream_filter modules matched
+[0000027e177a9b30] main stream_directory debug: looking for stream_directory module matching "any": 1 candidates
+[0000027e177a9b30] main stream_directory debug: no stream_directory modules matched
+[0000027e16f1b3f0] main input source debug: attachment of directory-extractor failed for file:///C:/Users/markm/Github/foxide/media/generated/comparison/A-avc-1080p.mp4
+[0000027e16f190d0] main stream debug: looking for stream_filter module matching "record": 24 candidates
+[0000027e16f190d0] main stream debug: using stream_filter module "record"
+[0000027e16f1b3f0] main input source debug: creating demux: access='file' demux='any' location='/C:/Users/markm/Github/foxide/media/generated/comparison/A-avc-1080p.mp4' file='C:\Users\markm\Github\foxide\media\generated\comparison\A-avc-1080p.mp4'
+[0000027e16f664f0] main demux debug: looking for demux module matching "mp4": 56 candidates
+[0000027e16f664f0] mp4 demux debug: dumping root Box "root"
+[0000027e16f664f0] mp4 demux debug: |   + ftyp size 32 offset 0
+[0000027e16f664f0] mp4 demux debug: |   + moov size 82459 offset 32
+[0000027e16f664f0] mp4 demux debug: |   |   + mvhd size 108 offset 40
+[0000027e16f664f0] mp4 demux debug: |   |   + trak size 34977 offset 148
+[0000027e16f664f0] mp4 demux debug: |   |   |   + tkhd size 92 offset 156
+[0000027e16f664f0] mp4 demux debug: |   |   |   + edts size 36 offset 248
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   + elst size 28 offset 256
+[0000027e16f664f0] mp4 demux debug: |   |   |   + mdia size 34841 offset 284
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   + mdhd size 32 offset 292
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   + hdlr size 45 offset 324
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   + minf size 34756 offset 369
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   + vmhd size 20 offset 377
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   + dinf size 36 offset 397
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   |   + dref size 28 offset 405
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   |   |   + url  size 12 offset 421
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   + stbl size 34692 offset 433
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   |   + stsd size 204 offset 441
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   |   |   + avc1 size 188 offset 457
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   |   |   |   + avcC size 66 offset 543
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   |   |   |   + pasp size 16 offset 609
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   |   |   |   + btrt size 20 offset 625
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   |   + stts size 88 offset 645
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   |   + stss size 176 offset 733
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   |   + ctts size 16144 offset 909
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   |   + stsc size 40 offset 17053
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   |   + stsz size 9020 offset 17093
+[0000027e16f163b0] qt interface debug: IM: Setting an input
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   |   + stco size 9012 offset 26113
+[0000027e16f664f0] mp4 demux debug: |   |   + trak size 47269 offset 35125
+[0000027e16f664f0] mp4 demux debug: |   |   |   + tkhd size 92 offset 35133
+[0000027e16f664f0] mp4 demux debug: |   |   |   + edts size 36 offset 35225
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   + elst size 28 offset 35233
+[0000027e16f664f0] mp4 demux debug: |   |   |   + mdia size 47133 offset 35261
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   + mdhd size 32 offset 35269
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   + hdlr size 45 offset 35301
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   + minf size 47048 offset 35346
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   + smhd size 16 offset 35354
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   + dinf size 36 offset 35370
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   |   + dref size 28 offset 35378
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   |   |   + url  size 12 offset 35394
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   + stbl size 46988 offset 35406
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   |   + stsd size 126 offset 35414
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   |   |   + mp4a size 110 offset 35430
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   |   |   |   + esds size 54 offset 35466
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   |   |   |   + btrt size 20 offset 35520
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   |   + stts size 88 offset 35540
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   |   + stsc size 23596 offset 35628
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   |   + stsz size 14104 offset 59224
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   |   + stco size 9012 offset 73328
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   |   + sgpd size 26 offset 82340
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   |   + sbgp size 28 offset 82366
+[0000027e16f664f0] mp4 demux debug: |   |   + udta size 97 offset 82394
+[0000027e16f664f0] mp4 demux debug: |   |   |   + meta size 89 offset 82402
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   + hdlr size 33 offset 82414
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   + ilst size 44 offset 82447
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   + ctoo size 36 offset 82455
+[0000027e16f664f0] mp4 demux debug: |   |   |   |   |   |   + data size 28 offset 82463
+[0000027e16f664f0] mp4 demux debug: |   + free size 8 offset 82491
+[0000027e16f664f0] mp4 demux debug: |   + mdat size 198496786 offset 82499
+[0000027e16f664f0] mp4 demux debug: ISO Media (isom) version 512.
+[0000027e16f664f0] mp4 demux debug: found 2 tracks
+[0000027e16f664f0] mp4 demux warning: elst box found
+[0000027e16f664f0] mp4 demux debug:    - [0] duration=75085ms media time=66ms) rate=1.0
+[0000027e16f664f0] mp4 demux debug: track[Id 0x1] read 2249 chunk
+[0000027e16f664f0] mp4 demux warning: STTS table of 9 entries
+[0000027e16f664f0] mp4 demux warning: CTTS table of 2016 entries
+[0000027e16f664f0] mp4 demux debug: track[Id 0x1] read 2250 samples length:75s
+[0000027e1781f440] main input debug: selecting program id=0
+[0000027e16f664f0] mp4 demux debug: adding track[Id 0x1] video (enable) language undef
+[0000027e16f664f0] mp4 demux warning: elst box found
+[0000027e16f664f0] mp4 demux debug:    - [0] duration=75018ms media time=21ms) rate=1.0
+[0000027e16f664f0] mp4 demux debug: track[Id 0x2] read 2249 chunk
+[0000027e16f664f0] mp4 demux warning: STTS table of 9 entries
+[0000027e16f664f0] mp4 demux debug: track[Id 0x2] read 3521 samples length:75s
+[0000027e16f664f0] mp4 demux debug: adding track[Id 0x2] audio (enable) language undef
+[0000027e16f664f0] main demux debug: using demux module "mp4"
+[0000027e1781f440] main input debug: looking for a subtitle file in C:\Users\markm\Github\foxide\media\generated\comparison\
+[0000027e17924bd0] main decoder debug: looking for video decoder module matching "any": 17 candidates
+[0000027e17924bd0] avcodec decoder debug: using ffmpeg Lavc62.28.102
+[0000027e17924bd0] avcodec decoder debug: CPU flags: 0x004fd3db
+[0000027e17924bd0] avcodec decoder debug: allowing 6 thread(s) for decoding
+[0000027e17924bd0] avcodec decoder debug: codec (h264) started
+[0000027e17924bd0] avcodec decoder debug: using frame thread mode with 6 threads
+[0000027e17924bd0] main decoder debug: using video decoder module "avcodec"
+[0000027e17abcfc0] main decoder debug: looking for audio decoder module matching "any": 21 candidates
+[0000027e17abcfc0] main decoder debug: using audio decoder module "faad"
+[0000027e17ac4710] main demux meta debug: looking for meta reader module matching "any": 2 candidates
+[0000027e16f196d0] main stream debug: creating access: file:///C:/Users/markm/Github/foxide/media/generated/comparison/A-avc-1080p.mp4
+[0000027e16f196d0] main stream debug:  (path: C:\Users\markm\Github\foxide\media\generated\comparison\A-avc-1080p.mp4)
+[0000027e16f196d0] main stream debug: looking for access module matching "file": 26 candidates
+[0000027e16f196d0] main stream debug: using access module "filesystem"
+[0000027e16f18f50] main stream debug: looking for stream_filter module matching "prefetch,cache": 24 candidates
+[0000027e16f18f50] main stream debug: no stream_filter modules matched
+[0000027e16f196d0] main stream debug: removing module "filesystem"
+[0000027e17ac4710] main demux meta debug: using meta reader module "taglib"
+[0000027e16f664f0] main demux debug: removing module "taglib"
+[0000027e1781f440] main input debug: `file:///C:/Users/markm/Github/foxide/media/generated/comparison/A-avc-1080p.mp4' successfully opened
+[0000027e16f664f0] mp4 demux debug: elst (0) gives 0ms (movie)-> 66ms (track)
+[0000027e16f664f0] mp4 demux debug: track[Id 0x1] using Sync Sample Box (stss)
+[0000027e16f664f0] mp4 demux debug: stss gives 2 --> 0 (sample number)
+[0000027e16f664f0] mp4 demux debug: elst (0) gives 0ms (movie)-> 21ms (track)
+[0000027e1781f440] main input debug: Buffering 0%
+[0000027e17924bd0] avcodec decoder debug: available hardware decoder output format 51 (dxva2_vld)
+[0000027e17924bd0] avcodec decoder debug: available hardware decoder output format 116 (d3d11va_vld)
+[0000027e17924bd0] avcodec decoder debug: available hardware decoder output format 171 (d3d11)
+[0000027e17924bd0] avcodec decoder debug: available software decoder output format 0 (yuv420p)
+[0000027e17924bd0] avcodec decoder debug: trying format d3d11va_vld
+[0000027e17abcfc0] faad decoder warning: decoded zero sample
+[0000027e152a9f70] main playlist debug: reusing audio output
+[0000027e17abe7c0] main generic debug: looking for aout stream module matching "any": 2 candidates
+[0000027e1781f440] main input debug: Buffering 25%
+[0000027e1e0c1f30] main spu text debug: looking for text renderer module matching "any": 3 candidates
+[0000027e1781f440] main input debug: Buffering 50%
+[0000027e1e0c1f30] freetype spu text debug: Using DWrite backend
+[0000027e1e0c1f30] freetype spu text debug: DWrite_GetFamily(): family name: Arial
+[0000027e1e0c1f30] freetype spu text debug: DWrite_ParseFamily(): using font at index 0 with weight 400 for bold: 0, italic: 0
+[0000027e1e0c1f30] freetype spu text debug: DWrite_ParseFamily(): using font at index 1 with weight 700 for bold: 1, italic: 0
+[0000027e1e0c1f30] freetype spu text debug: DWrite_ParseFamily(): using font at index 2 with weight 400 for bold: 0, italic: 1
+[0000027e1e0c1f30] freetype spu text debug: DWrite_ParseFamily(): using font at index 3 with weight 700 for bold: 1, italic: 1
+[0000027e1e0c1f30] main spu text debug: using text renderer module "freetype"
+[0000027e1781f440] main input debug: Buffering 75%
+[0000027e1e1af060] main scale debug: looking for video converter module matching "any": 24 candidates
+[0000027e1781f440] main input debug: Buffering 100%
+[0000027e1e1af060] swscale scale debug: 32x32 (32x32) chroma: YUVA -> 16x16 (16x16) chroma: RGBA with scaling using Bicubic (good quality)
+[0000027e1e1af060] main scale debug: using video converter module "swscale"
+[0000027e17b8de90] main scale debug: looking for video converter module matching "any": 24 candidates
+[0000027e1781f440] main input debug: Stream buffering done (1250 ms in 15 ms)
+[0000027e17b8de90] yuvp scale debug: YUVP to YUVA converter
+[0000027e17b8de90] main scale debug: using video converter module "yuvp"
+[0000027e17ac7d90] main video output debug: Deinterlacing available
+[0000027e17ac7d90] main video output debug: deinterlace -1, mode auto, is_needed 0
+[0000027e1e32edb0] main window debug: looking for vout window module matching "qt,any": 3 candidates
+[0000027e1e32edb0] qt window debug: requesting video window...
+[0000027e1e32edb0] main window debug: resized to 3862929888x150
+[0000027e1e32edb0] main window debug: resized to 3862929888x150
+[0000027e1e32edb0] main window debug: resized to 3862929328x150
+[0000027e1e32edb0] main window debug: resized to 258642644x32767
+[0000027e1e32edb0] main window debug: resized to 3862928768x150
+[0000027e1e32edb0] main window debug: resized to 100x30
+[0000027e1e32edb0] main window debug: resized to 100x30
+[0000027e1e32edb0] main window debug: resized to 100x30
+[0000027e1e32edb0] main window debug: resized to 100x30
+[0000027e1e32edb0] main window debug: resized to 100x30
+[0000027e1e32edb0] main window debug: resized to 100x30
+[0000027e1e32edb0] main window debug: resized to 1920x936
+[0000027e1e32edb0] main window debug: using vout window module "qt"
+[0000027e1e3495e0] main inhibit debug: looking for inhibit module matching "any": 1 candidates
+[0000027e1e3495e0] main inhibit debug: using inhibit module "inhibit"
+[0000027e17ac7d90] main video output debug: Opening vout display wrapper
+[0000027e1e344450] main vout display debug: looking for vout display module matching "any": 12 candidates
+[0000027e1e344450] direct3d11 vout display debug: creating Vout EventThread
+[0000027e1e344450] direct3d11 vout display debug: Win32VoutCreateWindow
+[0000027e1e344450] main vout display debug: VoutDisplayEvent 'resize' 1920x936
+[0000027e1e344450] direct3d11 vout display debug: inclinometer not found. (hr=0x80070490)
+[0000027e1e344450] direct3d11 vout display debug: created video sub-window
+[0000027e1e344450] direct3d11 vout display debug: Vout EventThread running
+[0000027e1e344450] direct3d11 vout display debug: Created the D3D11 device type 1 level b100.
+[0000027e1e344450] direct3d11 vout display debug: supports colorspace RGB Rec.709 gamma:22 range:FULL
+[0000027e1e344450] direct3d11 vout display debug: supports colorspace RGB Rec.709 gamma:22 range:STUDIO
+[0000027e1e344450] direct3d11 vout display debug: supports colorspace RGB Rec.2020 gamma:22 range:STUDIO
+[0000027e1e344450] direct3d11 vout display debug: supports colorspace RGB Rec.2020 gamma:22 range:FULL
+[0000027e1e344450] direct3d11 vout display debug: supports colorspace RGB Rec.2020 gamma:2084 range:FULL
+[0000027e1e344450] direct3d11 vout display debug: supports colorspace RGB Rec.2020 gamma:2084 range:STUDIO
+[0000027e1e344450] direct3d11 vout display debug: Output max luminance: 240.0, colorspace RGB Rec.709 gamma:22 range:FULL, bits per pixel 8
+[0000027e1e344450] direct3d11 vout display debug: using colorspace RGB Rec.709 gamma:22 range:FULL
+[0000027e1e344450] direct3d11 vout display debug: Using pixel format VA_NV12 for chroma DX11
+[0000027e1e344450] main vout display debug: VoutDisplayEvent 'resize' 1296x759
+[0000027e1e344450] direct3d11 vout display error: SetThumbNailClip failed: 0x80004005
+[0000027e1e344450] direct3d11 vout display debug: using GPU render fence
+[0000027e1e344450] direct3d11 vout display error: SetThumbNailClip failed: 0x80004005
+[0000027e1e344450] direct3d11 vout display debug: Direct3D11 resources created
+[0000027e1e344450] direct3d11 vout display debug: Direct3D11 device adapter successfully initialized
+[0000027e1e344450] direct3d11 vout display debug: Direct3D11 Open Succeeded
+[0000027e1e344450] main vout display debug: using vout display module "direct3d11"
+[0000027e1e344450] direct3d11 vout display debug: D3D11 pool succeed with 40 surfaces (1920x1088) context 0x0000027e1df95658
+[0000027e17ac7d90] main video output debug: original format sz 1920x1088, of (0,0), vsz 1920x1080, 4cc DX11, sar 1:1, msk r0x0 g0x0 b0x0
+[0000027e1e0c1f30] main spu text debug: removing module "freetype"
+[0000027e1e0c1f30] main spu text debug: looking for text renderer module matching "any": 3 candidates
+[0000027e1e0c1f30] freetype spu text debug: Using DWrite backend
+[0000027e1e344450] main vout display debug: VoutDisplayEvent 'resize' 1920x936
+[0000027e1e0c1f30] freetype spu text debug: DWrite_GetFamily(): family name: Arial
+[0000027e1e0c1f30] freetype spu text debug: DWrite_ParseFamily(): using font at index 0 with weight 400 for bold: 0, italic: 0
+[0000027e1e0c1f30] freetype spu text debug: DWrite_ParseFamily(): using font at index 1 with weight 700 for bold: 1, italic: 0
+[0000027e1e344450] direct3d11 vout display error: SetThumbNailClip failed: 0x80004005
+[0000027e1e0c1f30] freetype spu text debug: DWrite_ParseFamily(): using font at index 2 with weight 400 for bold: 0, italic: 1
+[0000027e1e344450] direct3d11 vout display debug: Detected size change 1664x936
+[0000027e1e0c1f30] freetype spu text debug: DWrite_ParseFamily(): using font at index 3 with weight 700 for bold: 1, italic: 1
+[0000027e1e0c1f30] main spu text debug: using text renderer module "freetype"
+[0000027e1e349040] main generic debug: looking for hw decoder module matching "any": 2 candidates
+[0000027e1e344450] direct3d11 vout display error: SetThumbNailClip failed: 0x80004005
+[0000027e1e349040] d3d11va generic debug: Reusing Direct3D11 device
+[0000027e1e349040] d3d11va generic debug: CreateDevice succeed
+[0000027e1e344450] direct3d11 vout display error: SetThumbNailClip failed: 0x80004005
+[0000027e1e349040] d3d11va generic debug: - 'MPEG-2 variable-length decoder' is supported
+[0000027e1e349040] d3d11va generic debug: - 'MPEG-2 inverse discrete cosine transform' is supported
+[0000027e1e349040] d3d11va generic debug: - 'VC-1 variable-length decoder' is supported
+[0000027e1e349040] d3d11va generic debug: - 'VC-1 variable-length decoder 2 (Intel)' is supported
+[0000027e1e349040] d3d11va generic debug: - 'VC-1 variable-length decoder (Intel)' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Windows Media Video 9 IDCT' is supported
+[0000027e1e349040] d3d11va generic debug: - 'VC-1 inverse discrete cosine transform' is supported
+[0000027e1e349040] d3d11va generic debug: - 'H.264 variable-length decoder, no film grain technology' is supported
+[0000027e1e349040] d3d11va generic debug: - 'H.264 stereo high profile, mbs flag set' is supported
+[0000027e1e349040] d3d11va generic debug: - 'H.264 stereo high profile' is supported
+[0000027e1e349040] d3d11va generic debug: - 'H.264 multiview high profile' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0xc528916c-0xc0af-0x4645-0x8cb2372b6d4adc2a' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x91cd2d6e-0x897b-0x4fa1-0xb0d751dc88010e0a' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x97688186-0x56a8-0x4094-0xb543fc9daaa49f4b' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x1424d4dc-0x7cf5-0x4bb1-0x9cd7b63717a72a6b' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0xc346e8a3-0xcbed-0x4d27-0x87cca70eb4dc8c27' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0xffc79924-0x5eaf-0x4666-0xa73606190f281443' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x464bdb3c-0x91c4-0x4e9b-0x896f225496ac4ed6' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x9b31316b-0xf204-0x455d-0x8a8c9345dca77c01' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0xafe4285c-0xab63-0x4b2d-0x8278e6baacea2ce9' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x277de9c5-0xed83-0x48dd-0xab8fac2d24b22943' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x04c5ba10-0x4e9a-0x4b8e-0x8dbf4f4b48afa27c' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x0acef8bc-0x285f-0x415d-0xab227bf2527a3d2e' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x24d19fca-0xc5a2-0x4b8e-0x9f93f8f6ef15c890' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x353aca91-0xd945-0x4c13-0xae7e469060fac8d8' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x28566328-0xf041-0x4466-0x8b148f5831e78f8b' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x6b4a94db-0x54fe-0x4ae1-0x9be47a7dad004600' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0xb8b28e0c-0xecab-0x4217-0x8c82eaaa9755aaf0' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x8732ecfd-0x9747-0x4897-0xb42ae534f9ff2b7a' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0xe139b5ca-0x47b2-0x40e1-0xaf1cad71a67a1836' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x056a6e36-0xf3a8-0x4d00-0x96637e9430358bf9' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x5415a68c-0x231e-0x46f4-0x878b5e9a22e967e9' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x161be912-0x44c2-0x49c0-0xb61ed946852b32a1' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0xd6d6bc4f-0xd51a-0x4712-0x97e8750917c860fd' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x7fef652d-0x3233-0x44df-0xacf7ecfb584dab35' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x87b2ae39-0xc9a5-0x4c53-0x86b8a52d7edba488' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x10e19ac8-0xbf39-0x4443-0xbec31b0cbfe4c7aa' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x2dec00c7-0x21ee-0x4bf8-0x8f0e773f11f126a2' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0xc35153a0-0x23c0-0x4a81-0xb3bb6a1326f2b76b' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0xa33fd0ec-0xa9d3-0x4c21-0x9276c241cc90f6c7' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x310e59d2-0x7ea4-0x47bb-0xb319500e78855336' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x036dff40-0x94a6-0x45b3-0xa0b371f0cdf35129' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x8c56eb1e-0x2b47-0x466f-0x8d337dbcd63f3df2' is supported
+[0000027e1e349040] d3d11va generic debug: - 'HEVC Main profile' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x75fc75f7-0xc589-0x4a07-0xa25b72e03b0383b3' is supported
+[0000027e1e349040] d3d11va generic debug: - 'HEVC Main 10 profile' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x9cc55490-0xe37c-0x4932-0x86844920f9f6409c' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x0bac4fe5-0x1532-0x4429-0xa854f84de04953db' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x4008018f-0xf537-0x4b36-0x98cf61af8a2c1a33' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x0dabeffa-0x4458-0x4602-0xbc030795659d617c' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x1a72925f-0x0c2c-0x4f15-0x96fbb17d1473603f' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x55bcac81-0xf311-0x4093-0xa7d01cbc0b849bee' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x9798634d-0xfe9d-0x48e5-0xb4dadbec45b3df01' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0xe484dcb8-0xcac9-0x4859-0x99f55c0d45069089' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x41a5af96-0xe415-0x4b0c-0x9d03907858e23e78' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x6a6a81ba-0x912a-0x485d-0xb57fccd2d37b8d94' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0xe4e3cf5b-0x97d2-0x4658-0xaacb366e3ee2ceee' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0xfd9d9559-0x0fd3-0x4917-0xa9a707e714ee9ef9' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x0e4bc693-0x5d2c-0x4936-0xb125aefe32b16d8a' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x2f08b5b1-0xdbc2-0x4d48-0x883a4e7b8174cff6' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x5467807a-0x295d-0x445d-0xbd2ecba8c2457c3d' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0xae0d4e15-0x2360-0x40a8-0xbf82028e6a0dd827' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x8ff8a3aa-0xc456-0x4132-0xb6ef69d9dd72571d' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0xc23dd857-0x874b-0x423c-0xb6e082ceaa9b118a' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x5b08e35d-0x0c66-0x4c51-0xa6f189d00cb2c197' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x07cfaffb-0x5a2e-0x4b99-0xb62ae4ca53b6d5aa' is supported
+[0000027e1e349040] d3d11va generic debug: - 'VP9 profile 0' is supported
+[0000027e1e349040] d3d11va generic debug: - 'VP9 profile 2' is supported
+[0000027e1e349040] d3d11va generic debug: - 'VP9 profile Intel' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x68a21c7b-0xd58f-0x4e74-0x9993e4b8172b19a0' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x80a3a7bd-0x89d8-0x4497-0xa2b82126af7e6eb8' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x1d5c4d76-0xb55a-0x4430-0x904c3383a7ae3b16' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0xa7f759dd-0x5f54-0x4d7f-0x829142e883c546fe' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0xf34fa92f-0xdc79-0x474c-0xb0dbb7bd4522df77' is supported
+[0000027e1e349040] d3d11va generic debug: - 'AV1 Main profile 8' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0xca44afc5-0xe1d0-0x42e6-0x9154b127186d4d40' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0xf9a16190-0x3fb4-0x4dc5-0x9846c8751f83d6d7' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x50925b7b-0xe931-0x4978-0xa12a586630f095f9' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0xb69c20e0-0x2508-0x8790-0x0305875499e0a2d0' is supported
+[0000027e1e349040] d3d11va generic debug: - 'Unknown decoder 0x49761bec-0x4b63-0x4349-0xa5ff87ffdf088466' is supported
+[0000027e1e349040] d3d11va generic debug: Trying to use 'H.264 variable-length decoder, no film grain technology' as input
+[0000027e1e349040] d3d11va generic debug: NV12 output is supported for decoder H.264 variable-length decoder, no film grain technology.
+[0000027e1e349040] d3d11va generic debug: Using output format NV12 for decoder H.264 variable-length decoder, no film grain technology
+[0000027e1e349040] d3d11va generic debug: va_pool_SetupDecoder id 27 1920x1088 count: 24
+[0000027e1e349040] d3d11va generic debug: using external surface pool
+[0000027e1e349040] d3d11va generic debug: ID3D11VideoDecoderOutputView succeed with 24 surfaces (1920x1088)
+[0000027e1e349040] d3d11va generic debug: we got 9 decoder configurations
+[0000027e1e349040] d3d11va generic debug: configuration[0] ConfigBitstreamRaw 2
+[0000027e1e349040] d3d11va generic debug: configuration[1] ConfigBitstreamRaw 1
+[0000027e1e349040] d3d11va generic debug: configuration[2] ConfigBitstreamRaw 2
+[0000027e1e349040] d3d11va generic debug: configuration[3] ConfigBitstreamRaw 2
+[0000027e1e349040] d3d11va generic debug: configuration[4] ConfigBitstreamRaw 2
+[0000027e1e349040] d3d11va generic debug: configuration[5] ConfigBitstreamRaw 2
+[0000027e1e349040] d3d11va generic debug: configuration[6] ConfigBitstreamRaw 2
+[0000027e1e349040] d3d11va generic debug: configuration[7] ConfigBitstreamRaw 1
+[0000027e1e349040] d3d11va generic debug: configuration[8] ConfigBitstreamRaw 1
+[0000027e1e349040] d3d11va generic debug: DxCreateDecoderSurfaces succeed
+[0000027e1e349040] main generic debug: using hw decoder module "d3d11va"
+[0000027e17924bd0] avcodec decoder: Using D3D11VA (Intel(R) Iris(R) Xe Graphics, vendor 8086(Intel), device 46a6, revision c) for hardware decoding
+[h264 @ 0000027e179c8b80] Reinit context to 1920x1088, pix_fmt: d3d11va_vld
+[0000027e17924bd0] main decoder debug: Received first picture
+[0000027e17abe7c0] wasapi generic debug: buffer size    : 96000 frames
+[0000027e17abe7c0] wasapi generic debug: maximum latency: 000 ns
+[0000027e17abe7c0] wasapi generic debug: default period : 10000000 ns
+[0000027e17abe7c0] wasapi generic debug: minimum period : 3000000 ns
+[0000027e17abe7c0] main generic debug: using aout stream module "wasapi"
+[0000027e16f57be0] main audio output debug: output 'f32l' 48000 Hz Stereo frame=1 samples/8 bytes
+[0000027e17abe6b0] main volume debug: looking for audio volume module matching "any": 2 candidates
+[0000027e17abe6b0] main volume debug: using audio volume module "float_mixer"
+[0000027e16f57be0] main audio output debug: input 'f32l' 48000 Hz Stereo frame=1 samples/8 bytes
+[0000027e17b87420] main audio filter debug: looking for audio filter module matching "scaletempo": 16 candidates
+[0000027e17b87420] scaletempo audio filter debug: format: 48000 rate, 2 nch, 4 bps, fl32
+[0000027e17b87420] scaletempo audio filter debug: params: 30 stride, 0.200 overlap, 14 search
+[0000027e17b87420] scaletempo audio filter debug: 1.000 scale, 1440.000 stride_in, 1440 stride_out, 1152 standing, 288 overlap, 672 search, 2400 queue, fl32 mode
+[0000027e17b87420] main audio filter debug: using audio filter module "scaletempo"
+[0000027e16f57be0] main audio output debug: conversion: 'f32l'->'f32l' 48000 Hz->48000 Hz Stereo->Stereo
+[0000027e16f57be0] main audio output debug: conversion pipeline complete
+[0000027e16f57be0] main audio output debug: conversion: 'f32l'->'f32l' 48000 Hz->48000 Hz Stereo->Stereo
+[0000027e16f57be0] main audio output debug: conversion pipeline complete
+[0000027e1e02d210] main audio resampler debug: looking for audio resampler module matching "any": 3 candidates
+[0000027e1e02d210] main audio resampler debug: using audio resampler module "samplerate"
+[0000027e1781f440] main input debug: Decoder wait done in 540 ms
+[0000027e16f57be0] main audio output debug: inserting 1456 zeroes
+[0000027e16f57be0] mmdevice audio output debug: state changed: 1
+[0000027e1e344450] main vout display debug: auto hiding mouse cursor

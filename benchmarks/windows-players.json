@@ -1,0 +1,337 @@
+{
+  "selection": "Expanded Windows/macOS player field. The original Windows selection was representative, not a market-share ranking. Platform-specific and audio-only players compete only in applicable cases.",
+  "players": [
+    {
+      "id": "foxide",
+      "name": "Foxide",
+      "family": "Development launcher",
+      "source": "README.md",
+      "paths": [
+        "target/release/foxide.exe"
+      ],
+      "requires": "mpv",
+      "note": "Current Foxide launches external mpv; it is not an independent playback engine.",
+      "platforms": [
+        "windows",
+        "macos",
+        "linux"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "vlc",
+      "name": "VLC",
+      "family": "Desktop player",
+      "source": "https://www.videolan.org/vlc/",
+      "paths": [
+        "{ProgramFiles}/VideoLAN/VLC/vlc.exe",
+        "{ProgramFiles(x86)}/VideoLAN/VLC/vlc.exe"
+      ],
+      "platforms": [
+        "windows",
+        "macos",
+        "linux"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "mpv",
+      "name": "mpv",
+      "family": "Desktop player",
+      "source": "https://mpv.io/installation/",
+      "paths": [
+        "tools/mpv/mpv.exe",
+        "mpv.exe",
+        "{LOCALAPPDATA}/Microsoft/WinGet/Links/mpv.exe"
+      ],
+      "platforms": [
+        "windows",
+        "macos",
+        "linux"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "wmp-modern",
+      "name": "Windows Media Player",
+      "family": "Modern / Microsoft Store",
+      "source": "https://apps.microsoft.com/detail/9wzdncrfj3pt",
+      "paths": [],
+      "note": "Packaged-app activation requires a dedicated adapter; Get-AppxPackage and Start Apps inventory are checked.",
+      "platforms": [
+        "windows"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "wmp-legacy",
+      "name": "Windows Media Player Legacy",
+      "family": "Windows built-in",
+      "source": "https://support.microsoft.com/windows/windows-media-player-d10303a5-896c-2ce2-53d4-5bd5b9fd888b",
+      "paths": [
+        "{ProgramFiles}/Windows Media Player/wmplayer.exe",
+        "{ProgramFiles(x86)}/Windows Media Player/wmplayer.exe"
+      ],
+      "platforms": [
+        "windows"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "mpc-hc",
+      "name": "MPC-HC",
+      "family": "Desktop player",
+      "source": "https://github.com/clsid2/mpc-hc/releases",
+      "paths": [
+        "tools/mpc-hc/mpc-hc64.exe",
+        "{ProgramFiles}/MPC-HC/mpc-hc64.exe",
+        "{ProgramFiles(x86)}/MPC-HC/mpc-hc.exe",
+        "mpc-hc64.exe"
+      ],
+      "platforms": [
+        "windows"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "mpc-be",
+      "name": "MPC-BE",
+      "family": "Desktop player",
+      "source": "https://github.com/Aleksoid1978/MPC-BE/releases",
+      "paths": [
+        "tools/mpc-be/mpc-be64.exe",
+        "{ProgramFiles}/MPC-BE/mpc-be64.exe",
+        "mpc-be64.exe"
+      ],
+      "platforms": [
+        "windows"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "potplayer",
+      "name": "PotPlayer",
+      "family": "Desktop player",
+      "source": "https://potplayer.daum.net/",
+      "paths": [
+        "{ProgramFiles}/DAUM/PotPlayer/PotPlayerMini64.exe",
+        "{ProgramFiles}/PotPlayer/PotPlayerMini64.exe",
+        "PotPlayerMini64.exe"
+      ],
+      "platforms": [
+        "windows"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "smplayer",
+      "name": "SMPlayer",
+      "family": "Desktop player",
+      "source": "https://www.smplayer.info/en/downloads",
+      "paths": [
+        "tools/smplayer/smplayer.exe",
+        "{ProgramFiles}/SMPlayer/smplayer.exe",
+        "{ProgramFiles(x86)}/SMPlayer/smplayer.exe",
+        "smplayer.exe"
+      ],
+      "platforms": [
+        "windows",
+        "macos",
+        "linux"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "kmplayer",
+      "name": "KMPlayer",
+      "family": "Desktop player",
+      "source": "https://www.kmplayer.com/",
+      "paths": [
+        "{ProgramFiles}/KMPlayer 64X/KMPlayer64.exe",
+        "{ProgramFiles}/KMPlayer/KMPlayer.exe",
+        "KMPlayer64.exe"
+      ],
+      "platforms": [
+        "windows"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "gom",
+      "name": "GOM Player",
+      "family": "Desktop player",
+      "source": "https://www.gomlab.com/en/gomplayer-media-player",
+      "paths": [
+        "{ProgramFiles}/GOM/GOMPlayer/GOM.exe",
+        "{ProgramFiles(x86)}/GRETECH/GomPlayer/GOM.exe",
+        "GOM.exe"
+      ],
+      "platforms": [
+        "windows"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "ffplay",
+      "name": "FFplay",
+      "family": "Extra FFmpeg reference",
+      "source": "https://ffmpeg.org/ffplay.html",
+      "paths": [
+        "ffplay.exe"
+      ],
+      "note": "Reference player, outside the selected ten. Its default decoder/render configuration can differ from GPU-decoding desktop players.",
+      "platforms": [
+        "windows",
+        "macos",
+        "linux"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "kodi",
+      "name": "Kodi",
+      "family": "Media center",
+      "source": "https://kodi.tv/download/",
+      "paths": [
+        "{ProgramFiles}/Kodi/kodi.exe",
+        "{LOCALAPPDATA}/Programs/Kodi/kodi.exe",
+        "kodi.exe"
+      ],
+      "platforms": [
+        "windows",
+        "macos",
+        "linux"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "plex",
+      "name": "Plex",
+      "family": "Desktop client",
+      "source": "https://www.plex.tv/media-server-downloads/?cat=plex+desktop&plat=windows#plex-app",
+      "paths": [
+        "{ProgramFiles}/Plex/Plex/Plex.exe",
+        "{LOCALAPPDATA}/Plex/Plex.exe",
+        "Plex.exe"
+      ],
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "note": "Desktop player only; local-file/server/account setup requires an adapter. Plex Media Server is not substituted."
+    },
+    {
+      "id": "foobar2000",
+      "name": "foobar2000",
+      "family": "Audio player",
+      "source": "https://www.foobar2000.org/download",
+      "paths": [
+        "{ProgramFiles}/foobar2000/foobar2000.exe",
+        "{ProgramFiles(x86)}/foobar2000/foobar2000.exe",
+        "{LOCALAPPDATA}/Programs/foobar2000/foobar2000.exe",
+        "foobar2000.exe"
+      ],
+      "platforms": [
+        "windows"
+      ],
+      "media_types": [
+        "audio"
+      ],
+      "note": "Audio-only entrant. Video categories are not applicable."
+    },
+    {
+      "id": "infuse",
+      "name": "Infuse",
+      "family": "Apple-platform player",
+      "source": "https://firecore.com/infuse",
+      "paths": [
+        "/Applications/Infuse.app/Contents/MacOS/Infuse"
+      ],
+      "platforms": [
+        "macos"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "note": "App Store distribution; provision on an authorized self-hosted Mac. No Windows WinGet package is substituted."
+    },
+    {
+      "id": "iina",
+      "name": "IINA",
+      "family": "macOS frontend",
+      "source": "https://iina.io/",
+      "paths": [
+        "/Applications/IINA.app/Contents/MacOS/IINA"
+      ],
+      "platforms": [
+        "macos"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "note": "Installed by Homebrew cask in the hosted macOS workflow. GUI launch alone is not playback verification."
+    },
+    {
+      "id": "quicktime",
+      "name": "QuickTime Player",
+      "family": "macOS built-in",
+      "source": "https://support.apple.com/guide/quicktime-player/welcome/mac",
+      "paths": [
+        "/System/Applications/QuickTime Player.app/Contents/MacOS/QuickTime Player"
+      ],
+      "platforms": [
+        "macos"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "note": "OS-provided native reference; requires a validated file-activation and playback collector."
+    }
+  ]
+}

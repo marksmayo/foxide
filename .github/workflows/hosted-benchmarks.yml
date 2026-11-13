@@ -1,0 +1,83 @@
+name: Windows and macOS benchmark smoke
+on:
+  workflow_dispatch:
+    inputs:
+      extended:
+        description: Install the expanded Windows player field (installation coverage, not validated playback for every frontend)
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+    paths: ['crates/**', 'scripts/**', 'benchmarks/**', '.github/workflows/hosted-benchmarks.yml', 'Cargo.toml', 'Cargo.lock']
+permissions:
+  contents: read
+concurrency:
+  group: hosted-player-smoke-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  smoke:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2025, macos-15]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    env:
+      FOXIDE_RESULTS: results/local/hosted
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Bootstrap WinGet on the ephemeral Windows VM
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/bootstrap-winget-ci.ps1
+      - name: Install Windows smoke dependencies
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          python scripts/install-players.py --install --players mpv vlc --output results/local/hosted/core-installation.json
+          if ($LASTEXITCODE -ne 0) { throw 'Core media dependencies failed to install' }
+          if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
+            winget install --exact --id Gyan.FFmpeg --source winget --silent --disable-interactivity --accept-source-agreements --accept-package-agreements
+            if ($LASTEXITCODE -ne 0) { throw 'FFmpeg installation failed' }
+          }
+          $env:PATH += ';' + (Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Links')
+          "$(Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Links')" >> $env:GITHUB_PATH
+      - name: Install expanded Windows field when requested
+        if: runner.os == 'Windows' && inputs.extended == true
+        shell: pwsh
+        run: |
+          python scripts/install-players.py --install --output results/local/hosted/expanded-installation.json
+          if ($LASTEXITCODE -ne 0) {
+            Write-Output '::warning::Some extended players could not install; see expanded-installation.json. This is not a playback pass.'
+          }
+      - name: Install macOS players including IINA
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          brew install mpv ffmpeg
+          brew install --cask vlc iina
+          mkdir -p results/local/hosted
+          brew info --json=v2 mpv ffmpeg > results/local/hosted/brew-formulae.json
+          brew info --json=v2 --cask vlc iina > results/local/hosted/brew-casks.json
+      - run: cargo build --release --locked
+      - name: Generate matched startup/decode fixture
+        run: python scripts/generate-media.py --profile smoke --seconds 15 --files A --output media/generated/hosted
+      - name: Run VM decode and frontend diagnostics
+        run: python scripts/hosted-benchmarks.py --media media/generated/hosted/A-avc-1080p.mp4 --output results/local/hosted
+      - name: Add platform-specific summary
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f results/local/hosted/summary.md ]]; then
+            cat results/local/hosted/summary.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hosted-smoke-${{ runner.os }}-${{ runner.arch }}-${{ github.sha }}
+          path: results/local/hosted/
+          if-no-files-found: error

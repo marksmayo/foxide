@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "scope": "Diagnostic process smoke only; no display or power measurement",
+  "platform": "Windows 11 x86-64",
+  "vlc_version": "3.0.24 Vetinari",
+  "vlc_executable_sha256": "63d0d02df6e466d642b824dc66be6b5a134bf98b26747ffac8ec0d879dc180d7",
+  "bench_executable_sha256": "6e8ca175665c83773172294bb19366e718e88d085cd28cdc66c2c8f93bc02462",
+  "extra_args": [
+    "--verbose=2"
+  ],
+  "fixture": [
+    {
+      "id": "A",
+      "path": "A-avc-1080p.mp4",
+      "sha256": "34a9f578ce2f9cf7952f9055245555014b03460239c4c370ae95c9db7a334732",
+      "bytes": 39717270
+    }
+  ],
+  "smoke_assets": [
+    {
+      "id": "A",
+      "path": "A-avc-1080p.mp4",
+      "sha256": "c751ba4abec8b7ac902ca08018e04f9d4e571b80dcae3d10947e42deefadc148",
+      "bytes": 8109401
+    },
+    {
+      "id": "B",
+      "path": "B-hevc-4k60-pq.mkv",
+      "sha256": "7b80b1788da62e6e8f1730060a782a2dd29aa5541594c7ee34bc6996a39c3522",
+      "bytes": 30050702
+    },
+    {
+      "id": "C",
+      "path": "C-av1-4k60.mkv",
+      "sha256": "8740be0f5fe913f709c30114f2a55f8e2ae7f669a75f87b65c223338a9273ed1",
+      "bytes": 18656577
+    },
+    {
+      "id": "D",
+      "path": "D-flac-track-01.flac",
+      "sha256": "6b8ff74ae709b50944c9a2c066c65d64483cd1e799822d6be52dd0eb5080ae8a",
+      "bytes": 60603
+    },
+    {
+      "id": "D",
+      "path": "D-flac-track-02.flac",
+      "sha256": "bf42d5924f3990d25fcdac66afba29ad22acbd5857e2e336bde9c2af767ef85a",
+      "bytes": 61848
+    },
+    {
+      "id": "D",
+      "path": "D-flac-track-03.flac",
+      "sha256": "7dc39b2d10c8eca1bb11da7a1f86a0ae7c5e1f87178388faf5589b31d6dbd772",
+      "bytes": 62380
+    }
+  ],
+  "runs": [
+    {
+      "directory": "results/local/vlc-verified-path/1794532265535-53924-run-1",
+      "player": "vlc",
+      "status": "process-sampled-playback-unverified",
+      "started_unix_ms": 1794532265715,
+      "duration_seconds": 8,
+      "warmup_seconds": 2,
+      "sample_interval_ms": 250,
+      "cache": "warm-primed",
+      "rss_peak_bytes": 393977856,
+      "rss_steady_mean_bytes": 304045909.3333333,
+      "cpu_steady_mean_percent_one_core": 12.224373062451681,
+      "sample_count": 32,
+      "ttff_display_ms": null,
+      "package_power_watts": null,
+      "terminated_by_harness": true
+    },
+    {
+      "directory": "results/local/vlc-verified-path/1794532273845-53924-run-2",
+      "player": "vlc",
+      "status": "process-sampled-playback-unverified",
+      "started_unix_ms": 1794532274019,
+      "duration_seconds": 8,
+      "warmup_seconds": 2,
+      "sample_interval_ms": 250,
+      "cache": "warm-primed",
+      "rss_peak_bytes": 400904192,
+      "rss_steady_mean_bytes": 400809813.3333333,
+      "cpu_steady_mean_percent_one_core": 4.944419165452321,
+      "sample_count": 32,
+      "ttff_display_ms": null,
+      "package_power_watts": null,
+      "terminated_by_harness": true
+    },
+    {
+      "directory": "results/local/vlc-verified-path/1794532282191-53924-run-3",
+      "player": "vlc",
+      "status": "process-sampled-playback-unverified",
+      "started_unix_ms": 1794532282443,
+      "duration_seconds": 8,
+      "warmup_seconds": 2,
+      "sample_interval_ms": 250,
+      "cache": "warm-primed",
+      "rss_peak_bytes": 397778944,
+      "rss_steady_mean_bytes": 397652821.3333333,
+      "cpu_steady_mean_percent_one_core": 7.302483876546224,
+      "sample_count": 32,
+      "ttff_display_ms": null,
+      "package_power_watts": null,
+      "terminated_by_harness": true
+    }
+  ]
+}

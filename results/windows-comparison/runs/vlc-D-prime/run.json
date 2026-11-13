@@ -1,0 +1,175 @@
+{
+  "id": "vlc-D-prime",
+  "player": "vlc",
+  "fixture": "D",
+  "prime": true,
+  "command": [
+    "C:\\Program Files\\VideoLAN\\VLC\\vlc.exe",
+    "--ignore-config",
+    "--no-one-instance",
+    "--no-video-title-show",
+    "--play-and-exit",
+    "--no-qt-video-autoresize",
+    "--width=1280",
+    "--height=720",
+    "--sub-track=-1",
+    "--verbose=2",
+    "--",
+    "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac"
+  ],
+  "duration_seconds": 3,
+  "warmup_seconds": 0,
+  "sample_interval_ms": 250,
+  "cache": "priming",
+  "started_utc": "2026-11-13T01:44:24.778381+00:00",
+  "samples": [
+    {
+      "elapsed_ms": 25.860199937596917,
+      "rss_bytes": 13086720,
+      "cpu_percent_one_core": null,
+      "process_count": 1,
+      "gpu_dedicated_bytes": null,
+      "gpu_shared_bytes": null,
+      "gpu_engine_percent": null
+    },
+    {
+      "elapsed_ms": 297.4355999613181,
+      "rss_bytes": 67661824,
+      "cpu_percent_one_core": 143.05898841592858,
+      "process_count": 1,
+      "gpu_dedicated_bytes": null,
+      "gpu_shared_bytes": null,
+      "gpu_engine_percent": null
+    },
+    {
+      "elapsed_ms": 548.1183000374585,
+      "rss_bytes": 68538368,
+      "cpu_percent_one_core": 12.473302144091827,
+      "process_count": 1,
+      "gpu_dedicated_bytes": null,
+      "gpu_shared_bytes": null,
+      "gpu_engine_percent": null
+    },
+    {
+      "elapsed_ms": 797.8270000312477,
+      "rss_bytes": 69410816,
+      "cpu_percent_one_core": 6.23337931854327,
+      "process_count": 1,
+      "gpu_dedicated_bytes": null,
+      "gpu_shared_bytes": null,
+      "gpu_engine_percent": null
+    },
+    {
+      "elapsed_ms": 1073.96119995974,
+      "rss_bytes": 69459968,
+      "cpu_percent_one_core": 17.23805692086822,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 0.0,
+      "gpu_engine_percent": null
+    },
+    {
+      "elapsed_ms": 1328.131099930033,
+      "rss_bytes": 69472256,
+      "cpu_percent_one_core": 0.0,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 0.0,
+      "gpu_engine_percent": null
+    },
+    {
+      "elapsed_ms": 1577.311099972576,
+      "rss_bytes": 69521408,
+      "cpu_percent_one_core": 6.091750931606947,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 0.0,
+      "gpu_engine_percent": null
+    },
+    {
+      "elapsed_ms": 1838.8933000387624,
+      "rss_bytes": 69554176,
+      "cpu_percent_one_core": 0.0,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 0.0,
+      "gpu_engine_percent": null
+    },
+    {
+      "elapsed_ms": 2102.746499935165,
+      "rss_bytes": 69554176,
+      "cpu_percent_one_core": 0.0,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 0.0,
+      "gpu_engine_percent": {
+        "3D": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 2355.304899974726,
+      "rss_bytes": 69554176,
+      "cpu_percent_one_core": 0.0,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 0.0,
+      "gpu_engine_percent": {
+        "3D": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 2640.3223000233993,
+      "rss_bytes": 69574656,
+      "cpu_percent_one_core": 0.0,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 0.0,
+      "gpu_engine_percent": {
+        "3D": 0.0
+      }
+    },
+    {
+      "elapsed_ms": 2890.1289999485016,
+      "rss_bytes": 69574656,
+      "cpu_percent_one_core": 0.0,
+      "process_count": 1,
+      "gpu_dedicated_bytes": 0.0,
+      "gpu_shared_bytes": 0.0,
+      "gpu_engine_percent": {
+        "3D": 0.0
+      }
+    }
+  ],
+  "window_ready_ms": 152.40120002999902,
+  "ttff_display_ms": null,
+  "seek_display_ms": null,
+  "power_watts": null,
+  "frame_pacing_ms": null,
+  "status": "sampled",
+  "gpu_counter_errors": {},
+  "notes": [
+    "RSS tree sum can count shared pages more than once.",
+    "Window-ready measures an enumerated visible window, not video TTFF.",
+    "GPU memory counts allocation, not exclusively resident VRAM. No CPU-power attribution."
+  ],
+  "pid": 17960,
+  "windows": [
+    {
+      "pid": 17960,
+      "title": "Privacy and Network Access Policy",
+      "class": "Qt5QWindowIcon"
+    }
+  ],
+  "terminated_by_harness": true,
+  "events": [],
+  "playback_evidence": {
+    "verified": true,
+    "method": "VLC engine diagnostic log; not screen presentation",
+    "hardware": "Not established"
+  },
+  "rss_steady_bytes": 64580266.666666664,
+  "cpu_steady_percent": 16.826861611912623,
+  "gpu_dedicated_steady_bytes": 0.0,
+  "gpu_shared_steady_bytes": 0.0,
+  "rss_peak_bytes": 69574656
+}
