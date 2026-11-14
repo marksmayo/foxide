@@ -1,5 +1,7 @@
 # Foxide
 
+[![CodSpeed](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://app.codspeed.io/marksmayo/foxide?utm_source=badge)
+
 A Rust desktop media player project, starting with measurable playback and a transparent competitor scoreboard. The current application launches an external mpv window with hardware decoding requested through `hwdec=auto-safe`.
 
 ```powershell
