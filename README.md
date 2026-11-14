@@ -21,7 +21,7 @@ Development follows red → green tests. CI enforces **90% Rust workspace line c
 
 Feature support earns **shared gold** for every documented supporter. Unknown is unverified, not unsupported. Counts reflect the documentation reviewed and do not establish an overall best player. Performance medals require at least three verified, comparable repeats on the same platform, host, fixture, scenario, and settings.
 
-[Interactive HTML report](docs/scoreboards/report.html) · [Raw scores](docs/scoreboards/medals.json) · [Feature sources](benchmarks/features.json) · [45 performance protocols](benchmarks/performance-events.json)
+[Interactive HTML report](docs/scoreboards/report.html) · [Raw scores](docs/scoreboards/medals.json) · [Feature sources](docs/scoreboards/features.json) · [45 performance protocols](docs/scoreboards/performance-events.json)
 
 ### Windows
 

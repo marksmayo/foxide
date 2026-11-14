@@ -53,7 +53,8 @@ jobs:
         if: runner.os == 'macOS'
         shell: bash
         run: |
-          brew install mpv ffmpeg
+          brew install mpv ffmpeg-full
+          echo "$(brew --prefix ffmpeg-full)/bin" >> "$GITHUB_PATH"
           brew install --cask vlc iina
           mkdir -p results/local/games
           for player in kodi plex smplayer foobar2000; do

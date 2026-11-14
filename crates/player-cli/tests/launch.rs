@@ -1,16 +1,25 @@
 use std::process::Command;
-use std::{fs, path::PathBuf, sync::OnceLock};
+use std::{
+    fs,
+    path::PathBuf,
+    sync::{
+        OnceLock,
+        atomic::{AtomicUsize, Ordering},
+    },
+};
 
 fn scratch() -> PathBuf {
+    static NEXT: AtomicUsize = AtomicUsize::new(0);
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../target/test-tmp");
     fs::create_dir_all(&root).unwrap();
     let path = root.join(format!(
-        "launcher-{}-{}",
+        "launcher-{}-{}-{}",
         std::process::id(),
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
-            .as_nanos()
+            .as_nanos(),
+        NEXT.fetch_add(1, Ordering::Relaxed)
     ));
     fs::create_dir(&path).unwrap();
     path

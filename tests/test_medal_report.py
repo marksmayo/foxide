@@ -37,6 +37,13 @@ class MedalReportTests(unittest.TestCase):
             self.assertEqual(windows['vlc']['performance_silver'], 1)
             self.assertTrue(all(p['performance_gold'] == 0 for p in report['boards']['linux']['players']))
             self.assertIn('Insufficient comparable evidence', (output / 'report.html').read_text('utf-8'))
+            self.assertTrue((output / 'features.json').is_file())
+            with mock.patch.dict('os.environ', {'GITHUB_REPOSITORY': 'marksmayo/foxide', 'GITHUB_RUN_ID': '42', 'GITHUB_SHA': 'source-sha'}):
+                write_report(json.loads((root / 'benchmarks/features.json').read_text('utf-8')),
+                             json.loads((root / 'benchmarks/performance-events.json').read_text('utf-8')), rows, output)
+            metadata = json.loads((output / 'medals.json').read_text('utf-8'))['provenance']
+            self.assertEqual(metadata['run_url'], 'https://github.com/marksmayo/foxide/actions/runs/42')
+            self.assertIn('actions/runs/42', (output / 'report.html').read_text('utf-8'))
         finally:
             self.assertEqual(tmp.resolve().parent, scratch.resolve())
             shutil.rmtree(tmp)

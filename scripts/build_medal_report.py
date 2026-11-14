@@ -1,6 +1,7 @@
 """Publish the sourced feature games and measured performance games together."""
 from __future__ import annotations
 import argparse
+from datetime import datetime, timezone
 import html
 import json
 import os
@@ -47,7 +48,7 @@ def chart(platform, board):
 def markdown(boards, relative):
     text = '\n## Player medal scoreboards\n\n'
     text += 'Feature support earns **shared gold** for every documented supporter. Unknown is unverified, not unsupported. Counts reflect the documentation reviewed and do not establish an overall best player. Performance medals require at least three verified, comparable repeats on the same platform, host, fixture, scenario, and settings.\n\n'
-    text += f'[Interactive HTML report]({relative}/report.html) · [Raw scores]({relative}/medals.json) · [Feature sources](benchmarks/features.json) · [45 performance protocols](benchmarks/performance-events.json)\n\n'
+    text += f'[Interactive HTML report]({relative}/report.html) · [Raw scores]({relative}/medals.json) · [Feature sources]({relative}/features.json) · [45 performance protocols]({relative}/performance-events.json)\n\n'
     for platform, board in boards.items():
         text += f'### {LABELS[platform]}\n\n![{LABELS[platform]} feature golds]({relative}/{platform}.svg)\n\n'
         text += '| Player | Feature 🥇 | Performance 🥇 | 🥈 | 🥉 | Runtime outcome |\n|---|---:|---:|---:|---:|---|\n'
@@ -59,7 +60,7 @@ def markdown(boards, relative):
     return text
 
 
-def render(catalog, protocol, boards):
+def render(catalog, protocol, boards, provenance):
     sections = []
     for platform, board in boards.items():
         players = board['players']
@@ -97,17 +98,22 @@ def render(catalog, protocol, boards):
     style = '''*{box-sizing:border-box}html{color-scheme:dark}body{margin:0;background:#0a1120;color:#e9eef8;font:15px/1.6 system-ui,sans-serif}header,main,footer{max-width:1600px;margin:auto;padding:28px 4vw}header{padding-top:55px}a{color:#9dccff;text-decoration:none}a:hover{text-decoration:underline}.brand,.eyebrow{text-transform:uppercase;letter-spacing:2px;font-size:11px;font-weight:750;color:#ff995e}.brand{font-size:15px}h1{font-size:clamp(40px,6vw,78px);line-height:1.05;letter-spacing:-3px;margin:22px 0}h1 span{color:#ff995e}h2{font-size:23px;line-height:1.25;margin:8px 0 18px}p{max-width:1050px}.lede{font-size:18px;color:#aebdd5}.stats{display:flex;gap:40px;margin:30px 0}.stats b{font-size:32px;display:block;color:#f4f7fd}.stats span,.muted{color:#95a6c2;font-size:13px}.notice{border-left:3px solid #e9c669;background:#192238;padding:20px;border-radius:0 12px 12px 0}.tabs{display:flex;gap:8px;margin:25px 0;position:sticky;top:0;padding:14px 0;background:#0a1120ed;z-index:3}button{border:1px solid #30415e;background:#152039;color:#b9c8df;padding:11px 25px;border-radius:24px;cursor:pointer;font:inherit}button[aria-pressed=true]{background:#ff995e;border-color:#ff995e;color:#161c2c;font-weight:750}.duo{display:grid;grid-template-columns:1fr 1.2fr;gap:22px}.panel{background:#111b30;border:1px solid #23314c;border-radius:16px;padding:26px;margin-bottom:24px;min-width:0}.graph svg{width:100%;height:auto}.scroll{overflow:auto}table{border-collapse:collapse;width:100%;font-size:13px}td,th{padding:12px 14px;text-align:left;border-bottom:1px solid #24314a;white-space:nowrap}thead th{font-size:11px;color:#9fb0ca;text-transform:uppercase;letter-spacing:.5px}th[scope=row]{font-weight:550}small{display:block;color:#889bb8;font-size:10px;font-weight:400}.matrix td{text-align:center;min-width:110px}.matrix th:first-child{position:sticky;left:0;background:#111b30;z-index:1}.yes{color:#e9c669;font-size:19px}.yes a{font-size:10px;color:#c4d5ec}.unknown{color:#7f92b1}.section-title{display:flex;justify-content:space-between;align-items:center;gap:20px}.filter{display:block;margin-top:6px;border:1px solid #354565;border-radius:8px;padding:9px 13px;background:#0b1426;color:#fff}label{font-size:11px;color:#a3b5cf}footer{color:#93a7c5;font-size:12px;padding-bottom:45px}[hidden]{display:none!important}@media(max-width:950px){.duo{grid-template-columns:1fr}.section-title{display:block}.panel{padding:18px}.stats{gap:23px}header,main,footer{padding-left:18px;padding-right:18px}}'''
     script = '''document.querySelectorAll('[data-platform]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-platform]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));document.querySelectorAll('.platform').forEach(s=>s.hidden=s.id!==b.dataset.platform);location.hash=b.dataset.platform}));document.querySelectorAll('.filter').forEach(i=>i.addEventListener('input',()=>i.closest('article').querySelectorAll('tbody tr').forEach(r=>r.hidden=!r.dataset.search.includes(i.value.toLowerCase()))));const selected=document.querySelector('[data-platform="'+location.hash.slice(1).replace(/[^a-z]/g,'')+'"]');if(selected)selected.click();'''
     buttons = ''.join(f'<button data-platform="{p}" aria-pressed="{str(p == "windows").lower()}">{label}</button>' for p, label in LABELS.items())
-    return f'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Foxide · The Player Games</title><style>{style}</style></head><body><header><div class="brand">🦊 Foxide / Research &amp; Engineering</div><h1>The Player <span>Games.</span></h1><p class="lede">A transparent scoreboard for desktop media players. Documented capabilities earn shared golds. Real measurements decide performance podiums.</p><div class="stats"><div><b>{len(catalog["players"])}</b><span>players in the field</span></div><div><b>{len(catalog["features"])}</b><span>feature medal events</span></div><div><b>{len(protocol["events"])}</b><span>performance events</span></div><div><b>3</b><span>platform boards</span></div></div><aside class="notice"><strong>Evidence before medals.</strong> Gold features are documentation findings; unknown never means absent. Performance requires ≥3 verified repeats and ≥2 comparable entrants in one cohort. Hosted VM software/null-output results are separate from physical GPU, battery, and displayed-frame measurements. Foxide currently uses an external mpv engine.</aside></header><main><nav class="tabs" aria-label="Platform">{buttons}</nav>{"".join(sections)}</main><footer>Generated from <a href="medals.json">versioned score data</a>. No synthetic benchmark results. Feature research: {esc(catalog["research_date"])}. Performance ties use competition ranks (1, 1, 3); feature possession always shares gold.</footer><script>{script}</script></body></html>'
+    return f'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Foxide · The Player Games</title><style>{style}</style></head><body><header><div class="brand">🦊 Foxide / Research &amp; Engineering</div><h1>The Player <span>Games.</span></h1><p class="lede">A transparent scoreboard for desktop media players. Documented capabilities earn shared golds. Real measurements decide performance podiums.</p><div class="stats"><div><b>{len(catalog["players"])}</b><span>players in the field</span></div><div><b>{len(catalog["features"])}</b><span>feature medal events</span></div><div><b>{len(protocol["events"])}</b><span>performance events</span></div><div><b>3</b><span>platform boards</span></div></div><aside class="notice"><strong>Evidence before medals.</strong> Gold features are documentation findings; unknown never means absent. Performance requires ≥3 verified repeats and ≥2 comparable entrants in one cohort. Hosted VM software/null-output results are separate from physical GPU, battery, and displayed-frame measurements. Foxide currently uses an external mpv engine.</aside></header><main><nav class="tabs" aria-label="Platform">{buttons}</nav>{"".join(sections)}</main><footer>{source_link(provenance["run_url"], "Actions run") if provenance["run_url"] else "Local validation"} · Source commit: {esc(provenance["source_commit"] or "working tree")} · {esc(provenance["generated_utc"])}<br>Generated from <a href="medals.json">versioned score data</a>. No synthetic benchmark results. Feature research: {esc(catalog["research_date"])}. Performance ties use competition ranks (1, 1, 3); feature possession always shares gold.</footer><script>{script}</script></body></html>'
 
 
 def write_report(catalog, protocol, measurements, output, readme=None, sessions=()):
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
     boards = scoreboards(catalog, protocol, measurements, sessions)
-    (output / 'medals.json').write_text(json.dumps({'boards': boards, 'measurements': measurements}, indent=2, allow_nan=False) + '\n', encoding='utf-8')
+    repository, run_id = os.environ.get('GITHUB_REPOSITORY'), os.environ.get('GITHUB_RUN_ID', '')
+    provenance = dict(generated_utc=datetime.now(timezone.utc).isoformat(), source_commit=os.environ.get('GITHUB_SHA'),
+                      run_url=f'https://github.com/{repository}/actions/runs/{run_id}' if repository and run_id.isdigit() else None)
+    (output / 'medals.json').write_text(json.dumps({'provenance': provenance, 'boards': boards, 'measurements': measurements}, indent=2, allow_nan=False) + '\n', encoding='utf-8')
+    (output / 'features.json').write_text(json.dumps(catalog, indent=2) + '\n', encoding='utf-8')
+    (output / 'performance-events.json').write_text(json.dumps(protocol, indent=2) + '\n', encoding='utf-8')
     for platform, board in boards.items():
         (output / (platform + '.svg')).write_text(chart(platform, board), encoding='utf-8')
-    (output / 'report.html').write_text(render(catalog, protocol, boards), encoding='utf-8')
+    (output / 'report.html').write_text(render(catalog, protocol, boards, provenance), encoding='utf-8')
     (output / 'scoreboards.md').write_text(markdown(boards, '.'), encoding='utf-8')
     if readme:
         readme = Path(readme)

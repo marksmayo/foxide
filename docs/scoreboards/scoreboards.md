@@ -3,7 +3,7 @@
 
 Feature support earns **shared gold** for every documented supporter. Unknown is unverified, not unsupported. Counts reflect the documentation reviewed and do not establish an overall best player. Performance medals require at least three verified, comparable repeats on the same platform, host, fixture, scenario, and settings.
 
-[Interactive HTML report](./report.html) · [Raw scores](./medals.json) · [Feature sources](benchmarks/features.json) · [45 performance protocols](benchmarks/performance-events.json)
+[Interactive HTML report](./report.html) · [Raw scores](./medals.json) · [Feature sources](./features.json) · [45 performance protocols](./performance-events.json)
 
 ### Windows
 

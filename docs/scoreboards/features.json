@@ -1,0 +1,2464 @@
+{
+  "schema_version": 1,
+  "research_date": "2026-11-13",
+  "research_scope": "Official documentation and upstream sources. Supported earns shared gold. Unknown/partial/planned earns no medal and is not evidence of absence. Claims describe documented capabilities, not runtime acceptance or platform performance.",
+  "features": [
+    {
+      "id": "common_video",
+      "name": "MP4 and MKV playback",
+      "group": "Playback",
+      "tier": 1,
+      "media_types": [
+        "video"
+      ]
+    },
+    {
+      "id": "flac",
+      "name": "FLAC audio",
+      "group": "Playback",
+      "tier": 1,
+      "media_types": [
+        "audio",
+        "video"
+      ]
+    },
+    {
+      "id": "hardware_decode",
+      "name": "Hardware decoding",
+      "group": "Playback",
+      "tier": 1,
+      "media_types": [
+        "video"
+      ]
+    },
+    {
+      "id": "audio_tracks",
+      "name": "Audio track selection",
+      "group": "Playback",
+      "tier": 1,
+      "media_types": [
+        "video"
+      ]
+    },
+    {
+      "id": "subtitle_tracks",
+      "name": "Subtitle track selection",
+      "group": "Subtitles",
+      "tier": 1,
+      "media_types": [
+        "video"
+      ]
+    },
+    {
+      "id": "external_subtitles",
+      "name": "External subtitle files",
+      "group": "Subtitles",
+      "tier": 1,
+      "media_types": [
+        "video"
+      ]
+    },
+    {
+      "id": "ass_subtitles",
+      "name": "ASS/SSA subtitle rendering",
+      "group": "Subtitles",
+      "tier": 1,
+      "media_types": [
+        "video"
+      ]
+    },
+    {
+      "id": "speed",
+      "name": "Variable playback speed",
+      "group": "Playback",
+      "tier": 1,
+      "media_types": [
+        "audio",
+        "video"
+      ]
+    },
+    {
+      "id": "playlist",
+      "name": "Playlists",
+      "group": "Library",
+      "tier": 1,
+      "media_types": [
+        "audio",
+        "video"
+      ]
+    },
+    {
+      "id": "shortcuts",
+      "name": "Keyboard controls",
+      "group": "Interface",
+      "tier": 1,
+      "media_types": [
+        "audio",
+        "video"
+      ]
+    },
+    {
+      "id": "exact_seek",
+      "name": "Frame-accurate seeking",
+      "group": "Playback",
+      "tier": 1,
+      "media_types": [
+        "video"
+      ]
+    },
+    {
+      "id": "thumbnails",
+      "name": "Seekbar thumbnail previews",
+      "group": "Interface",
+      "tier": 1,
+      "media_types": [
+        "video"
+      ]
+    },
+    {
+      "id": "hdr",
+      "name": "HDR video playback",
+      "group": "Picture",
+      "tier": 2,
+      "media_types": [
+        "video"
+      ]
+    },
+    {
+      "id": "tone_map",
+      "name": "HDR to SDR tone mapping",
+      "group": "Picture",
+      "tier": 2,
+      "media_types": [
+        "video"
+      ]
+    },
+    {
+      "id": "audio_delay",
+      "name": "Audio synchronization offset",
+      "group": "Playback",
+      "tier": 2,
+      "media_types": [
+        "video"
+      ]
+    },
+    {
+      "id": "subtitle_delay",
+      "name": "Subtitle synchronization offset",
+      "group": "Subtitles",
+      "tier": 2,
+      "media_types": [
+        "video"
+      ]
+    },
+    {
+      "id": "video_filters",
+      "name": "Video filters and adjustments",
+      "group": "Picture",
+      "tier": 2,
+      "media_types": [
+        "video"
+      ]
+    },
+    {
+      "id": "chapters",
+      "name": "Chapter navigation",
+      "group": "Playback",
+      "tier": 2,
+      "media_types": [
+        "audio",
+        "video"
+      ]
+    },
+    {
+      "id": "pip",
+      "name": "Native picture in picture",
+      "group": "Interface",
+      "tier": 2,
+      "media_types": [
+        "video"
+      ]
+    },
+    {
+      "id": "network",
+      "name": "Network stream playback",
+      "group": "Streaming",
+      "tier": 2,
+      "media_types": [
+        "audio",
+        "video"
+      ]
+    },
+    {
+      "id": "resume",
+      "name": "Persistent playback resume",
+      "group": "Library",
+      "tier": 3,
+      "media_types": [
+        "audio",
+        "video"
+      ]
+    },
+    {
+      "id": "folder_queue",
+      "name": "Automatic folder playback",
+      "group": "Library",
+      "tier": 3,
+      "media_types": [
+        "audio",
+        "video"
+      ]
+    },
+    {
+      "id": "minimal",
+      "name": "Borderless viewing mode",
+      "group": "Interface",
+      "tier": 3,
+      "media_types": [
+        "audio",
+        "video"
+      ]
+    },
+    {
+      "id": "screenshot",
+      "name": "Video screenshots",
+      "group": "Picture",
+      "tier": 2,
+      "media_types": [
+        "video"
+      ]
+    },
+    {
+      "id": "ab_repeat",
+      "name": "A\u2013B repeat",
+      "group": "Playback",
+      "tier": 2,
+      "media_types": [
+        "audio",
+        "video"
+      ]
+    },
+    {
+      "id": "equalizer",
+      "name": "Audio equalizer / DSP",
+      "group": "Audio",
+      "tier": 2,
+      "media_types": [
+        "audio",
+        "video"
+      ]
+    },
+    {
+      "id": "replaygain",
+      "name": "ReplayGain",
+      "group": "Audio",
+      "tier": 2,
+      "media_types": [
+        "audio",
+        "video"
+      ]
+    },
+    {
+      "id": "gapless",
+      "name": "Gapless audio playback",
+      "group": "Audio",
+      "tier": 2,
+      "media_types": [
+        "audio",
+        "video"
+      ]
+    },
+    {
+      "id": "disc",
+      "name": "DVD / Blu-ray structure playback",
+      "group": "Playback",
+      "tier": 2,
+      "media_types": [
+        "video"
+      ]
+    },
+    {
+      "id": "casting",
+      "name": "AirPlay / Cast output",
+      "group": "Streaming",
+      "tier": 3,
+      "media_types": [
+        "audio",
+        "video"
+      ]
+    }
+  ],
+  "players": [
+    {
+      "id": "foxide",
+      "name": "Foxide",
+      "platforms": [
+        "windows",
+        "macos",
+        "linux"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "note": "Current Foxide launches external mpv; it is not an independent playback engine."
+    },
+    {
+      "id": "vlc",
+      "name": "VLC",
+      "platforms": [
+        "windows",
+        "macos",
+        "linux"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "note": ""
+    },
+    {
+      "id": "mpv",
+      "name": "mpv",
+      "platforms": [
+        "windows",
+        "macos",
+        "linux"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "note": ""
+    },
+    {
+      "id": "wmp-modern",
+      "name": "Windows Media Player",
+      "platforms": [
+        "windows"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "note": "Packaged-app activation requires a dedicated adapter; Get-AppxPackage and Start Apps inventory are checked."
+    },
+    {
+      "id": "wmp-legacy",
+      "name": "Windows Media Player Legacy",
+      "platforms": [
+        "windows"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "note": ""
+    },
+    {
+      "id": "mpc-hc",
+      "name": "MPC-HC",
+      "platforms": [
+        "windows"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "note": ""
+    },
+    {
+      "id": "mpc-be",
+      "name": "MPC-BE",
+      "platforms": [
+        "windows"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "note": ""
+    },
+    {
+      "id": "potplayer",
+      "name": "PotPlayer",
+      "platforms": [
+        "windows"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "note": ""
+    },
+    {
+      "id": "smplayer",
+      "name": "SMPlayer",
+      "platforms": [
+        "windows",
+        "macos",
+        "linux"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "note": ""
+    },
+    {
+      "id": "kmplayer",
+      "name": "KMPlayer",
+      "platforms": [
+        "windows"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "note": ""
+    },
+    {
+      "id": "gom",
+      "name": "GOM Player",
+      "platforms": [
+        "windows"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "note": ""
+    },
+    {
+      "id": "ffplay",
+      "name": "FFplay",
+      "platforms": [
+        "windows",
+        "macos",
+        "linux"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "note": "Reference player, outside the selected ten. Its default decoder/render configuration can differ from GPU-decoding desktop players."
+    },
+    {
+      "id": "kodi",
+      "name": "Kodi",
+      "platforms": [
+        "windows",
+        "macos",
+        "linux"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "note": ""
+    },
+    {
+      "id": "plex",
+      "name": "Plex",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "note": "Desktop player only; local-file/server/account setup requires an adapter. Plex Media Server is not substituted."
+    },
+    {
+      "id": "foobar2000",
+      "name": "foobar2000",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "media_types": [
+        "audio"
+      ],
+      "note": "Audio-only entrant. Video categories are not applicable."
+    },
+    {
+      "id": "infuse",
+      "name": "Infuse",
+      "platforms": [
+        "macos"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "note": "App Store distribution; provision on an authorized self-hosted Mac. No Windows WinGet package is substituted."
+    },
+    {
+      "id": "iina",
+      "name": "IINA",
+      "platforms": [
+        "macos"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "note": "Installed by Homebrew cask in the hosted macOS workflow. GUI launch alone is not playback verification."
+    },
+    {
+      "id": "quicktime",
+      "name": "QuickTime Player",
+      "platforms": [
+        "macos"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "note": "OS-provided native reference; requires a validated file-activation and playback collector."
+    }
+  ],
+  "claims": [
+    {
+      "player": "mpv",
+      "feature": "common_video",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpv",
+      "feature": "flac",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpv",
+      "feature": "hardware_decode",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpv",
+      "feature": "audio_tracks",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpv",
+      "feature": "subtitle_tracks",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpv",
+      "feature": "external_subtitles",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpv",
+      "feature": "ass_subtitles",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpv",
+      "feature": "speed",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpv",
+      "feature": "playlist",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpv",
+      "feature": "shortcuts",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpv",
+      "feature": "exact_seek",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpv",
+      "feature": "hdr",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpv",
+      "feature": "tone_map",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpv",
+      "feature": "audio_delay",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpv",
+      "feature": "subtitle_delay",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpv",
+      "feature": "video_filters",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpv",
+      "feature": "chapters",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpv",
+      "feature": "network",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpv",
+      "feature": "resume",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpv",
+      "feature": "minimal",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpv",
+      "feature": "screenshot",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpv",
+      "feature": "ab_repeat",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpv",
+      "feature": "equalizer",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpv",
+      "feature": "replaygain",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpv",
+      "feature": "gapless",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpv",
+      "feature": "disc",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "vlc",
+      "feature": "speed",
+      "status": "supported",
+      "sources": [
+        "https://docs.videolan.me/vlc-user/desktop/3.0/en/basic/playback.html"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "vlc",
+      "feature": "playlist",
+      "status": "supported",
+      "sources": [
+        "https://docs.videolan.me/vlc-user/desktop/3.0/en/basic/playback.html"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "vlc",
+      "feature": "chapters",
+      "status": "supported",
+      "sources": [
+        "https://docs.videolan.me/vlc-user/desktop/3.0/en/basic/playback.html"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "vlc",
+      "feature": "ab_repeat",
+      "status": "supported",
+      "sources": [
+        "https://docs.videolan.me/vlc-user/desktop/3.0/en/basic/playback.html"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "vlc",
+      "feature": "subtitle_tracks",
+      "status": "supported",
+      "sources": [
+        "https://docs.videolan.me/vlc-user/en/support/faq/faqwindows.html"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "vlc",
+      "feature": "external_subtitles",
+      "status": "supported",
+      "sources": [
+        "https://docs.videolan.me/vlc-user/en/support/faq/faqwindows.html"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "vlc",
+      "feature": "subtitle_delay",
+      "status": "supported",
+      "sources": [
+        "https://docs.videolan.me/vlc-user/en/support/faq/faqwindows.html"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "iina",
+      "feature": "pip",
+      "status": "supported",
+      "sources": [
+        "https://iina.io/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "iina",
+      "feature": "thumbnails",
+      "status": "supported",
+      "sources": [
+        "https://www.iina.io/release-note/0.0.12.html"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpc-hc",
+      "feature": "hdr",
+      "status": "supported",
+      "sources": [
+        "https://github.com/clsid2/mpc-hc#overview-of-features"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpc-hc",
+      "feature": "ass_subtitles",
+      "status": "supported",
+      "sources": [
+        "https://github.com/clsid2/mpc-hc#overview-of-features"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpc-hc",
+      "feature": "speed",
+      "status": "supported",
+      "sources": [
+        "https://github.com/clsid2/mpc-hc#overview-of-features"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpc-hc",
+      "feature": "resume",
+      "status": "supported",
+      "sources": [
+        "https://github.com/clsid2/mpc-hc#overview-of-features"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpc-hc",
+      "feature": "folder_queue",
+      "status": "supported",
+      "sources": [
+        "https://github.com/clsid2/mpc-hc#overview-of-features"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpc-hc",
+      "feature": "ab_repeat",
+      "status": "supported",
+      "sources": [
+        "https://github.com/clsid2/mpc-hc#overview-of-features"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpc-hc",
+      "feature": "video_filters",
+      "status": "supported",
+      "sources": [
+        "https://github.com/clsid2/mpc-hc#overview-of-features"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpc-hc",
+      "feature": "shortcuts",
+      "status": "supported",
+      "sources": [
+        "https://github.com/clsid2/mpc-hc#overview-of-features"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpc-hc",
+      "feature": "thumbnails",
+      "status": "supported",
+      "sources": [
+        "https://github.com/clsid2/mpc-hc#overview-of-features"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpc-hc",
+      "feature": "network",
+      "status": "supported",
+      "sources": [
+        "https://github.com/clsid2/mpc-hc#overview-of-features"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpc-be",
+      "feature": "audio_tracks",
+      "status": "supported",
+      "sources": [
+        "https://github.com/Aleksoid1978/MPC-BE/blob/master/docs/Changelog.txt"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpc-be",
+      "feature": "subtitle_tracks",
+      "status": "supported",
+      "sources": [
+        "https://github.com/Aleksoid1978/MPC-BE/blob/master/docs/Changelog.txt"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpc-be",
+      "feature": "external_subtitles",
+      "status": "supported",
+      "sources": [
+        "https://github.com/Aleksoid1978/MPC-BE/blob/master/docs/Changelog.txt"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpc-be",
+      "feature": "playlist",
+      "status": "supported",
+      "sources": [
+        "https://github.com/Aleksoid1978/MPC-BE/blob/master/docs/Changelog.txt"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "mpc-be",
+      "feature": "thumbnails",
+      "status": "supported",
+      "sources": [
+        "https://github.com/Aleksoid1978/MPC-BE/blob/master/docs/Changelog.txt"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "potplayer",
+      "feature": "hardware_decode",
+      "status": "supported",
+      "sources": [
+        "https://t1.daumcdn.net/potplayer/PotPlayer/v4/Update2/UpdateEng.html"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "potplayer",
+      "feature": "subtitle_tracks",
+      "status": "supported",
+      "sources": [
+        "https://t1.daumcdn.net/potplayer/PotPlayer/v4/Update2/UpdateEng.html"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "potplayer",
+      "feature": "playlist",
+      "status": "supported",
+      "sources": [
+        "https://t1.daumcdn.net/potplayer/PotPlayer/v4/Update2/UpdateEng.html"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "smplayer",
+      "feature": "common_video",
+      "status": "supported",
+      "sources": [
+        "https://www.smplayer.info/en/info"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "smplayer",
+      "feature": "speed",
+      "status": "supported",
+      "sources": [
+        "https://www.smplayer.info/en/info"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "smplayer",
+      "feature": "audio_delay",
+      "status": "supported",
+      "sources": [
+        "https://www.smplayer.info/en/info"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "smplayer",
+      "feature": "subtitle_delay",
+      "status": "supported",
+      "sources": [
+        "https://www.smplayer.info/en/info"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "smplayer",
+      "feature": "video_filters",
+      "status": "supported",
+      "sources": [
+        "https://www.smplayer.info/en/info"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "smplayer",
+      "feature": "resume",
+      "status": "supported",
+      "sources": [
+        "https://www.smplayer.info/en/info"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "smplayer",
+      "feature": "audio_tracks",
+      "status": "supported",
+      "sources": [
+        "https://www.smplayer.info/en/first-steps"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "smplayer",
+      "feature": "subtitle_tracks",
+      "status": "supported",
+      "sources": [
+        "https://www.smplayer.info/en/first-steps"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "smplayer",
+      "feature": "external_subtitles",
+      "status": "supported",
+      "sources": [
+        "https://www.smplayer.info/en/first-steps"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "kmplayer",
+      "feature": "common_video",
+      "status": "supported",
+      "sources": [
+        "https://www.kmplayer.com/pc"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "kmplayer",
+      "feature": "flac",
+      "status": "supported",
+      "sources": [
+        "https://www.kmplayer.com/pc"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "kmplayer",
+      "feature": "hardware_decode",
+      "status": "supported",
+      "sources": [
+        "https://www.kmplayer.com/pc"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "kmplayer",
+      "feature": "external_subtitles",
+      "status": "supported",
+      "sources": [
+        "https://www.kmplayer.com/pc"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "kmplayer",
+      "feature": "ass_subtitles",
+      "status": "supported",
+      "sources": [
+        "https://www.kmplayer.com/pc"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "kmplayer",
+      "feature": "playlist",
+      "status": "supported",
+      "sources": [
+        "https://www.kmplayer.com/pc"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "kmplayer",
+      "feature": "network",
+      "status": "supported",
+      "sources": [
+        "https://www.kmplayer.com/pc"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "kmplayer",
+      "feature": "screenshot",
+      "status": "supported",
+      "sources": [
+        "https://www.kmplayer.com/pc"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "kmplayer",
+      "feature": "video_filters",
+      "status": "supported",
+      "sources": [
+        "https://www.kmplayer.com/pc"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "gom",
+      "feature": "audio_tracks",
+      "status": "supported",
+      "sources": [
+        "https://www.gomlab.com/en/faq-info?id=51&page=1&product=GOMPLAYER+&subCategory=Function+Inquiry"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "gom",
+      "feature": "external_subtitles",
+      "status": "supported",
+      "sources": [
+        "https://www.gomlab.com/en/faq-info?id=51&page=1&product=GOMPLAYER+&subCategory=Function+Inquiry"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "gom",
+      "feature": "shortcuts",
+      "status": "supported",
+      "sources": [
+        "https://www.gomlab.com/en/faq-info?id=51&page=1&product=GOMPLAYER+&subCategory=Function+Inquiry"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "kodi",
+      "feature": "audio_tracks",
+      "status": "supported",
+      "sources": [
+        "https://kodi.wiki/view/Video_playback"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "kodi",
+      "feature": "subtitle_tracks",
+      "status": "supported",
+      "sources": [
+        "https://kodi.wiki/view/Video_playback"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "kodi",
+      "feature": "external_subtitles",
+      "status": "supported",
+      "sources": [
+        "https://kodi.wiki/view/Video_playback"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "kodi",
+      "feature": "audio_delay",
+      "status": "supported",
+      "sources": [
+        "https://kodi.wiki/view/Video_playback"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "kodi",
+      "feature": "subtitle_delay",
+      "status": "supported",
+      "sources": [
+        "https://kodi.wiki/view/Video_playback"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "kodi",
+      "feature": "chapters",
+      "status": "supported",
+      "sources": [
+        "https://kodi.wiki/view/Video_playback"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "kodi",
+      "feature": "hardware_decode",
+      "status": "supported",
+      "sources": [
+        "https://kodi.wiki/view/Settings/Player/Videos"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "plex",
+      "feature": "shortcuts",
+      "status": "supported",
+      "sources": [
+        "https://support.plex.tv/articles/configuration-and-usage-options/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "plex",
+      "feature": "audio_tracks",
+      "status": "supported",
+      "sources": [
+        "https://support.plex.tv/articles/configuration-and-usage-options/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "plex",
+      "feature": "subtitle_tracks",
+      "status": "supported",
+      "sources": [
+        "https://support.plex.tv/articles/configuration-and-usage-options/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "plex",
+      "feature": "speed",
+      "status": "supported",
+      "sources": [
+        "https://support.plex.tv/articles/video-playback-speed-controls/"
+      ],
+      "note": "Documented on Windows desktop >=1.91 and supported desktop platforms; account/subscription and content restrictions apply."
+    },
+    {
+      "player": "foobar2000",
+      "feature": "flac",
+      "status": "supported",
+      "sources": [
+        "https://www.foobar2000.org/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "foobar2000",
+      "feature": "gapless",
+      "status": "supported",
+      "sources": [
+        "https://www.foobar2000.org/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "foobar2000",
+      "feature": "replaygain",
+      "status": "supported",
+      "sources": [
+        "https://www.foobar2000.org/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "foobar2000",
+      "feature": "equalizer",
+      "status": "supported",
+      "sources": [
+        "https://www.foobar2000.org/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "foobar2000",
+      "feature": "shortcuts",
+      "status": "supported",
+      "sources": [
+        "https://www.foobar2000.org/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "foobar2000",
+      "feature": "network",
+      "status": "supported",
+      "sources": [
+        "https://www.foobar2000.org/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "infuse",
+      "feature": "common_video",
+      "status": "supported",
+      "sources": [
+        "https://firecore.com/infuse"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "infuse",
+      "feature": "hardware_decode",
+      "status": "supported",
+      "sources": [
+        "https://firecore.com/infuse"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "infuse",
+      "feature": "hdr",
+      "status": "supported",
+      "sources": [
+        "https://firecore.com/infuse"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "infuse",
+      "feature": "casting",
+      "status": "supported",
+      "sources": [
+        "https://firecore.com/infuse"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "infuse",
+      "feature": "speed",
+      "status": "supported",
+      "sources": [
+        "https://support.firecore.com/hc/en-us/articles/360015608854-Settings-Overview"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "infuse",
+      "feature": "subtitle_tracks",
+      "status": "supported",
+      "sources": [
+        "https://support.firecore.com/hc/en-us/articles/360015608854-Settings-Overview"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "infuse",
+      "feature": "ass_subtitles",
+      "status": "supported",
+      "sources": [
+        "https://apps.firecore.com/infuse-pro"
+      ],
+      "note": "Some formats, audio, sync, and streaming options require Infuse Pro."
+    },
+    {
+      "player": "infuse",
+      "feature": "audio_tracks",
+      "status": "supported",
+      "sources": [
+        "https://apps.firecore.com/infuse-pro"
+      ],
+      "note": "Some formats, audio, sync, and streaming options require Infuse Pro."
+    },
+    {
+      "player": "infuse",
+      "feature": "external_subtitles",
+      "status": "supported",
+      "sources": [
+        "https://apps.firecore.com/infuse-pro"
+      ],
+      "note": "Some formats, audio, sync, and streaming options require Infuse Pro."
+    },
+    {
+      "player": "infuse",
+      "feature": "chapters",
+      "status": "supported",
+      "sources": [
+        "https://apps.firecore.com/infuse-pro"
+      ],
+      "note": "Some formats, audio, sync, and streaming options require Infuse Pro."
+    },
+    {
+      "player": "infuse",
+      "feature": "pip",
+      "status": "supported",
+      "sources": [
+        "https://apps.firecore.com/infuse-pro"
+      ],
+      "note": "Some formats, audio, sync, and streaming options require Infuse Pro."
+    },
+    {
+      "player": "infuse",
+      "feature": "folder_queue",
+      "status": "supported",
+      "sources": [
+        "https://apps.firecore.com/infuse-pro"
+      ],
+      "note": "Some formats, audio, sync, and streaming options require Infuse Pro."
+    },
+    {
+      "player": "quicktime",
+      "feature": "speed",
+      "status": "supported",
+      "sources": [
+        "https://support.apple.com/en-ca/guide/quicktime-player/qtp6cee0761b/mac"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "quicktime",
+      "feature": "pip",
+      "status": "supported",
+      "sources": [
+        "https://support.apple.com/en-ca/guide/quicktime-player/qtp6cee0761b/mac"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "quicktime",
+      "feature": "casting",
+      "status": "supported",
+      "sources": [
+        "https://support.apple.com/en-ca/guide/quicktime-player/qtp6cee0761b/mac"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "quicktime",
+      "feature": "subtitle_tracks",
+      "status": "supported",
+      "sources": [
+        "https://support.apple.com/en-asia/guide/quicktime-player/qtped9fbc349/mac"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "wmp-legacy",
+      "feature": "speed",
+      "status": "supported",
+      "sources": [
+        "https://learn.microsoft.com/en-us/windows/win32/wmp/settings-rate"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "wmp-modern",
+      "feature": "playlist",
+      "status": "supported",
+      "sources": [
+        "https://blogs.windows.com/windows-insider/2021/11/16/new-media-player-for-windows-11-begins-rolling-out-to-windows-insiders/"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "ffplay",
+      "feature": "audio_tracks",
+      "status": "supported",
+      "sources": [
+        "https://ffmpeg.org/ffplay.html"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "ffplay",
+      "feature": "subtitle_tracks",
+      "status": "supported",
+      "sources": [
+        "https://ffmpeg.org/ffplay.html"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "ffplay",
+      "feature": "video_filters",
+      "status": "supported",
+      "sources": [
+        "https://ffmpeg.org/ffplay.html"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "ffplay",
+      "feature": "shortcuts",
+      "status": "supported",
+      "sources": [
+        "https://ffmpeg.org/ffplay.html"
+      ],
+      "note": "Documented capability; installed build acceptance test pending."
+    },
+    {
+      "player": "potplayer",
+      "feature": "replaygain",
+      "status": "supported",
+      "sources": [
+        "https://t1.daumcdn.net/potplayer/PotPlayer/v4/Update2/UpdateEng.html"
+      ],
+      "note": "Official documentation; runtime acceptance test pending."
+    },
+    {
+      "player": "potplayer",
+      "feature": "network",
+      "status": "supported",
+      "sources": [
+        "https://t1.daumcdn.net/potplayer/PotPlayer/v4/Update2/UpdateEng.html"
+      ],
+      "note": "Official documentation; runtime acceptance test pending."
+    },
+    {
+      "player": "potplayer",
+      "feature": "ass_subtitles",
+      "status": "supported",
+      "sources": [
+        "https://t1.daumcdn.net/potplayer/PotPlayer/v4/Update2/UpdateEng.html"
+      ],
+      "note": "Official documentation; runtime acceptance test pending."
+    },
+    {
+      "player": "potplayer",
+      "feature": "video_filters",
+      "status": "supported",
+      "sources": [
+        "https://t1.daumcdn.net/potplayer/PotPlayer/v4/Update2/UpdateEng.html"
+      ],
+      "note": "Official documentation; runtime acceptance test pending."
+    },
+    {
+      "player": "gom",
+      "feature": "playlist",
+      "status": "supported",
+      "sources": [
+        "https://www.gomlab.com/en/faq-info?id=51&page=1&product=GOMPLAYER+&subCategory=Function+Inquiry"
+      ],
+      "note": "Official documentation; runtime acceptance test pending."
+    },
+    {
+      "player": "gom",
+      "feature": "disc",
+      "status": "supported",
+      "sources": [
+        "https://www.gomlab.com/en/faq-info?id=51&page=1&product=GOMPLAYER+&subCategory=Function+Inquiry"
+      ],
+      "note": "Official documentation; runtime acceptance test pending."
+    },
+    {
+      "player": "gom",
+      "feature": "speed",
+      "status": "supported",
+      "sources": [
+        "https://www.gomlab.com/en/faq-info?id=51&page=1&product=GOMPLAYER+&subCategory=Function+Inquiry"
+      ],
+      "note": "Official documentation; runtime acceptance test pending."
+    },
+    {
+      "player": "gom",
+      "feature": "subtitle_delay",
+      "status": "supported",
+      "sources": [
+        "https://www.gomlab.com/en/faq-info?id=51&page=1&product=GOMPLAYER+&subCategory=Function+Inquiry"
+      ],
+      "note": "Official documentation; runtime acceptance test pending."
+    },
+    {
+      "player": "gom",
+      "feature": "screenshot",
+      "status": "supported",
+      "sources": [
+        "https://www.gomlab.com/en/faq-info?id=51&page=1&product=GOMPLAYER+&subCategory=Function+Inquiry"
+      ],
+      "note": "Official documentation; runtime acceptance test pending."
+    },
+    {
+      "player": "gom",
+      "feature": "ab_repeat",
+      "status": "supported",
+      "sources": [
+        "https://www.gomlab.com/en/faq-info?id=51&page=1&product=GOMPLAYER+&subCategory=Function+Inquiry"
+      ],
+      "note": "Official documentation; runtime acceptance test pending."
+    },
+    {
+      "player": "gom",
+      "feature": "video_filters",
+      "status": "supported",
+      "sources": [
+        "https://www.gomlab.com/en/faq-info?id=51&page=1&product=GOMPLAYER+&subCategory=Function+Inquiry"
+      ],
+      "note": "Official documentation; runtime acceptance test pending."
+    },
+    {
+      "player": "wmp-modern",
+      "feature": "shortcuts",
+      "status": "supported",
+      "sources": [
+        "https://blogs.windows.com/windows-insider/2021/11/16/new-media-player-for-windows-11-begins-rolling-out-to-windows-insiders/"
+      ],
+      "note": "Official documentation; runtime acceptance test pending."
+    },
+    {
+      "player": "foxide",
+      "feature": "common_video",
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/main/docs/features.md"
+      ],
+      "note": "Exposed through external mpv. Command-policy/integration tests cover the interface; native Rust UI and physical rendering certification remain separate."
+    },
+    {
+      "player": "foxide",
+      "feature": "flac",
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/main/docs/features.md"
+      ],
+      "note": "Exposed through external mpv. Command-policy/integration tests cover the interface; native Rust UI and physical rendering certification remain separate."
+    },
+    {
+      "player": "foxide",
+      "feature": "hardware_decode",
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/main/docs/features.md"
+      ],
+      "note": "Exposed through external mpv. Command-policy/integration tests cover the interface; native Rust UI and physical rendering certification remain separate."
+    },
+    {
+      "player": "foxide",
+      "feature": "audio_tracks",
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/main/docs/features.md"
+      ],
+      "note": "Exposed through external mpv. Command-policy/integration tests cover the interface; native Rust UI and physical rendering certification remain separate."
+    },
+    {
+      "player": "foxide",
+      "feature": "subtitle_tracks",
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/main/docs/features.md"
+      ],
+      "note": "Exposed through external mpv. Command-policy/integration tests cover the interface; native Rust UI and physical rendering certification remain separate."
+    },
+    {
+      "player": "foxide",
+      "feature": "external_subtitles",
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/main/docs/features.md"
+      ],
+      "note": "Exposed through external mpv. Command-policy/integration tests cover the interface; native Rust UI and physical rendering certification remain separate."
+    },
+    {
+      "player": "foxide",
+      "feature": "ass_subtitles",
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/main/docs/features.md"
+      ],
+      "note": "Exposed through external mpv. Command-policy/integration tests cover the interface; native Rust UI and physical rendering certification remain separate."
+    },
+    {
+      "player": "foxide",
+      "feature": "speed",
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/main/docs/features.md"
+      ],
+      "note": "Exposed through external mpv. Command-policy/integration tests cover the interface; native Rust UI and physical rendering certification remain separate."
+    },
+    {
+      "player": "foxide",
+      "feature": "playlist",
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/main/docs/features.md"
+      ],
+      "note": "Exposed through external mpv. Command-policy/integration tests cover the interface; native Rust UI and physical rendering certification remain separate."
+    },
+    {
+      "player": "foxide",
+      "feature": "shortcuts",
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/main/docs/features.md"
+      ],
+      "note": "Exposed through external mpv. Command-policy/integration tests cover the interface; native Rust UI and physical rendering certification remain separate."
+    },
+    {
+      "player": "foxide",
+      "feature": "exact_seek",
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/main/docs/features.md"
+      ],
+      "note": "Exposed through external mpv. Command-policy/integration tests cover the interface; native Rust UI and physical rendering certification remain separate."
+    },
+    {
+      "player": "foxide",
+      "feature": "thumbnails",
+      "status": "planned",
+      "sources": [],
+      "note": "Planned in Foxide; no medal until exposed by the application."
+    },
+    {
+      "player": "foxide",
+      "feature": "hdr",
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/main/docs/features.md"
+      ],
+      "note": "Exposed through external mpv. Command-policy/integration tests cover the interface; native Rust UI and physical rendering certification remain separate."
+    },
+    {
+      "player": "foxide",
+      "feature": "tone_map",
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/main/docs/features.md"
+      ],
+      "note": "Exposed through external mpv. Command-policy/integration tests cover the interface; native Rust UI and physical rendering certification remain separate."
+    },
+    {
+      "player": "foxide",
+      "feature": "audio_delay",
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/main/docs/features.md"
+      ],
+      "note": "Exposed through external mpv. Command-policy/integration tests cover the interface; native Rust UI and physical rendering certification remain separate."
+    },
+    {
+      "player": "foxide",
+      "feature": "subtitle_delay",
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/main/docs/features.md"
+      ],
+      "note": "Exposed through external mpv. Command-policy/integration tests cover the interface; native Rust UI and physical rendering certification remain separate."
+    },
+    {
+      "player": "foxide",
+      "feature": "video_filters",
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/main/docs/features.md"
+      ],
+      "note": "Exposed through external mpv. Command-policy/integration tests cover the interface; native Rust UI and physical rendering certification remain separate."
+    },
+    {
+      "player": "foxide",
+      "feature": "chapters",
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/main/docs/features.md"
+      ],
+      "note": "Exposed through external mpv. Command-policy/integration tests cover the interface; native Rust UI and physical rendering certification remain separate."
+    },
+    {
+      "player": "foxide",
+      "feature": "pip",
+      "status": "planned",
+      "sources": [],
+      "note": "Planned in Foxide; no medal until exposed by the application."
+    },
+    {
+      "player": "foxide",
+      "feature": "network",
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/main/docs/features.md"
+      ],
+      "note": "Exposed through external mpv. Command-policy/integration tests cover the interface; native Rust UI and physical rendering certification remain separate."
+    },
+    {
+      "player": "foxide",
+      "feature": "resume",
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/main/docs/features.md"
+      ],
+      "note": "Exposed through external mpv. Command-policy/integration tests cover the interface; native Rust UI and physical rendering certification remain separate."
+    },
+    {
+      "player": "foxide",
+      "feature": "folder_queue",
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/main/docs/features.md"
+      ],
+      "note": "Exposed through external mpv. Command-policy/integration tests cover the interface; native Rust UI and physical rendering certification remain separate."
+    },
+    {
+      "player": "foxide",
+      "feature": "minimal",
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/main/docs/features.md"
+      ],
+      "note": "Exposed through external mpv. Command-policy/integration tests cover the interface; native Rust UI and physical rendering certification remain separate."
+    },
+    {
+      "player": "foxide",
+      "feature": "screenshot",
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/main/docs/features.md"
+      ],
+      "note": "Exposed through external mpv. Command-policy/integration tests cover the interface; native Rust UI and physical rendering certification remain separate."
+    },
+    {
+      "player": "foxide",
+      "feature": "ab_repeat",
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/main/docs/features.md"
+      ],
+      "note": "Exposed through external mpv. Command-policy/integration tests cover the interface; native Rust UI and physical rendering certification remain separate."
+    },
+    {
+      "player": "foxide",
+      "feature": "equalizer",
+      "status": "planned",
+      "sources": [],
+      "note": "Planned in Foxide; no medal until exposed by the application."
+    },
+    {
+      "player": "foxide",
+      "feature": "replaygain",
+      "status": "planned",
+      "sources": [],
+      "note": "Planned in Foxide; no medal until exposed by the application."
+    },
+    {
+      "player": "foxide",
+      "feature": "gapless",
+      "status": "planned",
+      "sources": [],
+      "note": "Planned in Foxide; no medal until exposed by the application."
+    },
+    {
+      "player": "foxide",
+      "feature": "disc",
+      "status": "planned",
+      "sources": [],
+      "note": "Planned in Foxide; no medal until exposed by the application."
+    },
+    {
+      "player": "foxide",
+      "feature": "casting",
+      "status": "planned",
+      "sources": [],
+      "note": "Planned in Foxide; no medal until exposed by the application."
+    },
+    {
+      "player": "vlc",
+      "feature": "hardware_decode",
+      "status": "supported",
+      "sources": [
+        "https://docs.videolan.me/vlc-user/en/lore/vlc/about.html"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "vlc",
+      "feature": "audio_delay",
+      "status": "supported",
+      "sources": [
+        "https://docs.videolan.me/vlc-user/en/lore/vlc/about.html"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "vlc",
+      "feature": "video_filters",
+      "status": "supported",
+      "sources": [
+        "https://docs.videolan.me/vlc-user/en/lore/vlc/about.html"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "vlc",
+      "feature": "disc",
+      "status": "supported",
+      "sources": [
+        "https://docs.videolan.me/vlc-user/en/lore/vlc/about.html"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "vlc",
+      "feature": "network",
+      "status": "supported",
+      "sources": [
+        "https://docs.videolan.me/vlc-user/en/lore/vlc/about.html"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "vlc",
+      "feature": "common_video",
+      "status": "supported",
+      "sources": [
+        "https://github.com/videolan/vlc/blob/3.0.x/modules/MODULES_LIST"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "vlc",
+      "feature": "flac",
+      "status": "supported",
+      "sources": [
+        "https://github.com/videolan/vlc/blob/3.0.x/modules/MODULES_LIST"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "vlc",
+      "feature": "ass_subtitles",
+      "status": "supported",
+      "sources": [
+        "https://github.com/videolan/vlc/blob/3.0.x/modules/MODULES_LIST"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "vlc",
+      "feature": "equalizer",
+      "status": "supported",
+      "sources": [
+        "https://github.com/videolan/vlc/blob/3.0.x/modules/MODULES_LIST"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "vlc",
+      "feature": "audio_tracks",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/videolan/vlc/3.0.x/src/libvlc-module.c"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "vlc",
+      "feature": "shortcuts",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/videolan/vlc/3.0.x/src/libvlc-module.c"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "vlc",
+      "feature": "screenshot",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/videolan/vlc/3.0.x/src/libvlc-module.c"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "vlc",
+      "feature": "replaygain",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/videolan/vlc/3.0.x/src/libvlc-module.c"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "iina",
+      "feature": "speed",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/iina/iina/develop/iina/MenuController.swift"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "iina",
+      "feature": "audio_tracks",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/iina/iina/develop/iina/MenuController.swift"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "iina",
+      "feature": "subtitle_tracks",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/iina/iina/develop/iina/MenuController.swift"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "iina",
+      "feature": "external_subtitles",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/iina/iina/develop/iina/MenuController.swift"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "iina",
+      "feature": "playlist",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/iina/iina/develop/iina/MenuController.swift"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "iina",
+      "feature": "shortcuts",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/iina/iina/develop/iina/MenuController.swift"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "iina",
+      "feature": "exact_seek",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/iina/iina/develop/iina/MenuController.swift"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "iina",
+      "feature": "audio_delay",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/iina/iina/develop/iina/MenuController.swift"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "iina",
+      "feature": "subtitle_delay",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/iina/iina/develop/iina/MenuController.swift"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "iina",
+      "feature": "chapters",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/iina/iina/develop/iina/MenuController.swift"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "iina",
+      "feature": "network",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/iina/iina/develop/iina/MenuController.swift"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "iina",
+      "feature": "screenshot",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/iina/iina/develop/iina/MenuController.swift"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "iina",
+      "feature": "ab_repeat",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/iina/iina/develop/iina/MenuController.swift"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "iina",
+      "feature": "resume",
+      "status": "supported",
+      "sources": [
+        "https://github.com/iina/iina/wiki/Feature-List"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "iina",
+      "feature": "folder_queue",
+      "status": "supported",
+      "sources": [
+        "https://github.com/iina/iina/wiki/Feature-List"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "iina",
+      "feature": "video_filters",
+      "status": "supported",
+      "sources": [
+        "https://github.com/iina/iina/wiki/Audio-and-Video-Filters"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "iina",
+      "feature": "equalizer",
+      "status": "supported",
+      "sources": [
+        "https://github.com/iina/iina/wiki/Audio-and-Video-Filters"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "iina",
+      "feature": "common_video",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/iina/iina/develop/iina/MPVController.swift",
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Media formats/subtitles supplied by the bundled mpv/FFmpeg engine; build/asset acceptance remains separate."
+    },
+    {
+      "player": "iina",
+      "feature": "flac",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/iina/iina/develop/iina/MPVController.swift",
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Media formats/subtitles supplied by the bundled mpv/FFmpeg engine; build/asset acceptance remains separate."
+    },
+    {
+      "player": "iina",
+      "feature": "ass_subtitles",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/iina/iina/develop/iina/MPVController.swift",
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Media formats/subtitles supplied by the bundled mpv/FFmpeg engine; build/asset acceptance remains separate."
+    },
+    {
+      "player": "iina",
+      "feature": "hardware_decode",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/iina/iina/develop/iina/MPVController.swift"
+      ],
+      "note": "Hardware decoding and HDR support are platform/hardware-dependent."
+    },
+    {
+      "player": "iina",
+      "feature": "hdr",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/iina/iina/develop/iina/MPVController.swift"
+      ],
+      "note": "Hardware decoding and HDR support are platform/hardware-dependent."
+    },
+    {
+      "player": "iina",
+      "feature": "tone_map",
+      "status": "supported",
+      "sources": [
+        "https://github.com/iina/iina/wiki/MPV-Options-and-Properties",
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Uses extra mpv options/configuration; output/device/build acceptance is separate."
+    },
+    {
+      "player": "iina",
+      "feature": "replaygain",
+      "status": "supported",
+      "sources": [
+        "https://github.com/iina/iina/wiki/MPV-Options-and-Properties",
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Uses extra mpv options/configuration; output/device/build acceptance is separate."
+    },
+    {
+      "player": "iina",
+      "feature": "gapless",
+      "status": "supported",
+      "sources": [
+        "https://github.com/iina/iina/wiki/MPV-Options-and-Properties",
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Uses extra mpv options/configuration; output/device/build acceptance is separate."
+    },
+    {
+      "player": "mpc-be",
+      "feature": "common_video",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/Aleksoid1978/MPC-BE/master/docs/Changelog.txt"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "mpc-be",
+      "feature": "flac",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/Aleksoid1978/MPC-BE/master/docs/Changelog.txt"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "mpc-be",
+      "feature": "hardware_decode",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/Aleksoid1978/MPC-BE/master/docs/Changelog.txt"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "mpc-be",
+      "feature": "ass_subtitles",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/Aleksoid1978/MPC-BE/master/docs/Changelog.txt"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "mpc-be",
+      "feature": "speed",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/Aleksoid1978/MPC-BE/master/docs/Changelog.txt"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "mpc-be",
+      "feature": "audio_delay",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/Aleksoid1978/MPC-BE/master/docs/Changelog.txt"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "mpc-be",
+      "feature": "subtitle_delay",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/Aleksoid1978/MPC-BE/master/docs/Changelog.txt"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "mpc-be",
+      "feature": "video_filters",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/Aleksoid1978/MPC-BE/master/docs/Changelog.txt"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "mpc-be",
+      "feature": "chapters",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/Aleksoid1978/MPC-BE/master/docs/Changelog.txt"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "mpc-be",
+      "feature": "network",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/Aleksoid1978/MPC-BE/master/docs/Changelog.txt"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "mpc-be",
+      "feature": "screenshot",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/Aleksoid1978/MPC-BE/master/docs/Changelog.txt"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "mpc-be",
+      "feature": "ab_repeat",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/Aleksoid1978/MPC-BE/master/docs/Changelog.txt"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "mpc-be",
+      "feature": "disc",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/Aleksoid1978/MPC-BE/master/docs/Changelog.txt"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "mpc-be",
+      "feature": "hdr",
+      "status": "supported",
+      "sources": [
+        "https://raw.githubusercontent.com/Aleksoid1978/MPC-BE/master/docs/Changelog.txt"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "potplayer",
+      "feature": "common_video",
+      "status": "supported",
+      "sources": [
+        "https://t1.daumcdn.net/potplayer/PotPlayer/v4/Update2/UpdateEng.html"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "potplayer",
+      "feature": "flac",
+      "status": "supported",
+      "sources": [
+        "https://t1.daumcdn.net/potplayer/PotPlayer/v4/Update2/UpdateEng.html"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "potplayer",
+      "feature": "speed",
+      "status": "supported",
+      "sources": [
+        "https://t1.daumcdn.net/potplayer/PotPlayer/v4/Update2/UpdateEng.html"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "potplayer",
+      "feature": "hdr",
+      "status": "supported",
+      "sources": [
+        "https://t1.daumcdn.net/potplayer/PotPlayer/v4/Update2/UpdateEng.html"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "potplayer",
+      "feature": "tone_map",
+      "status": "supported",
+      "sources": [
+        "https://t1.daumcdn.net/potplayer/PotPlayer/v4/Update2/UpdateEng.html"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "potplayer",
+      "feature": "screenshot",
+      "status": "supported",
+      "sources": [
+        "https://t1.daumcdn.net/potplayer/PotPlayer/v4/Update2/UpdateEng.html"
+      ],
+      "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    }
+  ],
+  "sources": {
+    "mpv": "https://mpv.io/manual/stable/",
+    "vlc_play": "https://docs.videolan.me/vlc-user/desktop/3.0/en/basic/playback.html",
+    "vlc_sub": "https://docs.videolan.me/vlc-user/en/support/faq/faqwindows.html",
+    "iina": "https://iina.io/",
+    "iina_thumb": "https://www.iina.io/release-note/0.0.12.html",
+    "hc": "https://github.com/clsid2/mpc-hc#overview-of-features",
+    "be": "https://github.com/Aleksoid1978/MPC-BE/blob/master/docs/Changelog.txt",
+    "pot": "https://t1.daumcdn.net/potplayer/PotPlayer/v4/Update2/UpdateEng.html",
+    "sm": "https://www.smplayer.info/en/info",
+    "sm_steps": "https://www.smplayer.info/en/first-steps",
+    "km": "https://www.kmplayer.com/pc",
+    "gom": "https://www.gomlab.com/en/faq-info?id=51&page=1&product=GOMPLAYER+&subCategory=Function+Inquiry",
+    "kodi": "https://kodi.wiki/view/Video_playback",
+    "kodi_video": "https://kodi.wiki/view/Settings/Player/Videos",
+    "plex": "https://support.plex.tv/articles/configuration-and-usage-options/",
+    "plex_speed": "https://support.plex.tv/articles/video-playback-speed-controls/",
+    "foobar": "https://www.foobar2000.org/",
+    "infuse": "https://firecore.com/infuse",
+    "infuse_settings": "https://support.firecore.com/hc/en-us/articles/360015608854-Settings-Overview",
+    "infuse_list": "https://apps.firecore.com/infuse-pro",
+    "qt": "https://support.apple.com/en-ca/guide/quicktime-player/qtp6cee0761b/mac",
+    "qt_sub": "https://support.apple.com/en-asia/guide/quicktime-player/qtped9fbc349/mac",
+    "wmp": "https://learn.microsoft.com/en-us/windows/win32/wmp/settings-rate",
+    "wmp_modern": "https://blogs.windows.com/windows-insider/2021/11/16/new-media-player-for-windows-11-begins-rolling-out-to-windows-insiders/",
+    "ffplay": "https://ffmpeg.org/ffplay.html",
+    "iina_menu": "https://raw.githubusercontent.com/iina/iina/develop/iina/MenuController.swift",
+    "iina_mpv": "https://raw.githubusercontent.com/iina/iina/develop/iina/MPVController.swift",
+    "vlc_modules": "https://github.com/videolan/vlc/blob/3.0.x/modules/MODULES_LIST",
+    "vlc_options": "https://raw.githubusercontent.com/videolan/vlc/3.0.x/src/libvlc-module.c"
+  }
+}
