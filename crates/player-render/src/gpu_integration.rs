@@ -42,12 +42,12 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
         move |error| errors.borrow_mut().errors.push(error),
         Arc::new(move || { let weak = weak_wake.clone(); let _ = slint::invoke_from_event_loop(move || if let Some(w) = weak.upgrade() { w.window().request_redraw(); }); }),
         move |state, api| {
-            if state == slint::RenderingState::RenderingSetup {
+            if matches!(state, slint::RenderingState::RenderingSetup) {
                 if let slint::GraphicsAPI::NativeOpenGL { get_proc_address } = api {
                     // SAFETY: the test observer runs with Slint's context current.
                     *graphics.borrow_mut() = Some(unsafe { glow::Context::from_loader_function(|name| get_proc_address(&CString::new(name).unwrap())) });
                 }
-            } else if state == slint::RenderingState::AfterRendering && started.elapsed().as_secs_f64() >= 1.0 {
+            } else if matches!(state, slint::RenderingState::AfterRendering) && started.elapsed().as_secs_f64() >= 1.0 {
                 let Some(w) = weak_probe.upgrade() else { return };
                 let size = w.window().size();
                 if size.width == 0 || size.height < 8 { return; }

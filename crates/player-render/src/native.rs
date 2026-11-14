@@ -11,12 +11,7 @@ use std::{
     time::Duration,
 };
 
-pub(crate) type Handle = *mut c_void;
-#[repr(C)]
-pub(crate) struct Param {
-    pub kind: c_int,
-    pub data: *mut c_void,
-}
+pub(crate) use crate::render_contract::{Handle, Param};
 #[repr(C)]
 struct Event {
     kind: c_int,

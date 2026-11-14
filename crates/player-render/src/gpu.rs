@@ -1,4 +1,5 @@
 use crate::native::{Api, Engine, Handle, Param};
+use crate::render_contract::{Fbo, TEXTURE_ORIGIN_BOTTOM_LEFT, render_texture};
 use glow::HasContext;
 use libloading::Library;
 use std::{
@@ -71,13 +72,6 @@ extern "C" fn wake(context: *mut c_void) {
 struct Init {
     get_proc: extern "C" fn(*mut c_void, *const c_char) -> *mut c_void,
     context: *mut c_void,
-}
-#[repr(C)]
-struct Fbo {
-    id: i32,
-    width: i32,
-    height: i32,
-    format: i32,
 }
 
 struct Renderer {
@@ -257,27 +251,7 @@ impl Renderer {
                 height: height as i32,
                 format: glow::RGBA8 as i32,
             };
-            let mut flip = 1_i32;
-            let mut block = 0_i32;
-            let mut params = [
-                Param {
-                    kind: 3,
-                    data: (&mut fbo as *mut Fbo).cast(),
-                },
-                Param {
-                    kind: 4,
-                    data: (&mut flip as *mut i32).cast(),
-                },
-                Param {
-                    kind: 12,
-                    data: (&mut block as *mut i32).cast(),
-                },
-                Param {
-                    kind: 0,
-                    data: std::ptr::null_mut(),
-                },
-            ];
-            let result = (self.api.render)(self.context, params.as_mut_ptr());
+            let result = render_texture(self.api.render, self.context, &mut fbo);
             gl.bind_framebuffer(glow::DRAW_FRAMEBUFFER, framebuffer);
             gl.bind_framebuffer(glow::READ_FRAMEBUFFER, read_framebuffer);
             gl.active_texture(active_texture as u32);
@@ -308,6 +282,7 @@ impl Renderer {
                 self.texture.0,
                 [width, height].into(),
             )
+            .origin(if TEXTURE_ORIGIN_BOTTOM_LEFT { slint::BorrowedOpenGLTextureOrigin::BottomLeft } else { slint::BorrowedOpenGLTextureOrigin::TopLeft })
             .build())
         }
     }
