@@ -230,7 +230,7 @@
     },
     {
       "id": "ab_repeat",
-      "name": "A\u00e2\u20ac\u201cB repeat",
+      "name": "A\u2013B repeat",
       "group": "Playback",
       "tier": 2,
       "media_types": [

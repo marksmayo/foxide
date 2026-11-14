@@ -40,9 +40,9 @@ UI events include menus, dialogs, playback controls, scrubbing, fullscreen and r
 
 | Player | Feature 🥇 | Performance 🥇 | 🥈 | 🥉 | Runtime outcome |
 |---|---:|---:|---:|---:|---|
-| Foxide | 23 | 2 | 8 | 4 | Verified playback 18/21 |
-| VLC | 20 | 3 | 3 | 5 | Verified playback 15/21 |
-| mpv | 26 | 10 | 2 | 2 | Verified playback 18/21 |
+| Foxide | 23 | 3 | 9 | 2 | Verified playback 18/21 |
+| VLC | 20 | 2 | 1 | 8 | Verified playback 15/21 |
+| mpv | 26 | 10 | 3 | 1 | Verified playback 18/21 |
 | Windows Media Player | 2 | 0 | 0 | 0 | installed-adapter-needed |
 | Windows Media Player Legacy | 1 | 0 | 0 | 0 | Unverified / diagnostic (3 cases) |
 | MPC-HC | 10 | 0 | 0 | 0 | Unverified / diagnostic (3 cases) |
@@ -62,20 +62,20 @@ Measured competitive event cohorts: **14**. Zero performance medals may mean mea
 
 | Metric / cohort | Unit | Foxide | VLC | mpv |
 |---|---|---:|---:|---:|
-| Engine playback restart latency / vm-software-null-output/avc1080/ef6da1a20405c446 | ms | 🥈 263 | — | 🥇 **116** |
-| Paused video CPU / vm-software-null-output/paused/7e08072db2d7aac9 | % of one core | 🥇 **0** | — | 🥇 **0** |
-| Paused video steady RAM / vm-software-null-output/paused/7e08072db2d7aac9 | MiB | 🥈 90.3 | — | 🥇 **85.8** |
-| 1080p H.264 CPU / vm-software-null-output/avc1080/ef6da1a20405c446 | % of one core | 🥉 35.8 | 🥈 33.9 | 🥇 **33.4** |
-| 1080p H.264 steady RAM / vm-software-null-output/avc1080/ef6da1a20405c446 | MiB | 🥈 108 | 🥉 139 | 🥇 **103** |
-| 4K60 HEVC 10-bit CPU / vm-software-null-output/hevc4k/c0a565d5a5dc739c | % of one core | 🥇 **69.7** | 🥈 180 | 🥉 193 |
-| 4K60 HEVC 10-bit steady RAM / vm-software-null-output/hevc4k/c0a565d5a5dc739c | MiB | 🥉 416 | 🥈 412 | 🥇 **362** |
-| 4K AV1 CPU / vm-software-null-output/av14k/9275ddbae5df14c7 | % of one core | 🥈 167 | 🥇 **165** | 🥉 170 |
-| 4K AV1 steady RAM / vm-software-null-output/av14k/9275ddbae5df14c7 | MiB | 🥈 480 | 🥉 555 | 🥇 **473** |
-| FLAC audio CPU / vm-software-null-output/flac/a5e820a71e67aaf1 | % of one core | 🥈 1.85 | 🥉 2.02 | 🥇 **1.32** |
-| FLAC audio steady RAM / vm-software-null-output/flac/a5e820a71e67aaf1 | MiB | 🥉 54.9 | 🥇 **25.1** | 🥈 50.5 |
-| 2Ã— playback CPU / vm-software-null-output/speed2x/e13283e5559ba6ab | % of one core | 🥉 72.4 | 🥇 **69.4** | 🥈 72.2 |
-| 2Ã— playback steady RAM / vm-software-null-output/speed2x/e13283e5559ba6ab | MiB | 🥈 110 | 🥉 140 | 🥇 **105** |
-| Peak playback RAM / vm-software-null-output/avc1080/ef6da1a20405c446 | MiB | 🥈 108 | 🥉 140 | 🥇 **104** |
+| Engine playback restart latency / vm-software-null-output/avc1080/e04828eb27f83752 | ms | 🥈 103 | — | 🥇 **88.2** |
+| Paused video CPU / vm-software-null-output/paused/94639af1b8ea8a22 | % of one core | 🥇 **0** | — | 🥇 **0** |
+| Paused video steady RAM / vm-software-null-output/paused/94639af1b8ea8a22 | MiB | 🥈 90.7 | — | 🥇 **85.7** |
+| 1080p H.264 CPU / vm-software-null-output/avc1080/e04828eb27f83752 | % of one core | 🥉 25.7 | 🥈 25.2 | 🥇 **24.1** |
+| 1080p H.264 steady RAM / vm-software-null-output/avc1080/e04828eb27f83752 | MiB | 🥈 108 | 🥉 140 | 🥇 **104** |
+| 4K60 HEVC 10-bit CPU / vm-software-null-output/hevc4k/26dbe62c8f570fef | % of one core | 🥇 **158** | 🥉 184 | 🥈 175 |
+| 4K60 HEVC 10-bit steady RAM / vm-software-null-output/hevc4k/26dbe62c8f570fef | MiB | 🥈 348 | 🥉 732 | 🥇 **344** |
+| 4K AV1 CPU / vm-software-null-output/av14k/7ad23dc74fb1aa19 | % of one core | 🥈 107 | 🥇 **104** | 🥉 114 |
+| 4K AV1 steady RAM / vm-software-null-output/av14k/7ad23dc74fb1aa19 | MiB | 🥈 478 | 🥉 555 | 🥇 **473** |
+| FLAC audio CPU / vm-software-null-output/flac/af777a91cf88831c | % of one core | 🥈 1.06 | 🥉 1.54 | 🥇 **0.794** |
+| FLAC audio steady RAM / vm-software-null-output/flac/af777a91cf88831c | MiB | 🥉 55 | 🥇 **25.2** | 🥈 50.9 |
+| 2× playback CPU / vm-software-null-output/speed2x/1b113898b09c7c40 | % of one core | 🥇 **45.7** | 🥉 54.1 | 🥈 47.8 |
+| 2× playback steady RAM / vm-software-null-output/speed2x/1b113898b09c7c40 | MiB | 🥈 110 | 🥉 140 | 🥇 **105** |
+| Peak playback RAM / vm-software-null-output/avc1080/e04828eb27f83752 | MiB | 🥈 109 | 🥉 140 | 🥇 **104** |
 
 Values require ≥3 verified trials; — means no eligible comparable result. Each row is a separate cohort, never a cross-host ranking.
 
@@ -109,7 +109,7 @@ Values require ≥3 verified trials; — means no eligible comparable result. Ea
 | Automatic folder playback | 🥇 | ? | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? |
 | Borderless viewing mode | 🥇 | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? |
 | Video screenshots | 🥇 | 🥇 | 🥇 | ? | ? | ? | 🥇 | 🥇 | ? | 🥇 | 🥇 | ? | ? | ? | N/A |
-| Aâ€“B repeat | 🥇 | 🥇 | 🥇 | ? | ? | 🥇 | 🥇 | ? | ? | ? | 🥇 | ? | ? | ? | ? |
+| A–B repeat | 🥇 | 🥇 | 🥇 | ? | ? | 🥇 | 🥇 | ? | ? | ? | 🥇 | ? | ? | ? | ? |
 | Audio equalizer / DSP | ? | 🥇 | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 |
 | ReplayGain | ? | 🥇 | 🥇 | ? | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | 🥇 |
 | Gapless audio playback | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 |
@@ -126,9 +126,9 @@ Values require ≥3 verified trials; — means no eligible comparable result. Ea
 
 | Player | Feature 🥇 | Performance 🥇 | 🥈 | 🥉 | Runtime outcome |
 |---|---:|---:|---:|---:|---|
-| Foxide | 23 | 2 | 8 | 4 | Verified playback 18/21 |
-| VLC | 20 | 9 | 1 | 1 | Verified playback 15/21 |
-| mpv | 26 | 3 | 5 | 6 | Verified playback 18/21 |
+| Foxide | 23 | 3 | 8 | 3 | Verified playback 18/21 |
+| VLC | 20 | 9 | 0 | 2 | Verified playback 15/21 |
+| mpv | 26 | 2 | 6 | 6 | Verified playback 18/21 |
 | SMPlayer | 9 | 0 | 0 | 0 | not-detected |
 | FFplay | 4 | 0 | 0 | 0 | Unverified / diagnostic (3 cases) |
 | Kodi | 7 | 0 | 0 | 0 | Unverified / diagnostic (3 cases) |
@@ -144,20 +144,20 @@ Measured competitive event cohorts: **14**. Zero performance medals may mean mea
 
 | Metric / cohort | Unit | Foxide | VLC | mpv |
 |---|---|---:|---:|---:|
-| Engine playback restart latency / vm-software-null-output/avc1080/c474b6ca2dbd3017 | ms | 🥈 278 | — | 🥇 **138** |
-| Paused video CPU / vm-software-null-output/paused/64ee3312cfd8e974 | % of one core | 🥈 0.914 | — | 🥇 **0.851** |
-| Paused video steady RAM / vm-software-null-output/paused/64ee3312cfd8e974 | MiB | 🥈 167 | — | 🥇 **163** |
-| 1080p H.264 CPU / vm-software-null-output/avc1080/c474b6ca2dbd3017 | % of one core | 🥈 28.9 | 🥇 **9.24** | 🥉 51.8 |
-| 1080p H.264 steady RAM / vm-software-null-output/avc1080/c474b6ca2dbd3017 | MiB | 🥉 223 | 🥇 **94.5** | 🥈 221 |
-| 4K60 HEVC 10-bit CPU / vm-software-null-output/hevc4k/3a8e968588e914cb | % of one core | 🥉 192 | 🥇 **4.74** | 🥈 190 |
-| 4K60 HEVC 10-bit steady RAM / vm-software-null-output/hevc4k/3a8e968588e914cb | MiB | 🥉 526 | 🥇 **122** | 🥈 518 |
-| 4K AV1 CPU / vm-software-null-output/av14k/b3b2e17733c86e02 | % of one core | 🥇 **112** | 🥈 115 | 🥉 122 |
-| 4K AV1 steady RAM / vm-software-null-output/av14k/b3b2e17733c86e02 | MiB | 🥇 **624** | 🥉 688 | 🥈 628 |
-| FLAC audio CPU / vm-software-null-output/flac/2311e732ede614f0 | % of one core | 🥈 2.52 | 🥇 **2.46** | 🥉 5.97 |
-| FLAC audio steady RAM / vm-software-null-output/flac/2311e732ede614f0 | MiB | 🥈 171 | 🥇 **67.3** | 🥉 171 |
-| 2Ã— playback CPU / vm-software-null-output/speed2x/faef3ce473944833 | % of one core | 🥈 74.2 | 🥇 **17.7** | 🥉 79.7 |
-| 2Ã— playback steady RAM / vm-software-null-output/speed2x/faef3ce473944833 | MiB | 🥉 222 | 🥇 **98** | 🥈 219 |
-| Peak playback RAM / vm-software-null-output/avc1080/c474b6ca2dbd3017 | MiB | 🥈 227 | 🥇 **95.2** | 🥉 234 |
+| Engine playback restart latency / vm-software-null-output/avc1080/783e332d3096ad53 | ms | 🥈 174 | — | 🥇 **159** |
+| Paused video CPU / vm-software-null-output/paused/0bea2801485d4ab6 | % of one core | 🥇 **0.956** | — | 🥈 1.03 |
+| Paused video steady RAM / vm-software-null-output/paused/0bea2801485d4ab6 | MiB | 🥈 172 | — | 🥇 **164** |
+| 1080p H.264 CPU / vm-software-null-output/avc1080/783e332d3096ad53 | % of one core | 🥈 28.6 | 🥇 **3.14** | 🥉 51.2 |
+| 1080p H.264 steady RAM / vm-software-null-output/avc1080/783e332d3096ad53 | MiB | 🥈 217 | 🥇 **95.6** | 🥉 219 |
+| 4K60 HEVC 10-bit CPU / vm-software-null-output/hevc4k/7e2fcf4d2dbe83e0 | % of one core | 🥉 209 | 🥇 **6.04** | 🥈 191 |
+| 4K60 HEVC 10-bit steady RAM / vm-software-null-output/hevc4k/7e2fcf4d2dbe83e0 | MiB | 🥈 520 | 🥇 **124** | 🥉 521 |
+| 4K AV1 CPU / vm-software-null-output/av14k/cc549dfb583cc5cd | % of one core | 🥇 **109** | 🥉 118 | 🥈 117 |
+| 4K AV1 steady RAM / vm-software-null-output/av14k/cc549dfb583cc5cd | MiB | 🥇 **632** | 🥉 689 | 🥈 634 |
+| FLAC audio CPU / vm-software-null-output/flac/7de95cd24bb6c63f | % of one core | 🥈 2.58 | 🥇 **2.44** | 🥉 6.55 |
+| FLAC audio steady RAM / vm-software-null-output/flac/7de95cd24bb6c63f | MiB | 🥉 172 | 🥇 **67.6** | 🥈 170 |
+| 2× playback CPU / vm-software-null-output/speed2x/c8eb09adbcf8aeaa | % of one core | 🥈 52 | 🥇 **17.8** | 🥉 78.1 |
+| 2× playback steady RAM / vm-software-null-output/speed2x/c8eb09adbcf8aeaa | MiB | 🥉 218 | 🥇 **97.5** | 🥈 212 |
+| Peak playback RAM / vm-software-null-output/avc1080/783e332d3096ad53 | MiB | 🥈 230 | 🥇 **96.8** | 🥉 233 |
 
 Values require ≥3 verified trials; — means no eligible comparable result. Each row is a separate cohort, never a cross-host ranking.
 
@@ -191,7 +191,7 @@ Values require ≥3 verified trials; — means no eligible comparable result. Ea
 | Automatic folder playback | 🥇 | ? | ? | ? | ? | ? | ? | ? | 🥇 | 🥇 | ? |
 | Borderless viewing mode | 🥇 | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? |
 | Video screenshots | 🥇 | 🥇 | 🥇 | ? | ? | ? | ? | N/A | ? | 🥇 | ? |
-| Aâ€“B repeat | 🥇 | 🥇 | 🥇 | ? | ? | ? | ? | ? | ? | 🥇 | ? |
+| A–B repeat | 🥇 | 🥇 | 🥇 | ? | ? | ? | ? | ? | ? | 🥇 | ? |
 | Audio equalizer / DSP | ? | 🥇 | 🥇 | ? | ? | ? | ? | 🥇 | ? | 🥇 | ? |
 | ReplayGain | ? | 🥇 | 🥇 | ? | ? | ? | ? | 🥇 | ? | 🥇 | ? |
 | Gapless audio playback | ? | ? | 🥇 | ? | ? | ? | ? | 🥇 | ? | 🥇 | ? |
@@ -208,9 +208,9 @@ Values require ≥3 verified trials; — means no eligible comparable result. Ea
 
 | Player | Feature 🥇 | Performance 🥇 | 🥈 | 🥉 | Runtime outcome |
 |---|---:|---:|---:|---:|---|
-| Foxide | 23 | 3 | 10 | 1 | Verified playback 18/21 |
-| VLC | 20 | 3 | 1 | 7 | Verified playback 15/21 |
-| mpv | 26 | 9 | 2 | 3 | Verified playback 18/21 |
+| Foxide | 23 | 4 | 7 | 3 | Verified playback 18/21 |
+| VLC | 20 | 4 | 0 | 7 | Verified playback 15/21 |
+| mpv | 26 | 7 | 6 | 1 | Verified playback 18/21 |
 | SMPlayer | 9 | 0 | 0 | 0 | Unverified / diagnostic (3 cases) |
 | FFplay | 4 | 0 | 0 | 0 | Unverified / diagnostic (3 cases) |
 | Kodi | 7 | 0 | 0 | 0 | Unverified / diagnostic (3 cases) |
@@ -221,20 +221,20 @@ Measured competitive event cohorts: **14**. Zero performance medals may mean mea
 
 | Metric / cohort | Unit | Foxide | VLC | mpv |
 |---|---|---:|---:|---:|
-| Engine playback restart latency / vm-software-null-output/avc1080/7652926fd1513544 | ms | 🥇 **155** | — | 🥈 157 |
-| Paused video CPU / vm-software-null-output/paused/27f5fa6a1d32902a | % of one core | 🥇 **0** | — | 🥇 **0** |
-| Paused video steady RAM / vm-software-null-output/paused/27f5fa6a1d32902a | MiB | 🥈 103 | — | 🥇 **100** |
-| 1080p H.264 CPU / vm-software-null-output/avc1080/7652926fd1513544 | % of one core | 🥈 35 | 🥉 35 | 🥇 **34.9** |
-| 1080p H.264 steady RAM / vm-software-null-output/avc1080/7652926fd1513544 | MiB | 🥈 120 | 🥉 159 | 🥇 **117** |
-| 4K60 HEVC 10-bit CPU / vm-software-null-output/hevc4k/e7713a4c6656e4fd | % of one core | 🥈 192 | 🥇 **182** | 🥉 192 |
-| 4K60 HEVC 10-bit steady RAM / vm-software-null-output/hevc4k/e7713a4c6656e4fd | MiB | 🥈 389 | 🥉 469 | 🥇 **387** |
-| 4K AV1 CPU / vm-software-null-output/av14k/28979e64eb3a89a1 | % of one core | 🥇 **177** | 🥈 180 | 🥉 180 |
-| 4K AV1 steady RAM / vm-software-null-output/av14k/28979e64eb3a89a1 | MiB | 🥈 486 | 🥉 552 | 🥇 **484** |
-| FLAC audio CPU / vm-software-null-output/flac/b88972b541f16f49 | % of one core | 🥈 0.673 | 🥉 1.14 | 🥇 **0.505** |
-| FLAC audio steady RAM / vm-software-null-output/flac/b88972b541f16f49 | MiB | 🥉 67.9 | 🥇 **38.1** | 🥈 65.3 |
-| 2Ã— playback CPU / vm-software-null-output/speed2x/24f5949aaa56bd48 | % of one core | 🥈 71.1 | 🥇 **68.6** | 🥉 71.4 |
-| 2Ã— playback steady RAM / vm-software-null-output/speed2x/24f5949aaa56bd48 | MiB | 🥈 121 | 🥉 160 | 🥇 **118** |
-| Peak playback RAM / vm-software-null-output/avc1080/7652926fd1513544 | MiB | 🥈 120 | 🥉 159 | 🥇 **118** |
+| Engine playback restart latency / vm-software-null-output/avc1080/86b43f89289300e5 | ms | 🥇 **153** | — | 🥈 153 |
+| Paused video CPU / vm-software-null-output/paused/4109bf58eb7c5e1f | % of one core | 🥇 **0** | — | 🥇 **0** |
+| Paused video steady RAM / vm-software-null-output/paused/4109bf58eb7c5e1f | MiB | 🥈 103 | — | 🥇 **100** |
+| 1080p H.264 CPU / vm-software-null-output/avc1080/86b43f89289300e5 | % of one core | 🥇 **33** | 🥉 34.1 | 🥈 33.3 |
+| 1080p H.264 steady RAM / vm-software-null-output/avc1080/86b43f89289300e5 | MiB | 🥈 120 | 🥉 159 | 🥇 **117** |
+| 4K60 HEVC 10-bit CPU / vm-software-null-output/hevc4k/30a9256e4b744531 | % of one core | 🥈 190 | 🥇 **184** | 🥉 192 |
+| 4K60 HEVC 10-bit steady RAM / vm-software-null-output/hevc4k/30a9256e4b744531 | MiB | 🥈 388 | 🥉 452 | 🥇 **386** |
+| 4K AV1 CPU / vm-software-null-output/av14k/26bb47ccf49f4e14 | % of one core | 🥉 173 | 🥇 **168** | 🥈 169 |
+| 4K AV1 steady RAM / vm-software-null-output/av14k/26bb47ccf49f4e14 | MiB | 🥈 486 | 🥉 571 | 🥇 **483** |
+| FLAC audio CPU / vm-software-null-output/flac/c7d7fc662ec00a63 | % of one core | 🥇 **0.504** | 🥉 0.813 | 🥈 0.673 |
+| FLAC audio steady RAM / vm-software-null-output/flac/c7d7fc662ec00a63 | MiB | 🥉 67.8 | 🥇 **38.1** | 🥈 65.3 |
+| 2× playback CPU / vm-software-null-output/speed2x/f02685815b83eb43 | % of one core | 🥉 69.3 | 🥇 **67** | 🥈 69.2 |
+| 2× playback steady RAM / vm-software-null-output/speed2x/f02685815b83eb43 | MiB | 🥈 121 | 🥉 160 | 🥇 **119** |
+| Peak playback RAM / vm-software-null-output/avc1080/86b43f89289300e5 | MiB | 🥈 120 | 🥉 159 | 🥇 **118** |
 
 Values require ≥3 verified trials; — means no eligible comparable result. Each row is a separate cohort, never a cross-host ranking.
 
@@ -268,7 +268,7 @@ Values require ≥3 verified trials; — means no eligible comparable result. Ea
 | Automatic folder playback | 🥇 | ? | ? | ? | ? | ? |
 | Borderless viewing mode | 🥇 | ? | 🥇 | ? | ? | ? |
 | Video screenshots | 🥇 | 🥇 | 🥇 | ? | ? | ? |
-| Aâ€“B repeat | 🥇 | 🥇 | 🥇 | ? | ? | ? |
+| A–B repeat | 🥇 | 🥇 | 🥇 | ? | ? | ? |
 | Audio equalizer / DSP | ? | 🥇 | 🥇 | ? | ? | ? |
 | ReplayGain | ? | 🥇 | 🥇 | ? | ? | ? |
 | Gapless audio playback | ? | ? | 🥇 | ? | ? | ? |
