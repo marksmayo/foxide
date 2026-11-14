@@ -282,7 +282,11 @@ impl Renderer {
                 self.texture.0,
                 [width, height].into(),
             )
-            .origin(if TEXTURE_ORIGIN_BOTTOM_LEFT { slint::BorrowedOpenGLTextureOrigin::BottomLeft } else { slint::BorrowedOpenGLTextureOrigin::TopLeft })
+            .origin(if TEXTURE_ORIGIN_BOTTOM_LEFT {
+                slint::BorrowedOpenGLTextureOrigin::BottomLeft
+            } else {
+                slint::BorrowedOpenGLTextureOrigin::TopLeft
+            })
             .build())
         }
     }
@@ -332,42 +336,43 @@ fn attach_observed(
     });
     let mut renderer: Option<Renderer> = None;
     window
-        .set_rendering_notifier(move |state, graphics| { match state {
-            slint::RenderingState::RenderingSetup => {
-                if let slint::GraphicsAPI::NativeOpenGL { get_proc_address } = graphics {
-                    match Renderer::new(api.clone(), get_proc_address, notify.clone()) {
-                        Ok(value) => {
-                            renderer = Some(value);
-                            ready.store(true, Ordering::Release);
+        .set_rendering_notifier(move |state, graphics| {
+            match state {
+                slint::RenderingState::RenderingSetup => {
+                    if let slint::GraphicsAPI::NativeOpenGL { get_proc_address } = graphics {
+                        match Renderer::new(api.clone(), get_proc_address, notify.clone()) {
+                            Ok(value) => {
+                                renderer = Some(value);
+                                ready.store(true, Ordering::Release);
+                            }
+                            Err(message) => error(message),
                         }
-                        Err(message) => error(message),
-                    }
-                } else {
-                    error("This playback build needs the OpenGL renderer".into());
-                }
-            }
-            slint::RenderingState::BeforeRendering => {
-                if let Some(renderer) = renderer.as_mut() {
-                    let (width, height) = size();
-                    if !changed.swap(false, Ordering::AcqRel)
-                        && renderer.size == (width.clamp(1, 8192), height.clamp(1, 8192))
-                    {
-                        return;
-                    }
-                    match renderer.frame(width, height) {
-                        Ok(frame) => image(frame),
-                        Err(message) => error(message),
+                    } else {
+                        error("This playback build needs the OpenGL renderer".into());
                     }
                 }
+                slint::RenderingState::BeforeRendering => {
+                    if let Some(renderer) = renderer.as_mut() {
+                        let (width, height) = size();
+                        if !changed.swap(false, Ordering::AcqRel)
+                            && renderer.size == (width.clamp(1, 8192), height.clamp(1, 8192))
+                        {
+                            return;
+                        }
+                        match renderer.frame(width, height) {
+                            Ok(frame) => image(frame),
+                            Err(message) => error(message),
+                        }
+                    }
+                }
+                slint::RenderingState::RenderingTeardown => {
+                    ready.store(false, Ordering::Release);
+                    image(slint::Image::default());
+                    renderer = None;
+                }
+                _ => {}
             }
-            slint::RenderingState::RenderingTeardown => {
-                ready.store(false, Ordering::Release);
-                image(slint::Image::default());
-                renderer = None;
-            }
-            _ => {}
-        }
-        observe(state, graphics);
+            observe(state, graphics);
         })
         .map_err(|e| e.to_string())
 }
