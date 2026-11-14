@@ -152,6 +152,7 @@ dependencies = [
  "anyhow",
  "clap",
  "player-core",
+ "serde_json",
 ]
 
 [[package]]

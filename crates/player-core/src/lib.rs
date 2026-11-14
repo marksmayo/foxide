@@ -1,4 +1,8 @@
 //! Backend-independent playback policy. No decoder or rendering implementation yet.
+mod playback;
+pub use playback::PlaybackOptions;
+mod queue;
+pub use queue::folder_queue;
 
 /// Conservative hardware-decoding policy shared by the launcher and benchmark.
 pub const HWDEC: &str = "auto-safe";

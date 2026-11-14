@@ -32,7 +32,20 @@ def digest(path):
 
 
 def resolve(candidate):
-    candidate = re.sub(r'\{([^}]+)\}', lambda m: os.environ.get(m[1], m[0]), candidate)
+    def folder(match):
+        name = match[1]
+        if os.environ.get(name):
+            return os.environ[name]
+        # Restricted launch environments can omit these standard variables.
+        # Ask Windows for the user's actual known folder instead of assuming C:.
+        ids = {'ProgramFiles': 0x26, 'ProgramFiles(x86)': 0x2a, 'LOCALAPPDATA': 0x1c}
+        if os.name == 'nt' and name in ids:
+            import ctypes
+            value = ctypes.create_unicode_buffer(32768)
+            if ctypes.windll.shell32.SHGetFolderPathW(None, ids[name], None, 0, value) == 0:
+                return value.value
+        return match[0]
+    candidate = re.sub(r'\{([^}]+)\}', folder, candidate)
     direct = Path(candidate)
     if not direct.is_absolute():
         direct = ROOT / direct
@@ -52,7 +65,7 @@ def inventory():
         path = next((path for candidate in player['paths'] if (path := resolve(candidate))), None)
         player['executable'] = str(path) if path else None
         player['status'] = 'available' if path else 'not-detected'
-        player['reason'] = None if path else 'No executable found in configured paths or PATH; downloads blocked by the configured terminal proxy.'
+        player['reason'] = None if path else 'No executable found in configured paths or PATH.'
         if path:
             player['sha256'] = digest(path)
             player['executable_bytes'] = path.stat().st_size

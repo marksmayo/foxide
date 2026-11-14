@@ -136,6 +136,7 @@
       "family": "Desktop player",
       "source": "https://potplayer.daum.net/",
       "paths": [
+        "tools/potplayer/PotPlayerMini64.exe",
         "{ProgramFiles}/DAUM/PotPlayer/PotPlayerMini64.exe",
         "{ProgramFiles}/PotPlayer/PotPlayerMini64.exe",
         "PotPlayerMini64.exe"
@@ -193,9 +194,11 @@
       "family": "Desktop player",
       "source": "https://www.gomlab.com/en/gomplayer-media-player",
       "paths": [
+        "tools/gom/GOM.exe",
         "{ProgramFiles}/GOM/GOMPlayer/GOM.exe",
         "{ProgramFiles(x86)}/GRETECH/GomPlayer/GOM.exe",
-        "GOM.exe"
+        "GOM.exe",
+        "{ProgramFiles(x86)}/GOMPlayer/GOM.exe"
       ],
       "platforms": [
         "windows"
@@ -230,6 +233,7 @@
       "family": "Media center",
       "source": "https://kodi.tv/download/",
       "paths": [
+        "tools/kodi/kodi.exe",
         "{ProgramFiles}/Kodi/kodi.exe",
         "{LOCALAPPDATA}/Programs/Kodi/kodi.exe",
         "kodi.exe"
@@ -250,6 +254,7 @@
       "family": "Desktop client",
       "source": "https://www.plex.tv/media-server-downloads/?cat=plex+desktop&plat=windows#plex-app",
       "paths": [
+        "tools/plex/Plex.exe",
         "{ProgramFiles}/Plex/Plex/Plex.exe",
         "{LOCALAPPDATA}/Plex/Plex.exe",
         "Plex.exe"
@@ -270,6 +275,7 @@
       "family": "Audio player",
       "source": "https://www.foobar2000.org/download",
       "paths": [
+        "tools/foobar2000/foobar2000.exe",
         "{ProgramFiles}/foobar2000/foobar2000.exe",
         "{ProgramFiles(x86)}/foobar2000/foobar2000.exe",
         "{LOCALAPPDATA}/Programs/foobar2000/foobar2000.exe",

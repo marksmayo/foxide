@@ -13,6 +13,7 @@ path = "src/main.rs"
 anyhow.workspace = true
 clap.workspace = true
 player-core.workspace = true
+serde_json.workspace = true
 
 [lints]
 workspace = true

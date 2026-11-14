@@ -19,7 +19,8 @@ local function stats()
         decoder_dropped=mp.get_property_number('decoder-frame-drop-count'),
         output_dropped=mp.get_property_number('frame-drop-count'),
         delayed=mp.get_property_number('vo-delayed-frame-count'),
-        position=mp.get_property_number('time-pos')})
+        position=mp.get_property_number('time-pos'), paused=mp.get_property_bool('pause'),
+        speed=mp.get_property_number('speed'), vo=mp.get_property('current-vo')})
 end
 local function seek()
     local duration = mp.get_property_number('duration', 0)

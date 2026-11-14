@@ -1,0 +1,165 @@
+name: Player Games
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/player-games.yml'
+      - 'scripts/run_event_benchmarks.py'
+      - 'scripts/event_benchmarks.py'
+      - 'scripts/build_medal_report.py'
+      - 'scripts/medal_events.py'
+      - 'scripts/prepare-event-media.py'
+      - 'benchmarks/features.json'
+      - 'benchmarks/performance-events.json'
+permissions:
+  contents: read
+concurrency:
+  group: player-games-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  benchmark:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2025, macos-15, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the Windows field
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          ./scripts/bootstrap-winget-ci.ps1
+          python scripts/install-mpv.py --output results/local/games/mpv-installation.json
+          if ($LASTEXITCODE -ne 0) { throw 'mpv failed verification' }
+          python scripts/install-players.py --install --output results/local/games/player-installation.json
+          if ($LASTEXITCODE -ne 0) { Write-Output '::warning::Some optional players need native Store/installer setup. Recorded as unavailable.' }
+          if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
+            winget install --exact --id Gyan.FFmpeg --source winget --silent --disable-interactivity --accept-source-agreements --accept-package-agreements
+            if ($LASTEXITCODE -ne 0) { throw 'FFmpeg installation failed' }
+          }
+          (Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Links') >> $env:GITHUB_PATH
+          (Join-Path $env:ProgramFiles 'WinGet\Links') >> $env:GITHUB_PATH
+          exit 0
+      - name: Install the macOS field
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          brew install mpv ffmpeg
+          brew install --cask vlc iina
+          mkdir -p results/local/games
+          for player in kodi plex smplayer foobar2000; do
+            if ! brew install --cask "$player" >> results/local/games/optional-installations.log 2>&1; then
+              echo "::warning::$player cask unavailable; runtime inventory will show its outcome."
+            fi
+          done
+          brew list --versions > results/local/games/brew-versions.txt
+          echo 'Infuse requires an authorized App Store installation on a self-hosted Mac.' >> results/local/games/optional-installations.log
+      - name: Install the Linux field
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mpv vlc ffmpeg xvfb
+          mkdir -p results/local/games
+          for player in smplayer kodi; do
+            if ! sudo apt-get install -y "$player" >> results/local/games/optional-installations.log 2>&1; then
+              echo "::warning::$player package unavailable; runtime inventory will show its outcome."
+            fi
+          done
+          dpkg-query -W > results/local/games/packages.txt
+      - run: cargo test --workspace --locked
+      - run: cargo build --release --locked
+      - name: Generate and verify deterministic seed corpus
+        run: python scripts/generate-media.py --profile smoke --seconds 3 --files A B C D --output media/generated/games-seed
+      - name: Extend matched bitstreams for repeated playback
+        run: python scripts/prepare-event-media.py --seed media/generated/games-seed --output media/generated/games
+      - name: Benchmark Windows and macOS native fields
+        if: runner.os != 'Linux'
+        run: python scripts/run_event_benchmarks.py --media-dir media/generated/games --output results/local/games --require-core
+      - name: Benchmark the Linux native field
+        if: runner.os == 'Linux'
+        run: xvfb-run -a python scripts/run_event_benchmarks.py --media-dir media/generated/games --output results/local/games --require-core
+      - name: Render this platform report
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f results/local/games/measurements.json ]]; then
+            python scripts/build_medal_report.py --measurements results/local/games/measurements.json --sessions results/local/games/session.json --output results/local/games/report
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: player-games-${{ runner.os }}-${{ runner.arch }}
+          path: |
+            results/local/games/
+            media/generated/games/manifest.json
+            media/generated/games-seed/manifest.json
+          if-no-files-found: warn
+  report:
+    needs: benchmark
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: player-games-*
+          path: results/local/platforms
+      - name: Generate all platform graphs and README tables
+        shell: bash
+        run: |
+          shopt -s globstar nullglob
+          files=(results/local/platforms/**/measurements.json)
+          sessions=(results/local/platforms/**/session.json)
+          python scripts/build_medal_report.py --measurements "${files[@]}" --sessions "${sessions[@]}" --output docs/scoreboards --readme README.md
+          cat docs/scoreboards/scoreboards.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Verify the rendered report and platform navigation
+        shell: bash
+        run: |
+          mkdir -p results/local/report-qa
+          google-chrome --headless --no-first-run --no-default-browser-check --user-data-dir="$RUNNER_TEMP/foxide-report-preview" --window-size=1600,1500 --virtual-time-budget=1500 --screenshot="$GITHUB_WORKSPACE/results/local/report-qa/preview.png" "file://$GITHUB_WORKSPACE/docs/scoreboards/report.html"
+          google-chrome --headless --no-first-run --no-default-browser-check --user-data-dir="$RUNNER_TEMP/foxide-report-navigation" --virtual-time-budget=1500 --dump-dom "file://$GITHUB_WORKSPACE/docs/scoreboards/report.html#macos" > results/local/report-qa/macos-dom.html
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          page = Path('results/local/report-qa/macos-dom.html').read_text('utf-8')
+          active = re.search(r'<section[^>]*id="macos"[^>]*>', page).group()
+          assert 'hidden' not in active, 'Platform navigation did not activate macOS'
+          assert page.count('<svg ') == 3, 'Expected three embedded platform graphs'
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: foxide-player-games-report
+          path: |
+            docs/scoreboards/
+            results/local/report-qa/
+      - name: Update the main branch scoreboards
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          git fetch origin main
+          if [[ "$(git rev-parse origin/main)" != "$GITHUB_SHA" ]]; then
+            echo 'A newer source commit exists; keep this run as an artifact without overwriting current scoreboards.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add README.md docs/scoreboards
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Update Player Games platform scores and graphs'
+          git push origin HEAD:main

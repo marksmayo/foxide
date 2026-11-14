@@ -38,7 +38,9 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          python scripts/install-players.py --install --players mpv vlc --output results/local/hosted/core-installation.json
+          python scripts/install-mpv.py --output results/local/hosted/mpv-installation.json
+          if ($LASTEXITCODE -ne 0) { throw 'Pinned portable mpv installation failed' }
+          python scripts/install-players.py --install --players vlc --output results/local/hosted/core-installation.json
           if ($LASTEXITCODE -ne 0) { throw 'Core media dependencies failed to install' }
           if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
             winget install --exact --id Gyan.FFmpeg --source winget --silent --disable-interactivity --accept-source-agreements --accept-package-agreements

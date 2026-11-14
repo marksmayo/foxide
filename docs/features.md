@@ -1,25 +1,37 @@
-# Foxide feature matrix
+# Foxide capabilities and feature events
 
-All product features below are planned; the current code provides the benchmark/architecture foundation and external-mpv launcher. Capability judgments are hypotheses to verify against pinned competitor versions, rather than claims that every player supports every format/platform.
+The current Foxide application is a Rust command-line launcher around an external mpv process. Its playback window and media clock are mpv-owned. The custom Rust window, libmpv integration, and shared GPU context remain future engineering work.
 
-| Tier | Capability / acceptance example | Baseline emphasis | Planned milestone |
-|---|---|---|---|
-| 1 | MKV/MP4/WebM/AVI/FLAC plus malformed/unsupported errors; A/B/C/D corpus | VLC/mpv broad compatibility; native OS support varies | v0.1–0.2 |
-| 1 | D3D11VA, VideoToolbox, VAAPI/NVDEC where hardware supports codec/profile; visible diagnostics/fallback | Compare actual decoder/GPU path and power, never config alone | v0.1–0.3 |
-| 1 | Enumerate/switch audio and subtitle tracks without stale UI/audio loss | VLC/IINA/mpv | v0.2 |
-| 1 | External UTF-8 SRT/ASS, font attachments, styling, RTL/shaping and high-DPI placement | VLC/mpv/libass behavior | v0.2 |
-| 1 | Exact and keyframe seeks; latest-target scrub coalescing; cancellable thumbnail previews | mpv latency plus IINA-style discoverability | v0.2 |
-| 1 | 0.25×–4× speed with supported pitch policy; test sound and sync at extremes | VLC/IINA/mpv | v0.2 |
-| 1 | mpv-compatible keyboard defaults, rebinding/conflicts, keyboard focus and accessibility | mpv command vocabulary | v0.2 |
-| 1 | File/folder drag/drop, editable ordered playlists and next/previous | VLC/IINA | v0.2 |
-| 2 | HDR passthrough where validated, HDR→SDR tone map with reference visual checks | Native HDR quality + mpv/VLC coverage | v0.3–0.4 |
-| 2 | Audio delay and subtitle offset, signed values with reset and persistence | VLC/IINA/mpv | v0.3 |
-| 2 | Deinterlace and brightness/contrast/gamma; disclose GPU/power impact | VLC/mpv | v0.3 |
-| 2 | Chapter names, chapter seek/navigation and keyboard access | VLC/IINA/mpv | v0.3 |
-| 2 | PiP and always-on-top, correct platform window semantics | IINA/native UX | v0.4 |
-| 2 | HTTP/HLS/RTSP, buffering, reconnect/cancel and credential privacy | VLC/mpv; native support varies | v0.4 |
-| 3 | Folder/series auto-queue with natural sorting, episode boundaries and opt-out | Fast series playback workflow | v0.5 |
-| 3 | SQLite resume state keyed by file identity; near-end/credits rules and opt-out | Reliable continuation across restarts | v0.5 |
-| 3 | Minimal/borderless floating UI, keyboard escape and multi-monitor restoration | Compact viewing | v0.5 |
+## Available controls
 
-Maintain a versioned competitor capability sheet during actual testing: mark each cell verified-supported, verified-unsupported, partial or untested with platform/build/file. Do not ship an inferred feature matrix as empirical evidence. Features such as ASS shaping, TrueHD passthrough, HDR and RTSP need specific acceptance assets beyond the synthetic starter suite.
+| Capability | Current interface | Verification |
+|---|---|---|
+| Local containers and codecs | One or more file arguments; decoding supplied by mpv/FFmpeg | Windows H.264 playback observed with D3D11VA; codec corpus in Actions |
+| Hardware decoding | Requests `hwdec=auto-safe` | Activation does not certify zero-copy interop or power parity |
+| Audio/subtitle tracks | `--audio-track ID`, `--subtitle-track ID` | Public playback policy and launcher integration tests |
+| External SRT/ASS | Repeatable `--subtitle FILE`; rendered by mpv/libass | Path and argument tests; visual shaping/font acceptance remains separate |
+| Playback speed | `--speed 0.25` through `--speed 4` | Finite/range validation before launch |
+| Ordered playlists | Multiple paths, a playlist file, or a folder | Natural ordering and non-media exclusion tests |
+| Folder autoqueue | `--autoqueue episode2.mkv` | Starts at the selected file in the naturally sorted direct folder |
+| Exact seeks / keyboard controls | mpv window shortcuts; Shift+arrows for exact seeks | Engine-provided; future Rust OSD policy has shortcut tests |
+| Video adjustments | `--brightness`, `--contrast`, `--gamma` (-100..100), `--deinterlace` | Validation and engine-option tests |
+| HDR input / SDR tone mapping | mpv HDR handling; `--tone-map` targets BT.709 / BT.1886 | Configuration tested; display passthrough/visual reference checks pending |
+| Signed synchronization offsets | `--audio-delay`, `--subtitle-delay` in seconds | Non-finite values rejected; signs preserved |
+| Chapters | `--chapter INDEX` (zero-based); mpv chapter keys | Cannot combine chapter start with `--start` |
+| Network playback | HTTP(S), HLS URLs, RTSP URLs | Individual arguments; live/network resilience acceptance pending |
+| Persistent resume | `--resume-dir DIRECTORY` | mpv watch-later state; saves on graceful exit. SQLite history is a later milestone |
+| Borderless floating window | `--minimal --on-top` | mpv borderless/always-on-top settings |
+| Screenshots | mpv screenshot key | Engine-provided |
+| A–B repeat | `--ab-start A --ab-end B` | Finite `0 <= A < B` validation |
+| Repeat playlist | `--loop-playlist` | Explicit loop policy |
+| Benchmark diagnostics | `--headless`, `--paused`, `--benchmark-script FILE`, `--print-command` | Null-output runs have separate cohorts |
+
+`--print-command` outputs a JSON argument vector without starting playback. Media/subtitle paths and values are passed directly without shell evaluation.
+
+## Implementation backlog
+
+The [30-event feature catalog](../benchmarks/features.json) also tracks seekbar thumbnails, native PiP, an audio equalizer/DSP interface, ReplayGain controls, gapless-output acceptance, optical-disc workflows, and casting. These earn no Foxide gold until exposed and documented to the same event definition.
+
+The original brief additionally requires a custom GPU OSD, editable drag/drop playlists, cancellable thumbnails, reconnect/buffering controls, a SQLite/redb library, accessibility, and native OS window behavior. Delegated mpv controls are an intermediate release, not completion of the native Rust architecture.
+
+Each slice follows red → green tests through public interfaces. See [playback policy](../crates/player-core/src/playback.rs), [folder queue](../crates/player-core/src/queue.rs), [launcher](../crates/player-cli/src/main.rs), [policy tests](../crates/player-core/tests/playback.rs), and [launcher tests](../crates/player-cli/tests/launch.rs).
