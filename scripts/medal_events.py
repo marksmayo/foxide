@@ -60,7 +60,6 @@ def scoreboards(catalog, protocol, measurements, sessions=()):
     """One platform board, with documented features and empirical medals apart."""
     boards = {}
     claims_by_feature = defaultdict(list)
-    measurements_by_platform = defaultdict(list)
     measurements_by_player = defaultdict(list)
     cohorts = defaultdict(list)
     profiles = defaultdict(set)
@@ -70,7 +69,6 @@ def scoreboards(catalog, protocol, measurements, sessions=()):
         key = row['platform'], row['event'], row['profile']
         cohorts[key].append(row)
         profiles[key[:2]].add(row['profile'])
-        measurements_by_platform[row['platform']].append(row)
         measurements_by_player[row['platform'], row['player']].append(row)
     source_validity = {}
     def valid_source(url):

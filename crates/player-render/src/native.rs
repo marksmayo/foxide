@@ -160,16 +160,14 @@ impl Api {
                 return Err("libmpv could not allocate a player".into());
             }
             for (name, value) in [
-                ("config", "no"),
-                ("load-scripts", "no"),
-                ("vo", "libmpv"),
-                ("hwdec", "auto-safe"),
-                ("keep-open", "yes"),
-                ("terminal", "no"),
-                ("input-default-bindings", "no"),
+                (c"config", c"no"),
+                (c"load-scripts", c"no"),
+                (c"vo", c"libmpv"),
+                (c"hwdec", c"auto-safe"),
+                (c"keep-open", c"yes"),
+                (c"terminal", c"no"),
+                (c"input-default-bindings", c"no"),
             ] {
-                let name = CString::new(name).unwrap();
-                let value = CString::new(value).unwrap();
                 if option(api.handle, name.as_ptr(), value.as_ptr()) < 0 {
                     return Err("libmpv rejected a required playback option".into());
                 }
@@ -182,10 +180,7 @@ impl Api {
         }
     }
 
-    fn get(&self, name: &str) -> String {
-        let Ok(name) = CString::new(name) else {
-            return String::new();
-        };
+    fn get(&self, name: &CStr) -> String {
         // SAFETY: only the control worker retrieves properties. Returned strings
         // are copied before mpv_free, using the same library's allocator.
         unsafe {
@@ -198,7 +193,12 @@ impl Api {
             text
         }
     }
-    fn number(&self, name: &str) -> f64 {
+    fn track_property(&self, index: u32, suffix: &str) -> String {
+        // Both components are internal ASCII values; there can be no interior NUL.
+        let name = CString::new(format!("track-list/{index}/{suffix}")).unwrap();
+        self.get(&name)
+    }
+    fn number(&self, name: &CStr) -> f64 {
         self.get(name)
             .parse::<f64>()
             .ok()
@@ -211,7 +211,8 @@ impl Api {
             .map(|s| CString::new(s.as_str()))
             .collect::<Result<Vec<_>, _>>()
             .map_err(|_| "Playback input contains a NUL byte")?;
-        let mut pointers: Vec<_> = strings.iter().map(|s| s.as_ptr()).collect();
+        let mut pointers = Vec::with_capacity(strings.len() + 1);
+        pointers.extend(strings.iter().map(|s| s.as_ptr()));
         pointers.push(std::ptr::null());
         // SAFETY: strings and null-terminated pointer array live through the call.
         let code = unsafe { (self.command)(self.handle, pointers.as_ptr()) };
@@ -320,44 +321,49 @@ impl Engine {
                             }
                         }
                     }
-                    let path = client.get("path");
+                    let path = client.get(c"path");
                     if path != last_path || tracks.is_empty() {
                         tracks.clear();
-                        let count = client.number("track-list/count").clamp(0.0, 256.0) as u32;
+                        let count = client.number(c"track-list/count").clamp(0.0, 256.0) as u32;
                         for i in 0..count {
-                            let prefix = format!("track-list/{i}/");
-                            let kind = client.get(&(prefix.clone() + "type"));
+                            let kind = client.track_property(i, "type");
                             if kind != "audio" && kind != "sub" {
                                 continue;
                             }
-                            let id = client.number(&(prefix.clone() + "id")) as u32;
-                            let title = client.get(&(prefix.clone() + "title"));
-                            let lang = client.get(&(prefix.clone() + "lang"));
+                            let id = client
+                                .track_property(i, "id")
+                                .parse::<f64>()
+                                .ok()
+                                .filter(|v| v.is_finite())
+                                .unwrap_or(0.0) as u32;
+                            let title = client.track_property(i, "title");
+                            let label = if title.is_empty() {
+                                client.track_property(i, "lang")
+                            } else {
+                                title
+                            };
                             tracks.push(Track {
                                 id,
-                                label: format!(
-                                    "{id} · {}",
-                                    if title.is_empty() { lang } else { title }
-                                ),
+                                label: format!("{id} · {label}"),
                                 kind,
-                                selected: client.get(&(prefix + "selected")) == "yes",
+                                selected: client.track_property(i, "selected") == "yes",
                             });
                         }
-                        last_path = path.clone();
+                        last_path.clone_from(&path);
                     }
                     let next = Snapshot {
                         loaded: !path.is_empty()
-                            && client.get("idle-active") == "no"
+                            && client.get(c"idle-active") == "no"
                             && error.is_empty(),
                         path,
-                        title: client.get("media-title"),
-                        paused: client.get("pause") == "yes",
-                        position: client.number("time-pos"),
-                        duration: client.number("duration"),
-                        speed: client.number("speed"),
-                        volume: client.number("volume"),
-                        muted: client.get("mute") == "yes",
-                        hwdec: client.get("hwdec-current"),
+                        title: client.get(c"media-title"),
+                        paused: client.get(c"pause") == "yes",
+                        position: client.number(c"time-pos"),
+                        duration: client.number(c"duration"),
+                        speed: client.number(c"speed"),
+                        volume: client.number(c"volume"),
+                        muted: client.get(c"mute") == "yes",
+                        hwdec: client.get(c"hwdec-current"),
                         tracks: tracks.clone(),
                         error: error.clone(),
                     };

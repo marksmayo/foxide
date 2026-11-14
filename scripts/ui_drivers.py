@@ -27,15 +27,17 @@ class Driver:
     method = 'accessibility-action'
 
     def find(self, name, roles):
+        expected = normalized(name)
         matches = [node for node in self.nodes() if node.pid == self.pid and node.visible
-                   and node.role in roles and normalized(node.name) == normalized(name)]
+                   and node.role in roles and normalized(node.name) == expected]
         if len(matches) != 1:
             raise RuntimeError(f'Expected one visible owned {roles} named {name!r}; found {len(matches)}')
         return matches[0]
 
     def observe(self, name, roles):
+        expected = normalized(name)
         return [node.evidence() for node in self.nodes() if node.pid == self.pid and node.visible
-                and node.role in roles and normalized(node.name) == normalized(name)]
+                and node.role in roles and normalized(node.name) == expected]
 
 
 class WindowsDriver(Driver):
