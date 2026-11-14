@@ -16,16 +16,13 @@ fn natural_key(name: &str) -> Vec<(bool, usize, String)> {
         {
             text.push(characters.next().unwrap());
         }
-        let significant = if numeric {
-            text.trim_start_matches('0')
-        } else {
-            &text
-        };
-        chunks.push((
-            numeric,
-            if numeric { significant.len() } else { 0 },
-            significant.to_owned(),
-        ));
+        // Reuse the chunk allocation. Only ASCII digits enter this branch, so
+        // the leading-zero byte count is always a valid UTF-8 boundary.
+        if numeric {
+            let zeroes = text.bytes().take_while(|&byte| byte == b'0').count();
+            text.drain(..zeroes);
+        }
+        chunks.push((numeric, if numeric { text.len() } else { 0 }, text));
     }
     chunks
 }

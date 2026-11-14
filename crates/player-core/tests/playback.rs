@@ -32,6 +32,11 @@ fn folder_queue_uses_episode_order_and_ignores_non_media_and_subdirectories() {
         "Episode10.MKV",
         "Episode2.mp4",
         "Episode01.mp4",
+        "Episode0.mp4",
+        "Episode00.mp4",
+        "Episode001.mp4",
+        "Épisode2.mp4",
+        "Épisode10.mp4",
         "subtitles.srt",
         "cover.png",
     ] {
@@ -44,7 +49,16 @@ fn folder_queue_uses_episode_order_and_ignores_non_media_and_subdirectories() {
             .iter()
             .map(|p| p.file_name().unwrap().to_str().unwrap())
             .collect::<Vec<_>>(),
-        ["Episode01.mp4", "Episode2.mp4", "Episode10.MKV"]
+        [
+            "Episode0.mp4",
+            "Episode00.mp4",
+            "Episode001.mp4",
+            "Episode01.mp4",
+            "Episode2.mp4",
+            "Episode10.MKV",
+            "Épisode2.mp4",
+            "Épisode10.mp4"
+        ]
     );
     let resolved = directory.canonicalize().unwrap();
     assert!(resolved.starts_with(root.canonicalize().unwrap()));

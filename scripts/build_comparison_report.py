@@ -5,6 +5,7 @@ import argparse
 import json
 from pathlib import Path
 import statistics
+from collections import defaultdict
 
 ROOT = Path(__file__).resolve().parents[1]
 METRICS = [
@@ -45,10 +46,15 @@ def eligible(trial, settings):
 def summarize(payload):
     profiles = payload.get('media', {}).get('fixtures', [])
     summary = {}
+    trials_by_fixture_player = defaultdict(list)
+    # Preserve trial order and eligibility rules while avoiding a full scan for
+    # every fixture/player pair.
+    for trial in payload['trials']:
+        trials_by_fixture_player[trial['fixture'], trial['player']].append(trial)
     for profile in profiles:
         player_values = {}
         for player in payload['catalog']['players']:
-            trials = [t for t in payload['trials'] if t['player'] == player['id'] and t['fixture'] == profile['id'] and eligible(t, payload['settings'])]
+            trials = [t for t in trials_by_fixture_player[profile['id'], player['id']] if eligible(t, payload['settings'])]
             metrics = {}
             for metric in METRICS:
                 values = [t.get(metric['key']) for t in trials if isinstance(t.get(metric['key']), (int, float))]
