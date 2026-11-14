@@ -34,7 +34,7 @@ jobs:
         shell: bash
         run: |
           python -m pip install coverage==7.17.3
-          python -m coverage run --branch --source=medal_events,build_medal_report,event_benchmarks,collection_io --data-file=results/local/.coverage-medals -m unittest discover -s tests
+          python -m coverage run --branch --source=medal_events,build_medal_report,event_benchmarks,collection_io,ui_benchmarks --data-file=results/local/.coverage-medals -m unittest discover -s tests
           python -m coverage report --data-file=results/local/.coverage-medals --fail-under=90
           python -m coverage json --data-file=results/local/.coverage-medals -o results/local/coverage-medals.json
       - uses: actions/upload-artifact@v4

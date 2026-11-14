@@ -7,6 +7,15 @@ from medal_events import feature_medals, performance_medals, scoreboards
 
 
 class MedalEventsTests(unittest.TestCase):
+    def test_ui_verification_is_not_mislabeled_as_verified_playback(self):
+        catalog = dict(features=[], claims=[], research_date='2026-11-15',
+                       players=[dict(id='one', name='One', platforms=['windows'])])
+        sessions = [dict(session={'system': 'windows'}, inventory=[], cases=[
+            dict(player='one', scope='native-ui', verified=True, status='verified')])]
+        status = scoreboards(catalog, {'events': []}, [], sessions)['windows']['runtime']['one']['status']
+        self.assertIn('Verified UI actions 1/1', status)
+        self.assertNotIn('playback', status)
+
     def test_every_documented_supporter_gets_gold(self):
         claims = [
             {'player': 'one', 'status': 'supported', 'sources': ['https://example.org/docs']},

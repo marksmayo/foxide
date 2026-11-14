@@ -1,6 +1,6 @@
 # Foxide engineering design
 
-Status: proposed architecture, pending baseline measurements and platform GPU spikes. The benchmark foundation was implemented first. No measured native-power parity or custom rendering integration exists yet. The initial machine is Windows x86-64; macOS/Linux require real-hardware validation.
+Status: desktop preview implemented with Slint and a libmpv/OpenGL texture compositor. Baselines exist for hosted software/null-output cohorts. Native-power parity and decoder/display zero-copy remain unverified. Windows has a local desktop build; macOS/Linux require build and real-hardware validation. [Current desktop ADR](adr/0004-slint-desktop.md) supersedes the original UI recommendation below.
 
 ## Product constraints and recommendation
 

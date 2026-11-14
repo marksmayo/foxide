@@ -1,0 +1,658 @@
+{
+  "schema_version": 1,
+  "notes": [
+    "Native UI action-to-state observation is not display presentation or decoder seek latency.",
+    "Default menu measurements use an idle player, a fixed locale, screen geometry/DPI and the same native automation method.",
+    "Each adapter must verify owned process identity, a false precondition, native action, and a true postcondition; absent adapters/permissions are unranked.",
+    "Requested actions requiring frame presentation stay pending until a content-aware presentation collector exists."
+  ],
+  "actions": [
+    {
+      "id": "menu_media",
+      "name": "Media/File menu",
+      "verification": "accessibility-state",
+      "condition": "media-menu-visible",
+      "context": "idle",
+      "collector": "native-accessibility",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "menu_playback",
+      "name": "Playback menu",
+      "verification": "accessibility-state",
+      "condition": "playback-menu-visible",
+      "context": "idle",
+      "collector": "native-accessibility",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "menu_audio",
+      "name": "Audio menu",
+      "verification": "accessibility-state",
+      "condition": "audio-menu-visible",
+      "context": "idle",
+      "collector": "native-accessibility",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "menu_subtitles",
+      "name": "Subtitle menu",
+      "verification": "accessibility-state",
+      "condition": "subtitle-menu-visible",
+      "context": "idle",
+      "collector": "native-accessibility",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "open_dialog",
+      "name": "Open-file dialog",
+      "verification": "accessibility-state",
+      "condition": "open-dialog-visible",
+      "context": "idle",
+      "collector": "native-accessibility",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "pause",
+      "name": "Pause control acknowledgement",
+      "verification": "accessibility-state",
+      "condition": "play-control-visible",
+      "context": "playback",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "resume",
+      "name": "Resume control acknowledgement",
+      "verification": "accessibility-state",
+      "condition": "pause-control-visible",
+      "context": "playback",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "mute",
+      "name": "Mute control acknowledgement",
+      "verification": "accessibility-state",
+      "condition": "unmute-control-visible",
+      "context": "playback",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "playlist",
+      "name": "Show playlist",
+      "verification": "accessibility-state",
+      "condition": "playlist-visible",
+      "context": "playback",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "preferences",
+      "name": "Open preferences",
+      "verification": "accessibility-state",
+      "condition": "preferences-visible",
+      "context": "playback",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "audio_track",
+      "name": "Select audio track",
+      "verification": "accessibility-state",
+      "condition": "audio-track-selected",
+      "context": "playback",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "subtitle_track",
+      "name": "Select subtitle track",
+      "verification": "accessibility-state",
+      "condition": "subtitle-track-selected",
+      "context": "playback",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "subtitle_dialog",
+      "name": "Load-subtitle dialog",
+      "verification": "accessibility-state",
+      "condition": "subtitle-dialog-visible",
+      "context": "playback",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "speed",
+      "name": "Change playback speed",
+      "verification": "accessibility-state",
+      "condition": "speed-selected",
+      "context": "playback",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "fullscreen_enter",
+      "name": "Enter fullscreen",
+      "verification": "window-geometry",
+      "condition": "fullscreen-geometry",
+      "context": "playback",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "fullscreen_exit",
+      "name": "Leave fullscreen",
+      "verification": "window-geometry",
+      "condition": "windowed-geometry",
+      "context": "playback",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "resize",
+      "name": "Resize window",
+      "verification": "window-geometry",
+      "condition": "requested-geometry",
+      "context": "playback",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "context_menu",
+      "name": "Video context menu",
+      "verification": "accessibility-state",
+      "condition": "context-menu-visible",
+      "context": "playback",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "seek_forward",
+      "name": "Seek +30s to stable video",
+      "verification": "presented-frame",
+      "condition": "seek-frame-presented",
+      "context": "playback",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "seek_backward",
+      "name": "Seek -30s to stable video",
+      "verification": "presented-frame",
+      "condition": "seek-frame-presented",
+      "context": "playback",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "scrub",
+      "name": "Scrub ten timestamps",
+      "verification": "presented-frame",
+      "condition": "scrub-final-frame-presented",
+      "context": "playback",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "drop_files",
+      "name": "Drop ten files into playlist",
+      "verification": "accessibility-state",
+      "condition": "ten-items-queued",
+      "context": "playback",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "open_video",
+      "name": "Open file to displayed frame",
+      "verification": "presented-frame",
+      "condition": "first-video-frame-presented",
+      "context": "playback",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "fullscreen_video",
+      "name": "Fullscreen to stable video",
+      "verification": "presented-frame",
+      "condition": "fullscreen-frame-presented",
+      "context": "playback",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    }
+  ],
+  "players": [
+    {
+      "id": "foxide",
+      "platforms": [
+        "windows",
+        "macos",
+        "linux"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "menus": {
+        "menu_media": [
+          "Media",
+          "Open files..."
+        ],
+        "menu_playback": [
+          "Playback",
+          "Stop"
+        ],
+        "menu_audio": [
+          "Audio",
+          "Mute"
+        ],
+        "menu_subtitles": [
+          "Subtitles",
+          "Load subtitle file..."
+        ],
+        "open_dialog": [
+          "Open files",
+          "Open media files"
+        ]
+      },
+      "status": "locators-require-runtime-verification",
+      "not_applicable": []
+    },
+    {
+      "id": "vlc",
+      "platforms": [
+        "windows",
+        "macos",
+        "linux"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "menus": {
+        "menu_media": [
+          "Media",
+          "Open File..."
+        ],
+        "menu_playback": [
+          "Playback",
+          "Stop"
+        ],
+        "menu_audio": [
+          "Audio",
+          "Audio Track"
+        ],
+        "menu_subtitles": [
+          "Subtitle",
+          "Add Subtitle File..."
+        ]
+      },
+      "status": "locators-require-runtime-verification",
+      "not_applicable": []
+    },
+    {
+      "id": "mpv",
+      "platforms": [
+        "windows",
+        "macos",
+        "linux"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "menus": {},
+      "status": "adapter-required",
+      "not_applicable": [
+        "menu_media",
+        "menu_playback",
+        "menu_audio",
+        "menu_subtitles",
+        "open_dialog",
+        "preferences"
+      ]
+    },
+    {
+      "id": "wmp-modern",
+      "platforms": [
+        "windows"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "menus": {},
+      "status": "adapter-required",
+      "not_applicable": []
+    },
+    {
+      "id": "wmp-legacy",
+      "platforms": [
+        "windows"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "menus": {},
+      "status": "adapter-required",
+      "not_applicable": []
+    },
+    {
+      "id": "mpc-hc",
+      "platforms": [
+        "windows"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "menus": {
+        "menu_media": [
+          "File",
+          "Open File..."
+        ],
+        "menu_playback": [
+          "Play",
+          "Pause"
+        ]
+      },
+      "status": "locators-require-runtime-verification",
+      "not_applicable": []
+    },
+    {
+      "id": "mpc-be",
+      "platforms": [
+        "windows"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "menus": {
+        "menu_media": [
+          "File",
+          "Open File..."
+        ],
+        "menu_playback": [
+          "Play",
+          "Pause"
+        ]
+      },
+      "status": "locators-require-runtime-verification",
+      "not_applicable": []
+    },
+    {
+      "id": "potplayer",
+      "platforms": [
+        "windows"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "menus": {},
+      "status": "adapter-required",
+      "not_applicable": []
+    },
+    {
+      "id": "smplayer",
+      "platforms": [
+        "windows",
+        "macos",
+        "linux"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "menus": {
+        "menu_media": [
+          "Open",
+          "File..."
+        ],
+        "menu_playback": [
+          "Play",
+          "Stop"
+        ]
+      },
+      "status": "locators-require-runtime-verification",
+      "not_applicable": []
+    },
+    {
+      "id": "kmplayer",
+      "platforms": [
+        "windows"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "menus": {},
+      "status": "adapter-required",
+      "not_applicable": []
+    },
+    {
+      "id": "gom",
+      "platforms": [
+        "windows"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "menus": {},
+      "status": "adapter-required",
+      "not_applicable": []
+    },
+    {
+      "id": "ffplay",
+      "platforms": [
+        "windows",
+        "macos",
+        "linux"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "menus": {},
+      "status": "adapter-required",
+      "not_applicable": [
+        "menu_media",
+        "menu_playback",
+        "menu_audio",
+        "menu_subtitles",
+        "open_dialog",
+        "preferences"
+      ]
+    },
+    {
+      "id": "kodi",
+      "platforms": [
+        "windows",
+        "macos",
+        "linux"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "menus": {},
+      "status": "adapter-required",
+      "not_applicable": []
+    },
+    {
+      "id": "plex",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "menus": {},
+      "status": "adapter-required",
+      "not_applicable": []
+    },
+    {
+      "id": "foobar2000",
+      "platforms": [
+        "windows",
+        "macos"
+      ],
+      "media_types": [
+        "audio"
+      ],
+      "menus": {
+        "menu_media": [
+          "File",
+          "Open..."
+        ],
+        "menu_playback": [
+          "Playback",
+          "Stop"
+        ]
+      },
+      "status": "locators-require-runtime-verification",
+      "not_applicable": []
+    },
+    {
+      "id": "infuse",
+      "platforms": [
+        "macos"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "menus": {},
+      "status": "adapter-required",
+      "not_applicable": []
+    },
+    {
+      "id": "iina",
+      "platforms": [
+        "macos"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "menus": {
+        "menu_media": [
+          "File",
+          "Open..."
+        ],
+        "menu_playback": [
+          "Playback",
+          "Pause"
+        ],
+        "menu_audio": [
+          "Audio",
+          "Audio Track"
+        ],
+        "menu_subtitles": [
+          "Subtitle",
+          "Load External Subtitle..."
+        ]
+      },
+      "status": "locators-require-runtime-verification",
+      "not_applicable": []
+    },
+    {
+      "id": "quicktime",
+      "platforms": [
+        "macos"
+      ],
+      "media_types": [
+        "video",
+        "audio"
+      ],
+      "menus": {
+        "menu_media": [
+          "File",
+          "Open File..."
+        ]
+      },
+      "status": "locators-require-runtime-verification",
+      "not_applicable": []
+    }
+  ]
+}

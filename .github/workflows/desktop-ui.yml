@@ -1,0 +1,32 @@
+name: Desktop UI build and preview
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: desktop-ui
+      - name: Linux window toolkit prerequisites
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libxkbcommon-dev libfontconfig1-dev libwayland-dev libegl1-mesa-dev
+      - run: cargo build -p player-ui --features desktop --bin foxide-desktop --release --locked
+      - name: Render actual Slint layout without a native display
+        shell: bash
+        run: |
+          mkdir -p results/local
+          ./target/release/foxide-desktop --preview-png results/local/foxide-ui-preview.png
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-ui-${{ runner.os }}
+          path: |
+            target/release/foxide-desktop*
+            results/local/foxide-ui-preview.png

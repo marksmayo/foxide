@@ -1,6 +1,6 @@
 # ADR 0002: Choose egui, initially with a shared OpenGL presenter
 
-Status: proposed. No GUI framework dependency or custom window is implemented yet.
+Status: superseded by [ADR 0004: Slint desktop](0004-slint-desktop.md). This document preserves the original proposal.
 
 ## Evaluation
 

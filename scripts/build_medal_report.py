@@ -49,7 +49,8 @@ def chart(platform, board):
 def markdown(boards, relative):
     parts = ['\n## Player medal scoreboards\n\n']
     parts.append('Feature support earns **shared gold** for every documented supporter. Unknown is unverified, not unsupported. Counts reflect the documentation reviewed and do not establish an overall best player. Performance medals require at least three verified, comparable repeats on the same platform, host, fixture, scenario, and settings.\n\n')
-    parts.append(f'Results are readable directly on GitHub below. [Download optional HTML]({relative}/report.html) to open locally · [Raw scores]({relative}/medals.json) · [Feature sources]({relative}/features.json) · [45 performance protocols]({relative}/performance-events.json)\n\n')
+    parts.append(f'Results are readable directly on GitHub below. [Download optional HTML]({relative}/report.html) to open locally · [Raw scores]({relative}/medals.json) · [Feature sources]({relative}/features.json) · [Performance protocols]({relative}/performance-events.json)\n\n')
+    parts.append(f'UI events include menus, dialogs, playback controls, scrubbing, fullscreen and resizing. Native UI acknowledgement has a separate cohort from displayed-frame timing. Missing adapters or presentation evidence remain unranked. [UI benchmark protocol]({relative}/../ui-benchmarks.md).\n\n')
     for platform, board in boards.items():
         parts.append(f'### {LABELS[platform]}\n\n![{LABELS[platform]} feature golds]({relative}/{platform}.svg)\n\n')
         parts.append('| Player | Feature 🥇 | Performance 🥇 | 🥈 | 🥉 | Runtime outcome |\n|---|---:|---:|---:|---:|---|\n')

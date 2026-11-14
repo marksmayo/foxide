@@ -1,0 +1,18 @@
+[package]
+name = "player-render"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[features]
+desktop = ["dep:slint", "dep:glow", "dep:libloading", "dep:serde_json"]
+
+[dependencies]
+slint = { version = "=1.18.1", default-features = false, features = ["std", "compat-1-18"], optional = true }
+glow = { version = "0.16", optional = true }
+libloading = { version = "0.8", optional = true }
+serde_json = { workspace = true, optional = true }
+
+[lints.rust]
+unsafe_op_in_unsafe_fn = "deny"

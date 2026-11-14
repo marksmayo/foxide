@@ -1,0 +1,35 @@
+name: Interactive UI benchmarks
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        type: choice
+        options: [Windows, macOS, Linux]
+        required: true
+      environment:
+        description: Screen resolution, DPI, locale, theme and desktop session
+        required: true
+permissions:
+  contents: read
+jobs:
+  native-ui:
+    runs-on: [self-hosted, foxide-ui, '${{ inputs.platform }}']
+    timeout-minutes: 90
+    env:
+      UI_ENVIRONMENT: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build release desktop player
+        run: cargo build -p player-ui --features desktop --bin foxide-desktop --release --locked
+      - name: Collect native UI evidence
+        shell: bash
+        run: python scripts/run_ui_benchmarks.py --execute --repeats 10 --environment-label "$UI_ENVIRONMENT" --output results/local/ui-actions
+      - name: Build evidence-backed report
+        run: python scripts/build_medal_report.py --measurements results/local/ui-actions/measurements.json --sessions results/local/ui-actions/session.json --output results/local/ui-report
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-ui-${{ runner.os }}
+          path: |
+            results/local/ui-actions
+            results/local/ui-report

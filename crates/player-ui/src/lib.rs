@@ -1,5 +1,8 @@
-//! Keyboard policy for the future Foxide OSD. This crate does not create a window yet.
+//! Shared command/state policy for the Foxide desktop and keyboard controls.
+#![forbid(unsafe_code)]
 use player_core::Command;
+mod state;
+pub use state::{Action, Effect, UiState};
 
 /// Initial mpv-compatible shortcut subset. Modifiers and text editing are handled by the UI.
 pub fn shortcut(key: &str) -> Option<Command> {

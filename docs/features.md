@@ -1,6 +1,6 @@
 # Foxide capabilities and feature events
 
-The current Foxide application is a Rust command-line launcher around an external mpv process. Its playback window and media clock are mpv-owned. The custom Rust window, libmpv integration, and shared GPU context remain future engineering work.
+The `foxide` CLI launches external mpv. The optional `foxide-desktop` preview now embeds libmpv in a Slint window, with menus, a playlist, playback/speed/volume/track controls, external subtitles, fullscreen and file/URL opening. See [desktop setup and limits](desktop.md). The table below describes the established CLI interface; GUI playback and GPU acceptance remain separate.
 
 ## Available controls
 

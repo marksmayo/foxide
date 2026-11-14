@@ -123,8 +123,15 @@ def scoreboards(catalog, protocol, measurements, sessions=()):
                 if case['player'] in runtime:
                     outcomes[case['player']].append(case)
         for player, cases in outcomes.items():
-            count = sum(c.get('verified') is True for c in cases)
-            runtime[player] = {'status': f'Verified playback {count}/{len(cases)}' if count else f'Unverified / diagnostic ({len(cases)} cases)',
+            playback = [c for c in cases if c.get('scope') != 'native-ui']
+            ui = [c for c in cases if c.get('scope') == 'native-ui']
+            count = sum(c.get('verified') is True for c in playback)
+            parts = []
+            if playback:
+                parts.append(f'Verified playback {count}/{len(playback)}' if count else f'Unverified / diagnostic ({len(playback)} cases)')
+            if ui:
+                parts.append(f'Verified UI actions {sum(c.get("verified") is True for c in ui)}/{len(ui)}')
+            runtime[player] = {'status': '; '.join(parts),
                                'details': ', '.join(sorted({c['status'] for c in cases}))}
         boards[platform] = {'players': players, 'features': features, 'performance': performances, 'runtime': runtime,
                             'research_date': catalog['research_date']}

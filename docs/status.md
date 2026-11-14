@@ -1,8 +1,8 @@
 # Foxide engineering status
 
-Foxide is a usable Rust launcher around external mpv, with validated playback options, local/network playlists, natural folder queueing, synchronization, picture controls, watch-later resume, and minimal-window options. See [capabilities](features.md). Embedded libmpv and the custom GPU window/OSD remain future work.
+Foxide now has an optional Slint desktop preview embedding libmpv in its own OpenGL window, alongside the existing external-mpv CLI. Menus, playback controls, native file pickers and playlists are implemented. The local Windows build and layout render pass; a visible window is user-confirmed. Moving-video playback, native accessibility and platform GPU efficiency still need acceptance. See [desktop setup](desktop.md) and [capabilities](features.md).
 
-[Player Games](player-games.md) provides a sourced 30-event feature comparison, 45 performance protocols, three platform boards, HTML, SVG graphs, and generated README tables. Verified playback and startup-only diagnostics remain distinct. Physical collectors remain pending.
+[Player Games](player-games.md) provides a sourced 30-event feature comparison, 117 performance protocols (including 72 UI events), three platform boards, HTML, SVG graphs, and generated README tables. The completed performance run supplies 579 measurements. UI events and physical collectors remain pending; definitions do not count as results. [UI protocol](ui-benchmarks.md).
 
 Local mpv came from the official pinned archive with verified SHA-256. Windows H.264 playback reported D3D11VA and GPU output. Eight additional competitor copies under `tools/` passed process startup checks. See [local inventory](local-players.md); startup does not certify playback.
 
