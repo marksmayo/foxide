@@ -6,11 +6,15 @@ import statistics
 from urllib.parse import urlparse
 
 
-def feature_medals(claims):
+def feature_medals(claims, valid_source=None):
     """Feature possession is a shared gold; unknown is never a negative claim."""
+    if valid_source is None:
+        def valid_source(url):
+            parsed = urlparse(url)
+            return parsed.scheme in ('https', 'http') and bool(parsed.hostname)
     return {c['player']: 'gold' for c in claims
             if c['status'] == 'supported' and c.get('sources')
-            and all(urlparse(u).scheme in ('https', 'http') and urlparse(u).hostname for u in c['sources'])}
+            and all(valid_source(u) for u in c['sources'])}
 
 
 def performance_medals(rows, event, platform, profile, direction='min', resolution=0):
@@ -42,11 +46,12 @@ def performance_medals(rows, event, platform, profile, direction='min', resoluti
         return []
     entrants.sort(key=lambda r: r['score'], reverse=direction == 'max')
     rank, previous = 0, None
+    medals = {1: 'gold', 2: 'silver', 3: 'bronze'}
     for index, entrant in enumerate(entrants, 1):
         if entrant['score'] != previous:
             rank = index
         entrant['rank'] = rank
-        entrant['medal'] = {1: 'gold', 2: 'silver', 3: 'bronze'}.get(rank)
+        entrant['medal'] = medals.get(rank)
         previous = entrant.pop('score')
     return entrants
 
@@ -54,26 +59,45 @@ def performance_medals(rows, event, platform, profile, direction='min', resoluti
 def scoreboards(catalog, protocol, measurements, sessions=()):
     """One platform board, with documented features and empirical medals apart."""
     boards = {}
+    claims_by_feature = defaultdict(list)
+    measurements_by_platform = defaultdict(list)
+    measurements_by_player = defaultdict(list)
+    cohorts = defaultdict(list)
+    profiles = defaultdict(set)
+    for claim in catalog['claims']:
+        claims_by_feature[claim['feature']].append(claim)
+    for row in measurements:
+        key = row['platform'], row['event'], row['profile']
+        cohorts[key].append(row)
+        profiles[key[:2]].add(row['profile'])
+        measurements_by_platform[row['platform']].append(row)
+        measurements_by_player[row['platform'], row['player']].append(row)
+    source_validity = {}
+    def valid_source(url):
+        if url not in source_validity:
+            parsed = urlparse(url)
+            source_validity[url] = parsed.scheme in ('https', 'http') and bool(parsed.hostname)
+        return source_validity[url]
     for platform in ('windows', 'macos', 'linux'):
         players = [{**p, 'feature_gold': 0, 'performance_gold': 0,
                     'performance_silver': 0, 'performance_bronze': 0}
                    for p in catalog['players'] if platform in p['platforms']]
         lookup = {p['id']: p for p in players}
         features = []
+        media_types = {p['id']: set(p.get('media_types', ['audio', 'video'])) for p in players}
         for feature in catalog['features']:
-            applicable = [p['id'] for p in players if set(p.get('media_types', ['audio', 'video'])) & set(feature.get('media_types', ['audio', 'video']))]
-            claims = [c for c in catalog['claims'] if c['feature'] == feature['id']
-                      and c['player'] in applicable and platform in c.get('platforms', [platform])]
-            awards = feature_medals(claims)
+            types = set(feature.get('media_types', ['audio', 'video']))
+            applicable = [p['id'] for p in players if media_types[p['id']] & types]
+            applicable_set = set(applicable)
+            claims = [c for c in claims_by_feature[feature['id']] if c['player'] in applicable_set and platform in c.get('platforms', [platform])]
+            awards = feature_medals(claims, valid_source)
             for player in awards:
                 lookup[player]['feature_gold'] += 1
             features.append({**feature, 'awards': awards, 'claims': claims, 'applicable': applicable})
         performances = []
         for event in protocol['events']:
-            profiles = sorted({r['profile'] for r in measurements
-                               if r['event'] == event['id'] and r['platform'] == platform})
-            for profile in profiles:
-                ranks = performance_medals([r for r in measurements if r['player'] in lookup],
+            for profile in sorted(profiles[platform, event['id']]):
+                ranks = performance_medals([r for r in cohorts[platform, event['id'], profile] if r['player'] in lookup],
                                            event['id'], platform, profile, event['direction'],
                                            event.get('resolution', 0))
                 for row in ranks:
@@ -82,7 +106,7 @@ def scoreboards(catalog, protocol, measurements, sessions=()):
                 performances.append({**event, 'profile': profile, 'rankings': ranks})
         runtime = {p['id']: {'status': 'Not run in this dataset', 'details': ''} for p in players}
         for player in runtime:
-            evidence = [r for r in measurements if r['platform'] == platform and r['player'] == player]
+            evidence = measurements_by_player[platform, player]
             if evidence:
                 cases = {(r['profile'], r['trial']) for r in evidence}
                 verified = {(r['profile'], r['trial']) for r in evidence if r.get('verified') is True}

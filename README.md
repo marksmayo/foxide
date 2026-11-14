@@ -10,9 +10,9 @@ A Rust desktop media player project, starting with measurable playback and a tra
 
 Build with `cargo build --release --locked`. On Windows, `python scripts/install-mpv.py` installs a verified engine under `tools/mpv`. Playback controls include Space/pause, arrows/seek, Shift+arrows/exact seek, F/fullscreen, J/subtitles, #/audio track, S/screenshot, and Q/quit. Run `foxide --help` for tracks, offsets, tone mapping, picture controls, chapters, URLs, playlists, and window options.
 
-[Capabilities and remaining work](docs/features.md) · [Local players](docs/local-players.md) · [Benchmark protocol](docs/player-games.md) · [Architecture](docs/architecture.md) · [Actions](https://github.com/marksmayo/foxide/actions)
+[Performance implementation ledger](docs/performance-review/IMPLEMENTATION.md) · [Capabilities and remaining work](docs/features.md) · [Local players](docs/local-players.md) · [Benchmark protocol](docs/player-games.md) · [Architecture](docs/architecture.md) · [Actions](https://github.com/marksmayo/foxide/actions)
 
-The **Player Games** workflow installs/attempts each platform's native field, records verified playback or labeled frontend diagnostics, generates HTML, and updates the graphs/tables below. Feature possession awards shared gold. Performance requires repeated, verified, comparable measurements. Hosted VMs have separate cohorts from physical GPU, battery, and displayed-frame tests.
+The **Player Games** workflow installs/attempts each platform's native field, records verified playback or labeled frontend diagnostics, updates the GitHub-native graphs, result tables, and expandable feature/metric details below; downloadable HTML remains optional. Feature possession awards shared gold. Performance requires repeated, verified, comparable measurements. Hosted VMs have separate cohorts from physical GPU, battery, and displayed-frame tests.
 
 Development follows red → green tests. CI enforces **90% Rust workspace line coverage** and **90% coverage for medal/report policies**. The custom Rust window/OSD, native PiP, thumbnails, and embedded libmpv GPU integration are still ahead of the current external-engine launcher.
 

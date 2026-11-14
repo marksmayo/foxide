@@ -23,6 +23,7 @@ import time
 import urllib.error
 import urllib.request
 
+from collection_io import EventTail, write_json
 from event_benchmarks import measurement_rows, playback_verified, summarize_samples
 from telemetry import windows_snapshot, linux_snapshot, mac_snapshot
 
@@ -37,10 +38,10 @@ def digest(path):
         return hashlib.file_digest(stream, 'sha256').hexdigest()
 
 
-def locate(player, system):
+def locate(player, system, discovered=None):
     if system == 'windows':
         from compare_players import inventory
-        return next((p.get('executable') for p in inventory()['players'] if p['id'] == player), None)
+        return (discovered if discovered is not None else {p['id']: p.get('executable') for p in inventory(fingerprint=False)['players']}).get(player)
     if player == 'foxide':
         binary = ROOT / 'target/release/foxide'
         return str(binary) if binary.is_file() else None
@@ -118,27 +119,33 @@ def stop_owned(process, records, snapshot):
         process.wait()
 
 
-def collect(player, executable, scenario, media, subtitle, directory, settings, system, trial):
+def collect(player, executable, scenario, media, subtitle, directory, settings, system, trial, media_hash=None, subtitle_hash=None, snapshot=None):
     directory.mkdir(parents=True, exist_ok=False)
-    with socket.socket() as reservation:
-        reservation.bind(('127.0.0.1', 0))
-        port = reservation.getsockname()[1]
-    password = secrets.token_urlsafe(18)
+    port, password = 0, ''
+    if player == 'vlc':
+        with socket.socket() as reservation:
+            reservation.bind(('127.0.0.1', 0))
+            port = reservation.getsockname()[1]
+        password = secrets.token_urlsafe(18)
     command = command_for(player, executable, scenario, media, subtitle, port, password)
-    cohort = dict(settings, media_sha256=digest(media), scenario=scenario,
+    cohort = dict(settings, media_sha256=media_hash or digest(media), scenario=scenario,
                   mode='vm-software-null-output' if player in CORE else 'frontend-default-diagnostic')
-    if scenario == 'ass': cohort['subtitle_sha256'] = digest(subtitle)
+    if scenario == 'ass': cohort['subtitle_sha256'] = subtitle_hash or digest(subtitle)
     profile = cohort['mode'] + '/' + scenario + '/' + hashlib.sha256(json.dumps(cohort, sort_keys=True).encode()).hexdigest()[:16]
     case = dict(player=player, scenario=scenario, platform=system, profile=profile, trial=trial,
-                source=str(directory / 'case.json'), cohort=cohort, command=[a.replace(password, '<ephemeral>') for a in command],
+                source=str(directory / 'case.json'), cohort=cohort, command=[a.replace(password, '<ephemeral>') if password else a for a in command],
                 verified=False, status='pending', metrics={}, samples=[], playback_events=[], vlc_status=[],
                 notes=['CPU 100% means one fully utilized logical core.',
                        'Steady sampling begins after verified playback readiness plus warmup. Cache state is uncontrolled.',
                        'RSS is a process-tree sum; shared pages may be counted twice.',
                        'VM null outputs do not exercise native GPU presentation, subtitle composition, display timing, or power.',
                        'mpv Lua / VLC HTTP observation overhead is included and differs by adapter.'])
-    snapshot = windows_snapshot() if os.name == 'nt' else (linux_snapshot if system == 'linux' else mac_snapshot)
+    snapshot = snapshot or (windows_snapshot() if os.name == 'nt' else (linux_snapshot if system == 'linux' else mac_snapshot))
     env = dict(os.environ, FOXIDE_BENCH_EVENTS=str(directory / 'events.jsonl'), FOXIDE_BENCH_SEEKS='0')
+    event_path = directory / 'events.jsonl'
+    tail = EventTail(event_path)
+    auth = base64.b64encode((':' + password).encode()).decode() if password else ''
+    status_url = f'http://127.0.0.1:{port}/requests/status.json'
     previous, previous_time, owned, root_identity = {}, None, {}, None
     started = time.perf_counter()
     process = None
@@ -164,18 +171,17 @@ def collect(player, executable, scenario, media, subtitle, directory, settings, 
                             case['status'] = 'pid-reused'
                             break
                         owned.update(records)
-                        common = [p for p in records if p in previous and records[p][0] == previous[p][0]]
+                        common = (p for p in records if p in previous and records[p][0] == previous[p][0])
                         cpu = None if previous_time is None else sum(max(0, records[p][2]-previous[p][2]) for p in common) / (now-previous_time) * 100
                         case['samples'].append(dict(elapsed=now-started, rss=sum(r[1] for r in records.values()), cpu=cpu))
                         previous, previous_time = records, now
                     next_sample = now + .25
                 if player in ('mpv', 'foxide') and startup_proxy is None:
-                    events = read_events(directory / 'events.jsonl')
+                    events = tail.read()
                     if any(e.get('kind') == 'first-playback-restart-proxy' for e in events):
                         startup_proxy = (time.perf_counter()-started)*1000
                 if player == 'vlc' and now >= next_status:
-                    auth = base64.b64encode((':' + password).encode()).decode()
-                    request = urllib.request.Request(f'http://127.0.0.1:{port}/requests/status.json', headers={'Authorization': 'Basic '+auth})
+                    request = urllib.request.Request(status_url, headers={'Authorization': 'Basic '+auth})
                     try:
                         with urllib.request.urlopen(request, timeout=.15) as response:
                             case['vlc_status'].append(json.load(response))
@@ -202,7 +208,7 @@ def collect(player, executable, scenario, media, subtitle, directory, settings, 
     if scenario == 'avc1080':
         case['metrics']['rss_peak'] = summary['rss_peak_mib']
         if player in ('mpv', 'foxide'): case['metrics']['startup_proxy'] = startup_proxy
-    (directory / 'case.json').write_text(json.dumps(case, indent=2, allow_nan=False), encoding='utf-8')
+    write_json(directory / 'case.json', case)
     return case
 
 
@@ -223,6 +229,7 @@ def main():
         parser.error('Use >=3 repeats, 4..600 seconds duration, and finite 0 <= warmup < duration')
     system = 'windows' if os.name == 'nt' else 'macos' if sys.platform == 'darwin' else 'linux'
     catalog = json.loads((ROOT / 'benchmarks/features.json').read_text('utf-8'))
+    args.players = set(args.players) if args.players else None
     if args.players and set(args.players) - {p['id'] for p in catalog['players']}:
         parser.error('Unknown player ID')
     manifest = json.loads((args.media_dir / 'manifest.json').read_text('utf-8'))
@@ -230,12 +237,24 @@ def main():
     for fixture in manifest['fixtures']:
         if digest(args.media_dir / fixture['path']) != fixture['sha256']:
             parser.error('Fixture hash mismatch: ' + fixture['path'])
+    media = {key: value.resolve() for key, value in media.items()}
+    hashes = {f['id']: f['sha256'] for f in manifest['fixtures']}
+    identities = {key: (stat.st_size, stat.st_mtime_ns) for key, value in media.items() for stat in [value.stat()]}
+    collector_paths = [Path(__file__), ROOT / 'scripts/telemetry.py', ROOT / 'scripts/collection_io.py', ROOT / 'scripts/event_benchmarks.py', ROOT / 'crates/player-bench/assets/bench.lua']
+    collector_digest = hashlib.sha256(''.join(digest(path) for path in collector_paths).encode()).hexdigest()
+    subtitle = (args.media_dir / 'subtitles.ass').resolve()
+    subtitle_hash = digest(subtitle) if subtitle.exists() else None
+    snapshot = windows_snapshot() if os.name == 'nt' else (linux_snapshot if system == 'linux' else mac_snapshot)
+    discovered = None
+    if os.name == 'nt':
+        from compare_players import inventory as windows_inventory
+        discovered = {p['id']: p.get('executable') for p in windows_inventory(fingerprint=False)['players']}
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
     session = dict(utc=datetime.now(timezone.utc).isoformat(), system=system, os=platform.platform(),
                    arch=platform.machine(), cpu_count=os.cpu_count(), host=platform.node(),
                    runner_image=os.environ.get('ImageVersion'), run_id=os.environ.get('GITHUB_RUN_ID'),
-                   duration=args.duration, warmup=args.warmup, script_sha256=digest(__file__))
+                   duration=args.duration, warmup=args.warmup, script_sha256=collector_digest)
     cases, inventory, rows = [], [], []
     installed = {}
     installation = output / 'player-installation.json'
@@ -244,7 +263,7 @@ def main():
     for player in catalog['players']:
         pid = player['id']
         if system not in player['platforms'] or args.players and pid not in args.players: continue
-        executable = locate(pid, system)
+        executable = locate(pid, system, discovered)
         entry = dict(player=pid, executable=executable, status='available' if executable else 'not-detected')
         inventory.append(entry)
         if not executable:
@@ -261,13 +280,18 @@ def main():
                 if args.plan:
                     cases.append(dict(player=pid, scenario=scenario, trial=trial, status='planned'))
                     continue
-                case = collect(pid, executable, scenario, fixture.resolve(), (args.media_dir / 'subtitles.ass').resolve(), output / 'cases' / f'{pid}-{scenario}-{trial}', session, system, trial)
+                identity = (fixture.stat().st_size, fixture.stat().st_mtime_ns)
+                if identity != identities[SCENARIOS[scenario]]:
+                    raise ValueError('Immutable fixture changed during session: ' + str(fixture))
+                case = collect(pid, executable, scenario, fixture, subtitle, output / 'cases' / f'{pid}-{scenario}-{trial}', session, system, trial, hashes[SCENARIOS[scenario]], subtitle_hash, snapshot)
+                if (fixture.stat().st_size, fixture.stat().st_mtime_ns) != identity:
+                    raise ValueError('Immutable fixture changed during trial: ' + str(fixture))
                 cases.append(case)
                 rows.extend(measurement_rows(case))
                 print(f'{pid} / {scenario} / {trial+1}: {case["status"]}', flush=True)
-                (output / 'measurements.json').write_text(json.dumps(rows, indent=2, allow_nan=False), encoding='utf-8')
+                write_json(output / 'measurements.json', rows, compact=True)
     (output / 'measurements.json').write_text(json.dumps(rows, indent=2, allow_nan=False), encoding='utf-8')
-    (output / 'session.json').write_text(json.dumps(dict(session=session, inventory=inventory, cases=cases), indent=2, allow_nan=False), encoding='utf-8')
+    write_json(output / 'session.json', dict(session=session, inventory=inventory, cases=cases))
     if args.require_core and not args.plan:
         for pid in CORE:
             if sum(c.get('verified', False) for c in cases if c['player'] == pid and c['scenario'] == 'avc1080') < args.repeat:

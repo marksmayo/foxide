@@ -30,9 +30,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: playback-release
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Cache verified mpv archive downloads
+        if: runner.os == 'Windows'
+        uses: actions/cache@v4
+        with:
+          path: tools/downloads
+          key: mpv-archive-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('benchmarks/mpv-windows.json') }}
       - name: Install the Windows field
         if: runner.os == 'Windows'
         shell: pwsh
@@ -79,10 +88,34 @@ jobs:
           dpkg-query -W > results/local/games/packages.txt
       - run: cargo test --workspace --locked
       - run: cargo build --release --locked
-      - name: Generate and verify deterministic seed corpus
+      - name: Identify the exact media tool build
+        id: media-tools
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib, os, subprocess
+          versions = b''.join(subprocess.check_output([tool, '-version']) for tool in ('ffmpeg', 'ffprobe'))
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('sha=' + hashlib.sha256(versions).hexdigest() + '\n')
+          PY
+      - name: Cache verified deterministic media
+        id: media-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            media/generated/games-seed
+            media/generated/games
+          key: games-media-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.media-tools.outputs.sha }}-${{ hashFiles('scripts/generate-media.py', 'scripts/prepare-event-media.py') }}
+      - name: Generate deterministic seed corpus on a cache miss
+        if: steps.media-cache.outputs.cache-hit != 'true'
         run: python scripts/generate-media.py --profile smoke --seconds 3 --files A B C D --output media/generated/games-seed
-      - name: Extend matched bitstreams for repeated playback
+      - name: Verify every seed, including restored seeds
+        run: python scripts/generate-media.py --verify-only --output media/generated/games-seed
+      - name: Extend matched bitstreams on a cache miss
+        if: steps.media-cache.outputs.cache-hit != 'true'
         run: python scripts/prepare-event-media.py --seed media/generated/games-seed --output media/generated/games
+      - name: Verify extended media before benchmarking
+        run: python scripts/prepare-event-media.py --verify-only --seed media/generated/games-seed --output media/generated/games
       - name: Benchmark Windows and macOS native fields
         if: runner.os != 'Linux'
         run: python scripts/run_event_benchmarks.py --media-dir media/generated/games --output results/local/games --require-core

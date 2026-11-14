@@ -31,9 +31,12 @@ def digest(path):
         return hashlib.file_digest(stream, 'sha256').hexdigest()
 
 
-def resolve(candidate):
+def resolve(candidate, folders=None):
+    folders = {} if folders is None else folders
     def folder(match):
         name = match[1]
+        if name in folders:
+            return folders[name]
         if os.environ.get(name):
             return os.environ[name]
         # Restricted launch environments can omit these standard variables.
@@ -43,6 +46,7 @@ def resolve(candidate):
             import ctypes
             value = ctypes.create_unicode_buffer(32768)
             if ctypes.windll.shell32.SHGetFolderPathW(None, ids[name], None, 0, value) == 0:
+                folders[name] = value.value
                 return value.value
         return match[0]
     candidate = re.sub(r'\{([^}]+)\}', folder, candidate)
@@ -55,20 +59,26 @@ def resolve(candidate):
     return Path(found).resolve() if found else None
 
 
-def inventory():
+def inventory(fingerprint=True):
+    folders, paths, fingerprints = {}, {}, {}
+    def cached_resolve(candidate):
+        if candidate not in paths:
+            paths[candidate] = resolve(candidate, folders)
+        return paths[candidate]
     catalog = json.loads((ROOT / 'benchmarks/windows-players.json').read_text('utf-8'))
     for player in catalog['players']:
         if 'windows' not in player.get('platforms', ['windows']):
             player.update(executable=None, status='other-platform',
                           reason='Available on ' + ', '.join(player['platforms']) + '; not installed or benchmarked as a Windows app.')
             continue
-        path = next((path for candidate in player['paths'] if (path := resolve(candidate))), None)
+        path = next((path for candidate in player['paths'] if (path := cached_resolve(candidate))), None)
         player['executable'] = str(path) if path else None
         player['status'] = 'available' if path else 'not-detected'
         player['reason'] = None if path else 'No executable found in configured paths or PATH.'
-        if path:
-            player['sha256'] = digest(path)
-            player['executable_bytes'] = path.stat().st_size
+        if path and fingerprint:
+            if path not in fingerprints:
+                fingerprints[path] = digest(path), path.stat().st_size
+            player['sha256'], player['executable_bytes'] = fingerprints[path]
         # Native frontend automation is not inferred from the fact a binary exists.
         if player['id'] not in ('vlc', 'mpv', 'foxide', 'ffplay', 'wmp-legacy') and path:
             player['status'] = 'adapter-needed'

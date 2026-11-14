@@ -59,14 +59,14 @@ def windows_snapshot():
         finally:
             kernel.CloseHandle(handle)
         result = {}
+        memory = Memory()
+        memory.size = c.sizeof(memory)
+        created, exited, kern, user = (w.FILETIME() for _ in range(4))
         for pid in descendants(entries, root):
             process = kernel.OpenProcess(0x0400 | 0x0010, False, pid)
             if not process:
                 continue
             try:
-                memory = Memory()
-                memory.size = c.sizeof(memory)
-                created, exited, kern, user = (w.FILETIME() for _ in range(4))
                 if (psapi.GetProcessMemoryInfo(process, c.byref(memory), memory.size)
                         and kernel.GetProcessTimes(process, c.byref(created), c.byref(exited),
                                                    c.byref(kern), c.byref(user))):
@@ -78,16 +78,23 @@ def windows_snapshot():
 
 
 def descendants(parents, root):
-    selected = {root} if root in parents else set()
-    while True:
-        more = {pid for pid, parent in parents.items() if parent in selected}
-        if more <= selected:
-            return selected
-        selected |= more
+    if root not in parents:
+        return set()
+    children = {}
+    for pid, parent in parents.items():
+        children.setdefault(parent, []).append(pid)
+    selected, pending = {root}, [root]
+    while pending:
+        for pid in children.get(pending.pop(), ()):
+            if pid not in selected:
+                selected.add(pid)
+                pending.append(pid)
+    return selected
 
 
 def linux_snapshot(root):
     records, parents = {}, {}
+    page_size, clock_ticks = os.sysconf('SC_PAGE_SIZE'), os.sysconf('SC_CLK_TCK')
     for path in Path('/proc').iterdir():
         if not path.name.isdigit():
             continue
@@ -96,8 +103,8 @@ def linux_snapshot(root):
             fields = (path / 'stat').read_text().rsplit(')', 1)[1].split()
             pid = int(path.name)
             parents[pid] = int(fields[1])
-            records[pid] = (int(fields[19]), int(fields[21]) * os.sysconf('SC_PAGE_SIZE'),
-                            (int(fields[11]) + int(fields[12])) / os.sysconf('SC_CLK_TCK'))
+            records[pid] = (int(fields[19]), int(fields[21]) * page_size,
+                            (int(fields[11]) + int(fields[12])) / clock_ticks)
         except (OSError, ValueError, IndexError):
             continue
     return {pid: records[pid] for pid in descendants(parents, root)}
@@ -116,15 +123,16 @@ def cpu_seconds(value):
 def mac_snapshot(root):
     result = subprocess.run(['ps', '-axo', 'pid=,ppid=,rss=,time=,lstart='],
                             check=True, capture_output=True, text=True)
-    records, parents = {}, {}
+    raw, parents = {}, {}
     for line in result.stdout.splitlines():
         fields = line.split(None, 4)
         if len(fields) != 5:
             continue
         pid, parent, rss, cpu, started = fields
         parents[int(pid)] = int(parent)
-        records[int(pid)] = (started, int(rss) * 1024, cpu_seconds(cpu))
-    return {pid: records[pid] for pid in descendants(parents, root)}
+        raw[int(pid)] = started, rss, cpu
+    return {pid: (raw[pid][0], int(raw[pid][1]) * 1024, cpu_seconds(raw[pid][2]))
+            for pid in descendants(parents, root)}
 
 
 def main():
@@ -137,9 +145,11 @@ def main():
         parser.error('duration must be positive and interval >= 100ms')
     sampler = windows_snapshot() if os.name == 'nt' else (
         linux_snapshot if sys.platform.startswith('linux') else mac_snapshot)
+    interval = args.interval_ms / 1000
+    encoder = json.JSONEncoder(allow_nan=False, separators=(',', ':'))
     with args.output.open('x', encoding='utf-8') as output:
         def emit(record):
-            output.write(json.dumps(record, allow_nan=False) + '\n')
+            output.write(encoder.encode(record) + '\n')
             output.flush()
         emit({'kind': 'host', 'platform': platform.platform(), 'machine': platform.machine(),
               'python': platform.python_version(), 'logical_cpus': os.cpu_count(),
@@ -164,8 +174,8 @@ def main():
                 elif root_identity != records[root][0]:
                     emit({'kind': 'pid-reused'})
                     break
-                common = [pid for pid, record in records.items()
-                          if pid in previous and previous[pid][0] == record[0]]
+                common = (pid for pid, record in records.items()
+                          if pid in previous and previous[pid][0] == record[0])
                 cpu = None if previous_time is None else sum(
                     max(0.0, records[pid][2] - previous[pid][2]) for pid in common
                 ) / (now - previous_time) * 100
@@ -174,7 +184,7 @@ def main():
                       'cpu_percent_one_core': cpu, 'process_count': len(records),
                       'observer_sample_ms': (now - tick) * 1000})
             previous, previous_time = records, now
-            time.sleep(max(0.0, args.interval_ms / 1000 - (time.perf_counter() - tick)))
+            time.sleep(max(0.0, interval - (time.perf_counter() - tick)))
 
 
 if __name__ == '__main__':

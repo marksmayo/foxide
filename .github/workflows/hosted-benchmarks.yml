@@ -27,9 +27,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: playback-release
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Cache verified mpv archive downloads
+        if: runner.os == 'Windows'
+        uses: actions/cache@v4
+        with:
+          path: tools/downloads
+          key: mpv-archive-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('benchmarks/mpv-windows.json') }}
       - name: Bootstrap WinGet on the ephemeral Windows VM
         if: runner.os == 'Windows'
         shell: pwsh

@@ -12,18 +12,39 @@ def digest(path):
         return hashlib.file_digest(stream, 'sha256').hexdigest()
 
 
+def verify_restored(output, seeds):
+    manifest = json.loads((output / 'manifest.json').read_text('utf-8'))
+    if {f['id'] for f in manifest['fixtures']} != set(seeds):
+        raise ValueError('Restored fixture set differs from seed set')
+    for fixture in manifest['fixtures']:
+        path = (output / fixture['path']).resolve()
+        if not path.is_relative_to(output.resolve()):
+            raise ValueError('Restored fixture escaped output directory')
+        if fixture['source_sha256'] != seeds[fixture['id']] or digest(path) != fixture['sha256']:
+            raise ValueError('Restored fixture or seed hash mismatch')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--seed', required=True, type=Path)
     parser.add_argument('--output', required=True, type=Path)
+    parser.add_argument('--verify-only', action='store_true')
     args = parser.parse_args()
     seed = json.loads((args.seed / 'manifest.json').read_text('utf-8'))
+    if args.verify_only:
+        seeds = {}
+        for fixture in seed['fixtures']:
+            seeds.setdefault(fixture['id'], fixture['sha256'])
+        verify_restored(args.output, seeds)
+        return
     if (args.output / 'manifest.json').exists():
         parser.error('Choose a fresh output; media manifests are immutable')
     args.output.mkdir(parents=True, exist_ok=True)
     fixtures = []
+    seen = set()
     for fixture in seed['fixtures']:
-        if any(f['id'] == fixture['id'] for f in fixtures): continue
+        if fixture['id'] in seen: continue
+        seen.add(fixture['id'])
         source = args.seed / fixture['path']
         if digest(source) != fixture['sha256']:
             raise ValueError('Seed hash mismatch: ' + str(source))
@@ -38,7 +59,7 @@ def main():
                        '-disposition:v', 'attached_pic', '-t', '90']
         command.append(str(output))
         subprocess.run(command, check=True)
-        probe = json.loads(subprocess.check_output(['ffprobe', '-v', 'error', '-show_format', '-of', 'json', str(output)], text=True))
+        probe = json.loads(subprocess.check_output(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'json', str(output)], text=True))
         if not 89 <= float(probe['format']['duration']) <= 92:
             raise ValueError('Unexpected duration: ' + str(output))
         fixtures.append(dict(id=fixture['id'], path=output.name, sha256=digest(output),

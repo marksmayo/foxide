@@ -40,14 +40,14 @@ pub fn folder_queue(directory: &Path) -> io::Result<Vec<PathBuf>> {
     let mut files = Vec::new();
     for entry in fs::read_dir(directory)? {
         let entry = entry?;
-        let path = entry.path();
-        if entry.file_type()?.is_file()
-            && path
-                .extension()
-                .and_then(|e| e.to_str())
-                .is_some_and(|e| EXTENSIONS.contains(&e.to_ascii_lowercase().as_str()))
+        let name = entry.file_name();
+        if Path::new(&name)
+            .extension()
+            .and_then(|e| e.to_str())
+            .is_some_and(|e| EXTENSIONS.iter().any(|known| e.eq_ignore_ascii_case(known)))
+            && entry.file_type()?.is_file()
         {
-            files.push(path);
+            files.push(entry.path());
         }
     }
     files.sort_by_cached_key(|p| {

@@ -51,28 +51,32 @@ pub fn percentile(values: &[f64], quantile: f64) -> Option<f64> {
     if sorted.is_empty() {
         return None;
     }
-    sorted.sort_by(f64::total_cmp);
     let rank = (quantile.clamp(0.0, 1.0) * sorted.len() as f64).ceil() as usize;
-    Some(sorted[rank.saturating_sub(1).min(sorted.len() - 1)])
+    let index = rank.saturating_sub(1).min(sorted.len() - 1);
+    Some(*sorted.select_nth_unstable_by(index, f64::total_cmp).1)
 }
 
 pub fn summarize(run: &mut Run) {
     run.rss_peak_bytes = run.samples.iter().map(|s| s.rss_bytes).max();
-    let steady: Vec<_> = run
-        .samples
-        .iter()
-        .filter(|s| s.elapsed_ms >= run.warmup_seconds * 1000.0)
-        .collect();
-    if !steady.is_empty() {
-        run.rss_steady_mean_bytes =
-            Some(steady.iter().map(|s| s.rss_bytes as f64).sum::<f64>() / steady.len() as f64);
+    let mut rss_sum = 0.0;
+    let mut rss_count = 0;
+    let mut cpu_sum = 0.0;
+    let mut cpu_count = 0;
+    for sample in &run.samples {
+        if sample.elapsed_ms >= run.warmup_seconds * 1000.0 {
+            rss_sum += sample.rss_bytes as f64;
+            rss_count += 1;
+            if let Some(cpu) = sample.cpu_percent_one_core {
+                cpu_sum += f64::from(cpu);
+                cpu_count += 1;
+            }
+        }
     }
-    let cpu: Vec<_> = steady
-        .iter()
-        .filter_map(|s| s.cpu_percent_one_core.map(f64::from))
-        .collect();
-    if !cpu.is_empty() {
-        run.cpu_steady_mean_percent_one_core = Some(cpu.iter().sum::<f64>() / cpu.len() as f64);
+    if rss_count > 0 {
+        run.rss_steady_mean_bytes = Some(rss_sum / rss_count as f64);
+    }
+    if cpu_count > 0 {
+        run.cpu_steady_mean_percent_one_core = Some(cpu_sum / cpu_count as f64);
     }
 }
 

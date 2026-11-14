@@ -94,7 +94,7 @@ def main():
     detected = {}
     if args.install:
         from compare_players import inventory
-        detected = {p['id']: p['executable'] for p in inventory()['players'] if p.get('executable')}
+        detected = {p['id']: p['executable'] for p in inventory(fingerprint=False)['players'] if p.get('executable')}
     entries = install_packages(packages, winget, execute=args.install, detected=detected)
     record = {'schema_version': 1, 'utc': datetime.now(timezone.utc).isoformat(),
               'mode': 'install' if args.install else 'plan', 'packages': entries,

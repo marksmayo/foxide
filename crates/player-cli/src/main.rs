@@ -75,16 +75,19 @@ fn mpv_path(explicit: Option<PathBuf>) -> PathBuf {
         return path;
     }
     let filename = if cfg!(windows) { "mpv.exe" } else { "mpv" };
-    let mut roots = Vec::new();
+    let mut roots = Vec::with_capacity(4);
     if let Ok(cwd) = std::env::current_dir() {
         roots.push(cwd);
     }
     if let Ok(exe) = std::env::current_exe() {
         roots.extend(exe.ancestors().skip(1).take(3).map(PathBuf::from));
     }
+    let mut seen = std::collections::HashSet::new();
+    let suffix = PathBuf::from("tools/mpv").join(filename);
     roots
         .into_iter()
-        .map(|root| root.join("tools/mpv").join(filename))
+        .filter(|root| seen.insert(root.clone()))
+        .map(|root| root.join(&suffix))
         .find(|path| path.is_file())
         .unwrap_or_else(|| "mpv".into())
 }
@@ -97,7 +100,7 @@ fn main() -> Result<()> {
         subtitle_track: args.subtitle_track,
         subtitle_files: args
             .subtitle_files
-            .iter()
+            .into_iter()
             .map(|p| p.canonicalize().context("Subtitle file does not exist"))
             .collect::<Result<Vec<_>>>()?,
         audio_delay: args.audio_delay,
@@ -126,7 +129,7 @@ fn main() -> Result<()> {
         ));
         engine_args.push(argument);
     }
-    let mut media = Vec::new();
+    let mut media = Vec::with_capacity(args.media.len());
     ensure!(
         !args.autoqueue || args.media.len() == 1,
         "autoqueue takes one starting file"
@@ -144,8 +147,9 @@ fn main() -> Result<()> {
         let path = PathBuf::from(input)
             .canonicalize()
             .context("Media file does not exist")?;
-        if path.is_dir() || args.autoqueue {
-            let folder = if path.is_dir() {
+        let is_directory = path.is_dir();
+        if is_directory || args.autoqueue {
+            let folder = if is_directory {
                 path.as_path()
             } else {
                 path.parent().context("File has no parent folder")?
@@ -164,6 +168,7 @@ fn main() -> Result<()> {
                 0
             };
             engine_args.push(format!("--playlist-start={start}").into());
+            media.reserve(queue.len());
             media.extend(
                 queue
                     .into_iter()
@@ -177,6 +182,7 @@ fn main() -> Result<()> {
     if args.headless {
         engine_args.extend(["--vo=null".into(), "--ao=null".into(), "--hwdec=no".into()]);
     }
+    engine_args.reserve(1 + media.len());
     engine_args.push("--".into());
     engine_args.extend(media);
     let executable = mpv_path(args.mpv);

@@ -38,8 +38,9 @@ def playback_verified(player, scenario, events, statuses):
 
 
 def summarize_samples(samples, ready_elapsed, warmup):
-    steady = [s for s in samples if s['elapsed'] >= ready_elapsed + warmup]
-    cpu = [s['cpu'] for s in steady if s['cpu'] is not None]
-    return dict(cpu=statistics.mean(cpu) if cpu else None,
-                rss_mib=statistics.mean(s['rss'] for s in steady)/1048576 if steady else None,
-                rss_peak_mib=max((s['rss'] for s in samples), default=0)/1048576 if samples else None)
+    threshold = ready_elapsed + warmup
+    has_steady = any(s['elapsed'] >= threshold for s in samples)
+    has_cpu = any(s['elapsed'] >= threshold and s['cpu'] is not None for s in samples)
+    return dict(cpu=statistics.mean(s['cpu'] for s in samples if s['elapsed'] >= threshold and s['cpu'] is not None) if has_cpu else None,
+                rss_mib=statistics.mean(s['rss'] for s in samples if s['elapsed'] >= threshold) / 1048576 if has_steady else None,
+                rss_peak_mib=max((s['rss'] for s in samples), default=0) / 1048576 if samples else None)

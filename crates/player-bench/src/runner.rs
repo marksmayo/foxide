@@ -116,11 +116,12 @@ fn finish_samples(
         thread::sleep(Duration::from_millis(20));
     };
     ensure!(status.success(), "Sampler failed; see telemetry.stderr.log");
-    for line in fs::read_to_string(dir.join("samples.jsonl"))?.lines() {
+    for line in BufReader::new(File::open(dir.join("samples.jsonl"))?).lines() {
+        let line = line?;
         let record: serde_json::Value =
-            serde_json::from_str(line).context("Invalid telemetry JSON")?;
+            serde_json::from_str(&line).context("Invalid telemetry JSON")?;
         if record["kind"] == "sample" {
-            let mut sample: Sample = serde_json::from_value(record.clone())?;
+            let mut sample: Sample = serde_json::from_value(record)?;
             sample.elapsed_ms += offset_ms;
             run.samples.push(sample);
         } else if record["kind"] == "pid-reused" || record["kind"] == "root-exited-or-inaccessible"
@@ -140,7 +141,9 @@ fn finish_samples(
 
 fn save(run: &Run, dir: &Path, prime: bool) -> Result<()> {
     let path = dir.join(if prime { "priming.json" } else { "run.json" });
-    fs::write(&path, serde_json::to_vec_pretty(run)?)?;
+    let mut output = std::io::BufWriter::new(File::create(&path)?);
+    serde_json::to_writer_pretty(&mut output, run)?;
+    output.flush()?;
     println!("{} [{}]", path.display(), run.status);
     Ok(())
 }
@@ -150,9 +153,10 @@ fn events(run: &mut Run, dir: &Path) -> Result<()> {
     if !path.exists() {
         return Ok(());
     }
-    for line in fs::read_to_string(path)?.lines() {
+    for line in BufReader::new(File::open(path)?).lines() {
+        let line = line?;
         let event: serde_json::Value =
-            serde_json::from_str(line).context("Invalid mpv event JSON")?;
+            serde_json::from_str(&line).context("Invalid mpv event JSON")?;
         if event["kind"] == "end-file" {
             run.status = "incomplete-end-file".into();
         }
@@ -282,11 +286,12 @@ fn one(args: &RunArgs, prime: bool, index: u32) -> Result<bool> {
         if prime { " (warm-cache priming)" } else { "" }
     );
     let mut event_reader: Option<BufReader<File>> = None;
-    let mut pending_line = String::new();
+    let mut pending_line = String::with_capacity(256);
+    let event_path = dir.join("events.jsonl");
     let deadline = started + Duration::from_secs_f64(settings.duration);
     while Instant::now() < deadline {
-        if event_reader.is_none() && dir.join("events.jsonl").exists() {
-            event_reader = Some(BufReader::new(File::open(dir.join("events.jsonl"))?));
+        if event_reader.is_none() && event_path.exists() {
+            event_reader = Some(BufReader::new(File::open(&event_path)?));
         }
         if run.startup_restart_observed_ms.is_none()
             && let Some(reader) = event_reader.as_mut()
