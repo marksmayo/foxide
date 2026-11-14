@@ -335,6 +335,18 @@ pub fn attach(
     error: impl Fn(String) + 'static,
     wakeup: Arc<dyn Fn() + Send + Sync>,
 ) -> Result<(), String> {
+    attach_observed(window, engine, size, image, error, wakeup, |_, _| {})
+}
+
+fn attach_observed(
+    window: &slint::Window,
+    engine: &Engine,
+    size: impl Fn() -> (u32, u32) + 'static,
+    image: impl Fn(slint::Image) + 'static,
+    error: impl Fn(String) + 'static,
+    wakeup: Arc<dyn Fn() + Send + Sync>,
+    mut observe: impl FnMut(slint::RenderingState, &slint::GraphicsAPI) + 'static,
+) -> Result<(), String> {
     let api = engine.api.clone();
     let ready = engine.ready.clone();
     let changed = Arc::new(AtomicBool::new(true));
@@ -345,7 +357,7 @@ pub fn attach(
     });
     let mut renderer: Option<Renderer> = None;
     window
-        .set_rendering_notifier(move |state, graphics| match state {
+        .set_rendering_notifier(move |state, graphics| { match state {
             slint::RenderingState::RenderingSetup => {
                 if let slint::GraphicsAPI::NativeOpenGL { get_proc_address } = graphics {
                     match Renderer::new(api.clone(), get_proc_address, notify.clone()) {
@@ -379,6 +391,12 @@ pub fn attach(
                 renderer = None;
             }
             _ => {}
+        }
+        observe(state, graphics);
         })
         .map_err(|e| e.to_string())
 }
+
+#[cfg(all(test, feature = "gpu-integration"))]
+#[path = "gpu_integration.rs"]
+mod integration;
