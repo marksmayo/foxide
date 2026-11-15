@@ -37,13 +37,13 @@ jobs:
           set -o pipefail
           set +e
           baseline_status=0
-          for driver in llvmpipe softpipe; do
+          for mode in none flush finish; do
             for trial in 1 2 3; do
-              GALLIUM_DRIVER="$driver" xvfb-run -a -s '-screen 0 1280x720x24' cargo test --workspace --features player-ui/desktop,player-render/gpu-integration --locked -- --ignored --nocapture --test-threads=1 > "results/local/video-$driver-$trial.log" 2>&1
+              FOXIDE_PROBE_SYNC="$mode" GALLIUM_DRIVER=llvmpipe xvfb-run -a -s '-screen 0 1280x720x24' cargo test --workspace --features player-ui/desktop,player-render/gpu-integration --locked -- --ignored --nocapture --test-threads=1 > "results/local/video-$mode-$trial.log" 2>&1
               status=$?
-              echo "Software driver $driver trial $trial: exit $status"
-              cat "results/local/video-$driver-$trial.log"
-              if [ "$status" -ne 0 ]; then baseline_status=$status; fi
+              echo "GPU submission $mode trial $trial: exit $status"
+              cat "results/local/video-$mode-$trial.log"
+              if [ "$mode" = flush ] && [ "$status" -ne 0 ]; then baseline_status=$status; fi
             done
           done
           set -e

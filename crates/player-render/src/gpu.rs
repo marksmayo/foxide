@@ -111,6 +111,10 @@ struct Renderer {
     output_colors: HashMap<[u8; 8], usize>,
     #[cfg(test)]
     created_context: usize,
+    #[cfg(test)]
+    probe_sync: String,
+    #[cfg(test)]
+    probe_readback: bool,
     _resolver: Box<Resolver>,
     callback: Box<Arc<dyn Fn() + Send + Sync>>,
 }
@@ -202,6 +206,10 @@ impl Renderer {
             output_colors: HashMap::new(),
             #[cfg(test)]
             created_context: resolver.current_context(),
+            #[cfg(test)]
+            probe_sync: std::env::var("FOXIDE_PROBE_SYNC").unwrap_or_default(),
+            #[cfg(test)]
+            probe_readback: std::env::var_os("FOXIDE_PROBE_READBACK").is_some(),
             _resolver: resolver,
             callback: Box::new(callback),
         };
@@ -338,8 +346,16 @@ impl Renderer {
             // Resizing above temporarily binds the output texture for allocation.
             gl.bind_texture(glow::TEXTURE_2D, None);
             let result = render_texture(self.api.render, self.context, &mut fbo);
+            #[cfg(not(test))]
+            gl.flush();
             #[cfg(test)]
-            {
+            match self.probe_sync.as_str() {
+                "none" => {}
+                "finish" => gl.finish(),
+                _ => gl.flush(),
+            }
+            #[cfg(test)]
+            if self.probe_readback {
                 gl.bind_framebuffer(glow::READ_FRAMEBUFFER, Some(self.framebuffer));
                 let mut raw = [0_u8; 8];
                 gl.read_pixels(
