@@ -9,10 +9,13 @@ These bundles preserve the inputs behind the README graphs and tables. Each JSON
 | [windows-hosted-software-null.json](windows-hosted-software-null.json) | Hosted Windows software/null output |
 | [macos-hosted-software-null.json](macos-hosted-software-null.json) | Hosted macOS software/null output |
 | [linux-hosted-software-null.json](linux-hosted-software-null.json) | Hosted Linux software/null output |
+| [linux-hosted-native-ui.json](linux-hosted-native-ui.json) | Isolated Linux desktop; owned accessibility targets, native pointer actions and verified state transitions |
 
 The November 15 local snapshot uses three repeats, eight seconds after engine readiness and two seconds of excluded warmup. Per-trial steady CPU/RSS means are reduced to medians across repeats. Peak RSS is a sampled peak including startup. CPU is percent of one logical core. Native window sizes/audio routes are player defaults, and background activity and cache state are uncontrolled. These are short resource comparisons, not displayed-frame timing or ten-minute battery tests.
 
 Hosted and local fields remain separate. The hosted bundles retain their original source commits, artifact hashes, Actions run IDs and collection dates; they exercise the Foxide CLI software path rather than native desktop presentation. Feature scores are sourced documentation claims, separate from performance measurements.
+
+The native UI field is separate from playback. Each eligible action has ten verified fresh-process trials. Raw before/after evidence, target ownership, action timing and available process-tree CPU/RSS counters are retained. Application-default window bounds are recorded; they are not normalized across players. A failed batch or incomplete metric counter set earns no medals. Action-to-observed-state timing does not establish physical display latency, playback cadence or battery efficiency. Scenarios awaiting an adapter remain explicitly pending.
 
 Failed/incomplete attempts remain available outside the scored-bundle directory:
 

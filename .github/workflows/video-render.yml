@@ -31,6 +31,17 @@ jobs:
         run: |
           mkdir -p results/local
           ffmpeg -v error -f lavfi -i "testsrc2=size=320x180:rate=30:duration=10,drawbox=x=0:y=0:w=iw:h=ih/4:color=red:t=fill,drawbox=x=0:y=3*ih/4:w=iw:h=ih/4:color=blue:t=fill" -c:v ffv1 "$FOXIDE_RENDER_FIXTURE"
+      - name: Compare independent SDL and libmpv renderer
+        shell: bash
+        run: |
+          for trial in 1 2 3; do
+            set +e
+            xvfb-run -a -s '-screen 0 1280x720x24' python3 scripts/probe_libmpv_gl.py > "results/local/video-sdl-$trial.log" 2>&1
+            status=$?
+            set -e
+            echo "Independent SDL control trial $trial: exit $status"
+            cat "results/local/video-sdl-$trial.log"
+          done
       - name: Verify compositor with the same features without instrumentation
         shell: bash
         run: |
