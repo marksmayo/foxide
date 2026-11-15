@@ -16,6 +16,7 @@ jobs:
         engine: [system, '0.40', '0.40-zero-lut']
     env:
       LIBGL_ALWAYS_SOFTWARE: '1'
+      MALLOC_PERTURB_: '128'
       FOXIDE_RENDER_FIXTURE: ${{ github.workspace }}/results/local/orientation.mkv
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
