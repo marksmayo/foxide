@@ -185,10 +185,30 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
                 if samples.summaries.len() < 2 {
                     let max = pixels.iter().copied().max().unwrap_or(0);
                     let nonblack = pixels
-                        .chunks_exact(4)
+                        .as_chunks::<4>()
+                        .0
+                        .iter()
                         .filter(|p| p[0] > 0 || p[1] > 0 || p[2] > 0)
                         .count();
-                    let image = w.get_frame().size();
+                    let source = w.get_frame();
+                    let image = source.size();
+                    let inner: &slint::private_unstable_api::re_exports::ImageInner = (&source).into();
+                    if let slint::private_unstable_api::re_exports::ImageInner::BorrowedOpenGLTexture(texture) = inner {
+                        // SAFETY: test-only diagnostic readback; the borrowed texture
+                        // belongs to this current context and the FBO is deleted below.
+                        unsafe {
+                            let previous = gl.get_parameter_framebuffer(glow::READ_FRAMEBUFFER_BINDING);
+                            let fbo = gl.create_framebuffer().unwrap();
+                            gl.bind_framebuffer(glow::READ_FRAMEBUFFER, Some(fbo));
+                            gl.framebuffer_texture_2d(glow::READ_FRAMEBUFFER, glow::COLOR_ATTACHMENT0, glow::TEXTURE_2D, Some(glow::NativeTexture(texture.texture_id)), 0);
+                            let mut raw = [0_u8; 8];
+                            gl.read_pixels((size.width/2) as i32, (size.height/8) as i32, 1, 1, glow::RGBA, glow::UNSIGNED_BYTE, glow::PixelPackData::Slice(Some(&mut raw[..4])));
+                            gl.read_pixels((size.width/2) as i32, (size.height*7/8) as i32, 1, 1, glow::RGBA, glow::UNSIGNED_BYTE, glow::PixelPackData::Slice(Some(&mut raw[4..])));
+                            gl.bind_framebuffer(glow::READ_FRAMEBUFFER, previous);
+                            gl.delete_framebuffer(fbo);
+                            samples.summaries.push(format!("texture={} raw={raw:?}", texture.texture_id));
+                        }
+                    }
                     samples.summaries.push(format!(
                         "surface={}x{} image={}x{} first={:?} max={} nonblack={}",
                         size.width,
