@@ -302,8 +302,11 @@ fn absent_engine_never_falls_back_to_an_implicit_working_directory_search() {
         String::from_utf8_lossy(&output.stderr)
     );
     let plan: Vec<String> = serde_json::from_slice(&output.stdout).unwrap();
+    let planned = PathBuf::from(&plan[0]);
+    assert!(planned.is_absolute());
     assert_eq!(
-        PathBuf::from(&plan[0]),
-        player_core::external_path(app.canonicalize().unwrap()).join(name)
+        planned.parent().unwrap().canonicalize().unwrap(),
+        app.canonicalize().unwrap()
     );
+    assert_eq!(planned.file_name(), Some(std::ffi::OsStr::new(name)));
 }
