@@ -360,7 +360,7 @@ fn attach_observed(
                             return;
                         }
                         match renderer.frame(width, height) {
-                            Ok(frame) => image(frame),
+                            Ok(frame) => publish_frame(frame, &image),
                             Err(message) => error(message),
                         }
                     }
@@ -375,6 +375,15 @@ fn attach_observed(
             observe(state, graphics);
         })
         .map_err(|e| e.to_string())
+}
+
+fn publish_frame(frame: slint::Image, image: &impl Fn(slint::Image)) {
+    // Borrowed image equality includes texture id/size/origin, not its changing
+    // GPU pixels. Rebinding the same image alone leaves rounded clipping layers
+    // clean and displaying stale video. Invalidate and restore synchronously,
+    // before Slint draws, so no intermediate blank frame is presented.
+    image(slint::Image::default());
+    image(frame);
 }
 
 #[cfg(all(test, feature = "gpu-integration"))]

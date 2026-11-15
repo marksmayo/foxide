@@ -23,6 +23,54 @@ slint::slint! {
     }
 }
 
+#[test]
+fn publishing_a_new_frame_invalidates_layers_even_when_texture_identity_is_reused() {
+    struct TestPlatform;
+    impl slint::platform::Platform for TestPlatform {
+        fn create_window_adapter(
+            &self,
+        ) -> Result<Rc<dyn slint::platform::WindowAdapter>, slint::PlatformError> {
+            Ok(
+                slint::platform::software_renderer::MinimalSoftwareWindow::new(
+                    slint::platform::software_renderer::RepaintBufferType::ReusedBuffer,
+                ),
+            )
+        }
+    }
+    slint::platform::set_platform(Box::new(TestPlatform)).unwrap();
+    let ui = VideoProbe::new().unwrap();
+    let frame = slint::Image::from_rgba8(slint::SharedPixelBuffer::new(8, 8));
+    publish_frame(frame.clone(), &|image| ui.set_frame(image));
+    // Use the same dependency tracker as Slint's rounded-layer cache. This
+    // checks invalidation itself, without needing a native window or GPU.
+    let source = Box::pin(slint::private_unstable_api::re_exports::Property::<
+        slint::Image,
+    >::default());
+    let weak = ui.as_weak();
+    source
+        .as_ref()
+        .set_binding(move || weak.upgrade().unwrap().get_frame());
+    let tracker = Box::pin(slint::private_unstable_api::re_exports::PropertyTracker::<
+        false,
+    >::default());
+    tracker.as_ref().evaluate(|| source.as_ref().get());
+    assert!(
+        !tracker.is_dirty(),
+        "The initial layer must be clean before the next frame"
+    );
+    // GPU pixels can change while texture id, dimensions and origin stay equal.
+    publish_frame(frame.clone(), &|image| ui.set_frame(image));
+    assert!(
+        tracker.is_dirty(),
+        "A new frame with reused image identity did not invalidate the cached video layer"
+    );
+    assert_eq!(
+        ui.get_frame(),
+        frame,
+        "The published frame must remain selected after invalidation"
+    );
+}
+
 #[derive(Default)]
 struct Samples {
     upright: usize,

@@ -173,11 +173,21 @@ fn refresh(
         state.muted = snapshot.muted;
         ui.set_loaded(true);
         ui.set_paused(snapshot.paused);
-        ui.set_media_title(snapshot.title.clone().into());
+        if !previous.loaded || snapshot.title != previous.title {
+            ui.set_media_title(snapshot.title.clone().into());
+        }
         ui.set_position(snapshot.position as f32);
         ui.set_duration(snapshot.duration as f32);
-        ui.set_time_label(clock(snapshot.position).into());
-        ui.set_duration_label(clock(snapshot.duration).into());
+        if !previous.loaded
+            || snapshot.position.max(0.0) as u64 != previous.position.max(0.0) as u64
+        {
+            ui.set_time_label(clock(snapshot.position).into());
+        }
+        if !previous.loaded
+            || snapshot.duration.max(0.0) as u64 != previous.duration.max(0.0) as u64
+        {
+            ui.set_duration_label(clock(snapshot.duration).into());
+        }
         ui.set_volume(snapshot.volume as f32);
         ui.set_muted(snapshot.muted);
         ui.set_status(
@@ -212,7 +222,12 @@ fn refresh(
         ui.set_audio_tracks(model("audio"));
         ui.set_subtitle_tracks(model("sub"));
     }
-    ui.set_diagnostics(format!("Video renderer: shared OpenGL texture\nRequested decoder: auto-safe\nActive decoder: {}\n\nHardware decoding does not by itself certify zero-copy.\nNative GPU/power acceptance remains platform-specific.\n\n{}", if snapshot.hwdec.is_empty() { "not active" } else { &snapshot.hwdec }, snapshot.error).into());
+    if snapshot.hwdec != previous.hwdec
+        || snapshot.error != previous.error
+        || ui.get_diagnostics() == "No media loaded"
+    {
+        ui.set_diagnostics(format!("Video renderer: shared OpenGL texture\nRequested decoder: auto-safe\nActive decoder: {}\n\nHardware decoding does not by itself certify zero-copy.\nNative GPU/power acceptance remains platform-specific.\n\n{}", if snapshot.hwdec.is_empty() { "not active" } else { &snapshot.hwdec }, snapshot.error).into());
+    }
     *previous = snapshot.clone();
 }
 
@@ -372,4 +387,84 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     ui.run()?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use slint::{
+        Model,
+        platform::{
+            Platform, WindowAdapter,
+            software_renderer::{MinimalSoftwareWindow, RepaintBufferType},
+        },
+    };
+
+    struct TestPlatform;
+    impl Platform for TestPlatform {
+        fn create_window_adapter(&self) -> Result<Rc<dyn WindowAdapter>, slint::PlatformError> {
+            Ok(MinimalSoftwareWindow::new(RepaintBufferType::ReusedBuffer))
+        }
+    }
+
+    #[test]
+    fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
+        slint::platform::set_platform(Box::new(TestPlatform)).unwrap();
+        let ui = PlayerWindow::new().unwrap();
+        let state = Rc::new(RefCell::new(UiState::default()));
+        state
+            .borrow_mut()
+            .dispatch(Action::Open(vec!["movie.mkv".into()]));
+        let mut previous = Snapshot::default();
+        let mut snapshot = Snapshot {
+            loaded: true,
+            path: "movie.mkv".into(),
+            title: "Movie".into(),
+            position: 65.1,
+            duration: 125.0,
+            speed: 1.0,
+            volume: 75.0,
+            hwdec: String::new(),
+            tracks: vec![player_render::Track {
+                id: 1,
+                kind: "audio".into(),
+                label: "English".into(),
+                selected: true,
+            }],
+            ..Default::default()
+        };
+        refresh(&ui, &state, &snapshot, &mut previous);
+        assert!(ui.get_loaded());
+        assert_eq!(ui.get_media_title(), "Movie");
+        assert_eq!(ui.get_time_label(), "01:05");
+        assert_eq!(ui.get_duration_label(), "02:05");
+        assert_eq!(ui.get_status(), "Playing · 1.00×");
+        assert_eq!(ui.get_audio_tracks().row_count(), 1);
+        let diagnostics = ui.get_diagnostics();
+        assert!(diagnostics.contains("Active decoder: not active"));
+        snapshot.position = 65.9;
+        refresh(&ui, &state, &snapshot, &mut previous);
+        assert_eq!(ui.get_position(), 65.9);
+        assert_eq!(ui.get_time_label(), "01:05");
+        assert_eq!(ui.get_diagnostics(), diagnostics);
+        snapshot.position = 66.0;
+        snapshot.paused = true;
+        snapshot.speed = 1.5;
+        snapshot.title = "New title".into();
+        snapshot.duration = 126.0;
+        snapshot.hwdec = "d3d11va".into();
+        snapshot.tracks[0].selected = false;
+        refresh(&ui, &state, &snapshot, &mut previous);
+        assert_eq!(ui.get_time_label(), "01:06");
+        assert_eq!(ui.get_duration_label(), "02:06");
+        assert_eq!(ui.get_status(), "Paused · 1.50×");
+        assert_eq!(ui.get_media_title(), "New title");
+        assert!(ui.get_diagnostics().contains("d3d11va"));
+        assert!(!ui.get_audio_tracks().row_data(0).unwrap().selected);
+        snapshot.error = "Decode failed".into();
+        refresh(&ui, &state, &snapshot, &mut previous);
+        assert!(!ui.get_loaded());
+        assert_eq!(ui.get_status(), "Decode failed");
+        assert!(ui.get_diagnostics().contains("Decode failed"));
+    }
 }
