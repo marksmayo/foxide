@@ -96,17 +96,17 @@
     }
   },
   {
-    "slug": "linux-dd906ea220",
+    "slug": "linux-3f5cc8a55c",
     "label": "Native UI actions \u00b7 default application windows \u00b7 Hosted",
     "mode": "native-ui",
     "host": "linux-hosted",
-    "utc": "2026-11-15T14:27:56.087618+00:00",
+    "utc": "2026-11-15T14:45:49.014528+00:00",
     "info": {
       "system": "linux",
       "host": "linux-hosted",
-      "utc": "2026-11-15T14:27:56.087618+00:00",
-      "source_commit": "50790e0d015d96e06d44dec6ef2d82ad08a40ee3",
-      "run_id": "43723899295",
+      "utc": "2026-11-15T14:45:49.014528+00:00",
+      "source_commit": "cb228a7b0fab4b2435de13042909a68556487c23",
+      "run_id": "43725584570",
       "presentation": "native-ui"
     }
   },
