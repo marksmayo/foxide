@@ -165,6 +165,21 @@ fn events(run: &mut Run, dir: &Path) -> Result<()> {
     Ok(())
 }
 
+fn finish_player(run: &mut Run, player: &mut Child) -> Result<()> {
+    match player.try_wait()? {
+        Some(status) => {
+            run.exit_status = Some(status.to_string());
+            run.status = "incomplete-player-exited".into();
+        }
+        None => {
+            player.kill()?;
+            run.exit_status = Some(player.wait()?.to_string());
+            run.terminated_by_harness = true;
+        }
+    }
+    Ok(())
+}
+
 fn one(args: &RunArgs, prime: bool, index: u32) -> Result<bool> {
     let media = args
         .media
@@ -329,11 +344,7 @@ fn one(args: &RunArgs, prime: bool, index: u32) -> Result<bool> {
     }
     // Wait for the last sample BEFORE terminating the player, avoiding false 'root exited'.
     let samples_result = finish_samples(&mut run, &mut telemetry, &dir, sample_offset_ms);
-    if player.0.try_wait()?.is_none() {
-        player.0.kill()?;
-        run.exit_status = Some(player.0.wait()?.to_string());
-        run.terminated_by_harness = true;
-    }
+    finish_player(&mut run, &mut player.0)?;
     if let Err(error) = samples_result {
         run.status = "telemetry-failed".into();
         run.notes.push(format!("{error:#}"));
@@ -465,4 +476,64 @@ pub fn doctor() -> Result<()> {
         "Display TTFF, VRAM and package watts require external telemetry; see docs/benchmarking.md."
     );
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn fixture_run() -> Run {
+        base_run(
+            "external".into(),
+            Path::new("test-fixture"),
+            &Sampling {
+                duration: 1.0,
+                warmup: 0.0,
+                sample_ms: 100,
+                output: PathBuf::new(),
+            },
+        )
+    }
+
+    #[test]
+    fn exit_during_final_sample_is_recorded_as_incomplete() {
+        for code in [0, 7] {
+            let mut child = ManagedChild(
+                Command::new(python())
+                    .args(["-c", &format!("raise SystemExit({code})")])
+                    .stdin(Stdio::null())
+                    .stdout(Stdio::null())
+                    .stderr(Stdio::null())
+                    .spawn()
+                    .unwrap(),
+            );
+            // Reproduce the exact cleanup state without a timing race: the child
+            // has exited after the polling loop and before final classification.
+            assert_eq!(child.0.wait().unwrap().code(), Some(code));
+            let mut run = fixture_run();
+            finish_player(&mut run, &mut child.0).unwrap();
+            assert_eq!(run.status, "incomplete-player-exited");
+            assert!(run.exit_status.is_some());
+            assert!(!run.terminated_by_harness);
+        }
+    }
+
+    #[test]
+    fn live_child_is_stopped_without_becoming_a_premature_exit() {
+        let mut child = ManagedChild(
+            Command::new(python())
+                .args(["-c", "import time; time.sleep(30)"])
+                .stdin(Stdio::null())
+                .stdout(Stdio::null())
+                .stderr(Stdio::null())
+                .spawn()
+                .unwrap(),
+        );
+        let mut run = fixture_run();
+        finish_player(&mut run, &mut child.0).unwrap();
+        assert_eq!(run.status, "process-sampled-playback-unverified");
+        assert!(run.exit_status.is_some());
+        assert!(run.terminated_by_harness);
+        assert!(child.0.try_wait().unwrap().is_some());
+    }
 }

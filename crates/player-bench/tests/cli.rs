@@ -115,7 +115,7 @@ fn premature_exit_is_saved_and_returns_failure() {
             "--arg=-c",
             "--arg=raise SystemExit(7)",
             "--duration",
-            "0.7",
+            "3",
             "--warmup",
             "0.1",
             "--repeat",
@@ -128,11 +128,15 @@ fn premature_exit_is_saved_and_returns_failure() {
         .output()
         .unwrap();
     assert!(!output.status.success());
-    assert!(
-        fs::read_dir(&dir)
-            .unwrap()
-            .any(|entry| entry.unwrap().path().join("run.json").is_file())
-    );
+    let saved = fs::read_dir(&dir)
+        .unwrap()
+        .map(|entry| entry.unwrap().path().join("run.json"))
+        .find(|path| path.is_file())
+        .expect("early exits must preserve their run record");
+    let record: serde_json::Value = serde_json::from_slice(&fs::read(saved).unwrap()).unwrap();
+    assert_eq!(record["status"], "incomplete-player-exited");
+    assert!(record["exit_status"].as_str().unwrap().contains('7'));
+    assert_eq!(record["terminated_by_harness"], false);
     fs::remove_dir_all(dir).unwrap();
 }
 
@@ -185,6 +189,8 @@ fn warm_priming_and_engine_events_never_become_display_measurements() {
     );
     let media = dir.join("fixture.txt");
     fs::write(&media, "Protocol fixture, not media").unwrap();
+    // Windows process creation under instrumentation can exceed 700ms.
+    // This is a protocol-contract check, not a startup-performance assertion.
     let output = Command::new(env!("CARGO_BIN_EXE_player-bench"))
         .args(["run", "--player", "mpv", "--exe"])
         .arg(executable)
@@ -196,7 +202,7 @@ fn warm_priming_and_engine_events_never_become_display_measurements() {
             "--repeat",
             "1",
             "--duration",
-            "0.7",
+            "3",
             "--warmup",
             "0.1",
             "--sample-ms",

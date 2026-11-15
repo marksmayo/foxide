@@ -1,4 +1,4 @@
-mod model;
+use player_bench::model;
 mod report;
 mod runner;
 

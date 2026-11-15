@@ -3,6 +3,8 @@ from __future__ import annotations
 import argparse
 from datetime import datetime, timezone
 import html
+import hashlib
+import math
 import json
 import os
 from pathlib import Path
@@ -30,11 +32,11 @@ def chart(platform, board):
     rows = sorted(board['players'], key=lambda p: (-p['feature_gold'], p['name']))
     height = 110 + 38 * len(rows)
     max_perf = max(1, max((p['performance_gold'] + p['performance_silver'] + p['performance_bronze'] for p in rows), default=0))
-    parts = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 {height}" role="img" aria-labelledby="{platform}-chart-title {platform}-chart-desc"><title id="{platform}-chart-title">{LABELS[platform]} medal scores</title><desc id="{platform}-chart-desc">Left: documented feature golds. Right: measured gold, silver, and bronze counts. Documentation coverage varies. Unknown does not mean unsupported.</desc><rect width="900" height="{height}" rx="16" fill="#111b30"/><g font-family="system-ui,sans-serif"><text x="28" y="32" font-size="22" fill="#f4f6fb">{LABELS[platform]} · medal scores</text><text x="215" y="61" font-size="12" fill="#a5b5cf">Documented feature golds</text><text x="590" y="61" font-size="12" fill="#a5b5cf">Measured gold / silver / bronze</text>']
+    parts = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 {height}" role="img" aria-labelledby="{platform}-chart-title {platform}-chart-desc"><title id="{platform}-chart-title">{LABELS[platform]} medal scores</title><desc id="{platform}-chart-desc">Left: documented feature golds. Right: measured gold, silver, and bronze counts. Documentation coverage varies. Unknown does not mean unsupported.</desc><rect width="900" height="{height}" rx="8" class="bg"/><style>{SVG_STYLE}</style><g><text class="title" x="28" y="32" font-size="22" >{LABELS[platform]} · medal scores</text><text x="215" y="61" font-size="12" class="sub">Documented feature golds</text><text x="590" y="61" font-size="12" class="sub">Measured gold / silver / bronze</text>']
     for index, p in enumerate(rows):
         y = 96 + index * 38
         width = p['feature_gold'] / max(1, len(board['features'])) * 300
-        parts.append(f'<text x="28" y="{y+5}" fill="#e0e7f5" font-size="14">{esc(p["name"])}</text><rect x="215" y="{y-12}" width="{width:.2f}" height="22" rx="5" fill="{("#ff995e" if p["id"] == "foxide" else "#e9c669")}"/><text x="{230+width:.2f}" y="{y+4}" fill="#f4f6fb" font-size="13">{p["feature_gold"]}</text>')
+        parts.append(f'<text x="28" y="{y+5}" font-size="12">{esc(p["name"])}</text><rect x="215" y="{y-12}" width="{width:.2f}" height="22" rx="5" fill="{("#2a78d6" if p["id"] == "foxide" else "#8f8e86")}"/><text x="{230+width:.2f}" y="{y+4}"  font-size="13">{p["feature_gold"]}</text>')
         x = 590.0
         total = p['performance_gold'] + p['performance_silver'] + p['performance_bronze']
         for medal, color in [('gold', '#e9c669'), ('silver', '#aec3d9'), ('bronze', '#c58c68')]:
@@ -42,49 +44,187 @@ def chart(platform, board):
             parts.append(f'<rect x="{x:.2f}" y="{y-12}" width="{size:.2f}" height="22" fill="{color}"/>')
             x += size
         label = f'{p["performance_gold"]}/{p["performance_silver"]}/{p["performance_bronze"]}' if total else '—'
-        parts.append(f'<text x="{x+10:.2f}" y="{y+4}" fill="#c4d1e6" font-size="12">{label}</text>')
+        parts.append(f'<text x="{x+10:.2f}" y="{y+4}" class="sub" font-size="12">{label}</text>')
     return ''.join(parts) + '</g></svg>'
 
 
-def markdown(boards, relative):
-    parts = ['\n## Player medal scoreboards\n\n']
-    parts.append('Feature support earns **shared gold** for every documented supporter. Unknown is unverified, not unsupported. Counts reflect the documentation reviewed and do not establish an overall best player. Performance medals require at least three verified, comparable repeats on the same platform, host, fixture, scenario, and settings.\n\n')
-    parts.append(f'Results are readable directly on GitHub below. [Download optional HTML]({relative}/report.html) to open locally · [Raw scores]({relative}/medals.json) · [Feature sources]({relative}/features.json) · [Performance protocols]({relative}/performance-events.json)\n\n')
-    parts.append(f'UI events include menus, dialogs, playback controls, scrubbing, fullscreen and resizing. Native UI acknowledgement has a separate cohort from displayed-frame timing. Missing adapters or presentation evidence remain unranked. [UI benchmark protocol]({relative}/../ui-benchmarks.md).\n\n')
-    for platform, board in boards.items():
-        parts.append(f'### {LABELS[platform]}\n\n![{LABELS[platform]} feature golds]({relative}/{platform}.svg)\n\n')
-        parts.append('| Player | Feature 🥇 | Performance 🥇 | 🥈 | 🥉 | Runtime outcome |\n|---|---:|---:|---:|---:|---|\n')
+def medal_rows(boards, kind='overall'):
+    rows = {}
+    features = {}
+    for board in boards.values():
         for p in board['players']:
-            outcome = board['runtime'][p['id']]['status'].replace('|', '\\|').replace('\n', ' ')
-            parts.append(f'| {p["name"]} | {p["feature_gold"]} | {p["performance_gold"]} | {p["performance_silver"]} | {p["performance_bronze"]} | {outcome} |\n')
-        completed = sum(bool(e['rankings']) for e in board['performance'])
-        parts.append(f'\nMeasured competitive event cohorts: **{completed}**. Zero performance medals may mean measurements are pending. VM decode results never establish displayed TTFF, GPU efficiency, or battery performance.\n\n')
-        entrants = [p for p in board['players'] if any(
-            r['player'] == p['id'] for e in board['performance'] for r in e['rankings'])]
-        parts.append('<details><summary>Every measured metric — median values and podiums</summary>\n\n')
-        parts.append('| Metric / cohort | Unit | ' + ' | '.join(p['name'] for p in entrants) + ' |\n')
-        parts.append('|---|---|' + '---:|' * len(entrants) + '\n')
-        for event in board['performance']:
-            if not event['rankings']:
-                continue
-            ranks = {r['player']: r for r in event['rankings']}
-            cells = []
-            for player in entrants:
-                result = ranks.get(player['id'])
-                value = f'{result["value"]:.3g}' if result else '—'
-                if result and result['medal']:
-                    value = MEDALS[result['medal']] + ' ' + (f'**{value}**' if result['medal'] == 'gold' else value)
-                cells.append(value)
-            label = (event['name'] + ' / ' + event['profile']).replace('|', '\\|')
-            parts.append('| ' + label + ' | ' + event['unit'] + ' | ' + ' | '.join(cells) + ' |\n')
-        parts.append('\nValues require ≥3 verified trials; — means no eligible comparable result. Each row is a separate cohort, never a cross-host ranking.\n\n</details>\n\n')
-        parts.append('<details><summary>Feature events — shared gold and documentation status</summary>\n\n')
-        parts.append('| Feature | ' + ' | '.join(p['name'] for p in board['players']) + ' |\n')
-        parts.append('|---|' + '---:|' * len(board['players']) + '\n')
+            row = rows.setdefault(p['id'], dict(id=p['id'], name=p['name'], gold=0, silver=0, bronze=0))
+            if kind != 'features':
+                for medal in ('gold', 'silver', 'bronze'):
+                    row[medal] += p['performance_' + medal]
         for feature in board['features']:
-            cells = ['N/A' if p['id'] not in feature['applicable'] else '🥇' if p['id'] in feature['awards'] else '?' for p in board['players']]
-            parts.append('| ' + feature['name'].replace('|', '\\|') + ' | ' + ' | '.join(cells) + ' |\n')
-        parts.append('\n? = undocumented/unverified, not a claim of absence. N/A = inapplicable media type. Source links and notes are in the feature catalog above.\n\n</details>\n\n')
+            for player in feature['awards']:
+                features.setdefault(player, set()).add(feature['id'])
+    if kind != 'performance':
+        for player, ids in features.items():
+            rows[player]['gold'] += len(ids)
+    return sorted(rows.values(), key=lambda p: (-p['gold'], -p['silver'], -p['bronze'], p['name']))
+
+
+def medal_table(rows):
+    parts = ['| Player | 🥇 | 🥈 | 🥉 | Total |\n|---|---:|---:|---:|---:|\n']
+    for p in rows:
+        parts.append(f'| {md(p["name"])} | {p["gold"]} | {p["silver"]} | {p["bronze"]} | {p["gold"]+p["silver"]+p["bronze"]} |\n')
+    return ''.join(parts)
+
+
+def md(value):
+    return esc(value).replace('|', '\\|').replace('\n', ' ').replace('\r', ' ')
+
+
+def fields_for(platform, board, sessions=()):
+    metadata, fields = {}, {}
+    for session in sessions:
+        info = session['session']
+        if info['system'] != platform or info.get('scope') == 'inventory-only':
+            continue
+        modes = set()
+        for case in session['cases']:
+            if case.get('profile'):
+                metadata[case['profile']] = info
+                mode = case['profile'].split('/')[0]
+                if mode != 'frontend-default-diagnostic':
+                    modes.add(mode)
+        if not modes:
+            modes.add('native-default-window' if info.get('presentation') == 'native-window' else 'software-null-output')
+        for mode in sorted(modes):
+            key = (info.get('host', 'Unrecorded host'), info.get('utc', ''), mode)
+            fields.setdefault(key, dict(host=key[0], utc=key[1], mode=mode, info=info, events=[]))
+    for event in board['performance']:
+        info = metadata.get(event['profile'], {})
+        mode = event['profile'].split('/')[0]
+        if mode == 'frontend-default-diagnostic':
+            continue
+        key = (info.get('host', 'Unrecorded host'), info.get('utc', ''), mode)
+        field = fields.setdefault(key, dict(host=key[0], utc=key[1], mode=mode, info=info, events=[]))
+        field['events'].append(event)
+    if not fields:
+        fields[('', '', 'pending')] = dict(host='Not measured', utc='', mode='pending', info={}, events=[])
+    for key, field in fields.items():
+        field['slug'] = platform + '-' + hashlib.sha256(repr(key).encode()).hexdigest()[:10]
+        field['names'] = {p['id']: p['name'] for p in board['players']}
+        field['label'] = ('Windowed playback · Foxide Desktop' if field['mode'] == 'native-default-window'
+                          else 'Software decode · Foxide CLI' if 'null' in field['mode']
+                          else 'Pending measurement' if field['mode'] == 'pending' else 'Measured events')
+        if field['info']:
+            field['label'] += ' · Hosted' if field['info'].get('run_id') else ' · Local'
+    return list(fields.values())
+
+
+def decoder_table(field, sessions):
+    observed = {}
+    for session in sessions:
+        if session['session'] != field['info']:
+            continue
+        for case in session['cases']:
+            if case.get('scenario') not in ('avc1080', 'hevc4k', 'av14k'):
+                continue
+            key = case['scenario'], case['player']
+            observed.setdefault(key, set()).update(e['hwdec'] for e in case.get('playback_events', ())
+                                                  if e.get('kind') == 'stats' and isinstance(e.get('hwdec'), str) and e['hwdec'])
+    if not observed:
+        return ''
+    players = [p for p in field['names'] if any(k[1] == p for k in observed)]
+    text = '| Observed decoder | ' + ' | '.join(md(field['names'][p]) for p in players) + ' |\n|---|' + '---|'*len(players) + '\n'
+    for scenario, label in [('avc1080', '1080p H.264'), ('hevc4k', '4K60 HEVC'), ('av14k', '4K60 AV1')]:
+        text += '| ' + label + ' | ' + ' | '.join(md(', '.join(sorted(observed.get((scenario, p), ()))) or 'Not reported') for p in players) + ' |\n'
+    return text + '\nEngine observations, not scanout proof. The [mpv manual](https://mpv.io/manual/stable/#options-hwdec) identifies <code>d3d11va-copy</code> as copying decoded video into system RAM; this is not zero-copy.\n\n'
+
+
+SVG_STYLE = '''text{font:13px system-ui,-apple-system,'Segoe UI',sans-serif;fill:#0b0b0b}.sub{fill:#52514e;font-size:11px}.title{font-size:16px;font-weight:600}.bg{fill:#fcfcfb}.bar{fill:#8f8e86}.foxide{fill:#2a78d6}.winner{font-weight:700}@media(prefers-color-scheme:dark){.bg{fill:#1a1a19}text{fill:#f0efec}.sub{fill:#c3c2b7}.foxide{fill:#3987e5}}'''
+
+
+def scenario_chart(field):
+    events = [e for e in field['events'] if e['rankings']]
+    panel_height = 74 + 24 * max((len(e['rankings']) for e in events), default=1)
+    height = 95 + max(1, math.ceil(len(events)/2)) * panel_height
+    parts = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 {height}" role="img" aria-label="{esc(field["label"])}: metric medians"><style>{SVG_STYLE}</style><rect class="bg" width="900" height="{height}" rx="8"/><text class="title" x="16" y="29">{esc(field["label"])}</text><text class="sub" x="16" y="49">{esc(field["host"])} · {esc(field["utc"][:10])}</text><text class="sub" x="16" y="69">Raw medians; each panel is one comparable metric/cohort. CPU and RAM are not watts or displayed frame timing.</text>']
+    if not events:
+        parts.append('<text x="16" y="120">Pending measurement — no eligible comparable results.</text>')
+    for i, event in enumerate(events):
+        x, y = 16 + (i % 2) * 445, 104 + (i // 2) * panel_height
+        label = event['name']
+        parts.append(f'<text x="{x}" y="{y}" font-weight="600">{esc(label[:55])}</text><text class="sub" x="{x}" y="{y+17}">{esc(event["unit"])} · {"higher" if event.get("direction") == "max" else "lower"} is better</text>')
+        maximum = max((r['value'] for r in event['rankings']), default=1) or 1
+        for row, rank in enumerate(event['rankings']):
+            yy = y + 40 + 24 * row
+            width = rank['value'] / maximum * 228
+            name = field.get('names', {}).get(rank['player'], rank['player'])
+            parts.append(f'<text x="{x+83}" y="{yy}" text-anchor="end">{esc(name)}</text><rect class="bar {"foxide" if rank["player"] == "foxide" else ""}" x="{x+92}" y="{yy-13}" width="{width:.2f}" height="17" rx="3"><title>{esc(name)}: {rank["value"]:.4g} {esc(event["unit"])}, {rank["trials"]} trials</title></rect><text class="{"winner" if rank["medal"] == "gold" else ""}" x="{x+326}" y="{yy}">{rank["value"]:.3g}</text>')
+    return ''.join(parts) + '</svg>'
+
+
+def markdown(boards, relative, sessions=(), provenance=None):
+    parts = ['\n## Benchmark\n\n### Latest results\n\n']
+    parts.append('Every metric is a separate medal event within one platform, host, fixture and settings cohort. Performance requires ≥3 verified repeats and ≥2 comparable entrants. Documented feature support earns shared gold; unknown does not mean unsupported.\n\n')
+    parts.append('Overall feature gold counts each feature once across applicable platforms; performance totals count every eligible field. These totals are not an overall speed ranking.\n\n')
+    for title, kind in [('Overall', 'overall'), ('Performance', 'performance'), ('Features', 'features')]:
+        parts.append(f'**{title}**\n\n' + medal_table(medal_rows(boards, kind)) + '\n')
+    parts.append(f'[Raw scores]({relative}/medals.json) · [Feature sources]({relative}/features.json) · [Performance protocols]({relative}/performance-events.json) · [Download optional HTML]({relative}/report.html)\n\n')
+    parts.append('Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CLI** launcher. Engine playback evidence is distinct from physical frame presentation. UI-action metrics, displayed TTFF, power and battery results remain pending unless explicitly measured.\n\n')
+    for platform, board in boards.items():
+        parts.append(f'### {LABELS[platform]}\n\n![{LABELS[platform]} medal scores]({relative}/{platform}.svg)\n\n')
+        parts.append(medal_table([dict(name=p['name'], gold=p['feature_gold']+p['performance_gold'], silver=p['performance_silver'], bronze=p['performance_bronze']) for p in sorted(board['players'], key=lambda p: (-(p['feature_gold']+p['performance_gold']), -p['performance_silver'], -p['performance_bronze'], p['name']))]))
+        for field in fields_for(platform, board, sessions):
+            parts.append(f'\n**{field["label"]}**\n\n')
+            info = field['info']
+            details = [field['host'], info.get('os', ''), info.get('arch', ''),
+                       str(info['cpu_count']) + ' logical CPUs' if info.get('cpu_count') else '',
+                       field['utc'] or 'Collection date unavailable']
+            parts.append(md(' · '.join(x for x in details if x)) + '.\n\n')
+            if info.get('run_id'):
+                parts.append(f'[Actions run](https://github.com/marksmayo/foxide/actions/runs/{md(info["run_id"])}) · ')
+            if info.get('source_commit'):
+                parts.append(f'Source: `{md(info["source_commit"])}`. ')
+            parts.append('Freshness is per field; older platform results are retained with their original collection dates.\n\n')
+            if info.get('duration'):
+                parts.append(f"Sampling: {md(info['duration'])}s after engine readiness, {md(info.get('warmup', 0))}s warmup excluded; {('randomized order (seed ' + str(info['order_seed']) + ')') if info.get('order_seed') is not None else 'original collection order'}; cache state uncontrolled.\n\n")
+            if field['mode'] == 'native-default-window':
+                parts.append('Exploratory native playback at each player’s default window size and audio route; dimensions are not normalized. Hardware fallback and observer overhead differ. This field does not establish displayed FPS or battery efficiency.\n\n')
+                parts.append(decoder_table(field, sessions))
+            podium = {}
+            for event in field['events']:
+                for rank in event['rankings']:
+                    row = podium.setdefault(rank['player'], dict(name=field['names'][rank['player']], gold=0, silver=0, bronze=0))
+                    if rank['medal']:
+                        row[rank['medal']] += 1
+            if podium:
+                parts.append(medal_table(sorted(podium.values(), key=lambda p: (-p['gold'], -p['silver'], -p['bronze'], p['name']))) + '\n')
+            parts.append(f'![{LABELS[platform]}: every measured metric]({relative}/{field["slug"]}-scenarios.svg)\n\n')
+            parts.append('<details><summary>Every measured metric — median values and podiums</summary>\n\n')
+            entrants = [p for p in board['players'] if any(r['player'] == p['id'] for e in field['events'] for r in e['rankings'])]
+            if entrants:
+                parts.append('| Metric | ' + ' | '.join(md(p['name']) for p in entrants) + ' |\n|---|' + '---:|'*len(entrants) + '\n')
+                for event in field['events']:
+                    if not event['rankings']: continue
+                    ranks = {r['player']: r for r in event['rankings']}
+                    cells = []
+                    for p in entrants:
+                        r = ranks.get(p['id'])
+                        value = f'{r["value"]:.3g}' if r else '—'
+                        if r and r['medal'] == 'gold': value = f'**{value}**'
+                        cells.append(value + (' ' + md(event['unit']) if r else ''))
+                    parts.append('| ' + md(event['name']) + ' | ' + ' | '.join(cells) + ' |\n')
+            else:
+                parts.append('No eligible comparable measurements.\n')
+            parts.append('\nBold values are gold medians. — means no eligible comparable result. Trial evidence and exact cohort IDs:\n\n')
+            parts.append('| Metric | Cohort | Trials per eligible entrant |\n|---|---|---:|\n')
+            for e in field['events']:
+                if e['rankings']:
+                    parts.append(f'| {md(e["name"])} | `{md(e["profile"])}` | ' + ', '.join(str(r['trials']) for r in e['rankings']) + ' |\n')
+            parts.append('\n</details>\n\n')
+        parts.append('<details><summary>Runtime outcomes and feature events</summary>\n\n| Player | Runtime outcome | Evidence / limitation |\n|---|---|---|\n')
+        for p in board['players']:
+            parts.append(f'| {md(p["name"])} | {md(board["runtime"][p["id"]]["status"])} | {md(board["runtime"][p["id"]].get("details", ""))} |\n')
+        parts.append('\n| Feature | ' + ' | '.join(md(p['name']) for p in board['players']) + ' |\n|---|' + '---:|'*len(board['players']) + '\n')
+        for f in board['features']:
+            parts.append('| '+md(f['name'])+' | '+' | '.join('N/A' if p['id'] not in f['applicable'] else '🥇' if p['id'] in f['awards'] else '?' for p in board['players'])+' |\n')
+        parts.append('\n? = undocumented/unverified. N/A = inapplicable media type.\n\n</details>\n\n')
     return ''.join(parts)
 
 
@@ -132,7 +272,7 @@ def render(catalog, protocol, boards, provenance, charts=None):
     script = '''const buttons=[...document.querySelectorAll('[data-platform]')],sections=[...document.querySelectorAll('.platform')];let active=null;buttons.forEach(b=>b.addEventListener('click',()=>{if(active===b)return;buttons.forEach(x=>x.setAttribute('aria-pressed',String(x===b)));sections.forEach(s=>{const hidden=s.id!==b.dataset.platform;if(s.hidden!==hidden)s.hidden=hidden});active=b;location.hash=b.dataset.platform}));document.querySelectorAll('.filter').forEach(i=>{const rows=[...i.closest('article').querySelectorAll('tbody tr')];let previous=null;i.addEventListener('input',()=>{const query=i.value.toLowerCase();if(query===previous)return;previous=query;rows.forEach(r=>{const hidden=!r.dataset.search.includes(query);if(r.hidden!==hidden)r.hidden=hidden})})});const selected=buttons.find(b=>b.dataset.platform===location.hash.slice(1));if(selected)selected.click();'''
 
     buttons = ''.join(f'<button data-platform="{p}" aria-pressed="{str(p == "windows").lower()}">{label}</button>' for p, label in LABELS.items())
-    return f'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Foxide · The Player Games</title><style>{style}</style></head><body><header><div class="brand">🦊 Foxide / Research &amp; Engineering</div><h1>The Player <span>Games.</span></h1><p class="lede">A transparent scoreboard for desktop media players. Documented capabilities earn shared golds. Real measurements decide performance podiums.</p><div class="stats"><div><b>{len(catalog["players"])}</b><span>players in the field</span></div><div><b>{len(catalog["features"])}</b><span>feature medal events</span></div><div><b>{len(protocol["events"])}</b><span>performance events</span></div><div><b>3</b><span>platform boards</span></div></div><aside class="notice"><strong>Evidence before medals.</strong> Gold features are documentation findings; unknown never means absent. Performance requires ≥3 verified repeats and ≥2 comparable entrants in one cohort. Hosted VM software/null-output results are separate from physical GPU, battery, and displayed-frame measurements. Foxide currently uses an external mpv engine.</aside></header><main><nav class="tabs" aria-label="Platform">{buttons}</nav>{"".join(sections)}</main><footer>{source_link(provenance["run_url"], "Actions run") if provenance["run_url"] else "Local validation"} · Source commit: {esc(provenance["source_commit"] or "working tree")} · {esc(provenance["generated_utc"])}<br>Generated from <a href="medals.json">versioned score data</a>. No synthetic benchmark results. Feature research: {esc(catalog["research_date"])}. Performance ties use competition ranks (1, 1, 3); feature possession always shares gold.</footer><script>{script}</script></body></html>'
+    return f'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Foxide · The Player Games</title><style>{style}</style></head><body><header><div class="brand">🦊 Foxide / Research &amp; Engineering</div><h1>The Player <span>Games.</span></h1><p class="lede">A transparent scoreboard for desktop media players. Documented capabilities earn shared golds. Real measurements decide performance podiums.</p><div class="stats"><div><b>{len(catalog["players"])}</b><span>players in the field</span></div><div><b>{len(catalog["features"])}</b><span>feature medal events</span></div><div><b>{len(protocol["events"])}</b><span>performance events</span></div><div><b>3</b><span>platform boards</span></div></div><aside class="notice"><strong>Evidence before medals.</strong> Gold features are documentation findings; unknown never means absent. Performance requires ≥3 verified repeats and ≥2 comparable entrants in one cohort. Hosted VM software/null-output results are separate from physical GPU, battery, and displayed-frame measurements. Windowed Foxide fields use the Slint/libmpv desktop; software-null fields use its CLI launcher.</aside></header><main><nav class="tabs" aria-label="Platform">{buttons}</nav>{"".join(sections)}</main><footer>{source_link(provenance["run_url"], "Actions run") if provenance["run_url"] else "Local validation"} · Source commit: {esc(provenance["source_commit"] or "working tree")} · {esc(provenance["generated_utc"])}<br>Generated from <a href="medals.json">versioned score data</a>. No synthetic benchmark results. Feature research: {esc(catalog["research_date"])}. Performance ties use competition ranks (1, 1, 3); feature possession always shares gold.</footer><script>{script}</script></body></html>'
 
 
 def write_report(catalog, protocol, measurements, output, readme=None, sessions=()):
@@ -142,20 +282,27 @@ def write_report(catalog, protocol, measurements, output, readme=None, sessions=
     repository, run_id = os.environ.get('GITHUB_REPOSITORY'), os.environ.get('GITHUB_RUN_ID', '')
     provenance = dict(generated_utc=datetime.now(timezone.utc).isoformat(), source_commit=os.environ.get('GITHUB_SHA'),
                       run_url=f'https://github.com/{repository}/actions/runs/{run_id}' if repository and run_id.isdigit() else None)
+    provenance['fields'] = [session['session'] for session in sessions]
     write_json(output / 'medals.json', {'provenance': provenance, 'boards': boards, 'measurements': measurements})
     (output / 'features.json').write_text(json.dumps(catalog, indent=2) + '\n', encoding='utf-8')
     (output / 'performance-events.json').write_text(json.dumps(protocol, indent=2) + '\n', encoding='utf-8')
     charts = {platform: chart(platform, board) for platform, board in boards.items()}
     for platform, svg in charts.items():
         (output / (platform + '.svg')).write_text(svg, encoding='utf-8')
+    field_index = []
+    for platform, board in boards.items():
+        for field in fields_for(platform, board, sessions):
+            (output / (field['slug'] + '-scenarios.svg')).write_text(scenario_chart(field), encoding='utf-8')
+            field_index.append({k: field[k] for k in ('slug', 'label', 'mode', 'host', 'utc', 'info')})
+    write_json(output / 'fields.json', field_index)
     (output / 'report.html').write_text(render(catalog, protocol, boards, provenance, charts), encoding='utf-8')
-    (output / 'scoreboards.md').write_text(markdown(boards, '.'), encoding='utf-8')
+    (output / 'scoreboards.md').write_text(markdown(boards, '.', sessions, provenance), encoding='utf-8')
     if readme:
         readme = Path(readme)
         relative = Path(os.path.relpath(output, readme.parent)).as_posix()
         start, end = '<!-- foxide-scores:start -->', '<!-- foxide-scores:end -->'
         text = readme.read_text('utf-8') if readme.exists() else '# Foxide\n'
-        generated = start + markdown(boards, relative) + end
+        generated = start + markdown(boards, relative, sessions, provenance) + end
         if start in text and end in text:
             text = text[:text.index(start)] + generated + text[text.index(end) + len(end):]
         else:

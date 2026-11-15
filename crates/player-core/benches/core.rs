@@ -91,10 +91,11 @@ struct MediaFolder(PathBuf);
 
 impl MediaFolder {
     fn new(files: usize) -> Self {
-        let dir =
-            std::env::temp_dir().join(format!("foxide-bench-queue-{}-{files}", std::process::id()));
-        let _ = fs::remove_dir_all(&dir);
-        fs::create_dir_all(dir.join("Extras.mkv")).unwrap();
+        let dir = fs::canonicalize(std::env::temp_dir())
+            .unwrap()
+            .join(format!("foxide-bench-queue-{}-{files}", std::process::id()));
+        fs::create_dir(&dir).expect("benchmark fixture directory must be unused");
+        fs::create_dir(dir.join("Extras.mkv")).unwrap();
         let extensions = ["mkv", "MP4", "srt", "webm", "nfo", "flac"];
         for i in 0..files {
             let extension = extensions[i % extensions.len()];
@@ -116,7 +117,12 @@ impl MediaFolder {
 
 impl Drop for MediaFolder {
     fn drop(&mut self) {
-        let _ = fs::remove_dir_all(&self.0);
+        if let (Ok(target), Ok(base)) = (self.0.canonicalize(), std::env::temp_dir().canonicalize())
+            && target.parent() == Some(base.as_path())
+            && target.file_name() == self.0.file_name()
+        {
+            let _ = fs::remove_dir_all(target);
+        }
     }
 }
 

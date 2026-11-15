@@ -1,0 +1,46 @@
+{
+  "run_id": 43676915097,
+  "run_url": "https://github.com/marksmayo/foxide/actions/runs/43676915097",
+  "source_commit": "188f2e6b49b5d638b7f641b47d13ae0ee6906740",
+  "status": "failed-before-measurement",
+  "eligible_for_scoreboards": false,
+  "note": "No new hosted measurements were produced. Previous hosted fields retain their original dates and commits. No job logs were available for the Windows startup failure; its cause is undetermined.",
+  "jobs": [
+    {
+      "id": 132698982620,
+      "name": "benchmark (windows-2025)",
+      "status": "completed",
+      "conclusion": "failure",
+      "started_at": "2026-11-15T04:28:23Z",
+      "completed_at": "2026-11-15T04:28:25Z",
+      "steps": []
+    },
+    {
+      "id": 132698982788,
+      "name": "benchmark (macos-15)",
+      "status": "completed",
+      "conclusion": "failure",
+      "started_at": "2026-11-15T04:28:23Z",
+      "completed_at": "2026-11-15T04:30:29Z",
+      "steps": []
+    },
+    {
+      "id": 132698982821,
+      "name": "benchmark (ubuntu-24.04)",
+      "status": "completed",
+      "conclusion": "failure",
+      "started_at": "2026-11-15T04:28:23Z",
+      "completed_at": "2026-11-15T04:28:25Z",
+      "steps": []
+    },
+    {
+      "id": 132699429044,
+      "name": "report",
+      "status": "completed",
+      "conclusion": "failure",
+      "started_at": "2026-11-15T04:30:29Z",
+      "completed_at": "2026-11-15T04:30:31Z",
+      "steps": []
+    }
+  ]
+}

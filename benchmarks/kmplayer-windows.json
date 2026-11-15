@@ -1,0 +1,29 @@
+{
+  "version": "2026.10.27.9",
+  "source_page": "https://www.kmplayer.com/pc64x",
+  "source_script": "https://img.kmplayer.com/kmp_rt/js/common.min.js?ver=20231017",
+  "download_handoff": "https://update.kmpmedia.net/player/download/kmp64x/en_US",
+  "installer_url": "https://dn.kmplayer.com/Dn/kmp64x/KMP64_2026.10.27.9.exe",
+  "installer_sha256": "7856ea625e9217a038cfbe22b3c92cbd69fcf620c26a5ad3c5d608d90537d9e0",
+  "installer_signature": {
+    "Status": "Valid",
+    "Message": "Signature verified.",
+    "Signer": "CN=\"PANDORATV Co.,Ltd\", O=\"PANDORATV Co.,Ltd\", L=Seongnam-si, S=Gyeonggi-do, C=KR",
+    "Thumbprint": "22AE2646AA06E425B345125BAC214648C21C44BE",
+    "TimestampSigner": "CN=Globalsign R45 TSA for CodeSign 202510, O=GlobalSign nv-sa, C=BE"
+  },
+  "executable_signature": {
+    "Status": "Valid",
+    "Signer": "CN=\"PANDORATV Co.,Ltd\", O=\"PANDORATV Co.,Ltd\", L=Seongnam-si, S=Gyeonggi-do, C=KR",
+    "Version": "2026.10.27.9"
+  },
+  "installation": "Project-local payload extracted from the signed official installer; installer launch was denied. No system-wide installation is claimed.",
+  "executable": "tools/kmplayer/KMPlayer64.exe",
+  "launch_verification": {
+    "trials": 3,
+    "active_eight_second_probes": 1,
+    "normal_early_exits": 2,
+    "playback_verified": false,
+    "reason": "Two subsequent launches exited 0; instance handoff is possible but unverified. No playback medal is eligible."
+  }
+}

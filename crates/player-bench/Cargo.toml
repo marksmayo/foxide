@@ -14,3 +14,10 @@ player-core.workspace = true
 
 [lints]
 workspace = true
+
+[dev-dependencies]
+divan = { version = "6.0.0", package = "codspeed-divan-compat" }
+
+[[bench]]
+name = "statistics"
+harness = false

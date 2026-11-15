@@ -7,6 +7,20 @@ from event_benchmarks import measurement_rows, playback_verified, summarize_samp
 
 
 class EventBenchmarkTests(unittest.TestCase):
+    def test_native_window_evidence_is_separate_from_software_decode(self):
+        events = [{'kind': 'first-playback-restart-proxy', 'video': '1'},
+                  *[{'kind': 'stats', 'position': p, 'hwdec': 'd3d11va'} for p in (0, 2)]]
+        self.assertFalse(playback_verified('foxide', 'avc1080', events, []))
+        self.assertTrue(playback_verified('foxide', 'avc1080', events, [], presentation='native-window'))
+        self.assertFalse(playback_verified('foxide', 'avc1080', events[:2], [], presentation='native-window'))
+        requested = [dict(e, hwdec='auto-safe') if e['kind'] == 'stats' else e for e in events]
+        self.assertFalse(playback_verified('foxide', 'avc1080', requested, [], presentation='native-window'))
+        from run_event_benchmarks import command_for
+        args = command_for('foxide', 'foxide-desktop.exe', 'avc1080', Path('movie.mp4'), None, 0, '', presentation='native-window')
+        self.assertIn('--benchmark-script', args)
+        self.assertNotIn('--headless', args)
+        self.assertTrue(any('--vo=null' in a for a in command_for('mpv', 'mpv', 'avc1080', Path('movie.mp4'), None, 0, '')))
+
     def test_unverified_playback_keeps_diagnostics_but_cannot_earn_a_medal(self):
         case = dict(player='plex', scenario='avc1080', platform='windows', profile='host', trial=0,
                     verified=False, source='case.json', metrics={'cpu_avc1080': 0.0, 'rss_avc1080': 20})
@@ -43,6 +57,17 @@ class EventBenchmarkTests(unittest.TestCase):
         self.assertEqual(summarize_samples(samples, ready_elapsed=5, warmup=2),
                          {'cpu': 20, 'rss_mib': 30, 'rss_peak_mib': 90})
         self.assertIsNone(summarize_samples([], ready_elapsed=0, warmup=0)['cpu'])
+
+    def test_missing_ass_fixture_fails_before_starting_players(self):
+        import contextlib
+        import io
+        from unittest.mock import patch
+        from run_event_benchmarks import main
+        message = io.StringIO()
+        with patch.object(sys, 'argv', ['run_event_benchmarks.py', '--media-dir', 'results/local/absent-corpus', '--plan', '--scenarios', 'ass']), contextlib.redirect_stderr(message), self.assertRaises(SystemExit) as stopped:
+            main()
+        self.assertEqual(stopped.exception.code, 2)
+        self.assertIn('ASS requires an existing subtitles.ass fixture', message.getvalue())
 
 
 if __name__ == '__main__':

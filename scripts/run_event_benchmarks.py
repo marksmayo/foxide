@@ -13,6 +13,7 @@ import json
 import os
 from pathlib import Path
 import platform
+import random
 import secrets
 import shutil
 import signal
@@ -59,17 +60,21 @@ def locate(player, system, discovered=None):
     return shutil.which(player)
 
 
-def command_for(player, executable, scenario, media, subtitle, port, password):
+def command_for(player, executable, scenario, media, subtitle, port, password, presentation='software-null'):
     script = str(ROOT / 'crates/player-bench/assets/bench.lua')
     if player == 'mpv':
         args = ['--no-config', '--load-scripts=no', '--vo=null', '--ao=null', '--hwdec=no',
                 '--no-terminal', '--loop-file=inf', '--script=' + script]
+        if presentation == 'native-window':
+            args = [a for a in args if not a.startswith(('--vo=', '--ao=', '--hwdec='))] + ['--hwdec=auto-safe', '--force-window=yes']
         if scenario == 'speed2x': args.append('--speed=2')
         if scenario == 'paused': args.append('--pause=yes')
         if scenario == 'ass': args.append('--sub-file=' + str(subtitle))
         return [executable, *args, '--', str(media)]
     if player == 'foxide':
         args = ['--headless', '--loop-playlist', '--benchmark-script', script]
+        if presentation == 'native-window':
+            args = ['--benchmark-script', script]
         if scenario == 'speed2x': args += ['--speed', '2']
         if scenario == 'paused': args.append('--paused')
         if scenario == 'ass': args += ['--subtitle', str(subtitle)]
@@ -78,6 +83,8 @@ def command_for(player, executable, scenario, media, subtitle, port, password):
         args = ['--ignore-config', '--intf=dummy', '--vout=dummy', '--aout=dummy', '--avcodec-hw=none',
                 '--repeat', '--no-video-title-show', '--extraintf=http', '--http-host=127.0.0.1',
                 '--http-port=' + str(port), '--http-password=' + password]
+        if presentation == 'native-window':
+            args = [a for a in args if not a.startswith(('--intf=', '--vout=', '--aout=', '--avcodec-hw='))] + ['--avcodec-hw=any']
         if sys.platform != 'darwin': args.append('--no-one-instance')
         if scenario == 'speed2x': args.append('--rate=2')
         if scenario == 'paused': args.append('--start-paused')
@@ -127,9 +134,10 @@ def collect(player, executable, scenario, media, subtitle, directory, settings, 
             reservation.bind(('127.0.0.1', 0))
             port = reservation.getsockname()[1]
         password = secrets.token_urlsafe(18)
-    command = command_for(player, executable, scenario, media, subtitle, port, password)
+    presentation = settings.get('presentation', 'software-null')
+    command = command_for(player, executable, scenario, media, subtitle, port, password, presentation)
     cohort = dict(settings, media_sha256=media_hash or digest(media), scenario=scenario,
-                  mode='vm-software-null-output' if player in CORE else 'frontend-default-diagnostic')
+                  mode=('native-default-window' if presentation == 'native-window' else 'software-null-output') if player in CORE else 'frontend-default-diagnostic')
     if scenario == 'ass': cohort['subtitle_sha256'] = subtitle_hash or digest(subtitle)
     profile = cohort['mode'] + '/' + scenario + '/' + hashlib.sha256(json.dumps(cohort, sort_keys=True).encode()).hexdigest()[:16]
     case = dict(player=player, scenario=scenario, platform=system, profile=profile, trial=trial,
@@ -140,6 +148,8 @@ def collect(player, executable, scenario, media, subtitle, directory, settings, 
                        'RSS is a process-tree sum; shared pages may be counted twice.',
                        'VM null outputs do not exercise native GPU presentation, subtitle composition, display timing, or power.',
                        'mpv Lua / VLC HTTP observation overhead is included and differs by adapter.'])
+    if presentation == 'native-window':
+        case['notes'][3] = 'Native output at player-default window dimensions and audio route; hardware fallback is recorded, not normalized. Engine state is not physical frame presentation or power.'
     snapshot = snapshot or (windows_snapshot() if os.name == 'nt' else (linux_snapshot if system == 'linux' else mac_snapshot))
     env = dict(os.environ, FOXIDE_BENCH_EVENTS=str(directory / 'events.jsonl'), FOXIDE_BENCH_SEEKS='0')
     event_path = directory / 'events.jsonl'
@@ -187,7 +197,7 @@ def collect(player, executable, scenario, media, subtitle, directory, settings, 
                             case['vlc_status'].append(json.load(response))
                     except (OSError, ValueError): pass
                     next_status = now + .5
-                if ready_elapsed is None and playback_verified(player, scenario, read_events(directory / 'events.jsonl'), case['vlc_status']):
+                if ready_elapsed is None and playback_verified(player, scenario, read_events(directory / 'events.jsonl'), case['vlc_status'], presentation):
                     ready_elapsed = time.perf_counter() - started
                     case['playback_ready_elapsed'] = ready_elapsed
                     deadline = started + ready_elapsed + settings['duration']
@@ -199,7 +209,7 @@ def collect(player, executable, scenario, media, subtitle, directory, settings, 
     finally:
         if process is not None: stop_owned(process, owned, snapshot)
     case['playback_events'] = read_events(directory / 'events.jsonl')
-    verified = playback_verified(player, scenario, case['playback_events'], case['vlc_status'])
+    verified = playback_verified(player, scenario, case['playback_events'], case['vlc_status'], presentation)
     case['verified'] = verified and case['status'] == 'sampled' and scenario != 'ass'
     if scenario == 'ass': case['notes'].append('Subtitle composition is disabled by null output; no ASS performance medal is eligible.')
     if case['status'] == 'sampled': case['status'] = 'verified-playback' if case['verified'] else 'sampled-playback-unverified'
@@ -217,6 +227,8 @@ def main():
     parser.add_argument('--media-dir', type=Path, required=True)
     parser.add_argument('--output', type=Path, default=ROOT / 'results/local/events')
     parser.add_argument('--players', nargs='+')
+    parser.add_argument('--presentation', choices=['software-null', 'native-window'], default='software-null')
+    parser.add_argument('--order-seed', type=int, default=20261115)
     parser.add_argument('--scenarios', nargs='+', choices=list(SCENARIOS), default=list(SCENARIOS))
     parser.add_argument('--repeat', type=int, default=3)
     parser.add_argument('--duration', type=float, default=8)
@@ -224,6 +236,11 @@ def main():
     parser.add_argument('--plan', action='store_true')
     parser.add_argument('--require-core', action='store_true')
     args = parser.parse_args()
+    if args.presentation == 'native-window' and 'ass' in args.scenarios:
+        args.scenarios.remove('ass')
+        print('ASS composition requires a validated presentation adapter; excluded from native field.', flush=True)
+    if 'ass' in args.scenarios and not (args.media_dir / 'subtitles.ass').is_file():
+        parser.error('ASS requires an existing subtitles.ass fixture; select the six other scenarios for a subtitle-free corpus')
     import math
     if not (math.isfinite(args.duration) and math.isfinite(args.warmup) and 4 <= args.duration <= 600 and 0 <= args.warmup < args.duration and args.repeat >= 3):
         parser.error('Use >=3 repeats, 4..600 seconds duration, and finite 0 <= warmup < duration')
@@ -254,8 +271,11 @@ def main():
     session = dict(utc=datetime.now(timezone.utc).isoformat(), system=system, os=platform.platform(),
                    arch=platform.machine(), cpu_count=os.cpu_count(), host=platform.node(),
                    runner_image=os.environ.get('ImageVersion'), run_id=os.environ.get('GITHUB_RUN_ID'),
-                   duration=args.duration, warmup=args.warmup, script_sha256=collector_digest)
-    cases, inventory, rows = [], [], []
+                   duration=args.duration, warmup=args.warmup, script_sha256=collector_digest,
+                   presentation=args.presentation, source_commit=os.environ.get('GITHUB_SHA'),
+                   order_seed=args.order_seed,
+                   window_policy='Player default window; not fullscreen or normalized video surface dimensions' if args.presentation == 'native-window' else 'No audio/video output')
+    cases, inventory, rows, jobs = [], [], [], []
     installed = {}
     installation = output / 'player-installation.json'
     if installation.exists():
@@ -264,7 +284,11 @@ def main():
         pid = player['id']
         if system not in player['platforms'] or args.players and pid not in args.players: continue
         executable = locate(pid, system, discovered)
-        entry = dict(player=pid, executable=executable, status='available' if executable else 'not-detected')
+        if pid == 'foxide' and args.presentation == 'native-window':
+            desktop = ROOT / ('target/release/foxide-desktop' + ('.exe' if system == 'windows' else ''))
+            executable = str(desktop) if desktop.is_file() else None
+        entry = dict(player=pid, executable=executable, status='available' if executable else 'not-detected',
+                     binary_sha256=digest(executable) if executable else None)
         inventory.append(entry)
         if not executable:
             entry['reason'] = 'No native executable found; packaged-app/account/Store activation may need a dedicated adapter.'
@@ -277,19 +301,22 @@ def main():
             fixture = media.get(SCENARIOS[scenario])
             if fixture is None: continue
             for trial in range(args.repeat):
-                if args.plan:
-                    cases.append(dict(player=pid, scenario=scenario, trial=trial, status='planned'))
-                    continue
-                identity = (fixture.stat().st_size, fixture.stat().st_mtime_ns)
-                if identity != identities[SCENARIOS[scenario]]:
-                    raise ValueError('Immutable fixture changed during session: ' + str(fixture))
-                case = collect(pid, executable, scenario, fixture, subtitle, output / 'cases' / f'{pid}-{scenario}-{trial}', session, system, trial, hashes[SCENARIOS[scenario]], subtitle_hash, snapshot)
-                if (fixture.stat().st_size, fixture.stat().st_mtime_ns) != identity:
-                    raise ValueError('Immutable fixture changed during trial: ' + str(fixture))
-                cases.append(case)
-                rows.extend(measurement_rows(case))
-                print(f'{pid} / {scenario} / {trial+1}: {case["status"]}', flush=True)
-                write_json(output / 'measurements.json', rows, compact=True)
+                jobs.append((pid, executable, scenario, fixture, trial))
+    random.Random(args.order_seed).shuffle(jobs)
+    for pid, executable, scenario, fixture, trial in jobs:
+        if args.plan:
+            cases.append(dict(player=pid, scenario=scenario, trial=trial, status='planned'))
+            continue
+        identity = (fixture.stat().st_size, fixture.stat().st_mtime_ns)
+        if identity != identities[SCENARIOS[scenario]]:
+            raise ValueError('Immutable fixture changed during session: ' + str(fixture))
+        case = collect(pid, executable, scenario, fixture, subtitle, output / 'cases' / f'{pid}-{scenario}-{trial}', session, system, trial, hashes[SCENARIOS[scenario]], subtitle_hash, snapshot)
+        if (fixture.stat().st_size, fixture.stat().st_mtime_ns) != identity:
+            raise ValueError('Immutable fixture changed during trial: ' + str(fixture))
+        cases.append(case)
+        rows.extend(measurement_rows(case))
+        print(f'{pid} / {scenario} / {trial+1}: {case["status"]}', flush=True)
+        write_json(output / 'measurements.json', rows, compact=True)
     (output / 'measurements.json').write_text(json.dumps(rows, indent=2, allow_nan=False), encoding='utf-8')
     write_json(output / 'session.json', dict(session=session, inventory=inventory, cases=cases))
     if args.require_core and not args.plan:
