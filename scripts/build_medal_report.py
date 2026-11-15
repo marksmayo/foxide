@@ -81,7 +81,7 @@ def fields_for(platform, board, sessions=()):
     metadata, fields = {}, {}
     for session in sessions:
         info = session['session']
-        if info['system'] != platform:
+        if info['system'] != platform or info.get('scope') == 'inventory-only':
             continue
         modes = set()
         for case in session['cases']:

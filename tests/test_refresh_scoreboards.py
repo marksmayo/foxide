@@ -18,6 +18,8 @@ class RefreshTests(unittest.TestCase):
         temp = root/'results/local'/('refresh-'+uuid4().hex)
         (temp/'bundles').mkdir(parents=True)
         (temp/'platforms/windows').mkdir(parents=True)
+        (temp/'runtime').mkdir()
+        (temp/'runtime/windows.json').write_text(json.dumps(dict(session=dict(system='windows', scope='inventory-only', utc='2026-11-15T12:00:00Z'), inventory=[dict(player='wmp-modern', status='installed-adapter-needed', reason='Local post-collection registration verified')], cases=[])), encoding='utf-8')
         try:
             cases = [dict(player=p, profile='native-default-window/avc1080/test', trial=i,
                           status='verified-playback', verified=True, source='original-case.json')
@@ -30,7 +32,7 @@ class RefreshTests(unittest.TestCase):
             (temp/'platforms/windows/session.json').write_text(json.dumps(session), encoding='utf-8')
             (temp/'platforms/windows/measurements.json').write_text(json.dumps(rows), encoding='utf-8')
             args = ['refresh_scoreboards.py', '--bundles', str(temp/'bundles'), '--platform-dir', str(temp/'platforms'),
-                    '--output', str(temp/'report'), '--readme', str(temp/'README.md')]
+                    '--output', str(temp/'report'), '--readme', str(temp/'README.md'), '--runtime-dir', str(temp/'runtime')]
             with patch.object(sys, 'argv', args), contextlib.redirect_stdout(io.StringIO()):
                 main()
             evidence = json.loads((temp/'bundles/windows-local-native-window.json').read_text('utf-8'))
@@ -38,9 +40,18 @@ class RefreshTests(unittest.TestCase):
             self.assertEqual(evidence['cases'][0]['original_source'], 'original-case.json')
             self.assertIn('Windowed playback', (temp/'README.md').read_text('utf-8'))
             self.assertIn('local host', (temp/'README.md').read_text('utf-8'))
+            board = json.loads((temp/'report/medals.json').read_text('utf-8'))['boards']['windows']
+            self.assertEqual(board['runtime']['wmp-modern']['status'], 'installed-adapter-needed')
+            self.assertEqual(next(p for p in board['players'] if p['id']=='mpv')['performance_gold'], 1)
+            self.assertFalse(any(f['host']=='Unrecorded host' for f in json.loads((temp/'report/fields.json').read_text('utf-8')) if f['mode'] != 'pending'))
             with patch.object(sys, 'argv', args), contextlib.redirect_stdout(io.StringIO()):
                 main()
             self.assertEqual(len(list((temp/'bundles').glob('*.json'))), 1)
+            for scope, cases in [('inventory-only', [dict(verified=True)]), ('native-ui', [])]:
+                invalid = dict(session=dict(system='windows', scope=scope), inventory=[], cases=cases)
+                (temp/'runtime/windows.json').write_text(json.dumps(invalid), encoding='utf-8')
+                with patch.object(sys, 'argv', args), contextlib.redirect_stdout(io.StringIO()), self.assertRaisesRegex(ValueError, 'inventory-only'):
+                    main()
         finally:
             self.assertEqual(temp.resolve().parent, (root/'results/local').resolve())
             shutil.rmtree(temp)

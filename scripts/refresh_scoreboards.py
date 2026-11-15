@@ -29,7 +29,7 @@ def latest_collections(collections):
     return [value[1] for value in latest.values()]
 
 
-def refresh(bundles, platform_dir, output, readme):
+def refresh(bundles, platform_dir, output, readme, runtime_dir=None):
     collections = [json.loads(path.read_text('utf-8')) for path in sorted(bundles.glob('*.json'))]
     if platform_dir.exists():
         for path in sorted(platform_dir.rglob('session.json')):
@@ -56,9 +56,12 @@ def refresh(bundles, platform_dir, output, readme):
         for row in collection['measurements']:
             row['source'] = references.get((row['player'], row['profile'], row['trial']), row['source'])
         write_json(destination, collection, compact=True)
+    runtime = [json.loads(path.read_text('utf-8')) for path in sorted(runtime_dir.glob('*.json'))] if runtime_dir else []
+    if any(s['session'].get('scope') != 'inventory-only' or any(c.get('verified') is True for c in s['cases']) for s in runtime):
+        raise ValueError('Runtime supplements must be inventory-only and cannot assert verified playback')
     boards = write_report(json.loads((ROOT/'benchmarks/features.json').read_text('utf-8')),
                           json.loads((ROOT/'benchmarks/performance-events.json').read_text('utf-8')),
-                          [row for c in selected for row in c['measurements']], output, readme, selected)
+                          [row for c in selected for row in c['measurements']], output, readme, selected + runtime)
     print(f'{len(selected)} independently collected fields; ' + str(sum(len(c['measurements']) for c in selected)) + ' measurement rows')
     return boards
 
@@ -69,8 +72,9 @@ def main():
     parser.add_argument('--platform-dir', type=Path, default=ROOT/'results/local/platforms')
     parser.add_argument('--output', type=Path, default=ROOT/'docs/scoreboards')
     parser.add_argument('--readme', type=Path)
+    parser.add_argument('--runtime-dir', type=Path, default=ROOT/'benchmarks/runtime')
     args = parser.parse_args()
-    refresh(args.bundles, args.platform_dir, args.output, args.readme)
+    refresh(args.bundles, args.platform_dir, args.output, args.readme, args.runtime_dir)
 
 
 if __name__ == '__main__':

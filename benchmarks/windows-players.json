@@ -176,6 +176,7 @@
       "family": "Desktop player",
       "source": "https://www.kmplayer.com/",
       "paths": [
+        "tools/kmplayer/KMPlayer64.exe",
         "{ProgramFiles}/KMPlayer 64X/KMPlayer64.exe",
         "{ProgramFiles}/KMPlayer/KMPlayer.exe",
         "KMPlayer64.exe"
@@ -186,7 +187,8 @@
       "media_types": [
         "video",
         "audio"
-      ]
+      ],
+      "note": "Official signed KMPlayer 64X payload installed locally under tools/kmplayer; validated playback adapter remains required."
     },
     {
       "id": "gom",
