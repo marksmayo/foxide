@@ -183,3 +183,11 @@ class UiBenchmarkTests(unittest.TestCase):
             observed, rows = collect_batch('foxide','binary',scenario,['Media','Open'],Path('unused-test-output'),{},'linux',3,None)
         self.assertEqual(len(observed),3)
         self.assertEqual([r['event'] for r in rows],['ui_menu_media_latency']*3)
+
+    def test_portal_dialog_requires_a_broker_owner_adapter_only_on_linux(self):
+        import json
+        from run_ui_benchmarks import plan
+        catalog=json.loads((Path(__file__).resolve().parents[1]/'benchmarks/ui-events.json').read_text())
+        statuses={s:next(r['status'] for r in plan(catalog,s) if r['player']=='foxide' and r['action']=='open_dialog') for s in ('linux','windows')}
+        self.assertEqual(statuses['linux'],'adapter-required')
+        self.assertEqual(statuses['windows'],'ready-for-interactive-validation')

@@ -35,7 +35,19 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          xvfb-run -a -s '-screen 0 1280x720x24' cargo test --workspace --features player-ui/desktop,player-render/gpu-integration --locked -- --ignored --nocapture --test-threads=1 2>&1 | tee results/local/video-uninstrumented.log
+          set +e
+          baseline_status=0
+          for api in default desktop; do
+            for trial in 1 2 3; do
+              FOXIDE_PROBE_GL_API="$api" xvfb-run -a -s '-screen 0 1280x720x24' cargo test --workspace --features player-ui/desktop,player-render/gpu-integration --locked -- --ignored --nocapture --test-threads=1 > "results/local/video-$api-$trial.log" 2>&1
+              status=$?
+              echo "GL API $api trial $trial: exit $status"
+              cat "results/local/video-$api-$trial.log"
+              if [ "$api" = default ] && [ "$status" -ne 0 ]; then baseline_status=$status; fi
+            done
+          done
+          set -e
+          test "$baseline_status" -eq 0
       - name: Reset coverage profiles before combining test passes
         run: cargo llvm-cov clean --workspace
       - name: Verify reused texture invalidates cached layers without a native display

@@ -81,6 +81,8 @@ struct Renderer {
     texture: glow::Texture,
     framebuffer: glow::Framebuffer,
     size: (u32, u32),
+    #[cfg(test)]
+    entry_states: HashMap<[i32; 10], usize>,
     _resolver: Box<Resolver>,
     callback: Box<Arc<dyn Fn() + Send + Sync>>,
 }
@@ -166,6 +168,8 @@ impl Renderer {
             texture,
             framebuffer,
             size: (0, 0),
+            #[cfg(test)]
+            entry_states: HashMap::new(),
             _resolver: resolver,
             callback: Box::new(callback),
         };
@@ -191,6 +195,24 @@ impl Renderer {
             let read_framebuffer = gl.get_parameter_framebuffer(glow::READ_FRAMEBUFFER_BINDING);
             let texture = gl.get_parameter_texture(glow::TEXTURE_BINDING_2D);
             let active_texture = gl.get_parameter_i32(glow::ACTIVE_TEXTURE);
+            #[cfg(test)]
+            {
+                let mut mask = [0; 4];
+                gl.get_parameter_i32_slice(glow::COLOR_WRITEMASK, &mut mask);
+                let state = [
+                    active_texture,
+                    mask[0],
+                    mask[1],
+                    mask[2],
+                    mask[3],
+                    gl.get_parameter_i32(glow::PIXEL_UNPACK_BUFFER_BINDING),
+                    gl.get_parameter_i32(glow::DRAW_BUFFER0),
+                    gl.get_parameter_i32(glow::UNPACK_ROW_LENGTH),
+                    gl.get_parameter_i32(glow::UNPACK_SKIP_ROWS),
+                    gl.get_parameter_i32(glow::UNPACK_SKIP_PIXELS),
+                ];
+                *self.entry_states.entry(state).or_default() += 1;
+            }
             let program = gl.get_parameter_program(glow::CURRENT_PROGRAM);
             let vao = gl.get_parameter_vertex_array(glow::VERTEX_ARRAY_BINDING);
             let buffer = gl.get_parameter_buffer(glow::ARRAY_BUFFER_BINDING);
@@ -300,6 +322,8 @@ impl Renderer {
 }
 impl Drop for Renderer {
     fn drop(&mut self) {
+        #[cfg(test)]
+        println!("[video-entry-states] {:?}", self.entry_states);
         // SAFETY: RenderingTeardown runs with the original context current.
         // Unregister and free before releasing userdata, textures or the client.
         unsafe {

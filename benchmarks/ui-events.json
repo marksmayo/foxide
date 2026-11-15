@@ -7,7 +7,8 @@
     "Requested actions requiring frame presentation stay pending until a content-aware presentation collector exists.",
     "Applications use their default window sizes; actual bounds are retained as evidence. This is not an equal-viewport comparison.",
     "Every action has total, dispatch and observation latency, CPU time, post-action RSS and RSS growth events. Missing evidence remains unranked.",
-    "Linux uses native pointer input at observed owned accessibility bounds for every entrant. Hidden zero-area menu nodes and existing toolbar controls are not popup evidence."
+    "Linux uses native pointer input at observed owned accessibility bounds for every entrant. Hidden zero-area menu nodes and existing toolbar controls are not popup evidence.",
+    "Linux portal file dialogs require a broker-ownership adapter; an unrelated process window is never accepted as owned UI evidence."
   ],
   "actions": [
     {
@@ -578,7 +579,7 @@
       "menus": {
         "menu_media": {
           "target": "Media",
-          "expected": "Open files...",
+          "expected": "Quit",
           "target_roles": {
             "linux": [
               "Text"
@@ -666,7 +667,12 @@
         }
       },
       "status": "locators-require-runtime-verification",
-      "not_applicable": []
+      "not_applicable": [],
+      "platform_adapter_required": {
+        "linux": [
+          "open_dialog"
+        ]
+      }
     },
     {
       "id": "vlc",

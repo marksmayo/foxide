@@ -92,11 +92,15 @@ struct Samples {
 fn composited_video_is_upright_and_advances_at_video_cadence() {
     let fixture = std::env::var("FOXIDE_RENDER_FIXTURE")
         .expect("Set FOXIDE_RENDER_FIXTURE to the asymmetric test video");
-    slint::BackendSelector::new()
+    let selector = slint::BackendSelector::new()
         .backend_name("winit".into())
-        .renderer_name("femtovg".into())
-        .select()
-        .unwrap();
+        .renderer_name("femtovg".into());
+    let selector = if std::env::var("FOXIDE_PROBE_GL_API").as_deref() == Ok("desktop") {
+        selector.require_opengl_with_version(3, 3)
+    } else {
+        selector
+    };
+    selector.select().unwrap();
     let ui = VideoProbe::new().unwrap();
     ui.set_clip_video(std::env::var_os("FOXIDE_PROBE_UNCLIPPED").is_none());
     let engine = Engine::new().unwrap();
@@ -139,11 +143,18 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
             if matches!(state, slint::RenderingState::RenderingSetup) {
                 if let slint::GraphicsAPI::NativeOpenGL { get_proc_address } = api {
                     // SAFETY: the test observer runs with Slint's context current.
-                    *graphics.borrow_mut() = Some(unsafe {
+                    let gl = unsafe {
                         glow::Context::from_loader_function(|name| {
                             get_proc_address(&CString::new(name).unwrap())
                         })
-                    });
+                    };
+                    // SAFETY: setup observer runs with the current probe context.
+                    unsafe {
+                        println!("[video-probe] GL_VERSION={} GL_RENDERER={}",
+                                 gl.get_parameter_string(glow::VERSION),
+                                 gl.get_parameter_string(glow::RENDERER));
+                    }
+                    *graphics.borrow_mut() = Some(gl);
                 }
             } else if matches!(state, slint::RenderingState::AfterRendering) {
                 observations.borrow_mut().presentations += 1;

@@ -35,6 +35,8 @@ def plan(catalog, system):
                 status = 'not-applicable'
             elif action['verification'] == 'presented-frame':
                 status = 'presentation-collector-required'
+            elif action['id'] in player.get('platform_adapter_required', {}).get(system, []):
+                status = 'adapter-required'
             elif action['collector'] == 'native-accessibility' and action['id'] in player['menus']:
                 status = 'ready-for-interactive-validation'
             rows.append(dict(player=player['id'], action=action['id'], status=status))
