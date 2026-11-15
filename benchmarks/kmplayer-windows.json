@@ -19,5 +19,11 @@
   },
   "installation": "Project-local payload extracted from the signed official installer; installer launch was denied. No system-wide installation is claimed.",
   "executable": "tools/kmplayer/KMPlayer64.exe",
-  "launch_verification": "pending"
+  "launch_verification": {
+    "trials": 3,
+    "active_eight_second_probes": 1,
+    "normal_early_exits": 2,
+    "playback_verified": false,
+    "reason": "Two subsequent launches exited 0; instance handoff is possible but unverified. No playback medal is eligible."
+  }
 }
