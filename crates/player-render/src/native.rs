@@ -188,16 +188,6 @@ impl Api {
                     return Err("libmpv rejected a required playback option".into());
                 }
             }
-            #[cfg(test)]
-            for (name, value) in [
-                (c"terminal", c"yes"),
-                (
-                    c"msg-level",
-                    c"all=warn,libmpv_render=debug,vo/libmpv=debug",
-                ),
-            ] {
-                option(api.handle, name.as_ptr(), value.as_ptr());
-            }
             if initialize(api.handle) < 0 {
                 return Err("libmpv initialization failed".into());
             }
