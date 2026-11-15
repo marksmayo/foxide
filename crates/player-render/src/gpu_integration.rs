@@ -249,4 +249,3 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
         samples.frames.len()
     );
 }
-
