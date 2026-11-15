@@ -73,6 +73,9 @@ fn publishing_a_new_frame_invalidates_layers_even_when_texture_identity_is_reuse
 
 #[derive(Default)]
 struct Samples {
+    presentations: usize,
+    colors: Vec<[u8; 6]>,
+    read_errors: Vec<u32>,
     upright: usize,
     inverted: usize,
     frames: HashSet<u64>,
@@ -137,9 +140,11 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
                         })
                     });
                 }
-            } else if matches!(state, slint::RenderingState::AfterRendering)
-                && started.elapsed().as_secs_f64() >= 1.0
-            {
+            } else if matches!(state, slint::RenderingState::AfterRendering) {
+                observations.borrow_mut().presentations += 1;
+                if started.elapsed().as_secs_f64() < 1.0 {
+                    return;
+                }
                 let Some(w) = weak_probe.upgrade() else {
                     return;
                 };
@@ -176,6 +181,16 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
                 let red = |p: &[u8]| p[0] > 150 && p[1] < 80 && p[2] < 80;
                 let blue = |p: &[u8]| p[2] > 150 && p[0] < 80 && p[1] < 80;
                 let mut samples = observations.borrow_mut();
+                if samples.colors.len() < 4 {
+                    samples
+                        .colors
+                        .push([top[0], top[1], top[2], bottom[0], bottom[1], bottom[2]]);
+                }
+                // SAFETY: the observer still runs with the same GL context current.
+                let read_error = unsafe { gl.get_error() };
+                if read_error != 0 {
+                    samples.read_errors.push(read_error);
+                }
                 if red(top) && blue(bottom) {
                     samples.upright += 1;
                 }
@@ -199,7 +214,17 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
         slint::quit_event_loop().unwrap();
     });
     ui.run().unwrap();
+    if let Some(state) = engine.snapshot() {
+        println!(
+            "[video-probe] loaded={} paused={} position={} duration={} decoder={}",
+            state.loaded, state.paused, state.position, state.duration, state.hwdec
+        );
+    }
     let samples = samples.borrow();
+    println!(
+        "[video-probe] presentations={} colors={:?} read_errors={:?}",
+        samples.presentations, samples.colors, samples.read_errors
+    );
     println!(
         "upright={}, inverted={}, unique_composited_frames={}, errors={:?}",
         samples.upright,
@@ -224,3 +249,4 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
         samples.frames.len()
     );
 }
+
