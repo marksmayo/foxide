@@ -12,6 +12,7 @@ from urllib.parse import urlparse
 
 from medal_events import scoreboards
 from collection_io import write_json
+from publication import public_evidence
 
 ROOT = Path(__file__).resolve().parents[1]
 LABELS = {'windows': 'Windows', 'macos': 'macOS', 'linux': 'Linux'}
@@ -276,6 +277,8 @@ def render(catalog, protocol, boards, provenance, charts=None):
 
 
 def write_report(catalog, protocol, measurements, output, readme=None, sessions=()):
+    sessions = [public_evidence(session) for session in sessions]
+    measurements = public_evidence({'measurements': measurements})['measurements']
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
     boards = scoreboards(catalog, protocol, measurements, sessions)

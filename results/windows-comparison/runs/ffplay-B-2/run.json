@@ -4,7 +4,7 @@
   "fixture": "B",
   "prime": false,
   "command": [
-    "C:\\Users\\markm\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
+    "C:\\Users\\<user>\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
     "-hide_banner",
     "-loglevel",
     "info",
@@ -15,7 +15,7 @@
     "-y",
     "720",
     "-i",
-    "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv"
+    "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv"
   ],
   "duration_seconds": 20.0,
   "warmup_seconds": 5.0,
@@ -1232,7 +1232,7 @@
   "windows": [
     {
       "pid": 49424,
-      "title": "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv",
+      "title": "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv",
       "class": "SDL_app"
     }
   ],

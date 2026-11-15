@@ -6,7 +6,6 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
-  id-token: write
 concurrency:
   group: codspeed-${{ github.ref }}
   cancel-in-progress: true
@@ -16,12 +15,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
         with:
           key: codspeed
-      - uses: taiki-e/install-action@v2
+      - uses: taiki-e/install-action@ab49d3c64680143e184118bed66a46419fc15519 # v2
         with:
           tool: cargo-codspeed@6.0.0
       - name: Validate every benchmark case and record the expanded inventory
@@ -39,13 +38,13 @@ jobs:
       - name: Build the benchmark targets
         run: cargo codspeed build -m simulation
       - name: Run the benchmarks
-        uses: CodSpeedHQ/action@v5
+        uses: CodSpeedHQ/action@af75f77f17a054769abefaa42fe8dc2975469b5f # v5
         with:
           mode: simulation
           run: cargo codspeed run
       - name: Upload benchmark inventory
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: codspeed-benchmark-inventory
           path: results/local/codspeed-benchmarks.txt

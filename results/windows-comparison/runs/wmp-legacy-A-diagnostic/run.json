@@ -6,7 +6,7 @@
   "command": [
     "C:\\Program Files\\Windows Media Player\\wmplayer.exe",
     "/play",
-    "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4"
+    "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4"
   ],
   "duration_seconds": 8,
   "warmup_seconds": 2,

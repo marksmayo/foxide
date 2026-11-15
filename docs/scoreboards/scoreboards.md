@@ -104,7 +104,7 @@ Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CL
 
 **Software decode · Foxide CLI · Hosted**
 
-runnervmm7ud1 · Windows-2025Server-10.0.26100-SP0 · AMD64 · 2 logical CPUs · 2026-11-14T12:18:38.147125+00:00.
+windows-hosted · Windows-2025Server-10.0.26100-SP0 · AMD64 · 2 logical CPUs · 2026-11-14T12:18:38.147125+00:00.
 
 [Actions run](https://github.com/marksmayo/foxide/actions/runs/43593686026) · Source: `2875cbeef9ed7243e73b44335eedb810cc60b540`. Freshness is per field; older platform results are retained with their original collection dates.
 
@@ -116,7 +116,7 @@ Sampling: 8s after engine readiness, 2s warmup excluded; original collection ord
 | Foxide | 3 | 9 | 2 | 14 |
 | VLC | 2 | 1 | 8 | 11 |
 
-![Windows: every measured metric](./windows-335ba50eba-scenarios.svg)
+![Windows: every measured metric](./windows-f4bf99ede6-scenarios.svg)
 
 <details><summary>Every measured metric — median values and podiums</summary>
 
@@ -161,7 +161,7 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 
 **Windowed playback · Foxide Desktop · Local**
 
-MM-Terem · Windows-11-10.0.26300-SP0 · 20 logical CPUs · 2026-11-15T04:01:52.019159+00:00.
+windows-local · Windows-11-10.0.26300-SP0 · 20 logical CPUs · 2026-11-15T04:01:52.019159+00:00.
 
 Source: `372de990b8f2810a32e091b01a553a1ec5d3a76f`. Freshness is per field; older platform results are retained with their original collection dates.
 
@@ -183,7 +183,7 @@ Engine observations, not scanout proof. The [mpv manual](https://mpv.io/manual/s
 | Foxide | 4 | 6 | 4 | 14 |
 | VLC | 3 | 2 | 6 | 11 |
 
-![Windows: every measured metric](./windows-26e722ad83-scenarios.svg)
+![Windows: every measured metric](./windows-f9366948d9-scenarios.svg)
 
 <details><summary>Every measured metric — median values and podiums</summary>
 
@@ -228,7 +228,7 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 
 **Software decode · Foxide CLI · Local**
 
-MM-Terem · Windows-11-10.0.26300-SP0 · 20 logical CPUs · 2026-11-15T04:29:30.454755+00:00.
+windows-local · Windows-11-10.0.26300-SP0 · 20 logical CPUs · 2026-11-15T04:29:30.454755+00:00.
 
 Source: `188f2e6b49b5d638b7f641b47d13ae0ee6906740`. Freshness is per field; older platform results are retained with their original collection dates.
 
@@ -240,7 +240,7 @@ Sampling: 8s after engine readiness, 2s warmup excluded; randomized order (seed 
 | mpv | 5 | 7 | 2 | 14 |
 | Foxide | 2 | 7 | 5 | 14 |
 
-![Windows: every measured metric](./windows-c6f67220e4-scenarios.svg)
+![Windows: every measured metric](./windows-0157c4dec0-scenarios.svg)
 
 <details><summary>Every measured metric — median values and podiums</summary>
 
@@ -359,7 +359,7 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 
 **Software decode · Foxide CLI · Hosted**
 
-dsm12-dh252-ff50306c-17b7-491f-9f18-ade1dde48def-128BE6880A2E.local · macOS-15.8.2-arm64-arm-64bit · arm64 · 5 logical CPUs · 2026-11-14T12:16:24.783861+00:00.
+macos-hosted · macOS-15.8.2-arm64-arm-64bit · arm64 · 5 logical CPUs · 2026-11-14T12:16:24.783861+00:00.
 
 [Actions run](https://github.com/marksmayo/foxide/actions/runs/43593686026) · Source: `2875cbeef9ed7243e73b44335eedb810cc60b540`. Freshness is per field; older platform results are retained with their original collection dates.
 
@@ -371,7 +371,7 @@ Sampling: 8s after engine readiness, 2s warmup excluded; original collection ord
 | Foxide | 3 | 8 | 3 | 14 |
 | mpv | 2 | 6 | 6 | 14 |
 
-![macOS: every measured metric](./macos-1a4c0a188f-scenarios.svg)
+![macOS: every measured metric](./macos-0abbede2b1-scenarios.svg)
 
 <details><summary>Every measured metric — median values and podiums</summary>
 
@@ -481,7 +481,7 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 
 **Software decode · Foxide CLI · Hosted**
 
-runnervm8axu0 · Linux-7.0.0-1017-azure-x86_64-with-glibc2.39 · x86_64 · 2 logical CPUs · 2026-11-14T12:15:22.792611+00:00.
+linux-hosted · Linux-7.0.0-1017-azure-x86_64-with-glibc2.39 · x86_64 · 2 logical CPUs · 2026-11-14T12:15:22.792611+00:00.
 
 [Actions run](https://github.com/marksmayo/foxide/actions/runs/43593686026) · Source: `2875cbeef9ed7243e73b44335eedb810cc60b540`. Freshness is per field; older platform results are retained with their original collection dates.
 
@@ -493,7 +493,7 @@ Sampling: 8s after engine readiness, 2s warmup excluded; original collection ord
 | Foxide | 4 | 7 | 3 | 14 |
 | VLC | 4 | 0 | 7 | 11 |
 
-![Linux: every measured metric](./linux-3f69c35d40-scenarios.svg)
+![Linux: every measured metric](./linux-19ec16f833-scenarios.svg)
 
 <details><summary>Every measured metric — median values and podiums</summary>
 

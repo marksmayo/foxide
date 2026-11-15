@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   pull_request:
   push:
-    branches: [fix/video-texture-orientation-and-cadence]
+    branches: [main, fix/video-texture-orientation-and-cadence]
 permissions:
   contents: read
 jobs:
@@ -14,12 +14,17 @@ jobs:
       LIBGL_ALWAYS_SOFTWARE: '1'
       FOXIDE_RENDER_FIXTURE: ${{ github.workspace }}/results/local/orientation.mkv
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
+        with:
+          components: llvm-tools-preview
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
         with:
           key: desktop-ui
           cache-on-failure: true
+      - uses: taiki-e/install-action@c2e5d2ce8920c881761c4cabb41434daa1f95687 # cargo-llvm-cov
+        with:
+          tool: cargo-llvm-cov@0.9.1
       - name: Install software OpenGL and the native media engine
         run: sudo apt-get update && sudo apt-get install -y ffmpeg libmpv2 xvfb xauth libgl1-mesa-dri libegl1-mesa-dev libxkbcommon-dev libxkbcommon-x11-dev libfontconfig1-dev libwayland-dev
       - name: Generate asymmetric moving video
@@ -27,14 +32,18 @@ jobs:
           mkdir -p results/local
           ffmpeg -v error -f lavfi -i "testsrc2=size=320x180:rate=30:duration=10,drawbox=x=0:y=0:w=iw:h=ih/4:color=red:t=fill,drawbox=x=0:y=3*ih/4:w=iw:h=ih/4:color=blue:t=fill" -c:v ffv1 "$FOXIDE_RENDER_FIXTURE"
       - name: Verify reused texture invalidates cached layers without a native display
-        run: cargo test -p player-render --features gpu-integration --locked publishing_a_new_frame -- --nocapture
+        run: cargo llvm-cov --workspace --features player-ui/desktop,player-render/gpu-integration --locked --no-report -- --test-threads=1
       - name: Verify actual composited orientation and changing video frames
         shell: bash
         run: |
           set -o pipefail
-          xvfb-run -a -s '-screen 0 1280x720x24' cargo test -p player-render --features gpu-integration --locked -- --ignored --nocapture --test-threads=1 2>&1 | tee results/local/video-regression.log
-      - uses: actions/upload-artifact@v4
+          xvfb-run -a -s '-screen 0 1280x720x24' cargo llvm-cov --workspace --features player-ui/desktop,player-render/gpu-integration --locked --no-clean --no-report -- --ignored --nocapture --test-threads=1 2>&1 | tee results/local/video-regression.log
+      - name: Publish measured desktop and GPU coverage
+        run: cargo llvm-cov report --json --summary-only --output-path results/local/coverage-desktop-gpu.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
           name: video-compositor-regression
-          path: results/local/video-regression.log
+          path: |
+            results/local/video-regression.log
+            results/local/coverage-desktop-gpu.json

@@ -75,21 +75,35 @@ fn mpv_path(explicit: Option<PathBuf>) -> PathBuf {
         return path;
     }
     let filename = if cfg!(windows) { "mpv.exe" } else { "mpv" };
-    let mut roots = Vec::with_capacity(4);
-    if let Ok(cwd) = std::env::current_dir() {
-        roots.push(cwd);
-    }
+    let mut roots = Vec::with_capacity(3);
     if let Ok(exe) = std::env::current_exe() {
         roots.extend(exe.ancestors().skip(1).take(3).map(PathBuf::from));
     }
     let mut seen = std::collections::HashSet::new();
     let suffix = PathBuf::from("tools/mpv").join(filename);
-    roots
+    let bundled = roots
         .into_iter()
         .filter(|root| seen.insert(root.clone()))
         .map(|root| root.join(&suffix))
+        .find(|path| path.is_file());
+    if let Some(path) = bundled {
+        return path;
+    }
+    // Resolve PATH explicitly: a bare Windows command also searches the working
+    // directory, even when that directory is absent from PATH.
+    if let Some(path) = std::env::var_os("PATH")
+        .into_iter()
+        .flat_map(|paths| std::env::split_paths(&paths).collect::<Vec<_>>())
+        .filter(|directory| directory.is_absolute())
+        .map(|directory| directory.join(filename))
         .find(|path| path.is_file())
-        .unwrap_or_else(|| "mpv".into())
+    {
+        return path;
+    }
+    // Keep failure anchored to the application, never an implicit cwd search.
+    std::env::current_exe()
+        .expect("Cannot locate Foxide executable")
+        .with_file_name(filename)
 }
 
 fn main() -> Result<()> {

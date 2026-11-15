@@ -1,7 +1,7 @@
 {
   "provenance": {
-    "generated_utc": "2026-11-15T04:59:02.496602+00:00",
-    "source_commit": "77e25fba592aacecb1bf2160052068f25220dfbd",
+    "generated_utc": "2026-11-15T11:09:37.642854+00:00",
+    "source_commit": null,
     "run_url": null,
     "fields": [
       {
@@ -10,7 +10,7 @@
         "os": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
         "arch": "x86_64",
         "cpu_count": 2,
-        "host": "runnervm8axu0",
+        "host": "linux-hosted",
         "runner_image": "20261111.370.1",
         "run_id": "43593686026",
         "duration": 8,
@@ -26,7 +26,7 @@
         "os": "macOS-15.8.2-arm64-arm-64bit",
         "arch": "arm64",
         "cpu_count": 5,
-        "host": "dsm12-dh252-ff50306c-17b7-491f-9f18-ade1dde48def-128BE6880A2E.local",
+        "host": "macos-hosted",
         "runner_image": "20261104.0514.1",
         "run_id": "43593686026",
         "duration": 8,
@@ -42,7 +42,7 @@
         "os": "Windows-2025Server-10.0.26100-SP0",
         "arch": "AMD64",
         "cpu_count": 2,
-        "host": "runnervmm7ud1",
+        "host": "windows-hosted",
         "runner_image": "20261103.298.1",
         "run_id": "43593686026",
         "duration": 8,
@@ -58,7 +58,7 @@
         "os": "Windows-11-10.0.26300-SP0",
         "arch": "",
         "cpu_count": 20,
-        "host": "MM-Terem",
+        "host": "windows-local",
         "runner_image": null,
         "run_id": null,
         "duration": 8,
@@ -75,7 +75,7 @@
         "os": "Windows-11-10.0.26300-SP0",
         "arch": "",
         "cpu_count": 20,
-        "host": "MM-Terem",
+        "host": "windows-local",
         "runner_image": null,
         "run_id": null,
         "duration": 8,
@@ -90,7 +90,7 @@
         "system": "windows",
         "scope": "inventory-only",
         "utc": "2026-11-15T04:58:09.709Z",
-        "host": "MM-Terem",
+        "host": "windows-local",
         "source_commit": "77e25fba592aacecb1bf2160052068f25220dfbd",
         "note": "Post-collection local setup/launch checks; no scored playback measurements are added or replaced."
       }

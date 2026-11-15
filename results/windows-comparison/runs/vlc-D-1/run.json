@@ -15,7 +15,7 @@
     "--sub-track=-1",
     "--verbose=2",
     "--",
-    "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac"
+    "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac"
   ],
   "duration_seconds": 20.0,
   "warmup_seconds": 5.0,

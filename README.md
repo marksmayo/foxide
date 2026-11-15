@@ -1,6 +1,17 @@
 # Foxide
 
+[![CI](https://github.com/marksmayo/foxide/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/marksmayo/foxide/actions/workflows/ci.yml)
+[![Desktop builds](https://github.com/marksmayo/foxide/actions/workflows/desktop-ui.yml/badge.svg?branch=main)](https://github.com/marksmayo/foxide/actions/workflows/desktop-ui.yml)
+[![Video regression](https://github.com/marksmayo/foxide/actions/workflows/video-render.yml/badge.svg?branch=main)](https://github.com/marksmayo/foxide/actions/workflows/video-render.yml)
+[![Player Games](https://github.com/marksmayo/foxide/actions/workflows/player-games.yml/badge.svg?branch=main)](https://github.com/marksmayo/foxide/actions/workflows/player-games.yml)
 [![CodSpeed](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://app.codspeed.io/marksmayo/foxide?utm_source=badge)
+
+[![Rust 1.99+](https://img.shields.io/badge/Rust-1.99%2B-dea584?logo=rust)](Cargo.toml)
+[![Slint 1.18.1](https://img.shields.io/badge/Slint-1.18.1-7c3aed)](docs/desktop.md)
+[![Target platforms](https://img.shields.io/badge/targets-Windows%20%7C%20macOS%20%7C%20Linux-0078d4)](docs/architecture.md)
+[![Default Rust coverage gate](https://img.shields.io/badge/default_Rust_coverage_gate-%E2%89%A590%25-2ea44f)](docs/security-and-testing.md)
+[![Policy and installer coverage gates](https://img.shields.io/badge/policy_%26_installer_gates-%E2%89%A590%25-2ea44f)](docs/security-and-testing.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 A Rust desktop media player with a Slint desktop preview and a transparent competitor scoreboard. The new desktop embeds libmpv in Foxide's own window; the existing `foxide` CLI still launches external mpv.
 
@@ -23,7 +34,7 @@ Build with `cargo build --release --locked`. On Windows, `python scripts/install
 
 The **Player Games** workflow installs/attempts each platform's native field, records verified playback or labeled frontend diagnostics, produces the GitHub-native graphs, result tables, and expandable feature/metric details below; benchmark branches receive updates for PR review and downloadable HTML remains optional. Feature possession awards shared gold. Performance requires repeated, verified, comparable measurements. Hosted VMs have separate cohorts from physical GPU, battery, and displayed-frame tests.
 
-Development follows red → green tests. CI enforces **90% Rust workspace line coverage** for default features and **90% coverage for medal/report policies**. Feature-gated desktop/native rendering is not yet covered by that threshold. A separate three-platform desktop workflow builds the GUI and renders a layout preview. Native PiP, thumbnails, drag-and-drop, persistent GUI resume, complete GUI coverage and physical GPU acceptance remain open.
+Development follows red → green tests. CI enforces **90% Rust workspace line coverage** for default features and **90% coverage for medal/report policies and installers**, in separate gates. Feature-gated desktop/native rendering has a separate instrumented GPU CI report; the default-feature threshold does not cover it. [Measured coverage and security follow-up](docs/security-and-testing.md). A separate three-platform desktop workflow builds the GUI and renders a layout preview. Native PiP, thumbnails, drag-and-drop, persistent GUI resume, complete GUI coverage and physical GPU acceptance remain open.
 
 CodSpeed tracks **233 CPU benchmark cases** across playback policy, UI actions, playlists and telemetry processing. [Suite and run commands](docs/codspeed.md) · [Case inventory](benchmarks/codspeed-inventory.json).
 
@@ -133,7 +144,7 @@ Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CL
 
 **Software decode · Foxide CLI · Hosted**
 
-runnervmm7ud1 · Windows-2025Server-10.0.26100-SP0 · AMD64 · 2 logical CPUs · 2026-11-14T12:18:38.147125+00:00.
+windows-hosted · Windows-2025Server-10.0.26100-SP0 · AMD64 · 2 logical CPUs · 2026-11-14T12:18:38.147125+00:00.
 
 [Actions run](https://github.com/marksmayo/foxide/actions/runs/43593686026) · Source: `2875cbeef9ed7243e73b44335eedb810cc60b540`. Freshness is per field; older platform results are retained with their original collection dates.
 
@@ -145,7 +156,7 @@ Sampling: 8s after engine readiness, 2s warmup excluded; original collection ord
 | Foxide | 3 | 9 | 2 | 14 |
 | VLC | 2 | 1 | 8 | 11 |
 
-![Windows: every measured metric](docs/scoreboards/windows-335ba50eba-scenarios.svg)
+![Windows: every measured metric](docs/scoreboards/windows-f4bf99ede6-scenarios.svg)
 
 <details><summary>Every measured metric — median values and podiums</summary>
 
@@ -190,7 +201,7 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 
 **Windowed playback · Foxide Desktop · Local**
 
-MM-Terem · Windows-11-10.0.26300-SP0 · 20 logical CPUs · 2026-11-15T04:01:52.019159+00:00.
+windows-local · Windows-11-10.0.26300-SP0 · 20 logical CPUs · 2026-11-15T04:01:52.019159+00:00.
 
 Source: `372de990b8f2810a32e091b01a553a1ec5d3a76f`. Freshness is per field; older platform results are retained with their original collection dates.
 
@@ -212,7 +223,7 @@ Engine observations, not scanout proof. The [mpv manual](https://mpv.io/manual/s
 | Foxide | 4 | 6 | 4 | 14 |
 | VLC | 3 | 2 | 6 | 11 |
 
-![Windows: every measured metric](docs/scoreboards/windows-26e722ad83-scenarios.svg)
+![Windows: every measured metric](docs/scoreboards/windows-f9366948d9-scenarios.svg)
 
 <details><summary>Every measured metric — median values and podiums</summary>
 
@@ -257,7 +268,7 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 
 **Software decode · Foxide CLI · Local**
 
-MM-Terem · Windows-11-10.0.26300-SP0 · 20 logical CPUs · 2026-11-15T04:29:30.454755+00:00.
+windows-local · Windows-11-10.0.26300-SP0 · 20 logical CPUs · 2026-11-15T04:29:30.454755+00:00.
 
 Source: `188f2e6b49b5d638b7f641b47d13ae0ee6906740`. Freshness is per field; older platform results are retained with their original collection dates.
 
@@ -269,7 +280,7 @@ Sampling: 8s after engine readiness, 2s warmup excluded; randomized order (seed 
 | mpv | 5 | 7 | 2 | 14 |
 | Foxide | 2 | 7 | 5 | 14 |
 
-![Windows: every measured metric](docs/scoreboards/windows-c6f67220e4-scenarios.svg)
+![Windows: every measured metric](docs/scoreboards/windows-0157c4dec0-scenarios.svg)
 
 <details><summary>Every measured metric — median values and podiums</summary>
 
@@ -388,7 +399,7 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 
 **Software decode · Foxide CLI · Hosted**
 
-dsm12-dh252-ff50306c-17b7-491f-9f18-ade1dde48def-128BE6880A2E.local · macOS-15.8.2-arm64-arm-64bit · arm64 · 5 logical CPUs · 2026-11-14T12:16:24.783861+00:00.
+macos-hosted · macOS-15.8.2-arm64-arm-64bit · arm64 · 5 logical CPUs · 2026-11-14T12:16:24.783861+00:00.
 
 [Actions run](https://github.com/marksmayo/foxide/actions/runs/43593686026) · Source: `2875cbeef9ed7243e73b44335eedb810cc60b540`. Freshness is per field; older platform results are retained with their original collection dates.
 
@@ -400,7 +411,7 @@ Sampling: 8s after engine readiness, 2s warmup excluded; original collection ord
 | Foxide | 3 | 8 | 3 | 14 |
 | mpv | 2 | 6 | 6 | 14 |
 
-![macOS: every measured metric](docs/scoreboards/macos-1a4c0a188f-scenarios.svg)
+![macOS: every measured metric](docs/scoreboards/macos-0abbede2b1-scenarios.svg)
 
 <details><summary>Every measured metric — median values and podiums</summary>
 
@@ -510,7 +521,7 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 
 **Software decode · Foxide CLI · Hosted**
 
-runnervm8axu0 · Linux-7.0.0-1017-azure-x86_64-with-glibc2.39 · x86_64 · 2 logical CPUs · 2026-11-14T12:15:22.792611+00:00.
+linux-hosted · Linux-7.0.0-1017-azure-x86_64-with-glibc2.39 · x86_64 · 2 logical CPUs · 2026-11-14T12:15:22.792611+00:00.
 
 [Actions run](https://github.com/marksmayo/foxide/actions/runs/43593686026) · Source: `2875cbeef9ed7243e73b44335eedb810cc60b540`. Freshness is per field; older platform results are retained with their original collection dates.
 
@@ -522,7 +533,7 @@ Sampling: 8s after engine readiness, 2s warmup excluded; original collection ord
 | Foxide | 4 | 7 | 3 | 14 |
 | VLC | 4 | 0 | 7 | 11 |
 
-![Linux: every measured metric](docs/scoreboards/linux-3f69c35d40-scenarios.svg)
+![Linux: every measured metric](docs/scoreboards/linux-19ec16f833-scenarios.svg)
 
 <details><summary>Every measured metric — median values and podiums</summary>
 

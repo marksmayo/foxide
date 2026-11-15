@@ -19,7 +19,7 @@ MEDIA_SPEC.loader.exec_module(media)
 
 
 @contextmanager
-def test_directory():
+def scratch_directory():
     # Regular inherited workspace permissions also allow the sampler child to write.
     # Python 3.14's Windows tempfile private DACL can exclude restricted child tokens.
     base = (ROOT / 'target/test-tmp').resolve()
@@ -47,7 +47,7 @@ class TelemetryTests(unittest.TestCase):
         with subprocess.Popen([sys.executable, '-c', program], stdout=subprocess.PIPE, text=True) as root:
             child_pid = int(root.stdout.readline())
             try:
-                with test_directory() as temp:
+                with scratch_directory() as temp:
                     output = Path(temp) / 'samples.jsonl'
                     # Allow two process-tree scans on Windows under coverage instrumentation.
                     # A 700ms wall-clock budget can expire after only the first scan.

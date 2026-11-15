@@ -22,7 +22,7 @@ jobs:
     runs-on: [self-hosted, foxide-bench, '${{ matrix.os }}']
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - run: cargo build --release --locked -p player-bench
       - name: Capture immutable suite and bench build manifest
         shell: bash
@@ -48,7 +48,7 @@ jobs:
           python3 scripts/generate-media.py --verify-only --output "$FOXIDE_MEDIA"
           target/release/player-bench run --player '${{ matrix.player }}' --exe "$player_exe" --media "$FOXIDE_MEDIA/${{ matrix.fixture }}" --cache warm --repeat 5 --duration 630 --warmup 30 --output results/local/release/runs
           target/release/player-bench report results/local/release/runs --output results/local/release/comparison.md
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
           name: baselines-${{ runner.os }}-${{ matrix.player }}-${{ matrix.fixture }}-${{ github.sha }}

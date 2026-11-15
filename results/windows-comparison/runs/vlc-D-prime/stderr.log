@@ -17,13 +17,13 @@
 [00000248e3c52e00] main input debug: Creating an input for 'Media Library'
 [00000248e3c52e00] main input debug: Input is a meta file: disabling unneeded options
 [00000248e3c52e00] main input debug: using timeshift granularity of 50 MiB
-[00000248e3c52e00] main input debug: using timeshift path: C:\Users\markm\AppData\Local\Temp
-[00000248e3c52e00] main input debug: `file/directory:///C:/Users/markm/AppData/Roaming/vlc/ml.xspf' gives access `file' demux `directory' path `/C:/Users/markm/AppData/Roaming/vlc/ml.xspf'
-[00000248e214a900] main input source debug: creating demux: access='file' demux='directory' location='/C:/Users/markm/AppData/Roaming/vlc/ml.xspf' file='C:\Users\markm\AppData\Roaming\vlc\ml.xspf'
+[00000248e3c52e00] main input debug: using timeshift path: C:\Users\<user>\AppData\Local\Temp
+[00000248e3c52e00] main input debug: `file/directory:///C:/Users/<user>/AppData/Roaming/vlc/ml.xspf' gives access `file' demux `directory' path `/C:/Users/<user>/AppData/Roaming/vlc/ml.xspf'
+[00000248e214a900] main input source debug: creating demux: access='file' demux='directory' location='/C:/Users/<user>/AppData/Roaming/vlc/ml.xspf' file='C:\Users\<user>\AppData\Roaming\vlc\ml.xspf'
 [00000248e2127a90] main demux debug: looking for access_demux module matching "file": 15 candidates
 [00000248e2127a90] main demux debug: no access_demux modules matched
-[00000248e2128aa0] main stream debug: creating access: file:///C:/Users/markm/AppData/Roaming/vlc/ml.xspf
-[00000248e2128aa0] main stream debug:  (path: C:\Users\markm\AppData\Roaming\vlc\ml.xspf)
+[00000248e2128aa0] main stream debug: creating access: file:///C:/Users/<user>/AppData/Roaming/vlc/ml.xspf
+[00000248e2128aa0] main stream debug:  (path: C:\Users\<user>\AppData\Roaming\vlc\ml.xspf)
 [00000248e2128aa0] main stream debug: looking for access module matching "file": 26 candidates
 [00000248e2128aa0] main stream debug: using access module "filesystem"
 [00000248e21296a0] main stream debug: looking for stream_filter module matching "prefetch,cache_read": 24 candidates
@@ -40,18 +40,18 @@
 [00000248e2129820] main stream debug: no stream_filter modules matched
 [00000248e212ba80] main stream_directory debug: looking for stream_directory module matching "any": 1 candidates
 [00000248e212ba80] main stream_directory debug: no stream_directory modules matched
-[00000248e214a900] main input source debug: attachment of directory-extractor failed for file:///C:/Users/markm/AppData/Roaming/vlc/ml.xspf
+[00000248e214a900] main input source debug: attachment of directory-extractor failed for file:///C:/Users/<user>/AppData/Roaming/vlc/ml.xspf
 [00000248e2128da0] main stream debug: looking for stream_filter module matching "record": 24 candidates
 [00000248e2128da0] main stream debug: using stream_filter module "record"
-[00000248e214a900] main input source debug: creating demux: access='file' demux='directory' location='/C:/Users/markm/AppData/Roaming/vlc/ml.xspf' file='C:\Users\markm\AppData\Roaming\vlc\ml.xspf'
+[00000248e214a900] main input source debug: creating demux: access='file' demux='directory' location='/C:/Users/<user>/AppData/Roaming/vlc/ml.xspf' file='C:\Users\<user>\AppData\Roaming\vlc\ml.xspf'
 [00000248e2128660] main demux debug: looking for demux module matching "directory": 56 candidates
 [00000248e2128660] main demux debug: using demux module "directory"
 [00000248e20fbc30] main demux meta debug: looking for meta reader module matching "any": 2 candidates
-[00000248e20fbc30] lua demux meta debug: Trying Lua scripts in C:\Users\markm\AppData\Roaming\vlc\lua\meta\reader
+[00000248e20fbc30] lua demux meta debug: Trying Lua scripts in C:\Users\<user>\AppData\Roaming\vlc\lua\meta\reader
 [00000248e20fbc30] lua demux meta debug: Trying Lua scripts in C:\Program Files\VideoLAN\VLC\lua\meta\reader
 [00000248e20fbc30] lua demux meta debug: Trying Lua playlist script C:\Program Files\VideoLAN\VLC\lua\meta\reader\filename.luac
 [00000248e20fbc30] main demux meta debug: no meta reader modules matched
-[00000248e3c52e00] main input debug: `file/directory:///C:/Users/markm/AppData/Roaming/vlc/ml.xspf' successfully opened
+[00000248e3c52e00] main input debug: `file/directory:///C:/Users/<user>/AppData/Roaming/vlc/ml.xspf' successfully opened
 [00000248e212cd00] main xml reader debug: looking for xml reader module matching "any": 1 candidates
 [00000248e212cd00] main xml reader debug: using xml reader module "xml"
 [00000248e3c52e00] main input debug: EOF reached
@@ -78,7 +78,7 @@
 [00000248e3c66ce0] qt interface debug: Boring first Run Wizard
 [00000248e3ddf820] main generic debug: looking for extension module matching "any": 1 candidates
 [00000248e3ddf820] lua generic debug: Opening Lua Extension module
-[00000248e3ddf820] lua generic debug: Trying Lua scripts in C:\Users\markm\AppData\Roaming\vlc\lua\extensions
+[00000248e3ddf820] lua generic debug: Trying Lua scripts in C:\Users\<user>\AppData\Roaming\vlc\lua\extensions
 [00000248e3ddf820] lua generic debug: Trying Lua scripts in C:\Program Files\VideoLAN\VLC\lua\extensions
 [00000248e3ddf820] lua generic debug: Trying Lua playlist script C:\Program Files\VideoLAN\VLC\lua\extensions\VLSub.luac
 [00000248e3ddf820] lua generic debug: Scanning Lua script C:\Program Files\VideoLAN\VLC\lua\extensions\VLSub.luac
@@ -94,13 +94,13 @@
 [00000248e2149f80] main playlist debug: creating new input thread
 [00000248e4274400] main input debug: Creating an input for 'Benchmark Track 1'
 [00000248e4274400] main input debug: using timeshift granularity of 50 MiB
-[00000248e4274400] main input debug: using timeshift path: C:\Users\markm\AppData\Local\Temp
-[00000248e4274400] main input debug: `file:///C:/Users/markm/Github/foxide/media/generated/comparison/D-audio.flac' gives access `file' demux `any' path `/C:/Users/markm/Github/foxide/media/generated/comparison/D-audio.flac'
-[00000248e212b840] main input source debug: creating demux: access='file' demux='any' location='/C:/Users/markm/Github/foxide/media/generated/comparison/D-audio.flac' file='C:\Users\markm\Github\foxide\media\generated\comparison\D-audio.flac'
+[00000248e4274400] main input debug: using timeshift path: C:\Users\<user>\AppData\Local\Temp
+[00000248e4274400] main input debug: `file:///C:/Users/<user>/Github/foxide/media/generated/comparison/D-audio.flac' gives access `file' demux `any' path `/C:/Users/<user>/Github/foxide/media/generated/comparison/D-audio.flac'
+[00000248e212b840] main input source debug: creating demux: access='file' demux='any' location='/C:/Users/<user>/Github/foxide/media/generated/comparison/D-audio.flac' file='C:\Users\<user>\Github\foxide\media\generated\comparison\D-audio.flac'
 [00000248e3cc2450] main demux debug: looking for access_demux module matching "file": 15 candidates
 [00000248e3cc2450] main demux debug: no access_demux modules matched
-[00000248e21293a0] main stream debug: creating access: file:///C:/Users/markm/Github/foxide/media/generated/comparison/D-audio.flac
-[00000248e21293a0] main stream debug:  (path: C:\Users\markm\Github\foxide\media\generated\comparison\D-audio.flac)
+[00000248e21293a0] main stream debug: creating access: file:///C:/Users/<user>/Github/foxide/media/generated/comparison/D-audio.flac
+[00000248e21293a0] main stream debug:  (path: C:\Users\<user>\Github\foxide\media\generated\comparison\D-audio.flac)
 [00000248e21293a0] main stream debug: looking for access module matching "file": 26 candidates
 [00000248e21293a0] main stream debug: using access module "filesystem"
 [00000248e21296a0] main stream debug: looking for stream_filter module matching "prefetch,cache_read": 24 candidates
@@ -110,7 +110,7 @@
 [00000248e21296a0] cache_read stream debug: pre-buffering done 1024 bytes in 0s - 1000000 KiB/s
 [00000248e21296a0] main stream debug: using stream_filter module "cache_read"
 [00000248e2128da0] main stream debug: looking for stream_filter module matching "any": 24 candidates
-[00000248e2128da0] lua stream debug: Trying Lua scripts in C:\Users\markm\AppData\Roaming\vlc\lua\playlist
+[00000248e2128da0] lua stream debug: Trying Lua scripts in C:\Users\<user>\AppData\Roaming\vlc\lua\playlist
 [00000248e2128da0] lua stream debug: Trying Lua scripts in C:\Program Files\VideoLAN\VLC\lua\playlist
 [00000248e2128da0] lua stream debug: Trying Lua playlist script C:\Program Files\VideoLAN\VLC\lua\playlist\anevia_streams.luac
 [00000248e2128da0] lua stream debug: Trying Lua playlist script C:\Program Files\VideoLAN\VLC\lua\playlist\anevia_xml.luac
@@ -130,24 +130,24 @@
 [00000248e2128da0] main stream debug: no stream_filter modules matched
 [00000248e3e2d500] main stream_directory debug: looking for stream_directory module matching "any": 1 candidates
 [00000248e3e2d500] main stream_directory debug: no stream_directory modules matched
-[00000248e212b840] main input source debug: attachment of directory-extractor failed for file:///C:/Users/markm/Github/foxide/media/generated/comparison/D-audio.flac
+[00000248e212b840] main input source debug: attachment of directory-extractor failed for file:///C:/Users/<user>/Github/foxide/media/generated/comparison/D-audio.flac
 [00000248e2128c20] main stream debug: looking for stream_filter module matching "record": 24 candidates
 [00000248e2128c20] main stream debug: using stream_filter module "record"
-[00000248e212b840] main input source debug: creating demux: access='file' demux='any' location='/C:/Users/markm/Github/foxide/media/generated/comparison/D-audio.flac' file='C:\Users\markm\Github\foxide\media\generated\comparison\D-audio.flac'
+[00000248e212b840] main input source debug: creating demux: access='file' demux='any' location='/C:/Users/<user>/Github/foxide/media/generated/comparison/D-audio.flac' file='C:\Users\<user>\Github\foxide\media\generated\comparison\D-audio.flac'
 [00000248e3cc2450] main demux debug: looking for demux module matching "flac": 56 candidates
 [00000248e4280c10] main demux packetizer debug: looking for packetizer module matching "any": 25 candidates
 [00000248e4280c10] main demux packetizer debug: using packetizer module "flac"
 [00000248e4274400] main input debug: selecting program id=0
 [00000248e3cc2450] main demux debug: using demux module "flacsys"
-[00000248e4274400] main input debug: looking for a subtitle file in C:\Users\markm\Github\foxide\media\generated\comparison\
+[00000248e4274400] main input debug: looking for a subtitle file in C:\Users\<user>\Github\foxide\media\generated\comparison\
 [00000248e41cacf0] main packetizer debug: looking for packetizer module matching "any": 25 candidates
 [00000248e41cacf0] main packetizer debug: using packetizer module "flac"
 [00000248e42873c0] main decoder debug: looking for audio decoder module matching "any": 21 candidates
 [00000248e3c66ce0] qt interface debug: IM: Setting an input
 [00000248e42873c0] main decoder debug: using audio decoder module "flac"
 [00000248e20fbc30] main demux meta debug: looking for meta reader module matching "any": 2 candidates
-[00000248e2128da0] main stream debug: creating access: file:///C:/Users/markm/Github/foxide/media/generated/comparison/D-audio.flac
-[00000248e2128da0] main stream debug:  (path: C:\Users\markm\Github\foxide\media\generated\comparison\D-audio.flac)
+[00000248e2128da0] main stream debug: creating access: file:///C:/Users/<user>/Github/foxide/media/generated/comparison/D-audio.flac
+[00000248e2128da0] main stream debug:  (path: C:\Users\<user>\Github\foxide\media\generated\comparison\D-audio.flac)
 [00000248e2128da0] main stream debug: looking for access module matching "file": 26 candidates
 [00000248e2128da0] main stream debug: using access module "filesystem"
 [00000248e2128f20] main stream debug: looking for stream_filter module matching "prefetch,cache": 24 candidates
@@ -157,7 +157,7 @@
 [00000248e20fbc30] main demux meta debug: using meta reader module "taglib"
 [00000248e3cc2450] main demux debug: removing module "taglib"
 [00000248e4274400] main input warning: art already fetched
-[00000248e4274400] main input debug: `file:///C:/Users/markm/Github/foxide/media/generated/comparison/D-audio.flac' successfully opened
+[00000248e4274400] main input debug: `file:///C:/Users/<user>/Github/foxide/media/generated/comparison/D-audio.flac' successfully opened
 [00000248e4274400] main input debug: Buffering 0%
 [00000248e42873c0] main decoder debug: restarting module due to input format change
 [00000248e4274400] main input debug: Buffering 2%

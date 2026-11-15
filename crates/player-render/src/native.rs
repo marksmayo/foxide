@@ -48,21 +48,42 @@ pub(crate) struct Api {
 unsafe impl Send for Api {}
 unsafe impl Sync for Api {}
 
+// Windows dependencies may resolve only beside the requested DLL or in trusted
+// system/application directories; LOAD_LIBRARY_SEARCH_DEFAULT_DIRS excludes cwd.
+unsafe fn load_library(path: &std::path::Path) -> Result<Library, String> {
+    #[cfg(windows)]
+    {
+        use libloading::os::windows::{
+            LOAD_LIBRARY_SEARCH_DEFAULT_DIRS, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR,
+            Library as WindowsLibrary,
+        };
+        let path = path.canonicalize().map_err(|error| error.to_string())?;
+        // SAFETY: caller retains the library; the absolute path is selected by
+        // executable-relative discovery or an explicit FOXIDE_LIBMPV override.
+        unsafe {
+            WindowsLibrary::load_with_flags(
+                path,
+                LOAD_LIBRARY_SEARCH_DEFAULT_DIRS | LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR,
+            )
+            .map(Into::into)
+            .map_err(|error| error.to_string())
+        }
+    }
+    #[cfg(not(windows))]
+    // SAFETY: native package-manager library lookup; ownership is retained by Api.
+    unsafe {
+        Library::new(path).map_err(|error| error.to_string())
+    }
+}
+
 impl Api {
     fn load() -> Result<Arc<Self>, String> {
         let candidates: Vec<PathBuf> = if let Some(path) = std::env::var_os("FOXIDE_LIBMPV") {
             vec![path.into()]
         } else if cfg!(windows) {
-            let mut paths = vec![PathBuf::from("tools/libmpv/libmpv-2.dll")];
-            if let Ok(exe) = std::env::current_exe() {
-                paths.extend(
-                    exe.ancestors()
-                        .skip(1)
-                        .take(3)
-                        .map(|root| root.join("tools/libmpv/libmpv-2.dll")),
-                );
-            }
-            paths
+            crate::dependency_paths::windows_libraries(
+                &std::env::current_exe().map_err(|e| e.to_string())?,
+            )
         } else if cfg!(target_os = "macos") {
             vec![
                 "/opt/homebrew/lib/libmpv.2.dylib".into(),
@@ -77,7 +98,7 @@ impl Api {
             // SAFETY: library stays owned by Api; every symbol has the documented
             // C signature from the pinned mpv client/render headers. No unload
             // occurs until the last client/render Arc has been released.
-            let library = match unsafe { Library::new(&path) } {
+            let library = match unsafe { load_library(&path) } {
                 Ok(value) => value,
                 Err(error) => {
                     errors.push(error.to_string());
