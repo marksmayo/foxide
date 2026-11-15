@@ -12,7 +12,7 @@ use std::{
 
 slint::slint! {
     export component VideoProbe inherits Window {
-        width: 320px; height: 180px; background: black;
+        width: 320px; height: 180px; background: lime;
         in property <image> frame;
         in property <bool> clip-video: true;
         Rectangle {
@@ -74,6 +74,7 @@ fn publishing_a_new_frame_invalidates_layers_even_when_texture_identity_is_reuse
 #[derive(Default)]
 struct Samples {
     presentations: usize,
+    summaries: Vec<String>,
     colors: Vec<[u8; 6]>,
     read_errors: Vec<u32>,
     upright: usize,
@@ -181,6 +182,24 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
                 let red = |p: &[u8]| p[0] > 150 && p[1] < 80 && p[2] < 80;
                 let blue = |p: &[u8]| p[2] > 150 && p[0] < 80 && p[1] < 80;
                 let mut samples = observations.borrow_mut();
+                if samples.summaries.len() < 2 {
+                    let max = pixels.iter().copied().max().unwrap_or(0);
+                    let nonblack = pixels
+                        .chunks_exact(4)
+                        .filter(|p| p[0] > 0 || p[1] > 0 || p[2] > 0)
+                        .count();
+                    let image = w.get_frame().size();
+                    samples.summaries.push(format!(
+                        "surface={}x{} image={}x{} first={:?} max={} nonblack={}",
+                        size.width,
+                        size.height,
+                        image.width,
+                        image.height,
+                        &pixels[..4],
+                        max,
+                        nonblack
+                    ));
+                }
                 if samples.colors.len() < 4 {
                     samples
                         .colors
@@ -225,6 +244,7 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
         "[video-probe] presentations={} colors={:?} read_errors={:?}",
         samples.presentations, samples.colors, samples.read_errors
     );
+    println!("[video-probe] summaries={:?}", samples.summaries);
     println!(
         "upright={}, inverted={}, unique_composited_frames={}, errors={:?}",
         samples.upright,

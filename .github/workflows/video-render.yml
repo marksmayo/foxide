@@ -35,6 +35,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
+          xvfb-run -a -s '-screen 0 1280x720x24' cargo test -p player-render --features gpu-integration --locked -- --ignored --nocapture --test-threads=1 2>&1 | tee results/local/video-minimal.log
           xvfb-run -a -s '-screen 0 1280x720x24' cargo test --workspace --features player-ui/desktop,player-render/gpu-integration --locked -- --ignored --nocapture --test-threads=1 2>&1 | tee results/local/video-uninstrumented.log
       - name: Reset coverage profiles before combining test passes
         run: cargo llvm-cov clean --workspace
@@ -54,4 +55,5 @@ jobs:
           path: |
             results/local/video-regression.log
             results/local/video-uninstrumented.log
+            results/local/video-minimal.log
             results/local/coverage-desktop-gpu.json
