@@ -49,8 +49,10 @@ class TelemetryTests(unittest.TestCase):
             try:
                 with test_directory() as temp:
                     output = Path(temp) / 'samples.jsonl'
+                    # Allow two process-tree scans on Windows under coverage instrumentation.
+                    # A 700ms wall-clock budget can expire after only the first scan.
                     sampler = subprocess.Popen([sys.executable, str(ROOT / 'scripts/telemetry.py'),
-                                                '--output', str(output), '--duration', '0.7',
+                                                '--output', str(output), '--duration', '3',
                                                 '--interval-ms', '100'], stdin=subprocess.PIPE,
                                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
                     try:

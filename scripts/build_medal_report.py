@@ -32,11 +32,11 @@ def chart(platform, board):
     rows = sorted(board['players'], key=lambda p: (-p['feature_gold'], p['name']))
     height = 110 + 38 * len(rows)
     max_perf = max(1, max((p['performance_gold'] + p['performance_silver'] + p['performance_bronze'] for p in rows), default=0))
-    parts = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 {height}" role="img" aria-labelledby="{platform}-chart-title {platform}-chart-desc"><title id="{platform}-chart-title">{LABELS[platform]} medal scores</title><desc id="{platform}-chart-desc">Left: documented feature golds. Right: measured gold, silver, and bronze counts. Documentation coverage varies. Unknown does not mean unsupported.</desc><rect width="900" height="{height}" rx="16" fill="#111b30"/><g font-family="system-ui,sans-serif"><text x="28" y="32" font-size="22" fill="#f4f6fb">{LABELS[platform]} · medal scores</text><text x="215" y="61" font-size="12" fill="#a5b5cf">Documented feature golds</text><text x="590" y="61" font-size="12" fill="#a5b5cf">Measured gold / silver / bronze</text>']
+    parts = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 {height}" role="img" aria-labelledby="{platform}-chart-title {platform}-chart-desc"><title id="{platform}-chart-title">{LABELS[platform]} medal scores</title><desc id="{platform}-chart-desc">Left: documented feature golds. Right: measured gold, silver, and bronze counts. Documentation coverage varies. Unknown does not mean unsupported.</desc><rect width="900" height="{height}" rx="8" class="bg"/><style>{SVG_STYLE}</style><g><text class="title" x="28" y="32" font-size="22" >{LABELS[platform]} · medal scores</text><text x="215" y="61" font-size="12" class="sub">Documented feature golds</text><text x="590" y="61" font-size="12" class="sub">Measured gold / silver / bronze</text>']
     for index, p in enumerate(rows):
         y = 96 + index * 38
         width = p['feature_gold'] / max(1, len(board['features'])) * 300
-        parts.append(f'<text x="28" y="{y+5}" fill="#e0e7f5" font-size="14">{esc(p["name"])}</text><rect x="215" y="{y-12}" width="{width:.2f}" height="22" rx="5" fill="{("#ff995e" if p["id"] == "foxide" else "#e9c669")}"/><text x="{230+width:.2f}" y="{y+4}" fill="#f4f6fb" font-size="13">{p["feature_gold"]}</text>')
+        parts.append(f'<text x="28" y="{y+5}" font-size="12">{esc(p["name"])}</text><rect x="215" y="{y-12}" width="{width:.2f}" height="22" rx="5" fill="{("#2a78d6" if p["id"] == "foxide" else "#8f8e86")}"/><text x="{230+width:.2f}" y="{y+4}"  font-size="13">{p["feature_gold"]}</text>')
         x = 590.0
         total = p['performance_gold'] + p['performance_silver'] + p['performance_bronze']
         for medal, color in [('gold', '#e9c669'), ('silver', '#aec3d9'), ('bronze', '#c58c68')]:
@@ -44,7 +44,7 @@ def chart(platform, board):
             parts.append(f'<rect x="{x:.2f}" y="{y-12}" width="{size:.2f}" height="22" fill="{color}"/>')
             x += size
         label = f'{p["performance_gold"]}/{p["performance_silver"]}/{p["performance_bronze"]}' if total else '—'
-        parts.append(f'<text x="{x+10:.2f}" y="{y+4}" fill="#c4d1e6" font-size="12">{label}</text>')
+        parts.append(f'<text x="{x+10:.2f}" y="{y+4}" class="sub" font-size="12">{label}</text>')
     return ''.join(parts) + '</g></svg>'
 
 
@@ -78,18 +78,28 @@ def md(value):
 
 
 def fields_for(platform, board, sessions=()):
-    metadata = {}
+    metadata, fields = {}, {}
     for session in sessions:
         info = session['session']
         if info['system'] != platform:
             continue
+        modes = set()
         for case in session['cases']:
             if case.get('profile'):
                 metadata[case['profile']] = info
-    fields = {}
+                mode = case['profile'].split('/')[0]
+                if mode != 'frontend-default-diagnostic':
+                    modes.add(mode)
+        if not modes:
+            modes.add('native-default-window' if info.get('presentation') == 'native-window' else 'software-null-output')
+        for mode in sorted(modes):
+            key = (info.get('host', 'Unrecorded host'), info.get('utc', ''), mode)
+            fields.setdefault(key, dict(host=key[0], utc=key[1], mode=mode, info=info, events=[]))
     for event in board['performance']:
         info = metadata.get(event['profile'], {})
         mode = event['profile'].split('/')[0]
+        if mode == 'frontend-default-diagnostic':
+            continue
         key = (info.get('host', 'Unrecorded host'), info.get('utc', ''), mode)
         field = fields.setdefault(key, dict(host=key[0], utc=key[1], mode=mode, info=info, events=[]))
         field['events'].append(event)
@@ -101,21 +111,43 @@ def fields_for(platform, board, sessions=()):
         field['label'] = ('Windowed playback · Foxide Desktop' if field['mode'] == 'native-default-window'
                           else 'Software decode · Foxide CLI' if 'null' in field['mode']
                           else 'Pending measurement' if field['mode'] == 'pending' else 'Measured events')
+        if field['info']:
+            field['label'] += ' · Hosted' if field['info'].get('run_id') else ' · Local'
     return list(fields.values())
 
 
-SVG_STYLE = '''text{font:13px system-ui,-apple-system,'Segoe UI',sans-serif;fill:#0b0b0b}.sub{fill:#52514e;font-size:11px}.title{font-size:16px;font-weight:600}.bg{fill:#fcfcfb}.bar{fill:#8f8e86}.foxide{fill:#2a78d6}@media(prefers-color-scheme:dark){.bg{fill:#1a1a19}text{fill:#f0efec}.sub{fill:#c3c2b7}.foxide{fill:#3987e5}}'''
+def decoder_table(field, sessions):
+    observed = {}
+    for session in sessions:
+        if session['session'] != field['info']:
+            continue
+        for case in session['cases']:
+            if case.get('scenario') not in ('avc1080', 'hevc4k', 'av14k'):
+                continue
+            key = case['scenario'], case['player']
+            observed.setdefault(key, set()).update(e['hwdec'] for e in case.get('playback_events', ())
+                                                  if e.get('kind') == 'stats' and isinstance(e.get('hwdec'), str) and e['hwdec'])
+    if not observed:
+        return ''
+    players = [p for p in field['names'] if any(k[1] == p for k in observed)]
+    text = '| Observed decoder | ' + ' | '.join(md(field['names'][p]) for p in players) + ' |\n|---|' + '---|'*len(players) + '\n'
+    for scenario, label in [('avc1080', '1080p H.264'), ('hevc4k', '4K60 HEVC'), ('av14k', '4K60 AV1')]:
+        text += '| ' + label + ' | ' + ' | '.join(md(', '.join(sorted(observed.get((scenario, p), ()))) or 'Not reported') for p in players) + ' |\n'
+    return text + '\nEngine observations, not scanout proof. The [mpv manual](https://mpv.io/manual/stable/#options-hwdec) identifies <code>d3d11va-copy</code> as copying decoded video into system RAM; this is not zero-copy.\n\n'
+
+
+SVG_STYLE = '''text{font:13px system-ui,-apple-system,'Segoe UI',sans-serif;fill:#0b0b0b}.sub{fill:#52514e;font-size:11px}.title{font-size:16px;font-weight:600}.bg{fill:#fcfcfb}.bar{fill:#8f8e86}.foxide{fill:#2a78d6}.winner{font-weight:700}@media(prefers-color-scheme:dark){.bg{fill:#1a1a19}text{fill:#f0efec}.sub{fill:#c3c2b7}.foxide{fill:#3987e5}}'''
 
 
 def scenario_chart(field):
     events = [e for e in field['events'] if e['rankings']]
     panel_height = 74 + 24 * max((len(e['rankings']) for e in events), default=1)
-    height = 75 + max(1, math.ceil(len(events)/2)) * panel_height
-    parts = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 {height}" role="img" aria-label="{esc(field["label"])}: metric medians"><style>{SVG_STYLE}</style><rect class="bg" width="900" height="{height}" rx="8"/><text class="title" x="16" y="29">{esc(field["label"])}</text><text class="sub" x="16" y="49">Raw medians; each panel is one comparable metric/cohort. CPU and RAM are not watts or displayed frame timing.</text>']
+    height = 95 + max(1, math.ceil(len(events)/2)) * panel_height
+    parts = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 {height}" role="img" aria-label="{esc(field["label"])}: metric medians"><style>{SVG_STYLE}</style><rect class="bg" width="900" height="{height}" rx="8"/><text class="title" x="16" y="29">{esc(field["label"])}</text><text class="sub" x="16" y="49">{esc(field["host"])} · {esc(field["utc"][:10])}</text><text class="sub" x="16" y="69">Raw medians; each panel is one comparable metric/cohort. CPU and RAM are not watts or displayed frame timing.</text>']
     if not events:
-        parts.append('<text x="16" y="100">Pending measurement — no eligible comparable results.</text>')
+        parts.append('<text x="16" y="120">Pending measurement — no eligible comparable results.</text>')
     for i, event in enumerate(events):
-        x, y = 16 + (i % 2) * 445, 84 + (i // 2) * panel_height
+        x, y = 16 + (i % 2) * 445, 104 + (i // 2) * panel_height
         label = event['name']
         parts.append(f'<text x="{x}" y="{y}" font-weight="600">{esc(label[:55])}</text><text class="sub" x="{x}" y="{y+17}">{esc(event["unit"])} · {"higher" if event.get("direction") == "max" else "lower"} is better</text>')
         maximum = max((r['value'] for r in event['rankings']), default=1) or 1
@@ -123,7 +155,7 @@ def scenario_chart(field):
             yy = y + 40 + 24 * row
             width = rank['value'] / maximum * 228
             name = field.get('names', {}).get(rank['player'], rank['player'])
-            parts.append(f'<text x="{x+83}" y="{yy}" text-anchor="end">{esc(name)}</text><rect class="bar {"foxide" if rank["player"] == "foxide" else ""}" x="{x+92}" y="{yy-13}" width="{width:.2f}" height="17" rx="3"><title>{esc(name)}: {rank["value"]:.4g} {esc(event["unit"])}, {rank["trials"]} trials</title></rect><text x="{x+326}" y="{yy}">{rank["value"]:.3g}</text>')
+            parts.append(f'<text x="{x+83}" y="{yy}" text-anchor="end">{esc(name)}</text><rect class="bar {"foxide" if rank["player"] == "foxide" else ""}" x="{x+92}" y="{yy-13}" width="{width:.2f}" height="17" rx="3"><title>{esc(name)}: {rank["value"]:.4g} {esc(event["unit"])}, {rank["trials"]} trials</title></rect><text class="{"winner" if rank["medal"] == "gold" else ""}" x="{x+326}" y="{yy}">{rank["value"]:.3g}</text>')
     return ''.join(parts) + '</svg>'
 
 
@@ -141,13 +173,28 @@ def markdown(boards, relative, sessions=(), provenance=None):
         for field in fields_for(platform, board, sessions):
             parts.append(f'\n**{field["label"]}**\n\n')
             info = field['info']
-            details = [field['host'], info.get('os', ''), field['utc'] or 'Collection date unavailable']
+            details = [field['host'], info.get('os', ''), info.get('arch', ''),
+                       str(info['cpu_count']) + ' logical CPUs' if info.get('cpu_count') else '',
+                       field['utc'] or 'Collection date unavailable']
             parts.append(md(' · '.join(x for x in details if x)) + '.\n\n')
             if info.get('run_id'):
                 parts.append(f'[Actions run](https://github.com/marksmayo/foxide/actions/runs/{md(info["run_id"])}) · ')
             if info.get('source_commit'):
                 parts.append(f'Source: `{md(info["source_commit"])}`. ')
             parts.append('Freshness is per field; older platform results are retained with their original collection dates.\n\n')
+            if info.get('duration'):
+                parts.append(f"Sampling: {md(info['duration'])}s after engine readiness, {md(info.get('warmup', 0))}s warmup excluded; {('randomized order (seed ' + str(info['order_seed']) + ')') if info.get('order_seed') is not None else 'original collection order'}; cache state uncontrolled.\n\n")
+            if field['mode'] == 'native-default-window':
+                parts.append('Exploratory native playback at each player’s default window size and audio route; dimensions are not normalized. Hardware fallback and observer overhead differ. This field does not establish displayed FPS or battery efficiency.\n\n')
+                parts.append(decoder_table(field, sessions))
+            podium = {}
+            for event in field['events']:
+                for rank in event['rankings']:
+                    row = podium.setdefault(rank['player'], dict(name=field['names'][rank['player']], gold=0, silver=0, bronze=0))
+                    if rank['medal']:
+                        row[rank['medal']] += 1
+            if podium:
+                parts.append(medal_table(sorted(podium.values(), key=lambda p: (-p['gold'], -p['silver'], -p['bronze'], p['name']))) + '\n')
             parts.append(f'![{LABELS[platform]}: every measured metric]({relative}/{field["slug"]}-scenarios.svg)\n\n')
             parts.append('<details><summary>Every measured metric — median values and podiums</summary>\n\n')
             entrants = [p for p in board['players'] if any(r['player'] == p['id'] for e in field['events'] for r in e['rankings'])]
@@ -171,9 +218,9 @@ def markdown(boards, relative, sessions=(), provenance=None):
                 if e['rankings']:
                     parts.append(f'| {md(e["name"])} | `{md(e["profile"])}` | ' + ', '.join(str(r['trials']) for r in e['rankings']) + ' |\n')
             parts.append('\n</details>\n\n')
-        parts.append('<details><summary>Runtime outcomes and feature events</summary>\n\n| Player | Runtime outcome |\n|---|---|\n')
+        parts.append('<details><summary>Runtime outcomes and feature events</summary>\n\n| Player | Runtime outcome | Evidence / limitation |\n|---|---|---|\n')
         for p in board['players']:
-            parts.append(f'| {md(p["name"])} | {md(board["runtime"][p["id"]]["status"])} |\n')
+            parts.append(f'| {md(p["name"])} | {md(board["runtime"][p["id"]]["status"])} | {md(board["runtime"][p["id"]].get("details", ""))} |\n')
         parts.append('\n| Feature | ' + ' | '.join(md(p['name']) for p in board['players']) + ' |\n|---|' + '---:|'*len(board['players']) + '\n')
         for f in board['features']:
             parts.append('| '+md(f['name'])+' | '+' | '.join('N/A' if p['id'] not in f['applicable'] else '🥇' if p['id'] in f['awards'] else '?' for p in board['players'])+' |\n')

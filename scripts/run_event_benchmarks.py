@@ -239,6 +239,8 @@ def main():
     if args.presentation == 'native-window' and 'ass' in args.scenarios:
         args.scenarios.remove('ass')
         print('ASS composition requires a validated presentation adapter; excluded from native field.', flush=True)
+    if 'ass' in args.scenarios and not (args.media_dir / 'subtitles.ass').is_file():
+        parser.error('ASS requires an existing subtitles.ass fixture; select the six other scenarios for a subtitle-free corpus')
     import math
     if not (math.isfinite(args.duration) and math.isfinite(args.warmup) and 4 <= args.duration <= 600 and 0 <= args.warmup < args.duration and args.repeat >= 3):
         parser.error('Use >=3 repeats, 4..600 seconds duration, and finite 0 <= warmup < duration')

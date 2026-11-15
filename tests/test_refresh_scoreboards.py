@@ -60,3 +60,23 @@ class RefreshTests(unittest.TestCase):
         self.assertIn(latest, selected, 'A newer failure must not fall back to older wins')
         self.assertIn(desktop, selected)
         self.assertIn(hosted, selected)
+
+    def test_unknown_field_identity_is_rejected(self):
+        from refresh_scoreboards import field_key
+        for system, presentation in [("unknown", "software-null"), ("windows", "unknown")]:
+            with self.subTest(system=system, presentation=presentation), self.assertRaises(ValueError):
+                field_key(dict(session=dict(system=system, presentation=presentation)))
+
+    def test_naive_legacy_date_is_interpreted_as_utc(self):
+        from refresh_scoreboards import latest_collections
+        old = dict(session=dict(system="linux", utc="2026-11-14T00:00:00"))
+        new = dict(session=dict(system="linux", utc="2026-11-15T00:00:00Z"))
+        self.assertEqual(latest_collections([old, new]), [new])
+
+    def test_no_evidence_refuses_to_replace_report(self):
+        from refresh_scoreboards import refresh
+        root = Path(__file__).resolve().parents[1]
+        absent = root/"results/local/nonexistent-evidence-folder"
+        self.assertFalse(absent.exists())
+        with self.assertRaisesRegex(ValueError, "No benchmark evidence"):
+            refresh(absent, absent, absent, None)
