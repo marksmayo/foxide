@@ -70,3 +70,34 @@ class LocatorTests(unittest.TestCase):
         result = driver.prepare()
         self.assertEqual(result['window_bounds'], [10, 20, 810, 620])
         self.assertEqual(focused, [True])
+
+    def test_linux_input_clicks_only_positive_visible_owned_accessibility_bounds(self):
+        from types import SimpleNamespace
+        from ui_drivers import LinuxDriver
+        clicks = []
+        driver = LinuxDriver.__new__(LinuxDriver)
+        driver.pid = 42
+        driver.atspi = SimpleNamespace(Registry=SimpleNamespace(generateMouseEvent=lambda *args: clicks.append(args)))
+        target = Node(None, 'Media', 'Text', 42, [10,20,110,60], True)
+        driver.activate(target)
+        self.assertEqual(clicks, [(60,40,'b1c')])
+        self.assertEqual(driver.method, 'native-input')
+        for invalid in [Node(None,'Media','Text',99,[10,20,110,60],True),
+                        Node(None,'Media','Text',42,[10,20,110,60],False),
+                        Node(None,'Media','Text',42,[10,20,10,60],True)]:
+            with self.assertRaises(RuntimeError):
+                driver.activate(invalid)
+        self.assertEqual(len(clicks), 1)
+
+    def test_linux_hidden_menu_items_with_zero_area_are_not_visible_evidence(self):
+        from types import SimpleNamespace
+        from ui_drivers import LinuxDriver
+        bounds = SimpleNamespace(x=0,y=0,width=0,height=0)
+        item = SimpleNamespace(name='File...', childCount=0, getRoleName=lambda:'menu item', get_process_id=lambda:42,
+                               getState=lambda:SimpleNamespace(contains=lambda state:True),
+                               queryComponent=lambda:SimpleNamespace(getExtents=lambda coords:bounds))
+        driver = LinuxDriver.__new__(LinuxDriver)
+        driver.pid, driver.app = 42, item
+        driver.context = SimpleNamespace(pending=lambda:False)
+        driver.atspi = SimpleNamespace(DESKTOP_COORDS=0,STATE_SHOWING=1)
+        self.assertEqual(driver.observe('File...', ['MenuItem']), [])

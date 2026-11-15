@@ -5,6 +5,7 @@ invokes their native accessibility actions; it never sends media-engine IPC.
 """
 from __future__ import annotations
 import argparse
+from collections import Counter
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -42,7 +43,10 @@ def plan(catalog, system):
 
 def command_for(player, executable):
     # No headless/null-output options. These are real GUI launches in idle state.
-    args = {'vlc': ['--no-one-instance'], 'mpc-hc': ['/new'], 'mpc-be': ['/new']}
+    vlc = ['--ignore-config']
+    if platform.system() != 'Darwin':
+        vlc += ['--no-one-instance', '--no-qt-privacy-ask']
+    args = {'vlc': vlc, 'mpc-hc': ['/new'], 'mpc-be': ['/new']}
     return [executable, *args.get(player, [])]
 
 
@@ -52,10 +56,10 @@ def collect(player, executable, action, selectors, directory, settings, system, 
     case = dict(player=player, platform=system, action=action['id'], trial=trial,
                 scope='native-ui', status='unverified', pid=0,
                 source=str(directory / 'case.json'), input_method='accessibility-action',
-                notes=['Native accessibility invocation to observed UI state; not physical display presentation.',
+                notes=['Native UI input/accessibility invocation to observed UI state; not physical display presentation.',
                        'Latency includes accessibility polling (10 ms interval) and adapter overhead.',
                        'CPU is process-tree CPU time across the action observation window; RSS is post-action, not peak.'])
-    owned, identity, process = {}, None, None
+    owned, identity, process, driver = {}, None, None, None
     try:
         with (directory / 'player.log').open('wb') as log:
             process = subprocess.Popen(command_for(player, executable), stdout=log, stderr=log)
@@ -86,14 +90,23 @@ def collect(player, executable, action, selectors, directory, settings, system, 
                 raise RuntimeError('No native UI adapter attached within startup deadline: ' + last_attach_error)
             # Settle before the timed action; any popup must first be absent.
             time.sleep(1)
-            target_name, expected_name = selectors
-            roles = ['Window'] if action['id'] == 'open_dialog' else ['MenuItem', 'Button']
-            driver.dismiss()
+            if isinstance(selectors, dict):
+                target_name, expected_name = selectors['target'], selectors['expected']
+                target_roles = selectors.get('target_roles', {}).get(system, ['MenuItem', 'Button'])
+                roles = selectors.get('expected_roles', {}).get(system, ['MenuItem'])
+            else:
+                target_name, expected_name = selectors
+                target_roles = ['MenuItem', 'Button']
+                roles = ['Window'] if action['id'] == 'open_dialog' else ['MenuItem']
+            case['input_method'] = context['input_method']
+            # Linux trials own fresh processes and use observed control bounds.
+            if system != 'linux':
+                driver.dismiss()
             time.sleep(.1)
             before = driver.observe(expected_name, roles)
             if before:
                 raise RuntimeError('Postcondition already true before the action')
-            target = driver.find(target_name, ['MenuItem', 'Button'])
+            target = driver.find(target_name, target_roles)
             write_json(directory / 'before.json', dict(pid=process.pid, expected=before, target=target.evidence()))
             before_cpu = snapshot(process.pid)
             owned.update(before_cpu)
@@ -133,6 +146,11 @@ def collect(player, executable, action, selectors, directory, settings, system, 
             case['rss_mib'] = sum(record[1] for record in after_cpu.values()) / 1048576
     except Exception as error:
         case.update(status='unverified', error=f'{type(error).__name__}: {error}')
+        if driver is not None:
+            try:
+                case['visible_controls'] = [node.evidence() for node in driver.nodes() if node.visible][:80]
+            except Exception as diagnostic_error:
+                case['diagnostic_error'] = str(diagnostic_error)
     finally:
         if process is not None:
             stop_owned(process, owned, snapshot)
@@ -154,6 +172,10 @@ def collect_batch(player, executable, action, selectors, directory, settings, sy
     if len(cases) == repeats and all(c.get('verified') is True for c in cases):
         for case in cases:
             rows.extend(action_rows(case, action))
+        # Optional resource counters must cover the entire batch too. A missing
+        # CPU/RSS sample must not produce medals from the successful subset.
+        counts = Counter(row['event'] for row in rows)
+        rows = [row for row in rows if counts[row['event']] == repeats]
     return cases, rows
 
 
@@ -212,6 +234,8 @@ def main():
               f'{sum(c.get("verified") is True for c in batch)} verified; {len(rows)} metric rows', flush=True)
         for failed in (c for c in batch if c.get('error')):
             print(failed['error'], flush=True)
+            if failed.get('visible_controls'):
+                print('Visible controls: ' + json.dumps(failed['visible_controls']), flush=True)
     write_json(args.output / 'measurements.json', measurements)
     write_json(args.output / 'session.json', dict(scope='native-ui',
                session=dict(system=system, host=socket.gethostname(), utc=datetime.now(timezone.utc).isoformat(),

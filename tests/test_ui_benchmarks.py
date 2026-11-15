@@ -157,3 +157,29 @@ class UiBenchmarkTests(unittest.TestCase):
         self.assertFalse(has_comparable_ui_measurements(rows[:3]))
         self.assertFalse(has_comparable_ui_measurements([dict(r, profile=r['player']) for r in rows]))
         self.assertFalse(has_comparable_ui_measurements([dict(r, verified=False) if r['player']=='vlc' else r for r in rows]))
+
+    def test_vlc_launch_uses_only_options_present_on_the_selected_platform(self):
+        from unittest.mock import patch
+        from run_ui_benchmarks import command_for
+        with patch('run_ui_benchmarks.platform.system', return_value='Linux'):
+            linux = command_for('vlc', 'vlc')
+        self.assertIn('--no-qt-privacy-ask', linux)
+        self.assertNotIn('--no-qt-updates-notif', linux, 'Updater options depend on UPDATE_CHECK builds')
+        with patch('run_ui_benchmarks.platform.system', return_value='Darwin'):
+            mac = command_for('vlc', 'vlc')
+        self.assertIn('--ignore-config', mac)
+        self.assertNotIn('--no-qt-privacy-ask', mac, 'Native macOS VLC has no Qt interface')
+
+    def test_incomplete_resource_measurements_do_not_rank_a_successful_subset(self):
+        from unittest.mock import patch
+        from run_ui_benchmarks import collect_batch
+        scenario = dict(id='menu_media', verification='accessibility-state', condition='media-menu-visible')
+        cases = [dict(player='foxide',platform='linux',profile='native-ui/shared',trial=i,source='case.json',
+                      status='verified',verified=True,pid=42,input_ns=0,completed_ns=100,input_method='native-input',
+                      before='before.json',after='after.json',cpu_time_ms=1,
+                      verification=dict(kind='accessibility-state',condition='media-menu-visible',passed=True,pid=42)) for i in range(3)]
+        del cases[1]['cpu_time_ms']
+        with patch('run_ui_benchmarks.collect',side_effect=cases):
+            observed, rows = collect_batch('foxide','binary',scenario,['Media','Open'],Path('unused-test-output'),{},'linux',3,None)
+        self.assertEqual(len(observed),3)
+        self.assertEqual([r['event'] for r in rows],['ui_menu_media_latency']*3)

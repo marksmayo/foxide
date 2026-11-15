@@ -95,6 +95,7 @@ class WindowsDriver(Driver):
 
 
 class LinuxDriver(Driver):
+    method = 'native-input'
     backend = 'linux-atspi'
 
     def __init__(self, pid):
@@ -118,7 +119,7 @@ class LinuxDriver(Driver):
     def nodes(self):
         self.pump()
         pending, nodes, budget = [self.app], [], 5000
-        roles = {'menu item': 'MenuItem', 'menu': 'MenuItem', 'push button': 'Button', 'frame': 'Window', 'dialog': 'Window'}
+        roles = {'menu item': 'MenuItem', 'menu': 'MenuItem', 'push button': 'Button', 'frame': 'Window', 'dialog': 'Window', 'label': 'Text', 'text': 'Text', 'static': 'Text', 'static text': 'Text'}
         while pending and budget:
             item = pending.pop(); budget -= 1
             try:
@@ -129,7 +130,7 @@ class LinuxDriver(Driver):
                 bounds = item.queryComponent().getExtents(self.atspi.DESKTOP_COORDS)
                 nodes.append(Node(item, item.name, roles.get(item.getRoleName(), item.getRoleName()),
                                   item.get_process_id(), [bounds.x, bounds.y, bounds.x+bounds.width, bounds.y+bounds.height],
-                                  state.contains(self.atspi.STATE_SHOWING)))
+                                  state.contains(self.atspi.STATE_SHOWING) and bounds.width > 0 and bounds.height > 0))
             except Exception:
                 continue
         return nodes
@@ -142,12 +143,15 @@ class LinuxDriver(Driver):
         return dict(backend=self.backend, input_method=self.method, window_bounds=windows[0].bounds)
 
     def activate(self, node):
-        actions = node.native.queryAction()
-        for i in range(actions.nActions):
-            if actions.getName(i).casefold() in ('click', 'press', 'activate', 'open'):
-                if actions.doAction(i):
-                    return
-        raise RuntimeError('Control exposes no supported native accessibility action')
+        if (node.pid != self.pid or not node.visible or len(node.bounds) != 4
+                or node.bounds[2] <= node.bounds[0] or node.bounds[3] <= node.bounds[1]):
+            raise RuntimeError('Refusing input outside visible owned control bounds')
+        x = int((node.bounds[0] + node.bounds[2]) // 2)
+        y = int((node.bounds[1] + node.bounds[3]) // 2)
+        if x < 0 or y < 0:
+            raise RuntimeError('Control center is outside the desktop')
+        # Use the same real pointer input at observed bounds for every Linux entrant.
+        self.atspi.Registry.generateMouseEvent(x, y, 'b1c')
 
     def dismiss(self):
         active = any(node.role == 'Window' and node.native.getState().contains(self.atspi.STATE_ACTIVE) for node in self.nodes())

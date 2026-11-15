@@ -6,7 +6,8 @@
     "Each adapter must verify owned process identity, a false precondition, native action, and a true postcondition; absent adapters/permissions are unranked.",
     "Requested actions requiring frame presentation stay pending until a content-aware presentation collector exists.",
     "Applications use their default window sizes; actual bounds are retained as evidence. This is not an equal-viewport comparison.",
-    "Every action has total, dispatch and observation latency, CPU time, post-action RSS and RSS growth events. Missing evidence remains unranked."
+    "Every action has total, dispatch and observation latency, CPU time, post-action RSS and RSS growth events. Missing evidence remains unranked.",
+    "Linux uses native pointer input at observed owned accessibility bounds for every entrant. Hidden zero-area menu nodes and existing toolbar controls are not popup evidence."
   ],
   "actions": [
     {
@@ -575,34 +576,94 @@
         "audio"
       ],
       "menus": {
-        "menu_media": [
-          "Media",
-          "Open files..."
-        ],
-        "menu_playback": [
-          "Playback",
-          "Stop"
-        ],
-        "menu_audio": [
-          "Audio",
-          "Mute"
-        ],
-        "menu_subtitles": [
-          "Subtitles",
-          "Load subtitle file..."
-        ],
+        "menu_media": {
+          "target": "Media",
+          "expected": "Open files...",
+          "target_roles": {
+            "linux": [
+              "Text"
+            ]
+          },
+          "expected_roles": {
+            "linux": [
+              "Text"
+            ]
+          }
+        },
+        "menu_playback": {
+          "target": "Playback",
+          "expected": "Stop",
+          "target_roles": {
+            "linux": [
+              "Text"
+            ]
+          },
+          "expected_roles": {
+            "linux": [
+              "Text"
+            ]
+          }
+        },
+        "menu_audio": {
+          "target": "Audio",
+          "expected": "Mute",
+          "target_roles": {
+            "linux": [
+              "Text"
+            ]
+          },
+          "expected_roles": {
+            "linux": [
+              "Text"
+            ]
+          }
+        },
+        "menu_subtitles": {
+          "target": "Subtitles",
+          "expected": "Load subtitle file...",
+          "target_roles": {
+            "linux": [
+              "Text"
+            ]
+          },
+          "expected_roles": {
+            "linux": [
+              "Text"
+            ]
+          }
+        },
         "open_dialog": [
           "Open files",
           "Open media files"
         ],
-        "menu_view": [
-          "View",
-          "Playback information"
-        ],
-        "menu_help": [
-          "Help",
-          "About Foxide"
-        ]
+        "menu_view": {
+          "target": "View",
+          "expected": "Playback information",
+          "target_roles": {
+            "linux": [
+              "Text"
+            ]
+          },
+          "expected_roles": {
+            "linux": [
+              "Text"
+            ]
+          }
+        },
+        "menu_help": {
+          "target": "Help",
+          "expected": "About Foxide",
+          "target_roles": {
+            "linux": [
+              "Text"
+            ]
+          },
+          "expected_roles": {
+            "linux": [
+              "Text"
+            ]
+          }
+        }
       },
       "status": "locators-require-runtime-verification",
       "not_applicable": []
