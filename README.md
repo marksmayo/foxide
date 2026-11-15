@@ -52,15 +52,15 @@ Overall feature gold counts each feature once across applicable platforms; perfo
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
 | mpv | 71 | 27 | 8 | 106 |
-| VLC | 52 | 3 | 22 | 77 |
+| VLC | 67 | 12 | 22 | 101 |
+| Foxide | 42 | 43 | 26 | 111 |
 | IINA | 34 | 0 | 0 | 34 |
-| Foxide | 32 | 38 | 23 | 93 |
 | MPC-BE | 19 | 0 | 0 | 19 |
+| SMPlayer | 18 | 6 | 2 | 26 |
 | MPC-HC | 15 | 0 | 0 | 15 |
 | Infuse | 14 | 0 | 0 | 14 |
 | Kodi | 14 | 0 | 0 | 14 |
 | PotPlayer | 14 | 0 | 0 | 14 |
-| SMPlayer | 14 | 0 | 0 | 14 |
 | KMPlayer | 13 | 0 | 0 | 13 |
 | foobar2000 | 13 | 0 | 0 | 13 |
 | GOM Player | 11 | 0 | 0 | 11 |
@@ -74,9 +74,10 @@ Overall feature gold counts each feature once across applicable platforms; perfo
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
+| VLC | 43 | 12 | 22 | 77 |
 | mpv | 35 | 27 | 8 | 70 |
-| VLC | 28 | 3 | 22 | 53 |
-| Foxide | 9 | 38 | 23 | 70 |
+| Foxide | 19 | 43 | 26 | 88 |
+| SMPlayer | 4 | 6 | 2 | 12 |
 | FFplay | 0 | 0 | 0 | 0 |
 | GOM Player | 0 | 0 | 0 | 0 |
 | IINA | 0 | 0 | 0 | 0 |
@@ -88,7 +89,6 @@ Overall feature gold counts each feature once across applicable platforms; perfo
 | Plex | 0 | 0 | 0 | 0 |
 | PotPlayer | 0 | 0 | 0 | 0 |
 | QuickTime Player | 0 | 0 | 0 | 0 |
-| SMPlayer | 0 | 0 | 0 | 0 |
 | Windows Media Player | 0 | 0 | 0 | 0 |
 | Windows Media Player Legacy | 0 | 0 | 0 | 0 |
 | foobar2000 | 0 | 0 | 0 | 0 |
@@ -589,29 +589,84 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
 | mpv | 46 | 3 | 1 | 50 |
-| VLC | 28 | 0 | 7 | 35 |
-| Foxide | 24 | 10 | 3 | 37 |
+| VLC | 43 | 9 | 7 | 59 |
+| Foxide | 34 | 15 | 6 | 55 |
+| SMPlayer | 17 | 6 | 2 | 25 |
 | Kodi | 14 | 0 | 0 | 14 |
-| SMPlayer | 13 | 0 | 0 | 13 |
 | FFplay | 5 | 0 | 0 | 5 |
 | Plex | 5 | 0 | 0 | 5 |
 
 **Native UI actions · default application windows · Hosted**
 
-linux-hosted · 2026-11-15T13:39:41.234097+00:00.
+linux-hosted · 2026-11-15T14:03:17.258548+00:00.
 
-[Actions run](https://github.com/marksmayo/foxide/actions/runs/43719724299) · Source: `b015d04926ae3a109d599ea172432f19afcfea4a`. Freshness is per field; older platform results are retained with their original collection dates.
+[Actions run](https://github.com/marksmayo/foxide/actions/runs/43721473636) · Source: `2cbfeeae4e8fe06308ff3b3433e1b8ac4afa1d00`. Freshness is per field; older platform results are retained with their original collection dates.
 
-![Linux: every measured metric](docs/scoreboards/linux-6380b20881-scenarios.svg)
+| Player | 🥇 | 🥈 | 🥉 | Total |
+|---|---:|---:|---:|---:|
+| VLC | 15 | 9 | 0 | 24 |
+| Foxide | 10 | 5 | 3 | 18 |
+| SMPlayer | 4 | 6 | 2 | 12 |
+
+![Linux: every measured metric](docs/scoreboards/linux-826c140956-scenarios.svg)
 
 <details><summary>Every measured metric — median values and podiums</summary>
 
-No eligible comparable measurements.
+| Metric | Foxide | VLC | SMPlayer |
+|---|---:|---:|---:|
+| Media/File menu — UI state latency | — | **188** ms | 422 ms |
+| Media/File menu — Action CPU time | — | **80** ms | 170 ms |
+| Media/File menu — Post-action RSS | — | **96.2** MiB | 96.6 MiB |
+| Media/File menu — Native input dispatch | — | **0.285** ms | **0.263** ms |
+| Media/File menu — UI state observation after dispatch | — | **188** ms | 422 ms |
+| Media/File menu — Action RSS increase | — | 1.12 MiB | **0.273** MiB |
+| Playback menu — UI state latency | **119** ms | 190 ms | 414 ms |
+| Playback menu — Action CPU time | 175 ms | **70** ms | 170 ms |
+| Playback menu — Post-action RSS | 186 MiB | **96.2** MiB | 97 MiB |
+| Playback menu — Native input dispatch | **0.246** ms | **0.253** ms | **0.268** ms |
+| Playback menu — UI state observation after dispatch | **118** ms | 189 ms | 414 ms |
+| Playback menu — Action RSS increase | 3.54 MiB | 1.12 MiB | **0.516** MiB |
+| Audio menu — UI state latency | **91.8** ms | 186 ms | — |
+| Audio menu — Action CPU time | 100 ms | **70** ms | — |
+| Audio menu — Post-action RSS | 180 MiB | **95.9** MiB | — |
+| Audio menu — Native input dispatch | **0.251** ms | **0.276** ms | — |
+| Audio menu — UI state observation after dispatch | **91.5** ms | 186 ms | — |
+| Audio menu — Action RSS increase | 1.26 MiB | **0.881** MiB | — |
+| Subtitle menu — UI state latency | **98.1** ms | 181 ms | — |
+| Subtitle menu — Action CPU time | 105 ms | **75** ms | — |
+| Subtitle menu — Post-action RSS | 178 MiB | **95.8** MiB | — |
+| Subtitle menu — Native input dispatch | **0.253** ms | **0.259** ms | — |
+| Subtitle menu — UI state observation after dispatch | **97.8** ms | 181 ms | — |
+| Subtitle menu — Action RSS increase | **0** MiB | 0.75 MiB | — |
 
 Bold values are gold medians. — means no eligible comparable result. Trial evidence and exact cohort IDs:
 
 | Metric | Cohort | Trials per eligible entrant |
 |---|---|---:|
+| Media/File menu — UI state latency | `native-ui/menu_media/797677e55015b33c` | 10, 10 |
+| Media/File menu — Action CPU time | `native-ui/menu_media/797677e55015b33c` | 10, 10 |
+| Media/File menu — Post-action RSS | `native-ui/menu_media/797677e55015b33c` | 10, 10 |
+| Media/File menu — Native input dispatch | `native-ui/menu_media/797677e55015b33c` | 10, 10 |
+| Media/File menu — UI state observation after dispatch | `native-ui/menu_media/797677e55015b33c` | 10, 10 |
+| Media/File menu — Action RSS increase | `native-ui/menu_media/797677e55015b33c` | 10, 10 |
+| Playback menu — UI state latency | `native-ui/menu_playback/4fb2de370f84a491` | 10, 10, 10 |
+| Playback menu — Action CPU time | `native-ui/menu_playback/4fb2de370f84a491` | 10, 10, 10 |
+| Playback menu — Post-action RSS | `native-ui/menu_playback/4fb2de370f84a491` | 10, 10, 10 |
+| Playback menu — Native input dispatch | `native-ui/menu_playback/4fb2de370f84a491` | 10, 10, 10 |
+| Playback menu — UI state observation after dispatch | `native-ui/menu_playback/4fb2de370f84a491` | 10, 10, 10 |
+| Playback menu — Action RSS increase | `native-ui/menu_playback/4fb2de370f84a491` | 10, 10, 10 |
+| Audio menu — UI state latency | `native-ui/menu_audio/f69b51da3961c1fd` | 10, 10 |
+| Audio menu — Action CPU time | `native-ui/menu_audio/f69b51da3961c1fd` | 10, 10 |
+| Audio menu — Post-action RSS | `native-ui/menu_audio/f69b51da3961c1fd` | 10, 10 |
+| Audio menu — Native input dispatch | `native-ui/menu_audio/f69b51da3961c1fd` | 10, 10 |
+| Audio menu — UI state observation after dispatch | `native-ui/menu_audio/f69b51da3961c1fd` | 10, 10 |
+| Audio menu — Action RSS increase | `native-ui/menu_audio/f69b51da3961c1fd` | 10, 10 |
+| Subtitle menu — UI state latency | `native-ui/menu_subtitles/3d9a5f9eb0eeea6e` | 10, 10 |
+| Subtitle menu — Action CPU time | `native-ui/menu_subtitles/3d9a5f9eb0eeea6e` | 10, 10 |
+| Subtitle menu — Post-action RSS | `native-ui/menu_subtitles/3d9a5f9eb0eeea6e` | 10, 10 |
+| Subtitle menu — Native input dispatch | `native-ui/menu_subtitles/3d9a5f9eb0eeea6e` | 10, 10 |
+| Subtitle menu — UI state observation after dispatch | `native-ui/menu_subtitles/3d9a5f9eb0eeea6e` | 10, 10 |
+| Subtitle menu — Action RSS increase | `native-ui/menu_subtitles/3d9a5f9eb0eeea6e` | 10, 10 |
 
 </details>
 
@@ -676,10 +731,10 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 
 | Player | Runtime outcome | Evidence / limitation |
 |---|---|---|
-| Foxide | Verified playback 18/21; Verified UI actions 0/5 | sampled-playback-unverified, unverified, verified-playback |
-| VLC | Verified playback 15/21; Verified UI actions 0/5 | adapter-required, playback-readiness-timeout, sampled-playback-unverified, unverified, verified-playback |
+| Foxide | Verified playback 18/21; Verified UI actions 30/32 | sampled-playback-unverified, unverified, verified, verified-playback |
+| VLC | Verified playback 15/21; Verified UI actions 40/41 | adapter-required, playback-readiness-timeout, sampled-playback-unverified, verified, verified-playback |
 | mpv | Verified playback 18/21 | sampled-playback-unverified, verified-playback |
-| SMPlayer | Unverified / diagnostic (3 cases); Verified UI actions 0/5 | adapter-required, sampled-playback-unverified, unverified |
+| SMPlayer | Unverified / diagnostic (3 cases); Verified UI actions 20/23 | adapter-required, sampled-playback-unverified, verified |
 | FFplay | Unverified / diagnostic (3 cases) | sampled-playback-unverified |
 | Kodi | Unverified / diagnostic (3 cases) | early-exit |
 | Plex | not-detected | No native executable found; packaged-app/account/Store activation may need a dedicated adapter. |
