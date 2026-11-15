@@ -23,6 +23,34 @@ struct Args {
     /// Render the empty Slint layout to PNG without opening a native window.
     #[arg(long)]
     preview_png: Option<PathBuf>,
+    /// Explicit diagnostic script; normal startup never loads scripts.
+    #[arg(long, hide = true)]
+    benchmark_script: Option<PathBuf>,
+    #[arg(long, default_value_t = 1.0)]
+    speed: f64,
+    #[arg(long)]
+    paused: bool,
+}
+
+fn startup_commands(args: &Args) -> Result<Vec<Vec<String>>, String> {
+    if !args.speed.is_finite() || !(0.25..=4.0).contains(&args.speed) {
+        return Err("Speed must be between 0.25 and 4".into());
+    }
+    let mut commands = Vec::new();
+    if let Some(path) = &args.benchmark_script {
+        let path = player_core::external_path(path.clone());
+        commands.push(vec![
+            "load-script".into(),
+            path.to_str().ok_or("Script path must be Unicode")?.into(),
+        ]);
+    }
+    if args.speed != 1.0 {
+        commands.push(vec!["set".into(), "speed".into(), args.speed.to_string()]);
+    }
+    if args.paused {
+        commands.push(vec!["set".into(), "pause".into(), "yes".into()]);
+    }
+    Ok(commands)
 }
 
 fn clock(seconds: f64) -> String {
@@ -233,6 +261,7 @@ fn refresh(
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
+    let startup = startup_commands(&args)?;
     if let Some(path) = args.preview_png {
         return preview::render(&path);
     }
@@ -357,6 +386,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     });
+    if let Some(engine) = &engine {
+        for command in startup {
+            engine.command(command)?;
+        }
+    }
     if !args.media.is_empty() {
         dispatch(&ui, &state, &engine, Action::Open(args.media));
     }
@@ -392,6 +426,32 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn benchmark_startup_is_explicit_and_preserves_speed_and_pause() {
+        let args = Args::try_parse_from([
+            "foxide-desktop",
+            "--benchmark-script",
+            "bench.lua",
+            "--speed",
+            "2",
+            "--paused",
+            "movie.mp4",
+        ])
+        .unwrap();
+        assert_eq!(
+            startup_commands(&args).unwrap(),
+            vec![
+                vec!["load-script".to_owned(), "bench.lua".to_owned()],
+                vec!["set".to_owned(), "speed".to_owned(), "2".to_owned()],
+                vec!["set".to_owned(), "pause".to_owned(), "yes".to_owned()],
+            ]
+        );
+        let defaults = Args::try_parse_from(["foxide-desktop"]).unwrap();
+        assert!(startup_commands(&defaults).unwrap().is_empty());
+        let invalid = Args::try_parse_from(["foxide-desktop", "--speed", "NaN"]).unwrap();
+        assert!(startup_commands(&invalid).is_err());
+    }
     use slint::{
         Model,
         platform::{

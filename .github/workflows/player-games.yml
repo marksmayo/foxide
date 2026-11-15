@@ -4,13 +4,14 @@ on:
   release:
     types: [published]
   push:
-    branches: [main]
+    branches: [main, 'bench/**']
     paths:
       - '.github/workflows/player-games.yml'
       - 'scripts/run_event_benchmarks.py'
       - 'scripts/event_benchmarks.py'
       - 'scripts/build_medal_report.py'
       - 'scripts/medal_events.py'
+      - 'scripts/refresh_scoreboards.py'
       - 'scripts/prepare-event-media.py'
       - 'benchmarks/features.json'
       - 'benchmarks/performance-events.json'
@@ -159,7 +160,7 @@ jobs:
           shopt -s globstar nullglob
           files=(results/local/platforms/**/measurements.json)
           sessions=(results/local/platforms/**/session.json)
-          python scripts/build_medal_report.py --measurements "${files[@]}" --sessions "${sessions[@]}" --output docs/scoreboards --readme README.md
+          python scripts/refresh_scoreboards.py --platform-dir results/local/platforms --output docs/scoreboards --readme README.md
           cat docs/scoreboards/scoreboards.md >> "$GITHUB_STEP_SUMMARY"
       - name: Verify the rendered report and platform navigation
         shell: bash
@@ -182,18 +183,19 @@ jobs:
           path: |
             docs/scoreboards/
             results/local/report-qa/
-      - name: Update the main branch scoreboards
-        if: github.ref == 'refs/heads/main'
+      - name: Update the benchmark branch scoreboards for PR review
+        if: startsWith(github.ref, 'refs/heads/bench/')
         shell: bash
         run: |
-          git fetch origin main
-          if [[ "$(git rev-parse origin/main)" != "$GITHUB_SHA" ]]; then
+          branch="$GITHUB_REF_NAME"
+          git fetch origin "$branch"
+          if [[ "$(git rev-parse "origin/$branch")" != "$GITHUB_SHA" ]]; then
             echo 'A newer source commit exists; keep this run as an artifact without overwriting current scoreboards.'
             exit 0
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add README.md docs/scoreboards
+          git add README.md docs/scoreboards benchmarks/results
           if git diff --cached --quiet; then exit 0; fi
           git commit -m 'Update Player Games platform scores and graphs'
-          git push origin HEAD:main
+          git push origin "HEAD:$branch"

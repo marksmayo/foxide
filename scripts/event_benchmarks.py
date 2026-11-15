@@ -9,7 +9,9 @@ def measurement_rows(case):
                  source=case['source']) for event, value in case['metrics'].items()]
 
 
-def playback_verified(player, scenario, events, statuses):
+def playback_verified(player, scenario, events, statuses, presentation='software-null'):
+    if presentation not in ('software-null', 'native-window'):
+        return False
     if any(e.get('kind') == 'collector-error' or (e.get('kind') == 'end-file' and e.get('reason') == 'error') for e in events):
         return False
     if player in ('mpv', 'foxide'):
@@ -17,7 +19,9 @@ def playback_verified(player, scenario, events, statuses):
         started = any(e.get('kind') == 'first-playback-restart-proxy' and
                       (scenario == 'flac' or e.get('video') not in (None, 'no', 'auto')) for e in events)
         hardware = [e['hwdec'] for e in stats if e.get('hwdec') not in (None, '')]
-        if not started or not hardware or any(value != 'no' for value in hardware):
+        if any(not isinstance(value, str) or value.startswith('auto') for value in hardware):
+            return False
+        if not started or not hardware or (presentation == 'software-null' and any(value != 'no' for value in hardware)):
             return False
         if scenario == 'speed2x' and not all(e.get('speed') == 2 for e in stats if e.get('position') is not None):
             return False
