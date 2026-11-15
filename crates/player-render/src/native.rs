@@ -188,6 +188,20 @@ impl Api {
                     return Err("libmpv rejected a required playback option".into());
                 }
             }
+            #[cfg(test)]
+            {
+                let mode = std::env::var("FOXIDE_RENDER_LOG_MODE").unwrap_or_default();
+                if mode == "terminal" || mode == "debug" {
+                    option(api.handle, c"terminal".as_ptr(), c"yes".as_ptr());
+                }
+                if mode == "debug" {
+                    option(
+                        api.handle,
+                        c"msg-level".as_ptr(),
+                        c"all=warn,libmpv_render=debug,vo/libmpv=debug".as_ptr(),
+                    );
+                }
+            }
             if initialize(api.handle) < 0 {
                 return Err("libmpv initialization failed".into());
             }
