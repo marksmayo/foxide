@@ -52,11 +52,11 @@ Overall feature gold counts each feature once across applicable platforms; perfo
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
 | mpv | 71 | 27 | 8 | 106 |
-| VLC | 67 | 12 | 22 | 101 |
-| Foxide | 42 | 43 | 26 | 111 |
+| VLC | 65 | 13 | 23 | 101 |
+| Foxide | 46 | 45 | 26 | 117 |
 | IINA | 34 | 0 | 0 | 34 |
 | MPC-BE | 19 | 0 | 0 | 19 |
-| SMPlayer | 18 | 6 | 2 | 26 |
+| SMPlayer | 17 | 3 | 6 | 26 |
 | MPC-HC | 15 | 0 | 0 | 15 |
 | Infuse | 14 | 0 | 0 | 14 |
 | Kodi | 14 | 0 | 0 | 14 |
@@ -74,10 +74,10 @@ Overall feature gold counts each feature once across applicable platforms; perfo
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
-| VLC | 43 | 12 | 22 | 77 |
+| VLC | 41 | 13 | 23 | 77 |
 | mpv | 35 | 27 | 8 | 70 |
-| Foxide | 19 | 43 | 26 | 88 |
-| SMPlayer | 4 | 6 | 2 | 12 |
+| Foxide | 23 | 45 | 26 | 94 |
+| SMPlayer | 3 | 3 | 6 | 12 |
 | FFplay | 0 | 0 | 0 | 0 |
 | GOM Player | 0 | 0 | 0 | 0 |
 | IINA | 0 | 0 | 0 | 0 |
@@ -589,84 +589,84 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
 | mpv | 46 | 3 | 1 | 50 |
-| VLC | 43 | 9 | 7 | 59 |
-| Foxide | 34 | 15 | 6 | 55 |
-| SMPlayer | 17 | 6 | 2 | 25 |
+| VLC | 41 | 10 | 8 | 59 |
+| Foxide | 38 | 17 | 6 | 61 |
+| SMPlayer | 16 | 3 | 6 | 25 |
 | Kodi | 14 | 0 | 0 | 14 |
 | FFplay | 5 | 0 | 0 | 5 |
 | Plex | 5 | 0 | 0 | 5 |
 
 **Native UI actions · default application windows · Hosted**
 
-linux-hosted · 2026-11-15T14:03:17.258548+00:00.
+linux-hosted · 2026-11-15T14:16:23.950260+00:00.
 
-[Actions run](https://github.com/marksmayo/foxide/actions/runs/43721473636) · Source: `2cbfeeae4e8fe06308ff3b3433e1b8ac4afa1d00`. Freshness is per field; older platform results are retained with their original collection dates.
+[Actions run](https://github.com/marksmayo/foxide/actions/runs/43722921502) · Source: `8840a5c14713e8dedd2eabcc24f1e18b5bb8aa7a`. Freshness is per field; older platform results are retained with their original collection dates.
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
-| VLC | 15 | 9 | 0 | 24 |
-| Foxide | 10 | 5 | 3 | 18 |
-| SMPlayer | 4 | 6 | 2 | 12 |
+| Foxide | 14 | 7 | 3 | 24 |
+| VLC | 13 | 10 | 1 | 24 |
+| SMPlayer | 3 | 3 | 6 | 12 |
 
-![Linux: every measured metric](docs/scoreboards/linux-826c140956-scenarios.svg)
+![Linux: every measured metric](docs/scoreboards/linux-5859b49d64-scenarios.svg)
 
 <details><summary>Every measured metric — median values and podiums</summary>
 
 | Metric | Foxide | VLC | SMPlayer |
 |---|---:|---:|---:|
-| Media/File menu — UI state latency | — | **188** ms | 422 ms |
-| Media/File menu — Action CPU time | — | **80** ms | 170 ms |
-| Media/File menu — Post-action RSS | — | **96.2** MiB | 96.6 MiB |
-| Media/File menu — Native input dispatch | — | **0.285** ms | **0.263** ms |
-| Media/File menu — UI state observation after dispatch | — | **188** ms | 422 ms |
-| Media/File menu — Action RSS increase | — | 1.12 MiB | **0.273** MiB |
-| Playback menu — UI state latency | **119** ms | 190 ms | 414 ms |
-| Playback menu — Action CPU time | 175 ms | **70** ms | 170 ms |
-| Playback menu — Post-action RSS | 186 MiB | **96.2** MiB | 97 MiB |
-| Playback menu — Native input dispatch | **0.246** ms | **0.253** ms | **0.268** ms |
-| Playback menu — UI state observation after dispatch | **118** ms | 189 ms | 414 ms |
-| Playback menu — Action RSS increase | 3.54 MiB | 1.12 MiB | **0.516** MiB |
-| Audio menu — UI state latency | **91.8** ms | 186 ms | — |
-| Audio menu — Action CPU time | 100 ms | **70** ms | — |
-| Audio menu — Post-action RSS | 180 MiB | **95.9** MiB | — |
-| Audio menu — Native input dispatch | **0.251** ms | **0.276** ms | — |
-| Audio menu — UI state observation after dispatch | **91.5** ms | 186 ms | — |
-| Audio menu — Action RSS increase | 1.26 MiB | **0.881** MiB | — |
-| Subtitle menu — UI state latency | **98.1** ms | 181 ms | — |
-| Subtitle menu — Action CPU time | 105 ms | **75** ms | — |
-| Subtitle menu — Post-action RSS | 178 MiB | **95.8** MiB | — |
-| Subtitle menu — Native input dispatch | **0.253** ms | **0.259** ms | — |
-| Subtitle menu — UI state observation after dispatch | **97.8** ms | 181 ms | — |
+| Media/File menu — UI state latency | **89.6** ms | 147 ms | 327 ms |
+| Media/File menu — Action CPU time | 90 ms | **60** ms | 135 ms |
+| Media/File menu — Post-action RSS | 183 MiB | **96.2** MiB | 96.7 MiB |
+| Media/File menu — Native input dispatch | **0.202** ms | **0.183** ms | **0.213** ms |
+| Media/File menu — UI state observation after dispatch | **89.5** ms | 147 ms | 327 ms |
+| Media/File menu — Action RSS increase | **0** MiB | 1.16 MiB | 0.279 MiB |
+| Playback menu — UI state latency | **102** ms | 145 ms | 320 ms |
+| Playback menu — Action CPU time | 125 ms | **60** ms | 135 ms |
+| Playback menu — Post-action RSS | 181 MiB | **96.3** MiB | 97 MiB |
+| Playback menu — Native input dispatch | **0.179** ms | **0.215** ms | **0.321** ms |
+| Playback menu — UI state observation after dispatch | **102** ms | 145 ms | 320 ms |
+| Playback menu — Action RSS increase | 1.67 MiB | 1.13 MiB | **0.559** MiB |
+| Audio menu — UI state latency | **81.2** ms | 137 ms | — |
+| Audio menu — Action CPU time | 80 ms | **55** ms | — |
+| Audio menu — Post-action RSS | 181 MiB | **95.9** MiB | — |
+| Audio menu — Native input dispatch | **0.202** ms | **0.185** ms | — |
+| Audio menu — UI state observation after dispatch | **81** ms | 137 ms | — |
+| Audio menu — Action RSS increase | 1.21 MiB | **0.879** MiB | — |
+| Subtitle menu — UI state latency | **84.2** ms | 130 ms | — |
+| Subtitle menu — Action CPU time | 80 ms | **65** ms | — |
+| Subtitle menu — Post-action RSS | 179 MiB | **95.8** MiB | — |
+| Subtitle menu — Native input dispatch | **0.242** ms | **0.195** ms | — |
+| Subtitle menu — UI state observation after dispatch | **83.8** ms | 129 ms | — |
 | Subtitle menu — Action RSS increase | **0** MiB | 0.75 MiB | — |
 
 Bold values are gold medians. — means no eligible comparable result. Trial evidence and exact cohort IDs:
 
 | Metric | Cohort | Trials per eligible entrant |
 |---|---|---:|
-| Media/File menu — UI state latency | `native-ui/menu_media/797677e55015b33c` | 10, 10 |
-| Media/File menu — Action CPU time | `native-ui/menu_media/797677e55015b33c` | 10, 10 |
-| Media/File menu — Post-action RSS | `native-ui/menu_media/797677e55015b33c` | 10, 10 |
-| Media/File menu — Native input dispatch | `native-ui/menu_media/797677e55015b33c` | 10, 10 |
-| Media/File menu — UI state observation after dispatch | `native-ui/menu_media/797677e55015b33c` | 10, 10 |
-| Media/File menu — Action RSS increase | `native-ui/menu_media/797677e55015b33c` | 10, 10 |
-| Playback menu — UI state latency | `native-ui/menu_playback/4fb2de370f84a491` | 10, 10, 10 |
-| Playback menu — Action CPU time | `native-ui/menu_playback/4fb2de370f84a491` | 10, 10, 10 |
-| Playback menu — Post-action RSS | `native-ui/menu_playback/4fb2de370f84a491` | 10, 10, 10 |
-| Playback menu — Native input dispatch | `native-ui/menu_playback/4fb2de370f84a491` | 10, 10, 10 |
-| Playback menu — UI state observation after dispatch | `native-ui/menu_playback/4fb2de370f84a491` | 10, 10, 10 |
-| Playback menu — Action RSS increase | `native-ui/menu_playback/4fb2de370f84a491` | 10, 10, 10 |
-| Audio menu — UI state latency | `native-ui/menu_audio/f69b51da3961c1fd` | 10, 10 |
-| Audio menu — Action CPU time | `native-ui/menu_audio/f69b51da3961c1fd` | 10, 10 |
-| Audio menu — Post-action RSS | `native-ui/menu_audio/f69b51da3961c1fd` | 10, 10 |
-| Audio menu — Native input dispatch | `native-ui/menu_audio/f69b51da3961c1fd` | 10, 10 |
-| Audio menu — UI state observation after dispatch | `native-ui/menu_audio/f69b51da3961c1fd` | 10, 10 |
-| Audio menu — Action RSS increase | `native-ui/menu_audio/f69b51da3961c1fd` | 10, 10 |
-| Subtitle menu — UI state latency | `native-ui/menu_subtitles/3d9a5f9eb0eeea6e` | 10, 10 |
-| Subtitle menu — Action CPU time | `native-ui/menu_subtitles/3d9a5f9eb0eeea6e` | 10, 10 |
-| Subtitle menu — Post-action RSS | `native-ui/menu_subtitles/3d9a5f9eb0eeea6e` | 10, 10 |
-| Subtitle menu — Native input dispatch | `native-ui/menu_subtitles/3d9a5f9eb0eeea6e` | 10, 10 |
-| Subtitle menu — UI state observation after dispatch | `native-ui/menu_subtitles/3d9a5f9eb0eeea6e` | 10, 10 |
-| Subtitle menu — Action RSS increase | `native-ui/menu_subtitles/3d9a5f9eb0eeea6e` | 10, 10 |
+| Media/File menu — UI state latency | `native-ui/menu_media/270e71d014376c82` | 10, 10, 10 |
+| Media/File menu — Action CPU time | `native-ui/menu_media/270e71d014376c82` | 10, 10, 10 |
+| Media/File menu — Post-action RSS | `native-ui/menu_media/270e71d014376c82` | 10, 10, 10 |
+| Media/File menu — Native input dispatch | `native-ui/menu_media/270e71d014376c82` | 10, 10, 10 |
+| Media/File menu — UI state observation after dispatch | `native-ui/menu_media/270e71d014376c82` | 10, 10, 10 |
+| Media/File menu — Action RSS increase | `native-ui/menu_media/270e71d014376c82` | 10, 10, 10 |
+| Playback menu — UI state latency | `native-ui/menu_playback/4f63bf4b8c83665b` | 10, 10, 10 |
+| Playback menu — Action CPU time | `native-ui/menu_playback/4f63bf4b8c83665b` | 10, 10, 10 |
+| Playback menu — Post-action RSS | `native-ui/menu_playback/4f63bf4b8c83665b` | 10, 10, 10 |
+| Playback menu — Native input dispatch | `native-ui/menu_playback/4f63bf4b8c83665b` | 10, 10, 10 |
+| Playback menu — UI state observation after dispatch | `native-ui/menu_playback/4f63bf4b8c83665b` | 10, 10, 10 |
+| Playback menu — Action RSS increase | `native-ui/menu_playback/4f63bf4b8c83665b` | 10, 10, 10 |
+| Audio menu — UI state latency | `native-ui/menu_audio/5fb16dc85a3298b1` | 10, 10 |
+| Audio menu — Action CPU time | `native-ui/menu_audio/5fb16dc85a3298b1` | 10, 10 |
+| Audio menu — Post-action RSS | `native-ui/menu_audio/5fb16dc85a3298b1` | 10, 10 |
+| Audio menu — Native input dispatch | `native-ui/menu_audio/5fb16dc85a3298b1` | 10, 10 |
+| Audio menu — UI state observation after dispatch | `native-ui/menu_audio/5fb16dc85a3298b1` | 10, 10 |
+| Audio menu — Action RSS increase | `native-ui/menu_audio/5fb16dc85a3298b1` | 10, 10 |
+| Subtitle menu — UI state latency | `native-ui/menu_subtitles/2c8ef1fdf0981767` | 10, 10 |
+| Subtitle menu — Action CPU time | `native-ui/menu_subtitles/2c8ef1fdf0981767` | 10, 10 |
+| Subtitle menu — Post-action RSS | `native-ui/menu_subtitles/2c8ef1fdf0981767` | 10, 10 |
+| Subtitle menu — Native input dispatch | `native-ui/menu_subtitles/2c8ef1fdf0981767` | 10, 10 |
+| Subtitle menu — UI state observation after dispatch | `native-ui/menu_subtitles/2c8ef1fdf0981767` | 10, 10 |
+| Subtitle menu — Action RSS increase | `native-ui/menu_subtitles/2c8ef1fdf0981767` | 10, 10 |
 
 </details>
 
@@ -731,7 +731,7 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 
 | Player | Runtime outcome | Evidence / limitation |
 |---|---|---|
-| Foxide | Verified playback 18/21; Verified UI actions 30/32 | sampled-playback-unverified, unverified, verified, verified-playback |
+| Foxide | Verified playback 18/21; Verified UI actions 40/41 | adapter-required, sampled-playback-unverified, verified, verified-playback |
 | VLC | Verified playback 15/21; Verified UI actions 40/41 | adapter-required, playback-readiness-timeout, sampled-playback-unverified, verified, verified-playback |
 | mpv | Verified playback 18/21 | sampled-playback-unverified, verified-playback |
 | SMPlayer | Unverified / diagnostic (3 cases); Verified UI actions 20/23 | adapter-required, sampled-playback-unverified, verified |
