@@ -14,3 +14,7 @@ divan = { version = "6.0.0", package = "codspeed-divan-compat" }
 [[bench]]
 name = "core"
 harness = false
+
+[[bench]]
+name = "policy"
+harness = false

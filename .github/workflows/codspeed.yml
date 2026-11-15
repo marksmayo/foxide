@@ -14,6 +14,7 @@ jobs:
   benchmarks:
     name: Run benchmarks
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -22,7 +23,19 @@ jobs:
           key: codspeed
       - uses: taiki-e/install-action@v2
         with:
-          tool: cargo-codspeed
+          tool: cargo-codspeed@6.0.0
+      - name: Validate every benchmark case and record the expanded inventory
+        shell: bash
+        run: |
+          mkdir -p results/local
+          cargo bench --workspace --benches --locked -- --test 2>&1 | tee results/local/codspeed-benchmarks.txt
+      - name: Record benchmark inventory
+        shell: bash
+        run: |
+          echo '## Registered CPU benchmarks' >> "$GITHUB_STEP_SUMMARY"
+          echo '```text' >> "$GITHUB_STEP_SUMMARY"
+          cat results/local/codspeed-benchmarks.txt >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
       - name: Build the benchmark targets
         run: cargo codspeed build -m simulation
       - name: Run the benchmarks
@@ -30,3 +43,10 @@ jobs:
         with:
           mode: simulation
           run: cargo codspeed run
+      - name: Upload benchmark inventory
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codspeed-benchmark-inventory
+          path: results/local/codspeed-benchmarks.txt
+          if-no-files-found: warn

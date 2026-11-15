@@ -38,3 +38,7 @@ divan = { version = "6.0.0", package = "codspeed-divan-compat" }
 [[bench]]
 name = "shortcuts"
 harness = false
+
+[[bench]]
+name = "actions"
+harness = false

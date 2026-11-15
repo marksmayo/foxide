@@ -25,6 +25,8 @@ The **Player Games** workflow installs/attempts each platform's native field, re
 
 Development follows red → green tests. CI enforces **90% Rust workspace line coverage** for default features and **90% coverage for medal/report policies**. Feature-gated desktop/native rendering is not yet covered by that threshold. A separate three-platform desktop workflow builds the GUI and renders a layout preview. Native PiP, thumbnails, drag-and-drop, persistent GUI resume, complete GUI coverage and physical GPU acceptance remain open.
 
+CodSpeed tracks **233 CPU benchmark cases** across playback policy, UI actions, playlists and telemetry processing. [Suite and run commands](docs/codspeed.md) · [Case inventory](benchmarks/codspeed-inventory.json).
+
 <!-- foxide-scores:start -->
 ## Benchmark
 
