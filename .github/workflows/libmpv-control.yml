@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        engine: [system, '0.40']
+        engine: [system, '0.40', '0.40-zero-lut']
     env:
       LIBGL_ALWAYS_SOFTWARE: '1'
       FOXIDE_RENDER_FIXTURE: ${{ github.workspace }}/results/local/orientation.mkv
@@ -22,13 +22,25 @@ jobs:
       - name: Install independent control dependencies
         run: sudo apt-get update && sudo apt-get install -y ffmpeg libmpv2 libsdl2-2.0-0 xvfb xauth libgl1-mesa-dri meson ninja-build pkg-config libavcodec-dev libavfilter-dev libavformat-dev libavutil-dev libswresample-dev libswscale-dev libplacebo-dev libass-dev libegl1-mesa-dev
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        if: matrix.engine == '0.40'
+        if: matrix.engine != 'system'
         with:
           repository: mpv-player/mpv
           ref: e48ac7ce08462f5e33af6ef9deeac6fa87eef01e # v0.40.0
           path: results/local/mpv-source
+      - name: Zero only scaler lookup-table padding in the control build
+        if: matrix.engine == '0.40-zero-lut'
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('results/local/mpv-source/video/out/gpu/video.c')
+          source = path.read_text()
+          before = 'float *weights = talloc_array(NULL, float, lut_size * stride);'
+          after = 'float *weights = talloc_zero_array(NULL, float, lut_size * stride);'
+          assert source.count(before) == 1
+          path.write_text(source.replace(before, after))
+          PY
       - name: Build pinned upstream media engine
-        if: matrix.engine == '0.40'
+        if: matrix.engine != 'system'
         shell: bash
         run: |
           meson setup results/local/mpv-build results/local/mpv-source --prefix="$PWD/results/local/mpv-install" --buildtype=release --wrap-mode=nofallback -Dlibmpv=true -Dcplayer=false -Dlua=disabled -Djavascript=disabled -Dplain-gl=enabled
