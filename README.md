@@ -598,9 +598,9 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 
 **Native UI actions · default application windows · Hosted**
 
-linux-hosted · 2026-11-15T15:17:04.227545+00:00.
+linux-hosted · 2026-11-15T15:30:48.292375+00:00.
 
-[Actions run](https://github.com/marksmayo/foxide/actions/runs/43728411977) · Source: `baa5e2a062e62ccc4d22a4b15ec382ecc086332e`. Freshness is per field; older platform results are retained with their original collection dates.
+[Actions run](https://github.com/marksmayo/foxide/actions/runs/43729760988) · Source: `ec8c2b06d6a7aa2a9cac5fb9754dd9ca29d7c4d8`. Freshness is per field; older platform results are retained with their original collection dates.
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
@@ -608,36 +608,36 @@ linux-hosted · 2026-11-15T15:17:04.227545+00:00.
 | VLC | 13 | 10 | 1 | 24 |
 | SMPlayer | 3 | 3 | 6 | 12 |
 
-![Linux: every measured metric](docs/scoreboards/linux-540303e05f-scenarios.svg)
+![Linux: every measured metric](docs/scoreboards/linux-96148f0be5-scenarios.svg)
 
 <details><summary>Every measured metric — median values and podiums</summary>
 
 | Metric | Foxide | VLC | SMPlayer |
 |---|---:|---:|---:|
-| Media/File menu — UI state latency | **134** ms | 268 ms | 583 ms |
-| Media/File menu — Action CPU time | 150 ms | **120** ms | 260 ms |
-| Media/File menu — Post-action RSS | 180 MiB | **96.3** MiB | 96.6 MiB |
-| Media/File menu — Native input dispatch | **0.261** ms | **0.273** ms | **0.268** ms |
-| Media/File menu — UI state observation after dispatch | **133** ms | 268 ms | 583 ms |
-| Media/File menu — Action RSS increase | **0** MiB | 1.12 MiB | 0.25 MiB |
-| Playback menu — UI state latency | **157** ms | 266 ms | 594 ms |
-| Playback menu — Action CPU time | 205 ms | **120** ms | 280 ms |
-| Playback menu — Post-action RSS | 178 MiB | **96.2** MiB | 96.9 MiB |
-| Playback menu — Native input dispatch | **0.302** ms | **0.267** ms | **0.292** ms |
-| Playback menu — UI state observation after dispatch | **156** ms | 266 ms | 593 ms |
-| Playback menu — Action RSS increase | 1.16 MiB | 1.12 MiB | **0.625** MiB |
-| Audio menu — UI state latency | **121** ms | 256 ms | — |
-| Audio menu — Action CPU time | 120 ms | **115** ms | — |
+| Media/File menu — UI state latency | **104** ms | 189 ms | 416 ms |
+| Media/File menu — Action CPU time | 120 ms | **85** ms | 165 ms |
+| Media/File menu — Post-action RSS | 181 MiB | **96.3** MiB | 96.8 MiB |
+| Media/File menu — Native input dispatch | **0.284** ms | **0.266** ms | **0.261** ms |
+| Media/File menu — UI state observation after dispatch | **104** ms | 189 ms | 416 ms |
+| Media/File menu — Action RSS increase | **0.0332** MiB | 1.19 MiB | 0.279 MiB |
+| Playback menu — UI state latency | **119** ms | 194 ms | 428 ms |
+| Playback menu — Action CPU time | 165 ms | **80** ms | 185 ms |
+| Playback menu — Post-action RSS | 178 MiB | **96.2** MiB | 97.1 MiB |
+| Playback menu — Native input dispatch | **0.266** ms | **0.27** ms | **0.272** ms |
+| Playback menu — UI state observation after dispatch | **119** ms | 194 ms | 428 ms |
+| Playback menu — Action RSS increase | 1.64 MiB | 1.06 MiB | **0.5** MiB |
+| Audio menu — UI state latency | **93.7** ms | 188 ms | — |
+| Audio menu — Action CPU time | 100 ms | **70** ms | — |
 | Audio menu — Post-action RSS | 178 MiB | **96** MiB | — |
-| Audio menu — Native input dispatch | **0.275** ms | **0.252** ms | — |
-| Audio menu — UI state observation after dispatch | **121** ms | 256 ms | — |
-| Audio menu — Action RSS increase | 1.13 MiB | **0.812** MiB | — |
-| Subtitle menu — UI state latency | **124** ms | 255 ms | — |
-| Subtitle menu — Action CPU time | 130 ms | **120** ms | — |
-| Subtitle menu — Post-action RSS | 176 MiB | **95.8** MiB | — |
-| Subtitle menu — Native input dispatch | **0.255** ms | **0.278** ms | — |
-| Subtitle menu — UI state observation after dispatch | **123** ms | 255 ms | — |
-| Subtitle menu — Action RSS increase | **0** MiB | 0.75 MiB | — |
+| Audio menu — Native input dispatch | **0.26** ms | **0.268** ms | — |
+| Audio menu — UI state observation after dispatch | **93.4** ms | 188 ms | — |
+| Audio menu — Action RSS increase | 1.21 MiB | **0.875** MiB | — |
+| Subtitle menu — UI state latency | **99.1** ms | 185 ms | — |
+| Subtitle menu — Action CPU time | 105 ms | **70** ms | — |
+| Subtitle menu — Post-action RSS | 176 MiB | **96** MiB | — |
+| Subtitle menu — Native input dispatch | **0.274** ms | **0.267** ms | — |
+| Subtitle menu — UI state observation after dispatch | **98.9** ms | 185 ms | — |
+| Subtitle menu — Action RSS increase | **0** MiB | 0.688 MiB | — |
 
 Bold values are gold medians. — means no eligible comparable result. Trial evidence and exact cohort IDs:
 
