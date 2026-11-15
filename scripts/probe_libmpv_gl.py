@@ -43,6 +43,9 @@ def main():
     option = bind(mpv, "mpv_set_option_string", c.c_int, c.c_void_p, c.c_char_p, c.c_char_p)
     for key, value in [(b"config", b"no"), (b"load-scripts", b"no"), (b"vo", b"libmpv"), (b"hwdec", b"auto-safe"), (b"terminal", b"no"), (b"keep-open", b"yes")]:
         assert option(handle, key, value) >= 0
+    if os.environ.get("FOXIDE_PROBE_MPV_OPTION"):
+        key, value = os.environ["FOXIDE_PROBE_MPV_OPTION"].split("=", 1)
+        assert option(handle, key.encode(), value.encode()) >= 0
     assert bind(mpv, "mpv_initialize", c.c_int, c.c_void_p)(handle) >= 0
     lookup_type = c.CFUNCTYPE(c.c_void_p, c.c_void_p, c.c_char_p)
     lookup = lookup_type(lambda _, name: get(name))
@@ -90,16 +93,20 @@ def main():
     read = gl("glReadPixels", None, c.c_int, c.c_int, c.c_int, c.c_int, c.c_uint, c.c_uint, c.c_void_p)
     pump = bind(sdl, "SDL_PumpEvents", None)
     first, started, frames, inverted = None, time.monotonic(), set(), 0
+    rendered, colors = 0, []
     while time.monotonic() - started < 15:
         pump()
         if update(renderer) & 1:
             assert render(renderer, params) >= 0
+            rendered += 1
             bind_fbo(0x8CA8, framebuffer)
             read(0, 0, 320, 180, 0x1908, 0x1401, pixels)
             bind_fbo(0x8CA8, 0)
             data = bytes(pixels)
             top = data[((180 // 8) * 320 + 160) * 4:][:3]
             bottom = data[((180 * 7 // 8) * 320 + 160) * 4:][:3]
+            if len(colors) < 4:
+                colors.append((list(top), list(bottom)))
             if top[0] > 150 and bottom[2] > 150:
                 first = first or time.monotonic()
                 frames.add(data)
@@ -108,7 +115,7 @@ def main():
         if first and time.monotonic() - first >= 5:
             break
         time.sleep(0.001)
-    print(f"SDL control unique={len(frames)} inverted={inverted}", flush=True)
+    print(f"SDL control unique={len(frames)} inverted={inverted} rendered={rendered} colors={colors}", flush=True)
     worker.join(timeout=2)
     bind(mpv, "mpv_render_context_free", None, c.c_void_p)(renderer)
     bind(mpv, "mpv_terminate_destroy", None, c.c_void_p)(handle)

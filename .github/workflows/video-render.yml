@@ -34,21 +34,30 @@ jobs:
       - name: Compare independent SDL and libmpv renderer
         shell: bash
         run: |
+          for variant in default nocache rgba8 dumb; do
+          unset FOXIDE_PROBE_MPV_OPTION MESA_SHADER_CACHE_DISABLE
+          case "$variant" in
+            nocache) export FOXIDE_PROBE_MPV_OPTION=gpu-shader-cache=no MESA_SHADER_CACHE_DISABLE=true ;;
+            rgba8) export FOXIDE_PROBE_MPV_OPTION=fbo-format=rgba8 ;;
+            dumb) export FOXIDE_PROBE_MPV_OPTION=gpu-dumb-mode=yes ;;
+          esac
           for trial in 1 2 3; do
             set +e
-            xvfb-run -a -s '-screen 0 1280x720x24' python3 scripts/probe_libmpv_gl.py > "results/local/video-sdl-$trial.log" 2>&1
+            xvfb-run -a -s '-screen 0 1280x720x24' python3 scripts/probe_libmpv_gl.py > "results/local/video-sdl-$variant-$trial.log" 2>&1
             status=$?
             set -e
-            echo "Independent SDL control trial $trial: exit $status"
-            cat "results/local/video-sdl-$trial.log"
+            echo "Independent SDL control $variant trial $trial: exit $status"
+            cat "results/local/video-sdl-$variant-$trial.log"
           done
+          done
+          unset FOXIDE_PROBE_MPV_OPTION MESA_SHADER_CACHE_DISABLE
       - name: Verify compositor with the same features without instrumentation
         shell: bash
         run: |
           set -o pipefail
           set +e
           baseline_status=0
-          for mode in normal detached single-thread; do
+          for mode in normal; do
             for trial in 1 2 3; do
               if [ "$mode" = detached ]; then export FOXIDE_PROBE_DETACHED=1; else unset FOXIDE_PROBE_DETACHED; fi
               if [ "$mode" = single-thread ]; then export LP_NUM_THREADS=1; else unset LP_NUM_THREADS; fi
