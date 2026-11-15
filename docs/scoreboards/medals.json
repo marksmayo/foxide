@@ -1,9 +1,17 @@
 {
   "provenance": {
-    "generated_utc": "2026-11-15T13:33:22.393235+00:00",
-    "source_commit": "726d4ce5a19dcf09bff676129dba0dc4a55958aa",
-    "run_url": "https://github.com/marksmayo/foxide/actions/runs/43717764774",
+    "generated_utc": "2026-11-15T13:39:54.322970+00:00",
+    "source_commit": "b015d04926ae3a109d599ea172432f19afcfea4a",
+    "run_url": "https://github.com/marksmayo/foxide/actions/runs/43719724299",
     "fields": [
+      {
+        "system": "linux",
+        "host": "linux-hosted",
+        "utc": "2026-11-15T13:39:41.234097+00:00",
+        "source_commit": "b015d04926ae3a109d599ea172432f19afcfea4a",
+        "run_id": "43719724299",
+        "presentation": "native-ui"
+      },
       {
         "utc": "2026-11-15T13:14:35.214843+00:00",
         "system": "linux",
@@ -88,14 +96,6 @@
         "source_commit": "188f2e6b49b5d638b7f641b47d13ae0ee6906740",
         "order_seed": 20261115,
         "window_policy": "No audio/video output"
-      },
-      {
-        "system": "linux",
-        "host": "linux-hosted",
-        "utc": "2026-11-15T13:20:00.683610+00:00",
-        "source_commit": "726d4ce5a19dcf09bff676129dba0dc4a55958aa",
-        "run_id": "43717764774",
-        "presentation": "native-ui"
       },
       {
         "system": "windows",

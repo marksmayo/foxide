@@ -596,6 +596,26 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 | FFplay | 5 | 0 | 0 | 5 |
 | Plex | 5 | 0 | 0 | 5 |
 
+**Native UI actions · default application windows · Hosted**
+
+linux-hosted · 2026-11-15T13:39:41.234097+00:00.
+
+[Actions run](https://github.com/marksmayo/foxide/actions/runs/43719724299) · Source: `b015d04926ae3a109d599ea172432f19afcfea4a`. Freshness is per field; older platform results are retained with their original collection dates.
+
+![Linux: every measured metric](docs/scoreboards/linux-6380b20881-scenarios.svg)
+
+<details><summary>Every measured metric — median values and podiums</summary>
+
+No eligible comparable measurements.
+
+Bold values are gold medians. — means no eligible comparable result. Trial evidence and exact cohort IDs:
+
+| Metric | Cohort | Trials per eligible entrant |
+|---|---|---:|
+
+</details>
+
+
 **Software decode · Foxide CLI · Hosted**
 
 linux-hosted · Linux-7.0.0-1017-azure-x86_64-with-glibc2.39 · x86_64 · 4 logical CPUs · 2026-11-15T13:14:35.214843+00:00.
@@ -649,26 +669,6 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 | 2× playback CPU | `software-null-output/speed2x/cc7734c634e52354` | 3, 3, 3 |
 | 2× playback steady RAM | `software-null-output/speed2x/cc7734c634e52354` | 3, 3, 3 |
 | Peak playback RAM | `software-null-output/avc1080/d1e775b8e1007a78` | 3, 3, 3 |
-
-</details>
-
-
-**Native UI actions · default application windows · Hosted**
-
-linux-hosted · 2026-11-15T13:20:00.683610+00:00.
-
-[Actions run](https://github.com/marksmayo/foxide/actions/runs/43717764774) · Source: `726d4ce5a19dcf09bff676129dba0dc4a55958aa`. Freshness is per field; older platform results are retained with their original collection dates.
-
-![Linux: every measured metric](docs/scoreboards/linux-a02bd74456-scenarios.svg)
-
-<details><summary>Every measured metric — median values and podiums</summary>
-
-No eligible comparable measurements.
-
-Bold values are gold medians. — means no eligible comparable result. Trial evidence and exact cohort IDs:
-
-| Metric | Cohort | Trials per eligible entrant |
-|---|---|---:|
 
 </details>
 

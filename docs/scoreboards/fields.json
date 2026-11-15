@@ -96,6 +96,21 @@
     }
   },
   {
+    "slug": "linux-6380b20881",
+    "label": "Native UI actions \u00b7 default application windows \u00b7 Hosted",
+    "mode": "native-ui",
+    "host": "linux-hosted",
+    "utc": "2026-11-15T13:39:41.234097+00:00",
+    "info": {
+      "system": "linux",
+      "host": "linux-hosted",
+      "utc": "2026-11-15T13:39:41.234097+00:00",
+      "source_commit": "b015d04926ae3a109d599ea172432f19afcfea4a",
+      "run_id": "43719724299",
+      "presentation": "native-ui"
+    }
+  },
+  {
     "slug": "linux-b8c8cd7788",
     "label": "Software decode \u00b7 Foxide CLI \u00b7 Hosted",
     "mode": "software-null-output",
@@ -117,21 +132,6 @@
       "source_commit": "726d4ce5a19dcf09bff676129dba0dc4a55958aa",
       "order_seed": 20261115,
       "window_policy": "No audio/video output"
-    }
-  },
-  {
-    "slug": "linux-a02bd74456",
-    "label": "Native UI actions \u00b7 default application windows \u00b7 Hosted",
-    "mode": "native-ui",
-    "host": "linux-hosted",
-    "utc": "2026-11-15T13:20:00.683610+00:00",
-    "info": {
-      "system": "linux",
-      "host": "linux-hosted",
-      "utc": "2026-11-15T13:20:00.683610+00:00",
-      "source_commit": "726d4ce5a19dcf09bff676129dba0dc4a55958aa",
-      "run_id": "43717764774",
-      "presentation": "native-ui"
     }
   }
 ]
