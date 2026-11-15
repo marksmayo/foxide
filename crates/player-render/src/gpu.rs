@@ -251,6 +251,13 @@ impl Renderer {
                 height: height as i32,
                 format: glow::RGBA8 as i32,
             };
+            // libmpv requires standard GL capability defaults on entry. Slint
+            // can leave clipping/blending enabled after flushing cached layers;
+            // inheriting those states can discard the entire offscreen frame.
+            // The caller's capability states are restored below.
+            for (flag, _) in flags {
+                gl.disable(flag);
+            }
             let result = render_texture(self.api.render, self.context, &mut fbo);
             gl.bind_framebuffer(glow::DRAW_FRAMEBUFFER, framebuffer);
             gl.bind_framebuffer(glow::READ_FRAMEBUFFER, read_framebuffer);
