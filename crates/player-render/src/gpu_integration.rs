@@ -308,6 +308,11 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
         );
     }
     let samples = samples.borrow();
+    if samples.frames.len() < 75
+        && let Ok(logs) = engine.diagnostics.lock()
+    {
+        println!("[engine-diagnostics] {}", logs.join(""));
+    }
     println!(
         "[video-probe] presentations={} colors={:?} read_errors={:?}",
         samples.presentations, samples.colors, samples.read_errors

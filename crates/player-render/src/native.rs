@@ -24,6 +24,14 @@ struct End {
     reason: c_int,
     error: c_int,
 }
+#[cfg(test)]
+#[repr(C)]
+struct LogMessage {
+    prefix: *const c_char,
+    level: *const c_char,
+    text: *const c_char,
+    log_level: c_int,
+}
 
 pub(crate) struct Api {
     pub handle: Handle,
@@ -197,6 +205,16 @@ impl Api {
                 return Err("libmpv initialization failed".into());
             }
             api.initialized = true;
+            #[cfg(test)]
+            {
+                let logs = api
+                    ._library
+                    .get::<unsafe extern "C" fn(Handle, *const c_char) -> c_int>(
+                        b"mpv_request_log_messages\0",
+                    )
+                    .map_err(|error| error.to_string())?;
+                logs(api.handle, c"debug".as_ptr());
+            }
             Ok(api)
         }
     }
@@ -288,6 +306,8 @@ pub struct Engine {
     stop: Arc<AtomicBool>,
     sender: SyncSender<Vec<String>>,
     snapshot: Arc<Mutex<Snapshot>>,
+    #[cfg(test)]
+    pub(crate) diagnostics: Arc<Mutex<Vec<String>>>,
 }
 impl Engine {
     pub fn new() -> Result<Self, String> {
@@ -295,6 +315,10 @@ impl Engine {
         let ready = Arc::new(AtomicBool::new(false));
         let stop = Arc::new(AtomicBool::new(false));
         let snapshot = Arc::new(Mutex::new(Snapshot::default()));
+        #[cfg(test)]
+        let diagnostics = Arc::new(Mutex::new(Vec::<String>::new()));
+        #[cfg(test)]
+        let diagnostic_output = diagnostics.clone();
         let (sender, receiver) = mpsc::sync_channel::<Vec<String>>(32);
         let (client, active, stopped, output) =
             (api.clone(), ready.clone(), stop.clone(), snapshot.clone());
@@ -330,6 +354,22 @@ impl Engine {
                             let event = (client.wait_event)(client.handle, 0.0);
                             if event.is_null() || (*event).kind == 0 {
                                 break;
+                            }
+                            #[cfg(test)]
+                            if (*event).kind == 2 && !(*event).data.is_null() {
+                                let message = &*((*event).data.cast::<LogMessage>());
+                                if !message.prefix.is_null() && !message.text.is_null() {
+                                    let text = format!(
+                                        "[{}] {}",
+                                        CStr::from_ptr(message.prefix).to_string_lossy(),
+                                        CStr::from_ptr(message.text).to_string_lossy()
+                                    );
+                                    if let Ok(mut logs) = diagnostic_output.lock()
+                                        && logs.len() < 10000
+                                    {
+                                        logs.push(text);
+                                    }
+                                }
                             }
                             if (*event).kind == 7 && !(*event).data.is_null() {
                                 let end = &*((*event).data.cast::<End>());
@@ -400,6 +440,8 @@ impl Engine {
             stop,
             sender,
             snapshot,
+            #[cfg(test)]
+            diagnostics,
         })
     }
     pub fn command(&self, args: Vec<String>) -> Result<(), String> {
