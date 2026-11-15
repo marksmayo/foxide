@@ -8,6 +8,8 @@ on:
       - 'scripts/ui_benchmarks.py'
       - 'scripts/run_ui_benchmarks.py'
       - 'benchmarks/ui-events.json'
+      - 'crates/player-ui/**'
+      - 'crates/player-render/**'
   workflow_dispatch:
     inputs:
       platform:

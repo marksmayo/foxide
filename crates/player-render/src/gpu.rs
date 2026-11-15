@@ -195,6 +195,21 @@ impl Renderer {
             let read_framebuffer = gl.get_parameter_framebuffer(glow::READ_FRAMEBUFFER_BINDING);
             let texture = gl.get_parameter_texture(glow::TEXTURE_BINDING_2D);
             let active_texture = gl.get_parameter_i32(glow::ACTIVE_TEXTURE);
+            // Slint finishes on texture unit 1 and can leave the borrowed video
+            // bound on unit 0. libmpv's render_gl.h requires standard GL defaults
+            // on entry. In particular, the destination must not remain bound as
+            // an input texture while libmpv initializes its passes.
+            let texture_zero = if active_texture as u32 != glow::TEXTURE0 {
+                gl.active_texture(glow::TEXTURE0);
+                let bound = gl.get_parameter_texture(glow::TEXTURE_BINDING_2D);
+                gl.active_texture(active_texture as u32);
+                gl.bind_texture(glow::TEXTURE_2D, None);
+                bound
+            } else {
+                texture
+            };
+            gl.active_texture(glow::TEXTURE0);
+            gl.bind_texture(glow::TEXTURE_2D, None);
             #[cfg(test)]
             {
                 let mut mask = [0; 4];
@@ -280,9 +295,15 @@ impl Renderer {
             for (flag, _) in flags {
                 gl.disable(flag);
             }
+            // Resizing above temporarily binds the output texture for allocation.
+            gl.bind_texture(glow::TEXTURE_2D, None);
             let result = render_texture(self.api.render, self.context, &mut fbo);
             gl.bind_framebuffer(glow::DRAW_FRAMEBUFFER, framebuffer);
             gl.bind_framebuffer(glow::READ_FRAMEBUFFER, read_framebuffer);
+            if active_texture as u32 != glow::TEXTURE0 {
+                gl.active_texture(glow::TEXTURE0);
+                gl.bind_texture(glow::TEXTURE_2D, texture_zero);
+            }
             gl.active_texture(active_texture as u32);
             gl.bind_texture(glow::TEXTURE_2D, texture);
             gl.use_program(program);

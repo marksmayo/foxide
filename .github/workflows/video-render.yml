@@ -43,7 +43,7 @@ jobs:
               status=$?
               echo "GL API $api trial $trial: exit $status"
               cat "results/local/video-$api-$trial.log"
-              if [ "$api" = default ] && [ "$status" -ne 0 ]; then baseline_status=$status; fi
+              if [ "$status" -ne 0 ]; then baseline_status=$status; fi
             done
           done
           set -e
