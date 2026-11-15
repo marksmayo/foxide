@@ -30,6 +30,26 @@ def latest_collections(collections):
     return [value[1] for value in latest.values()]
 
 
+
+def enforce_software_decoder_evidence(collection):
+    """Retire legacy VLC software medals whose decoder was never observed."""
+    if collection['session'].get('presentation', 'software-null') != 'software-null':
+        return
+    proven = set()
+    for case in collection.get('cases', []):
+        if case.get('player') != 'vlc':
+            continue
+        if case.get('software_decode_verified') is True:
+            proven.add((case['profile'], case['trial']))
+        else:
+            case['verified'] = False
+            if case.get('status') == 'verified-playback':
+                case['status'] = 'software-decoder-unverified'
+    for row in collection.get('measurements', []):
+        if row.get('player') == 'vlc' and (row['profile'], row['trial']) not in proven:
+            row['verified'] = False
+
+
 def refresh(bundles, platform_dir, output, readme, runtime_dir=None):
     collections = [json.loads(path.read_text('utf-8')) for path in sorted(bundles.glob('*.json'))]
     if platform_dir.exists():
