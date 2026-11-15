@@ -94,3 +94,10 @@ class RefreshTests(unittest.TestCase):
         self.assertFalse(absent.exists())
         with self.assertRaisesRegex(ValueError, "No benchmark evidence"):
             refresh(absent, absent, absent, None)
+
+    def test_native_ui_fields_remain_separate_from_playback(self):
+        from refresh_scoreboards import latest_collections, field_key
+        ui = dict(session=dict(system='linux', presentation='native-ui', run_id='42', utc='2026-11-16T00:00:00Z'))
+        video = dict(session=dict(system='linux', presentation='native-window', run_id='42', utc='2026-11-16T00:00:00Z'))
+        self.assertEqual(field_key(ui), ('linux', 'hosted', 'native-ui'))
+        self.assertEqual(len(latest_collections([ui, video])), 2)

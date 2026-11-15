@@ -19,7 +19,7 @@ import time
 from collection_io import write_json
 from run_event_benchmarks import ROOT, digest, locate, stop_owned
 from telemetry import windows_snapshot, linux_snapshot, mac_snapshot
-from ui_benchmarks import action_rows
+from ui_benchmarks import action_cohort, action_rows
 
 
 def plan(catalog, system):
@@ -99,6 +99,7 @@ def collect(player, executable, action, selectors, directory, settings, system, 
                 raise RuntimeError('Owned process disappeared before input')
             case['input_ns'] = time.perf_counter_ns()
             driver.activate(target)
+            case['dispatch_completed_ns'] = time.perf_counter_ns()
             deadline = time.monotonic() + 5
             after = []
             while time.monotonic() < deadline:
@@ -114,7 +115,8 @@ def collect(player, executable, action, selectors, directory, settings, system, 
             if len(after) != 1 or after_cpu.get(process.pid, (None,))[0] != identity:
                 raise RuntimeError('Owned visible postcondition was not verified')
             write_json(directory / 'after.json', dict(pid=process.pid, expected=after))
-            cohort = dict(settings, **context, scenario=action['id'], fixture='idle-no-media')
+            cohort = action_cohort(settings, context, action['id'])
+            case['window_bounds'] = context.get('window_bounds')
             case.update(cohort=cohort, profile='native-ui/' + action['id'] + '/' + hashlib.sha256(
                 json.dumps(cohort, sort_keys=True).encode()).hexdigest()[:16],
                 status='verified', verified=True, before=str(directory / 'before.json'), after=str(directory / 'after.json'),
@@ -125,6 +127,7 @@ def collect(player, executable, action, selectors, directory, settings, system, 
                 delta = sum(after_cpu[p][2] - before_cpu[p][2] for p in before_cpu)
                 if delta >= 0:
                     case['cpu_time_ms'] = delta * 1000
+            case['rss_before_mib'] = sum(record[1] for record in before_cpu.values()) / 1048576
             case['rss_mib'] = sum(record[1] for record in after_cpu.values()) / 1048576
     except Exception as error:
         case.update(status='unverified', error=f'{type(error).__name__}: {error}')
@@ -190,7 +193,8 @@ def main():
                 measurements.extend(action_rows(case, actions[action_id]))
     write_json(args.output / 'measurements.json', measurements)
     write_json(args.output / 'session.json', dict(scope='native-ui',
-               session=dict(system=system, generated_at=datetime.now(timezone.utc).isoformat()),
+               session=dict(system=system, utc=datetime.now(timezone.utc).isoformat(),
+                            run_id=os.environ.get('GITHUB_RUN_ID'), presentation='native-ui'),
                inventory=[], cases=cases, settings=settings))
     print(f'{len(cases)} action outcomes; {len(measurements)} verified metric rows. Output: {args.output}')
 

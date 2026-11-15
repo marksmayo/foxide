@@ -12,7 +12,7 @@ from publication import public_evidence
 def field_key(collection):
     info = collection['session']
     system, presentation = info['system'], info.get('presentation', 'software-null')
-    if system not in ('windows', 'macos', 'linux') or presentation not in ('software-null', 'native-window'):
+    if system not in ('windows', 'macos', 'linux') or presentation not in ('software-null', 'native-window', 'native-ui'):
         raise ValueError('Unsupported field identity')
     return system, 'hosted' if info.get('run_id') else 'local', presentation
 

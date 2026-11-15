@@ -72,3 +72,43 @@ class UiBenchmarkTests(unittest.TestCase):
         self.assertEqual(len(action_rows(dict(case, cpu_time_ms=float('nan'), rss_mib=-1), scenario)), 1)
         for patch in [dict(pid=None), dict(pid=True), dict(input_ns=True), dict(completed_ns=None)]:
             self.assertEqual(action_rows(dict(case, **patch), scenario), [])
+
+    def test_input_dispatch_and_state_observation_are_timed_separately(self):
+        scenario = dict(id='menu_audio', verification='accessibility-state', condition='audio-menu-visible')
+        case = dict(player='vlc', platform='linux', profile='native-ui/idle', trial=1, source='case.json',
+                    status='verified', pid=42, input_ns=1000000, dispatch_completed_ns=4000000, completed_ns=14000000,
+                    input_method='accessibility-action',
+                    verification=dict(kind='accessibility-state', condition='audio-menu-visible', passed=True, pid=42),
+                    before='before.json', after='after.json')
+        values = {r['event']: r['value'] for r in action_rows(case, scenario)}
+        self.assertEqual(values['ui_menu_audio_dispatch_latency'], 3)
+        self.assertEqual(values['ui_menu_audio_settle_latency'], 10)
+        self.assertEqual(values['ui_menu_audio_latency'], 13)
+        for stamp in (None, True, 0, 15000000):
+            rows = action_rows(dict(case, dispatch_completed_ns=stamp), scenario)
+            self.assertEqual([r['event'] for r in rows], ['ui_menu_audio_latency'])
+
+    def test_rss_increase_requires_measured_before_and_after_memory(self):
+        scenario = dict(id='menu_media', verification='accessibility-state', condition='media-menu-visible')
+        case = dict(player='foxide', platform='linux', profile='native-ui/idle', trial=0, source='case.json',
+                    status='verified', pid=42, input_ns=10, completed_ns=20, input_method='accessibility-action',
+                    verification=dict(kind='accessibility-state', condition='media-menu-visible', passed=True, pid=42),
+                    before='before.json', after='after.json', rss_before_mib=70, rss_mib=80)
+        values = {r['event']: r['value'] for r in action_rows(case, scenario)}
+        self.assertEqual(values['ui_menu_media_rss_increase'], 10)
+        values = {r['event']: r['value'] for r in action_rows(dict(case, rss_before_mib=90), scenario)}
+        self.assertEqual(values['ui_menu_media_rss_increase'], 0)
+        for before in (None, True, -1, float('nan')):
+            rows = action_rows(dict(case, rss_before_mib=before), scenario)
+            self.assertNotIn('ui_menu_media_rss_increase', [r['event'] for r in rows])
+
+    def test_default_window_positions_do_not_split_identical_ui_workloads(self):
+        from ui_benchmarks import action_cohort
+        settings = dict(host='same-host', environment='1920x1080, DPI96, English', runner_sha256='code')
+        context = dict(backend='linux-atspi', input_method='accessibility-action', window_bounds=[10,20,810,620])
+        one = action_cohort(settings, context, 'menu_media')
+        two = action_cohort(settings, dict(context, window_bounds=[100,200,1100,900]), 'menu_media')
+        self.assertEqual(one, two)
+        self.assertEqual(one['window_policy'], 'application-default')
+        self.assertNotEqual(one, action_cohort(settings, dict(context, backend='different'), 'menu_media'))
+        self.assertNotEqual(one, action_cohort(settings, context, 'menu_audio'))

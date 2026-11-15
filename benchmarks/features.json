@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "research_date": "2026-11-13",
-  "research_scope": "Official documentation and upstream sources. Supported earns shared gold. Unknown/partial/planned earns no medal and is not evidence of absence. Claims describe documented capabilities, not runtime acceptance or platform performance.",
+  "research_date": "2026-11-16",
+  "research_scope": "Desktop-platform official documentation and upstream sources. All supported entrants share gold. Sender/receiver and Chromecast/AirPlay are distinct events. Helper, backend and paid-tier requirements are recorded. Product-family mobile casting claims do not establish desktop support. Unknown/partial/planned is unranked and is not evidence of absence. Feature possession is separate from runtime acceptance and measured performance.",
   "features": [
     {
       "id": "common_video",
@@ -278,14 +278,414 @@
       ]
     },
     {
-      "id": "casting",
-      "name": "AirPlay / Cast output",
-      "group": "Streaming",
+      "id": "chromecast_output",
+      "name": "Chromecast video output",
+      "group": "Casting",
+      "tier": 3,
+      "media_types": [
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "airplay_video_output",
+      "name": "AirPlay video output",
+      "group": "Casting",
+      "tier": 3,
+      "media_types": [
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "airplay_audio_receiver",
+      "name": "AirPlay audio receiver",
+      "group": "Casting",
       "tier": 3,
       "media_types": [
         "audio",
         "video"
-      ]
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "online_subtitles",
+      "name": "Search and download subtitles",
+      "group": "Subtitles",
+      "tier": 3,
+      "media_types": [
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "youtube_urls",
+      "name": "Video-site URL playback",
+      "group": "Network",
+      "tier": 3,
+      "media_types": [
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "extensions",
+      "name": "User extension or scripting system",
+      "group": "Extensibility",
+      "tier": 3,
+      "media_types": [
+        "audio",
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "custom_keys",
+      "name": "Editable keyboard bindings",
+      "group": "Interface",
+      "tier": 3,
+      "media_types": [
+        "audio",
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "custom_layout",
+      "name": "Customizable UI layout or skins",
+      "group": "Interface",
+      "tier": 3,
+      "media_types": [
+        "audio",
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "touch_gestures",
+      "name": "Touch or trackpad playback gestures",
+      "group": "Interface",
+      "tier": 3,
+      "media_types": [
+        "audio",
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "system_media_controls",
+      "name": "System media-control integration",
+      "group": "Interface",
+      "tier": 3,
+      "media_types": [
+        "audio",
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "compact_music_view",
+      "name": "Compact dedicated music view",
+      "group": "Interface",
+      "tier": 3,
+      "media_types": [
+        "audio",
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "dark_theme",
+      "name": "Dark interface theme",
+      "group": "Interface",
+      "tier": 3,
+      "media_types": [
+        "audio",
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "music_artwork",
+      "name": "Music playback artwork view",
+      "group": "Library",
+      "tier": 3,
+      "media_types": [
+        "audio",
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "library_metadata",
+      "name": "Automatic movie and TV library metadata",
+      "group": "Library",
+      "tier": 3,
+      "media_types": [
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "smb_browse",
+      "name": "Browse SMB network media",
+      "group": "Network",
+      "tier": 3,
+      "media_types": [
+        "audio",
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "cloud_storage",
+      "name": "Direct cloud-storage playback",
+      "group": "Network",
+      "tier": 3,
+      "media_types": [
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "offline_downloads",
+      "name": "Download server media for offline viewing",
+      "group": "Library",
+      "tier": 3,
+      "media_types": [
+        "audio",
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "watch_sync",
+      "name": "Cross-device playback progress sync",
+      "group": "Library",
+      "tier": 3,
+      "media_types": [
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "live_tv",
+      "name": "Live TV and guide frontend",
+      "group": "Television",
+      "tier": 3,
+      "media_types": [
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "pvr_record",
+      "name": "Schedule TV recordings from the player",
+      "group": "Television",
+      "tier": 3,
+      "media_types": [
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "http_remote",
+      "name": "HTTP remote-control interface",
+      "group": "Control",
+      "tier": 3,
+      "media_types": [
+        "audio",
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "json_ipc",
+      "name": "Documented JSON IPC control",
+      "group": "Control",
+      "tier": 3,
+      "media_types": [
+        "audio",
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "hd_audio_passthrough",
+      "name": "HD audio bitstream passthrough",
+      "group": "Audio",
+      "tier": 3,
+      "media_types": [
+        "audio",
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "video_360",
+      "name": "360-degree panoramic video",
+      "group": "Picture",
+      "tier": 3,
+      "media_types": [
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "stereo_3d",
+      "name": "Stereoscopic 3D video",
+      "group": "Picture",
+      "tier": 3,
+      "media_types": [
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "video_capture",
+      "name": "Capture playing video to a clip",
+      "group": "Capture",
+      "tier": 3,
+      "media_types": [
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "screen_record",
+      "name": "Desktop screen recording",
+      "group": "Capture",
+      "tier": 3,
+      "media_types": [
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "video_trim",
+      "name": "Trim and rearrange video clips",
+      "group": "Editing",
+      "tier": 3,
+      "media_types": [
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "audio_transcode",
+      "name": "Audio conversion or transcoding",
+      "group": "Editing",
+      "tier": 3,
+      "media_types": [
+        "audio",
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "cd_rip",
+      "name": "Audio CD ripping",
+      "group": "Optical media",
+      "tier": 3,
+      "media_types": [
+        "audio",
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "cd_burn",
+      "name": "Audio or data CD burning",
+      "group": "Optical media",
+      "tier": 3,
+      "media_types": [
+        "audio",
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "tag_edit",
+      "name": "Edit media tags",
+      "group": "Library",
+      "tier": 3,
+      "media_types": [
+        "audio",
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "radio_directory",
+      "name": "Built-in internet-radio directory",
+      "group": "Network",
+      "tier": 3,
+      "media_types": [
+        "audio",
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "video_rotate",
+      "name": "Video rotation and flip controls",
+      "group": "Picture",
+      "tier": 3,
+      "media_types": [
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "icc_profiles",
+      "name": "ICC display color management",
+      "group": "Picture",
+      "tier": 3,
+      "media_types": [
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "user_shaders",
+      "name": "User GPU shader pipeline",
+      "group": "Picture",
+      "tier": 3,
+      "media_types": [
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "deband",
+      "name": "Debanding control",
+      "group": "Picture",
+      "tier": 3,
+      "media_types": [
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "frame_step",
+      "name": "Single-frame advance",
+      "group": "Playback",
+      "tier": 3,
+      "media_types": [
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "playlist_search",
+      "name": "Playlist search and filtering",
+      "group": "Library",
+      "tier": 3,
+      "media_types": [
+        "audio",
+        "video"
+      ],
+      "research_batch": "desktop-2026-11-16"
     }
   ],
   "players": [
@@ -462,7 +862,8 @@
       "name": "Plex",
       "platforms": [
         "windows",
-        "macos"
+        "macos",
+        "linux"
       ],
       "media_types": [
         "video",
@@ -1368,15 +1769,6 @@
     },
     {
       "player": "infuse",
-      "feature": "casting",
-      "status": "supported",
-      "sources": [
-        "https://firecore.com/infuse"
-      ],
-      "note": "Documented capability; installed build acceptance test pending."
-    },
-    {
-      "player": "infuse",
       "feature": "speed",
       "status": "supported",
       "sources": [
@@ -1459,15 +1851,6 @@
     {
       "player": "quicktime",
       "feature": "pip",
-      "status": "supported",
-      "sources": [
-        "https://support.apple.com/en-ca/guide/quicktime-player/qtp6cee0761b/mac"
-      ],
-      "note": "Documented capability; installed build acceptance test pending."
-    },
-    {
-      "player": "quicktime",
-      "feature": "casting",
       "status": "supported",
       "sources": [
         "https://support.apple.com/en-ca/guide/quicktime-player/qtp6cee0761b/mac"
@@ -1895,13 +2278,6 @@
       "note": "Planned in Foxide; no medal until exposed by the application."
     },
     {
-      "player": "foxide",
-      "feature": "casting",
-      "status": "planned",
-      "sources": [],
-      "note": "Planned in Foxide; no medal until exposed by the application."
-    },
-    {
       "player": "vlc",
       "feature": "hardware_decode",
       "status": "supported",
@@ -2428,6 +2804,1035 @@
         "https://t1.daumcdn.net/potplayer/PotPlayer/v4/Update2/UpdateEng.html"
       ],
       "note": "Official documentation/upstream feature interface; build-specific acceptance pending."
+    },
+    {
+      "player": "vlc",
+      "feature": "chromecast_output",
+      "status": "supported",
+      "sources": [
+        "https://images.videolan.org/vlc/releases/3.0.0.html"
+      ],
+      "note": "Renderer output, with format conversion when needed.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "smplayer",
+      "feature": "chromecast_output",
+      "status": "supported",
+      "sources": [
+        "https://www.smplayer.info/en/first-steps"
+      ],
+      "note": "Browser-mediated Cast control; companion requirements apply.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "chromecast_output",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "quicktime",
+      "feature": "airplay_video_output",
+      "status": "supported",
+      "sources": [
+        "https://support.apple.com/en-qa/guide/quicktime-player/qtp6cee0761b/mac"
+      ],
+      "note": "Native playback-control AirPlay destination picker.",
+      "research_batch": "desktop-2026-11-16",
+      "platforms": [
+        "macos"
+      ],
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "airplay_video_output",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "kodi",
+      "feature": "airplay_audio_receiver",
+      "status": "supported",
+      "sources": [
+        "https://kodi.wiki/view/Settings/Services/Airplay"
+      ],
+      "note": "Receiving audio; video from modern iOS is a separate limitation.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "airplay_audio_receiver",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "smplayer",
+      "feature": "online_subtitles",
+      "status": "supported",
+      "sources": [
+        "https://www.smplayer.info/en/info"
+      ],
+      "note": "Online subtitle service integration.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "mpc-hc",
+      "feature": "online_subtitles",
+      "status": "supported",
+      "sources": [
+        "https://github.com/clsid2/mpc-hc"
+      ],
+      "note": "Subtitle search; service credentials may be required.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "iina",
+      "feature": "online_subtitles",
+      "status": "supported",
+      "sources": [
+        "https://www.iina.io/"
+      ],
+      "note": "Online subtitle search.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "online_subtitles",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "mpv",
+      "feature": "youtube_urls",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "yt-dlp integration requires a working helper.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "mpc-hc",
+      "feature": "youtube_urls",
+      "status": "supported",
+      "sources": [
+        "https://github.com/clsid2/mpc-hc"
+      ],
+      "note": "yt-dlp helper required.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "smplayer",
+      "feature": "youtube_urls",
+      "status": "supported",
+      "sources": [
+        "https://www.smplayer.info/en/info"
+      ],
+      "note": "YouTube playback and optional browser.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "kmplayer",
+      "feature": "youtube_urls",
+      "status": "supported",
+      "sources": [
+        "https://www.kmplayer.com/pc"
+      ],
+      "note": "PC URL playback/download tools.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "youtube_urls",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "mpv",
+      "feature": "extensions",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Lua/JavaScript scripting interfaces.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "iina",
+      "feature": "extensions",
+      "status": "supported",
+      "sources": [
+        "https://www.iina.io/"
+      ],
+      "note": "Plugin system.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foobar2000",
+      "feature": "extensions",
+      "status": "supported",
+      "sources": [
+        "https://www.foobar2000.org/"
+      ],
+      "note": "Component ecosystem.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "kodi",
+      "feature": "extensions",
+      "status": "supported",
+      "sources": [
+        "https://kodi.tv/about/"
+      ],
+      "note": "Add-ons extend the media center.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "extensions",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "mpv",
+      "feature": "custom_keys",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "User input.conf bindings.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "mpc-hc",
+      "feature": "custom_keys",
+      "status": "supported",
+      "sources": [
+        "https://github.com/clsid2/mpc-hc"
+      ],
+      "note": "Configurable keyboard and mouse controls.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foobar2000",
+      "feature": "custom_keys",
+      "status": "supported",
+      "sources": [
+        "https://www.foobar2000.org/"
+      ],
+      "note": "User-configurable shortcuts.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "custom_keys",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "foobar2000",
+      "feature": "custom_layout",
+      "status": "supported",
+      "sources": [
+        "https://www.foobar2000.org/"
+      ],
+      "note": "Layout customization on Windows and macOS.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "iina",
+      "feature": "custom_layout",
+      "status": "supported",
+      "sources": [
+        "https://www.iina.io/"
+      ],
+      "note": "Customizable interface.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "smplayer",
+      "feature": "custom_layout",
+      "status": "supported",
+      "sources": [
+        "https://www.smplayer.info/en/info"
+      ],
+      "note": "Skins and icon themes.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "custom_layout",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "iina",
+      "feature": "touch_gestures",
+      "status": "supported",
+      "sources": [
+        "https://www.iina.io/"
+      ],
+      "note": "Mouse and trackpad gestures.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "smplayer",
+      "feature": "touch_gestures",
+      "status": "supported",
+      "sources": [
+        "https://www.smplayer.info/en/new-features"
+      ],
+      "note": "Tablet-mode touch gestures on Windows.",
+      "research_batch": "desktop-2026-11-16",
+      "platforms": [
+        "windows"
+      ],
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "touch_gestures",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "iina",
+      "feature": "system_media_controls",
+      "status": "supported",
+      "sources": [
+        "https://www.iina.io/"
+      ],
+      "note": "macOS system media controls.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "system_media_controls",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "iina",
+      "feature": "compact_music_view",
+      "status": "supported",
+      "sources": [
+        "https://www.iina.io/"
+      ],
+      "note": "Music mode.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "wmp-modern",
+      "feature": "compact_music_view",
+      "status": "supported",
+      "sources": [
+        "https://blogs.windows.com/windows-insider/2021/11/16/new-media-player-for-windows-11-begins-rolling-out-to-windows-insiders/"
+      ],
+      "note": "Mini-player music view.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "compact_music_view",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "iina",
+      "feature": "dark_theme",
+      "status": "supported",
+      "sources": [
+        "https://www.iina.io/"
+      ],
+      "note": "Native dark appearance.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "mpc-hc",
+      "feature": "dark_theme",
+      "status": "supported",
+      "sources": [
+        "https://github.com/clsid2/mpc-hc"
+      ],
+      "note": "Modern dark/light themes.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "dark_theme",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "wmp-modern",
+      "feature": "music_artwork",
+      "status": "supported",
+      "sources": [
+        "https://blogs.windows.com/windows-insider/2021/11/16/new-media-player-for-windows-11-begins-rolling-out-to-windows-insiders/"
+      ],
+      "note": "Album and artist imagery in playback and mini-player.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "music_artwork",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "infuse",
+      "feature": "library_metadata",
+      "status": "supported",
+      "sources": [
+        "https://firecore.com/infuse"
+      ],
+      "note": "Artwork and metadata library.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "kodi",
+      "feature": "library_metadata",
+      "status": "supported",
+      "sources": [
+        "https://kodi.tv/about/"
+      ],
+      "note": "Movie and TV libraries with online metadata.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "library_metadata",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "kodi",
+      "feature": "smb_browse",
+      "status": "supported",
+      "sources": [
+        "https://kodi.wiki/view/Features_and_supported_formats"
+      ],
+      "note": "SMB/Samba protocol client.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "smb_browse",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "infuse",
+      "feature": "cloud_storage",
+      "status": "supported",
+      "sources": [
+        "https://firecore.com/infuse"
+      ],
+      "note": "Cloud providers; Pro subscription conditions apply.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "cloud_storage",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "plex",
+      "feature": "offline_downloads",
+      "status": "supported",
+      "sources": [
+        "https://support.plex.tv/articles/downloads-on-desktop/"
+      ],
+      "note": "Desktop downloads from a Plex server; entitlement conditions apply.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "offline_downloads",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "infuse",
+      "feature": "watch_sync",
+      "status": "supported",
+      "sources": [
+        "https://firecore.com/infuse"
+      ],
+      "note": "iCloud library and watched-state sync; Pro.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "watch_sync",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "kodi",
+      "feature": "live_tv",
+      "status": "supported",
+      "sources": [
+        "https://kodi.tv/about/"
+      ],
+      "note": "Requires a compatible TV backend/add-on.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "live_tv",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "kodi",
+      "feature": "pvr_record",
+      "status": "supported",
+      "sources": [
+        "https://kodi.tv/about/"
+      ],
+      "note": "PVR frontend with a separate recording backend.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "pvr_record",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "kodi",
+      "feature": "http_remote",
+      "status": "supported",
+      "sources": [
+        "https://kodi.wiki/view/Web_interface"
+      ],
+      "note": "Optional configured web interface.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "http_remote",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "mpv",
+      "feature": "json_ipc",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Local JSON IPC endpoint.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "json_ipc",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "vlc",
+      "feature": "hd_audio_passthrough",
+      "status": "supported",
+      "sources": [
+        "https://images.videolan.org/vlc/releases/3.0.0.html"
+      ],
+      "note": "HD audio codecs over HDMI.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "mpv",
+      "feature": "hd_audio_passthrough",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Configured audio-spdif and supported output device.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "hd_audio_passthrough",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "vlc",
+      "feature": "video_360",
+      "status": "supported",
+      "sources": [
+        "https://images.videolan.org/vlc/releases/3.0.0.html"
+      ],
+      "note": "Interactive 360 video.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "kmplayer",
+      "feature": "video_360",
+      "status": "supported",
+      "sources": [
+        "https://www.kmplayer.com/pc"
+      ],
+      "note": "PC 360 VR playback.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "gom",
+      "feature": "video_360",
+      "status": "supported",
+      "sources": [
+        "https://www.gomlab.com/en/guide/gomplayer/2024?pageNum=basicmenu"
+      ],
+      "note": "Windows VR video mode.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "video_360",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "kmplayer",
+      "feature": "stereo_3d",
+      "status": "supported",
+      "sources": [
+        "https://www.kmplayer.com/pc"
+      ],
+      "note": "PC 3D video playback.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "stereo_3d",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "kmplayer",
+      "feature": "video_capture",
+      "status": "supported",
+      "sources": [
+        "https://www.kmplayer.com/pc"
+      ],
+      "note": "Configurable PC video capture.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "video_capture",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "vlc",
+      "feature": "screen_record",
+      "status": "supported",
+      "sources": [
+        "https://docs.videolan.me/vlc-user/desktop/3.0/en/advanced/transcode/screen_record.html"
+      ],
+      "note": "Desktop source with encoding/output setup.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "screen_record",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "quicktime",
+      "feature": "video_trim",
+      "status": "supported",
+      "sources": [
+        "https://support.apple.com/en-lamr/guide/quicktime-player/welcome/mac"
+      ],
+      "note": "Native movie editing.",
+      "research_batch": "desktop-2026-11-16",
+      "platforms": [
+        "macos"
+      ],
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "video_trim",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "foobar2000",
+      "feature": "audio_transcode",
+      "status": "supported",
+      "sources": [
+        "https://www.foobar2000.org/"
+      ],
+      "note": "Converter; output encoder availability applies.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "audio_transcode",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "foobar2000",
+      "feature": "cd_rip",
+      "status": "supported",
+      "sources": [
+        "https://www.foobar2000.org/"
+      ],
+      "note": "Desktop CD ripping.",
+      "research_batch": "desktop-2026-11-16",
+      "platforms": [
+        "windows"
+      ],
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "wmp-legacy",
+      "feature": "cd_rip",
+      "status": "supported",
+      "sources": [
+        "https://support.microsoft.com/en-us/windows/apps/windowsmediaplayer/burn-and-rip-cds"
+      ],
+      "note": "Legacy player rip workflow.",
+      "research_batch": "desktop-2026-11-16",
+      "platforms": [
+        "windows"
+      ],
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "cd_rip",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "wmp-legacy",
+      "feature": "cd_burn",
+      "status": "supported",
+      "sources": [
+        "https://support.microsoft.com/en-us/windows/apps/windowsmediaplayer/burn-and-rip-cds"
+      ],
+      "note": "Legacy player burn workflow.",
+      "research_batch": "desktop-2026-11-16",
+      "platforms": [
+        "windows"
+      ],
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "cd_burn",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "foobar2000",
+      "feature": "tag_edit",
+      "status": "supported",
+      "sources": [
+        "https://www.foobar2000.org/"
+      ],
+      "note": "Advanced audio tagging.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "tag_edit",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "foobar2000",
+      "feature": "radio_directory",
+      "status": "supported",
+      "sources": [
+        "https://www.foobar2000.org/"
+      ],
+      "note": "Radio Browser integration.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "radio_directory",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "quicktime",
+      "feature": "video_rotate",
+      "status": "supported",
+      "sources": [
+        "https://support.apple.com/en-mo/guide/quicktime-player/qtp5a6251741/mac"
+      ],
+      "note": "Rotate and flip clips.",
+      "research_batch": "desktop-2026-11-16",
+      "platforms": [
+        "macos"
+      ],
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "mpv",
+      "feature": "video_rotate",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Video rotation and flip filters.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "mpc-hc",
+      "feature": "video_rotate",
+      "status": "supported",
+      "sources": [
+        "https://github.com/clsid2/mpc-hc"
+      ],
+      "note": "Pan-and-scan rotation/flip controls.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "video_rotate",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "mpv",
+      "feature": "icc_profiles",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Configured or automatic display profiles.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "icc_profiles",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "mpv",
+      "feature": "user_shaders",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "User shader hooks.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "user_shaders",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "mpv",
+      "feature": "deband",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Runtime debanding toggle.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "deband",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "mpv",
+      "feature": "frame_step",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/"
+      ],
+      "note": "Forward and backward frame steps.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "ffplay",
+      "feature": "frame_step",
+      "status": "supported",
+      "sources": [
+        "https://ffmpeg.org/ffplay.html"
+      ],
+      "note": "Single-step playback key.",
+      "research_batch": "desktop-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "frame_step",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "potplayer",
+      "feature": "playlist_search",
+      "status": "supported",
+      "sources": [
+        "https://t1.daumcdn.net/potplayer/PotPlayer/v4/Update2/UpdateEng.html"
+      ],
+      "note": "Playlist search filtering in current official changelog.",
+      "research_batch": "desktop-2026-11-16",
+      "platforms": [
+        "windows"
+      ],
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "playlist_search",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted Foxide desktop implementation for this event; no medal.",
+      "research_batch": "desktop-2026-11-16"
     }
   ],
   "sources": {
@@ -2459,6 +3864,30 @@
     "iina_menu": "https://raw.githubusercontent.com/iina/iina/develop/iina/MenuController.swift",
     "iina_mpv": "https://raw.githubusercontent.com/iina/iina/develop/iina/MPVController.swift",
     "vlc_modules": "https://github.com/videolan/vlc/blob/3.0.x/modules/MODULES_LIST",
-    "vlc_options": "https://raw.githubusercontent.com/videolan/vlc/3.0.x/src/libvlc-module.c"
+    "vlc_options": "https://raw.githubusercontent.com/videolan/vlc/3.0.x/src/libvlc-module.c",
+    "desktop_vlc3": "https://images.videolan.org/vlc/releases/3.0.0.html",
+    "desktop_sm": "https://www.smplayer.info/en/info",
+    "desktop_smcast": "https://www.smplayer.info/en/first-steps",
+    "desktop_smtouch": "https://www.smplayer.info/en/new-features",
+    "desktop_iina": "https://www.iina.io/",
+    "desktop_mpc": "https://github.com/clsid2/mpc-hc",
+    "desktop_mpv": "https://mpv.io/manual/stable/",
+    "desktop_kodi": "https://kodi.tv/about/",
+    "desktop_kodiformats": "https://kodi.wiki/view/Features_and_supported_formats",
+    "desktop_kodiair": "https://kodi.wiki/view/Settings/Services/Airplay",
+    "desktop_kodiweb": "https://kodi.wiki/view/Web_interface",
+    "desktop_infuse": "https://firecore.com/infuse",
+    "desktop_plexdl": "https://support.plex.tv/articles/downloads-on-desktop/",
+    "desktop_foo": "https://www.foobar2000.org/",
+    "desktop_km": "https://www.kmplayer.com/pc",
+    "desktop_gom": "https://www.gomlab.com/en/guide/gomplayer/2024?pageNum=basicmenu",
+    "desktop_pot": "https://t1.daumcdn.net/potplayer/PotPlayer/v4/Update2/UpdateEng.html",
+    "desktop_qtair": "https://support.apple.com/en-qa/guide/quicktime-player/qtp6cee0761b/mac",
+    "desktop_qtedit": "https://support.apple.com/en-lamr/guide/quicktime-player/welcome/mac",
+    "desktop_qtrotate": "https://support.apple.com/en-mo/guide/quicktime-player/qtp5a6251741/mac",
+    "desktop_vlcscreen": "https://docs.videolan.me/vlc-user/desktop/3.0/en/advanced/transcode/screen_record.html",
+    "desktop_wmpcd": "https://support.microsoft.com/en-us/windows/apps/windowsmediaplayer/burn-and-rip-cds",
+    "desktop_wmpmodern": "https://blogs.windows.com/windows-insider/2021/11/16/new-media-player-for-windows-11-begins-rolling-out-to-windows-insiders/",
+    "desktop_ffplay": "https://ffmpeg.org/ffplay.html"
   }
 }

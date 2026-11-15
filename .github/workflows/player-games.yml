@@ -4,7 +4,7 @@ on:
   release:
     types: [published]
   push:
-    branches: [main, 'bench/**']
+    branches: [main, 'bench/**', fix/security-and-test-gaps]
     paths:
       - '.github/workflows/player-games.yml'
       - 'scripts/run_event_benchmarks.py'
@@ -15,6 +15,10 @@ on:
       - 'scripts/prepare-event-media.py'
       - 'benchmarks/features.json'
       - 'benchmarks/performance-events.json'
+      - 'benchmarks/ui-events.json'
+      - 'scripts/ui_benchmarks.py'
+      - 'scripts/ui_drivers.py'
+      - 'scripts/run_ui_benchmarks.py'
 permissions:
   contents: read
 concurrency:
@@ -139,8 +143,40 @@ jobs:
             media/generated/games/manifest.json
             media/generated/games-seed/manifest.json
           if-no-files-found: warn
+  native-ui:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      LIBGL_ALWAYS_SOFTWARE: '1'
+      QT_LINUX_ACCESSIBILITY_ALWAYS_ON: '1'
+      LANG: C.UTF-8
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
+        with:
+          key: hosted-native-ui-release
+      - name: Install isolated desktop and native accessibility adapters
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libmpv2 libxkbcommon-dev libwayland-dev libfontconfig1-dev libudev-dev libdbus-1-dev xvfb xauth openbox dbus-x11 at-spi2-core python3-pyatspi vlc smplayer
+      - name: Build release desktop
+        run: cargo build -p player-ui --features desktop --bin foxide-desktop --release --locked
+      - name: Collect real UI actions in an isolated desktop session
+        shell: bash
+        run: |
+          dbus-run-session -- xvfb-run -a -s '-screen 0 1920x1080x24 -dpi 96' bash -e -c '
+            openbox > /tmp/foxide-openbox.log 2>&1 &
+            /usr/bin/python3 scripts/run_ui_benchmarks.py --execute --players foxide vlc smplayer --repeats 10 --environment-label "Hosted Ubuntu X11 1920x1080 DPI96 C.UTF-8 Openbox application-default theme/window" --output results/local/ui-actions
+          '
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: player-games-ui-Linux
+          path: results/local/ui-actions/
+          if-no-files-found: warn
   report:
-    needs: benchmark
+    needs: [benchmark, native-ui]
     if: always()
     runs-on: ubuntu-latest
     permissions:
@@ -184,7 +220,7 @@ jobs:
             docs/scoreboards/
             results/local/report-qa/
       - name: Update the benchmark branch scoreboards for PR review
-        if: startsWith(github.ref, 'refs/heads/bench/')
+        if: startsWith(github.ref, 'refs/heads/bench/') || github.ref == 'refs/heads/fix/security-and-test-gaps'
         shell: bash
         run: |
           branch="$GITHUB_REF_NAME"
