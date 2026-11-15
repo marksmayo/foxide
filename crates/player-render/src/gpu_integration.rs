@@ -1,6 +1,9 @@
 //! Opt-in compositor regression: real libmpv -> GL texture -> Slint -> pixels.
 //! Readback exists only in this test, never in the production playback path.
+#[path = "cadence_window.rs"]
+mod cadence_window;
 use super::*;
+use cadence_window::CadenceWindow;
 use slint::ComponentHandle;
 use std::{
     cell::RefCell,
@@ -12,7 +15,7 @@ use std::{
 
 slint::slint! {
     export component VideoProbe inherits Window {
-        width: 320px; height: 180px; background: black;
+        width: 320px; height: 180px; background: lime;
         in property <image> frame;
         in property <bool> clip-video: true;
         Rectangle {
@@ -73,6 +76,11 @@ fn publishing_a_new_frame_invalidates_layers_even_when_texture_identity_is_reuse
 
 #[derive(Default)]
 struct Samples {
+    timing: CadenceWindow,
+    presentations: usize,
+    summaries: Vec<String>,
+    colors: Vec<[u8; 6]>,
+    read_errors: Vec<u32>,
     upright: usize,
     inverted: usize,
     frames: HashSet<u64>,
@@ -90,8 +98,7 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
         .select()
         .unwrap();
     let ui = VideoProbe::new().unwrap();
-    ui.set_clip_video(std::env::var_os("FOXIDE_PROBE_UNCLIPPED").is_none());
-    let engine = Engine::new().unwrap();
+    let engine = Rc::new(Engine::new().unwrap());
     let samples = Rc::new(RefCell::new(Samples::default()));
     let graphics = Rc::new(RefCell::new(None::<glow::Context>));
     let started = Instant::now();
@@ -101,6 +108,7 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
     let weak_probe = ui.as_weak();
     let errors = samples.clone();
     let observations = samples.clone();
+    let load_engine = engine.clone();
     attach_observed(
         ui.window(),
         &engine,
@@ -131,18 +139,39 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
             if matches!(state, slint::RenderingState::RenderingSetup) {
                 if let slint::GraphicsAPI::NativeOpenGL { get_proc_address } = api {
                     // SAFETY: the test observer runs with Slint's context current.
-                    *graphics.borrow_mut() = Some(unsafe {
+                    let gl = unsafe {
                         glow::Context::from_loader_function(|name| {
                             get_proc_address(&CString::new(name).unwrap())
                         })
-                    });
+                    };
+                    // SAFETY: setup observer runs with the current probe context.
+                    unsafe {
+                        println!(
+                            "[video-probe] GL_VERSION={} GL_RENDERER={}",
+                            gl.get_parameter_string(glow::VERSION),
+                            gl.get_parameter_string(glow::RENDERER)
+                        );
+                    }
+                    *graphics.borrow_mut() = Some(gl);
                 }
-            } else if matches!(state, slint::RenderingState::AfterRendering)
-                && started.elapsed().as_secs_f64() >= 1.0
-            {
+            } else if matches!(state, slint::RenderingState::AfterRendering) {
+                observations.borrow_mut().presentations += 1;
                 let Some(w) = weak_probe.upgrade() else {
                     return;
                 };
+                if observations.borrow().presentations == 1 {
+                    if w.get_frame().size().width != 0 || w.get_frame().size().height != 0 {
+                        observations
+                            .borrow_mut()
+                            .errors
+                            .push("Published a video surface before any media was opened".into());
+                    }
+                    // This only queues a control command; no normal libmpv API
+                    // is called on the rendering thread.
+                    load_engine
+                        .command(vec!["loadfile".into(), fixture.clone(), "replace".into()])
+                        .unwrap();
+                }
                 let size = w.window().size();
                 if size.width == 0 || size.height < 8 {
                     return;
@@ -176,6 +205,41 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
                 let red = |p: &[u8]| p[0] > 150 && p[1] < 80 && p[2] < 80;
                 let blue = |p: &[u8]| p[2] > 150 && p[0] < 80 && p[1] < 80;
                 let mut samples = observations.borrow_mut();
+                if samples.summaries.len() < 2 {
+                    let max = pixels.iter().copied().max().unwrap_or(0);
+                    let nonblack = pixels
+                        .as_chunks::<4>()
+                        .0
+                        .iter()
+                        .filter(|p| p[0] > 0 || p[1] > 0 || p[2] > 0)
+                        .count();
+                    let source = w.get_frame();
+                    let image = source.size();
+                    samples.summaries.push(format!(
+                        "surface={}x{} image={}x{} first={:?} max={} nonblack={}",
+                        size.width,
+                        size.height,
+                        image.width,
+                        image.height,
+                        &pixels[..4],
+                        max,
+                        nonblack
+                    ));
+                }
+                if samples.colors.len() < 4 {
+                    samples
+                        .colors
+                        .push([top[0], top[1], top[2], bottom[0], bottom[1], bottom[2]]);
+                }
+                // SAFETY: the observer still runs with the same GL context current.
+                let read_error = unsafe { gl.get_error() };
+                if read_error != 0 {
+                    samples.read_errors.push(read_error);
+                }
+                samples.timing.observe(
+                    started.elapsed(),
+                    (red(top) && blue(bottom)) || (blue(top) && red(bottom)),
+                );
                 if red(top) && blue(bottom) {
                     samples.upright += 1;
                 }
@@ -191,21 +255,50 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
         },
     )
     .unwrap();
-    engine
-        .command(vec!["loadfile".into(), fixture, "replace".into()])
-        .unwrap();
     let timer = slint::Timer::default();
-    timer.start(slint::TimerMode::SingleShot, Duration::from_secs(6), || {
-        slint::quit_event_loop().unwrap();
-    });
+    let sample_clock = samples.clone();
+    timer.start(
+        slint::TimerMode::Repeated,
+        Duration::from_millis(20),
+        move || {
+            if sample_clock.borrow().timing.finished(started.elapsed()) {
+                slint::quit_event_loop().unwrap();
+            }
+        },
+    );
     ui.run().unwrap();
+    if let Some(state) = engine.snapshot() {
+        println!(
+            "[video-probe] loaded={} paused={} position={} duration={} decoder={}",
+            state.loaded, state.paused, state.position, state.duration, state.hwdec
+        );
+    }
     let samples = samples.borrow();
+    if samples.frames.len() < 75
+        && let Ok(logs) = engine.diagnostics.lock()
+    {
+        println!("[engine-diagnostics] {}", logs.join(""));
+    }
+    println!(
+        "[video-probe] presentations={} colors={:?} read_errors={:?}",
+        samples.presentations, samples.colors, samples.read_errors
+    );
+    println!("[video-probe] summaries={:?}", samples.summaries);
     println!(
         "upright={}, inverted={}, unique_composited_frames={}, errors={:?}",
         samples.upright,
         samples.inverted,
         samples.frames.len(),
         samples.errors
+    );
+    assert!(
+        samples.timing.complete(started.elapsed()),
+        "Video did not start within 15 seconds or complete the five-second cadence window"
+    );
+    assert!(
+        samples.read_errors.is_empty(),
+        "OpenGL readback errors: {:?}",
+        samples.read_errors
     );
     assert!(
         samples.errors.is_empty(),
@@ -220,7 +313,7 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
     );
     assert!(
         samples.frames.len() >= 75,
-        "Video stalled: only {} distinct composited frames over five seconds of 30fps media",
+        "Video stalled: only {} distinct composited frames over five seconds after first presented video",
         samples.frames.len()
     );
 }

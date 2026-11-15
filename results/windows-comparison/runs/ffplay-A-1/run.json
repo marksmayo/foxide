@@ -4,7 +4,7 @@
   "fixture": "A",
   "prime": false,
   "command": [
-    "C:\\Users\\markm\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
+    "C:\\Users\\<user>\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
     "-hide_banner",
     "-loglevel",
     "info",
@@ -15,7 +15,7 @@
     "-y",
     "720",
     "-i",
-    "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4"
+    "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4"
   ],
   "duration_seconds": 20.0,
   "warmup_seconds": 5.0,
@@ -1216,7 +1216,7 @@
   "windows": [
     {
       "pid": 3536,
-      "title": "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4",
+      "title": "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4",
       "class": "SDL_app"
     }
   ],

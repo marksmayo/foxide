@@ -12,6 +12,7 @@ from urllib.parse import urlparse
 
 from medal_events import scoreboards
 from collection_io import write_json
+from publication import public_evidence
 
 ROOT = Path(__file__).resolve().parents[1]
 LABELS = {'windows': 'Windows', 'macos': 'macOS', 'linux': 'Linux'}
@@ -91,7 +92,7 @@ def fields_for(platform, board, sessions=()):
                 if mode != 'frontend-default-diagnostic':
                     modes.add(mode)
         if not modes:
-            modes.add('native-default-window' if info.get('presentation') == 'native-window' else 'software-null-output')
+            modes.add({'native-window': 'native-default-window', 'native-ui': 'native-ui'}.get(info.get('presentation'), 'software-null-output'))
         for mode in sorted(modes):
             key = (info.get('host', 'Unrecorded host'), info.get('utc', ''), mode)
             fields.setdefault(key, dict(host=key[0], utc=key[1], mode=mode, info=info, events=[]))
@@ -110,6 +111,7 @@ def fields_for(platform, board, sessions=()):
         field['names'] = {p['id']: p['name'] for p in board['players']}
         field['label'] = ('Windowed playback · Foxide Desktop' if field['mode'] == 'native-default-window'
                           else 'Software decode · Foxide CLI' if 'null' in field['mode']
+                          else 'Native UI actions · default application windows' if field['mode'] == 'native-ui'
                           else 'Pending measurement' if field['mode'] == 'pending' else 'Measured events')
         if field['info']:
             field['label'] += ' · Hosted' if field['info'].get('run_id') else ' · Local'
@@ -276,6 +278,8 @@ def render(catalog, protocol, boards, provenance, charts=None):
 
 
 def write_report(catalog, protocol, measurements, output, readme=None, sessions=()):
+    sessions = [public_evidence(session) for session in sessions]
+    measurements = public_evidence({'measurements': measurements})['measurements']
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
     boards = scoreboards(catalog, protocol, measurements, sessions)

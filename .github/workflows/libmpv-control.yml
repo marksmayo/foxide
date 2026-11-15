@@ -1,0 +1,78 @@
+name: Independent libmpv control
+on:
+  workflow_dispatch:
+  push:
+    branches: [fix/security-and-test-gaps]
+    paths: [.github/workflows/libmpv-control.yml, tests/probes/libmpv_gl.py, third_party/mpv/**]
+permissions:
+  contents: read
+jobs:
+  independent-renderer:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [nan-padding, zero-lut]
+    env:
+      LIBGL_ALWAYS_SOFTWARE: '1'
+      FOXIDE_RENDER_FIXTURE: ${{ github.workspace }}/results/local/orientation.mkv
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install independent control dependencies
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg libmpv2 libsdl2-2.0-0 xvfb xauth libgl1-mesa-dri meson ninja-build pkg-config libavcodec-dev libavfilter-dev libavformat-dev libavutil-dev libswresample-dev libswscale-dev libplacebo-dev libass-dev libegl1-mesa-dev
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: mpv-player/mpv
+          ref: e48ac7ce08462f5e33af6ef9deeac6fa87eef01e # v0.40.0
+          path: results/local/mpv-source
+      - name: Reproduce allowed NaN contents of uninitialized scaler padding
+        if: matrix.engine == 'nan-padding'
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('results/local/mpv-source/video/out/gpu/video.c')
+          source = path.read_text()
+          before = 'float *weights = talloc_array(NULL, float, lut_size * stride);'
+          after = before + '\n    for (int i = 0; i < lut_size * stride; i++) weights[i] = NAN;'
+          assert source.count(before) == 1
+          path.write_text(source.replace(before, after))
+          PY
+      - name: Zero only scaler lookup-table padding in the control build
+        if: matrix.engine == 'zero-lut'
+        run: |
+          git -C results/local/mpv-source apply "$GITHUB_WORKSPACE/third_party/mpv/scaler-lut-padding.patch"
+      - name: Build pinned upstream media engine
+        shell: bash
+        run: |
+          meson setup results/local/mpv-build results/local/mpv-source --prefix="$PWD/results/local/mpv-install" --buildtype=release --wrap-mode=nofallback -Dlibmpv=true -Dcplayer=false -Dlua=disabled -Djavascript=disabled -Dplain-gl=enabled
+          meson compile -C results/local/mpv-build -j 2
+          meson install -C results/local/mpv-build
+          engine_path=$(find "$PWD/results/local/mpv-install" -name libmpv.so.2 -print -quit)
+          test -n "$engine_path"
+          echo "FOXIDE_LIBMPV=$engine_path" >> "$GITHUB_ENV"
+      - name: Generate identical asymmetric fixture
+        run: |
+          mkdir -p results/local
+          ffmpeg -v error -f lavfi -i "testsrc2=size=320x180:rate=30:duration=10,drawbox=x=0:y=0:w=iw:h=ih/4:color=red:t=fill,drawbox=x=0:y=3*ih/4:w=iw:h=ih/4:color=blue:t=fill" -c:v ffv1 "$FOXIDE_RENDER_FIXTURE"
+      - name: Verify independent default rendering
+        shell: bash
+        run: |
+          result=0
+          expected=0
+          trials=12
+          if [ '${{ matrix.engine }}' = nan-padding ]; then expected=2; trials=3; fi
+          for trial in $(seq 1 "$trials"); do
+            set +e
+            xvfb-run -a -s '-screen 0 1280x720x24' python3 tests/probes/libmpv_gl.py > "results/local/video-independent-$trial.log" 2>&1
+            status=$?
+            set -e
+            cat "results/local/video-independent-$trial.log"
+            if [ "$status" -ne "$expected" ]; then result=1; fi
+          done
+          exit "$result"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: independent-renderer-${{ matrix.engine }}
+          path: results/local/video-independent-*.log

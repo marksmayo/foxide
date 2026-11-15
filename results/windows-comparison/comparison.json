@@ -14,7 +14,7 @@
         ],
         "requires": "mpv",
         "note": "Current Foxide launches external mpv; it is not an independent playback engine.",
-        "executable": "C:\\Users\\markm\\Github\\foxide\\target\\release\\foxide.exe",
+        "executable": "C:\\Users\\<user>\\Github\\foxide\\target\\release\\foxide.exe",
         "status": "blocked-dependency",
         "reason": "Foxide 0.0.1 launches external mpv; mpv.exe is not available. No independent Foxide media engine exists yet.",
         "sha256": "9344f49d8c908940014bd6429f8cd50e79e31a5c70ae369ea29a8cb11a1cae36",
@@ -177,7 +177,7 @@
           "ffplay.exe"
         ],
         "note": "Reference player, outside the selected ten. Its default decoder/render configuration can differ from GPU-decoding desktop players.",
-        "executable": "C:\\Users\\markm\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
+        "executable": "C:\\Users\\<user>\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
         "status": "available",
         "reason": null,
         "sha256": "6de07c2f9e5580f6250220341a449b62e03b7b6619848011d9178b1f7599630e",
@@ -216,7 +216,7 @@
       "command": [
         "C:\\Program Files\\Windows Media Player\\wmplayer.exe",
         "/play",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4"
       ],
       "duration_seconds": 8,
       "warmup_seconds": 2,
@@ -741,7 +741,7 @@
         "--sub-track=-1",
         "--verbose=2",
         "--",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4"
       ],
       "duration_seconds": 3,
       "warmup_seconds": 0,
@@ -925,7 +925,7 @@
       "fixture": "A",
       "prime": true,
       "command": [
-        "C:\\Users\\markm\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
+        "C:\\Users\\<user>\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
         "-hide_banner",
         "-loglevel",
         "info",
@@ -936,7 +936,7 @@
         "-y",
         "720",
         "-i",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4"
       ],
       "duration_seconds": 3,
       "warmup_seconds": 0,
@@ -1097,7 +1097,7 @@
       "windows": [
         {
           "pid": 32816,
-          "title": "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4",
+          "title": "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4",
           "class": "SDL_app"
         }
       ],
@@ -1122,7 +1122,7 @@
       "fixture": "A",
       "prime": false,
       "command": [
-        "C:\\Users\\markm\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
+        "C:\\Users\\<user>\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
         "-hide_banner",
         "-loglevel",
         "info",
@@ -1133,7 +1133,7 @@
         "-y",
         "720",
         "-i",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4"
       ],
       "duration_seconds": 20,
       "warmup_seconds": 5,
@@ -2334,7 +2334,7 @@
       "windows": [
         {
           "pid": 3536,
-          "title": "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4",
+          "title": "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4",
           "class": "SDL_app"
         }
       ],
@@ -2370,7 +2370,7 @@
         "--sub-track=-1",
         "--verbose=2",
         "--",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4"
       ],
       "duration_seconds": 20,
       "warmup_seconds": 5,
@@ -3594,7 +3594,7 @@
       "fixture": "A",
       "prime": false,
       "command": [
-        "C:\\Users\\markm\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
+        "C:\\Users\\<user>\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
         "-hide_banner",
         "-loglevel",
         "info",
@@ -3605,7 +3605,7 @@
         "-y",
         "720",
         "-i",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4"
       ],
       "duration_seconds": 20,
       "warmup_seconds": 5,
@@ -4806,7 +4806,7 @@
       "windows": [
         {
           "pid": 55556,
-          "title": "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4",
+          "title": "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4",
           "class": "SDL_app"
         }
       ],
@@ -4842,7 +4842,7 @@
         "--sub-track=-1",
         "--verbose=2",
         "--",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4"
       ],
       "duration_seconds": 20,
       "warmup_seconds": 5,
@@ -6066,7 +6066,7 @@
       "fixture": "A",
       "prime": false,
       "command": [
-        "C:\\Users\\markm\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
+        "C:\\Users\\<user>\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
         "-hide_banner",
         "-loglevel",
         "info",
@@ -6077,7 +6077,7 @@
         "-y",
         "720",
         "-i",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4"
       ],
       "duration_seconds": 20,
       "warmup_seconds": 5,
@@ -7278,7 +7278,7 @@
       "windows": [
         {
           "pid": 58052,
-          "title": "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4",
+          "title": "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4",
           "class": "SDL_app"
         }
       ],
@@ -7314,7 +7314,7 @@
         "--sub-track=-1",
         "--verbose=2",
         "--",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4"
       ],
       "duration_seconds": 20,
       "warmup_seconds": 5,
@@ -8549,7 +8549,7 @@
         "--sub-track=-1",
         "--verbose=2",
         "--",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv"
       ],
       "duration_seconds": 3,
       "warmup_seconds": 0,
@@ -8713,7 +8713,7 @@
       "fixture": "B",
       "prime": true,
       "command": [
-        "C:\\Users\\markm\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
+        "C:\\Users\\<user>\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
         "-hide_banner",
         "-loglevel",
         "info",
@@ -8724,7 +8724,7 @@
         "-y",
         "720",
         "-i",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv"
       ],
       "duration_seconds": 3,
       "warmup_seconds": 0,
@@ -8885,7 +8885,7 @@
       "windows": [
         {
           "pid": 38212,
-          "title": "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv",
+          "title": "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv",
           "class": "SDL_app"
         }
       ],
@@ -8921,7 +8921,7 @@
         "--sub-track=-1",
         "--verbose=2",
         "--",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv"
       ],
       "duration_seconds": 20,
       "warmup_seconds": 5,
@@ -10145,7 +10145,7 @@
       "fixture": "B",
       "prime": false,
       "command": [
-        "C:\\Users\\markm\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
+        "C:\\Users\\<user>\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
         "-hide_banner",
         "-loglevel",
         "info",
@@ -10156,7 +10156,7 @@
         "-y",
         "720",
         "-i",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv"
       ],
       "duration_seconds": 20,
       "warmup_seconds": 5,
@@ -11341,7 +11341,7 @@
       "windows": [
         {
           "pid": 3896,
-          "title": "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv",
+          "title": "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv",
           "class": "SDL_app"
         }
       ],
@@ -11366,7 +11366,7 @@
       "fixture": "B",
       "prime": false,
       "command": [
-        "C:\\Users\\markm\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
+        "C:\\Users\\<user>\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
         "-hide_banner",
         "-loglevel",
         "info",
@@ -11377,7 +11377,7 @@
         "-y",
         "720",
         "-i",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv"
       ],
       "duration_seconds": 20,
       "warmup_seconds": 5,
@@ -12594,7 +12594,7 @@
       "windows": [
         {
           "pid": 49424,
-          "title": "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv",
+          "title": "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv",
           "class": "SDL_app"
         }
       ],
@@ -12630,7 +12630,7 @@
         "--sub-track=-1",
         "--verbose=2",
         "--",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv"
       ],
       "duration_seconds": 20,
       "warmup_seconds": 5,
@@ -13865,7 +13865,7 @@
         "--sub-track=-1",
         "--verbose=2",
         "--",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv"
       ],
       "duration_seconds": 20,
       "warmup_seconds": 5,
@@ -15089,7 +15089,7 @@
       "fixture": "B",
       "prime": false,
       "command": [
-        "C:\\Users\\markm\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
+        "C:\\Users\\<user>\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
         "-hide_banner",
         "-loglevel",
         "info",
@@ -15100,7 +15100,7 @@
         "-y",
         "720",
         "-i",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv"
       ],
       "duration_seconds": 20,
       "warmup_seconds": 5,
@@ -16285,7 +16285,7 @@
       "windows": [
         {
           "pid": 21364,
-          "title": "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv",
+          "title": "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv",
           "class": "SDL_app"
         }
       ],
@@ -16321,7 +16321,7 @@
         "--sub-track=-1",
         "--verbose=2",
         "--",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\C-av1-4k60.mkv"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\C-av1-4k60.mkv"
       ],
       "duration_seconds": 3,
       "warmup_seconds": 0,
@@ -16505,7 +16505,7 @@
       "fixture": "C",
       "prime": true,
       "command": [
-        "C:\\Users\\markm\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
+        "C:\\Users\\<user>\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
         "-hide_banner",
         "-loglevel",
         "info",
@@ -16516,7 +16516,7 @@
         "-y",
         "720",
         "-i",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\C-av1-4k60.mkv"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\C-av1-4k60.mkv"
       ],
       "duration_seconds": 3,
       "warmup_seconds": 0,
@@ -16677,7 +16677,7 @@
       "windows": [
         {
           "pid": 29472,
-          "title": "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\C-av1-4k60.mkv",
+          "title": "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\C-av1-4k60.mkv",
           "class": "SDL_app"
         }
       ],
@@ -16702,7 +16702,7 @@
       "fixture": "C",
       "prime": false,
       "command": [
-        "C:\\Users\\markm\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
+        "C:\\Users\\<user>\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
         "-hide_banner",
         "-loglevel",
         "info",
@@ -16713,7 +16713,7 @@
         "-y",
         "720",
         "-i",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\C-av1-4k60.mkv"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\C-av1-4k60.mkv"
       ],
       "duration_seconds": 20,
       "warmup_seconds": 5,
@@ -17930,7 +17930,7 @@
       "windows": [
         {
           "pid": 52556,
-          "title": "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\C-av1-4k60.mkv",
+          "title": "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\C-av1-4k60.mkv",
           "class": "SDL_app"
         }
       ],
@@ -17966,7 +17966,7 @@
         "--sub-track=-1",
         "--verbose=2",
         "--",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\C-av1-4k60.mkv"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\C-av1-4k60.mkv"
       ],
       "duration_seconds": 20,
       "warmup_seconds": 5,
@@ -19190,7 +19190,7 @@
       "fixture": "C",
       "prime": false,
       "command": [
-        "C:\\Users\\markm\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
+        "C:\\Users\\<user>\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
         "-hide_banner",
         "-loglevel",
         "info",
@@ -19201,7 +19201,7 @@
         "-y",
         "720",
         "-i",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\C-av1-4k60.mkv"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\C-av1-4k60.mkv"
       ],
       "duration_seconds": 20,
       "warmup_seconds": 5,
@@ -20386,7 +20386,7 @@
       "windows": [
         {
           "pid": 58436,
-          "title": "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\C-av1-4k60.mkv",
+          "title": "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\C-av1-4k60.mkv",
           "class": "SDL_app"
         }
       ],
@@ -20422,7 +20422,7 @@
         "--sub-track=-1",
         "--verbose=2",
         "--",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\C-av1-4k60.mkv"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\C-av1-4k60.mkv"
       ],
       "duration_seconds": 20,
       "warmup_seconds": 5,
@@ -21630,7 +21630,7 @@
       "fixture": "C",
       "prime": false,
       "command": [
-        "C:\\Users\\markm\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
+        "C:\\Users\\<user>\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
         "-hide_banner",
         "-loglevel",
         "info",
@@ -21641,7 +21641,7 @@
         "-y",
         "720",
         "-i",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\C-av1-4k60.mkv"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\C-av1-4k60.mkv"
       ],
       "duration_seconds": 20,
       "warmup_seconds": 5,
@@ -22826,7 +22826,7 @@
       "windows": [
         {
           "pid": 33020,
-          "title": "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\C-av1-4k60.mkv",
+          "title": "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\C-av1-4k60.mkv",
           "class": "SDL_app"
         }
       ],
@@ -22862,7 +22862,7 @@
         "--sub-track=-1",
         "--verbose=2",
         "--",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\C-av1-4k60.mkv"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\C-av1-4k60.mkv"
       ],
       "duration_seconds": 20,
       "warmup_seconds": 5,
@@ -24097,7 +24097,7 @@
         "--sub-track=-1",
         "--verbose=2",
         "--",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac"
       ],
       "duration_seconds": 3,
       "warmup_seconds": 0,
@@ -24261,7 +24261,7 @@
       "fixture": "D",
       "prime": true,
       "command": [
-        "C:\\Users\\markm\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
+        "C:\\Users\\<user>\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
         "-hide_banner",
         "-loglevel",
         "info",
@@ -24272,7 +24272,7 @@
         "-y",
         "720",
         "-i",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac"
       ],
       "duration_seconds": 3,
       "warmup_seconds": 0,
@@ -24433,7 +24433,7 @@
       "windows": [
         {
           "pid": 49100,
-          "title": "Benchmark Track 1 - C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac",
+          "title": "Benchmark Track 1 - C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac",
           "class": "SDL_app"
         }
       ],
@@ -24458,7 +24458,7 @@
       "fixture": "D",
       "prime": false,
       "command": [
-        "C:\\Users\\markm\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
+        "C:\\Users\\<user>\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
         "-hide_banner",
         "-loglevel",
         "info",
@@ -24469,7 +24469,7 @@
         "-y",
         "720",
         "-i",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac"
       ],
       "duration_seconds": 20,
       "warmup_seconds": 5,
@@ -25670,7 +25670,7 @@
       "windows": [
         {
           "pid": 56740,
-          "title": "Benchmark Track 1 - C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac",
+          "title": "Benchmark Track 1 - C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac",
           "class": "SDL_app"
         }
       ],
@@ -25706,7 +25706,7 @@
         "--sub-track=-1",
         "--verbose=2",
         "--",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac"
       ],
       "duration_seconds": 20,
       "warmup_seconds": 5,
@@ -26596,7 +26596,7 @@
         "--sub-track=-1",
         "--verbose=2",
         "--",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac"
       ],
       "duration_seconds": 20,
       "warmup_seconds": 5,
@@ -27475,7 +27475,7 @@
       "fixture": "D",
       "prime": false,
       "command": [
-        "C:\\Users\\markm\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
+        "C:\\Users\\<user>\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
         "-hide_banner",
         "-loglevel",
         "info",
@@ -27486,7 +27486,7 @@
         "-y",
         "720",
         "-i",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac"
       ],
       "duration_seconds": 20,
       "warmup_seconds": 5,
@@ -28687,7 +28687,7 @@
       "windows": [
         {
           "pid": 56220,
-          "title": "Benchmark Track 1 - C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac",
+          "title": "Benchmark Track 1 - C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac",
           "class": "SDL_app"
         }
       ],
@@ -28712,7 +28712,7 @@
       "fixture": "D",
       "prime": false,
       "command": [
-        "C:\\Users\\markm\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
+        "C:\\Users\\<user>\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
         "-hide_banner",
         "-loglevel",
         "info",
@@ -28723,7 +28723,7 @@
         "-y",
         "720",
         "-i",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac"
       ],
       "duration_seconds": 20,
       "warmup_seconds": 5,
@@ -29924,7 +29924,7 @@
       "windows": [
         {
           "pid": 41924,
-          "title": "Benchmark Track 1 - C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac",
+          "title": "Benchmark Track 1 - C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac",
           "class": "SDL_app"
         }
       ],
@@ -29960,7 +29960,7 @@
         "--sub-track=-1",
         "--verbose=2",
         "--",
-        "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac"
+        "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac"
       ],
       "duration_seconds": 20,
       "warmup_seconds": 5,
@@ -30854,7 +30854,7 @@
           "-stream_loop",
           "-1",
           "-i",
-          "C:\\Users\\markm\\Github\\foxide\\media\\generated\\quick\\A-avc-1080p.mp4",
+          "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\quick\\A-avc-1080p.mp4",
           "-map",
           "0:v?",
           "-map",
@@ -30866,7 +30866,7 @@
           "75",
           "-movflags",
           "+faststart",
-          "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4"
+          "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4"
         ],
         "probe": {
           "streams": [
@@ -30985,7 +30985,7 @@
             }
           ],
           "format": {
-            "filename": "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4",
+            "filename": "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\A-avc-1080p.mp4",
             "nb_streams": 2,
             "nb_programs": 0,
             "nb_stream_groups": 0,
@@ -31021,7 +31021,7 @@
           "-stream_loop",
           "-1",
           "-i",
-          "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\B-loop-source.mkv",
+          "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\B-loop-source.mkv",
           "-map",
           "0:v?",
           "-map",
@@ -31031,7 +31031,7 @@
           "copy",
           "-t",
           "75",
-          "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv"
+          "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv"
         ],
         "probe": {
           "streams": [
@@ -31145,7 +31145,7 @@
             }
           ],
           "format": {
-            "filename": "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv",
+            "filename": "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\B-hevc-4k60-pq.mkv",
             "nb_streams": 2,
             "nb_programs": 0,
             "nb_stream_groups": 0,
@@ -31178,7 +31178,7 @@
           "-stream_loop",
           "-1",
           "-i",
-          "C:\\Users\\markm\\Github\\foxide\\media\\generated\\smoke\\C-av1-4k60.mkv",
+          "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\smoke\\C-av1-4k60.mkv",
           "-map",
           "0:v?",
           "-map",
@@ -31188,7 +31188,7 @@
           "copy",
           "-t",
           "75",
-          "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\C-av1-4k60.mkv"
+          "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\C-av1-4k60.mkv"
         ],
         "probe": {
           "streams": [
@@ -31292,7 +31292,7 @@
             }
           ],
           "format": {
-            "filename": "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\C-av1-4k60.mkv",
+            "filename": "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\C-av1-4k60.mkv",
             "nb_streams": 2,
             "nb_programs": 0,
             "nb_stream_groups": 0,
@@ -31325,7 +31325,7 @@
           "-stream_loop",
           "-1",
           "-i",
-          "C:\\Users\\markm\\Github\\foxide\\media\\generated\\smoke\\D-flac-track-01.flac",
+          "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\smoke\\D-flac-track-01.flac",
           "-map",
           "0:a",
           "-map",
@@ -31338,7 +31338,7 @@
           "attached_pic",
           "-t",
           "75",
-          "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac"
+          "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac"
         ],
         "probe": {
           "streams": [
@@ -31439,7 +31439,7 @@
             }
           ],
           "format": {
-            "filename": "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac",
+            "filename": "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac",
             "nb_streams": 2,
             "nb_programs": 0,
             "nb_stream_groups": 0,

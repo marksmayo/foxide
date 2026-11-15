@@ -6,12 +6,13 @@ from pathlib import Path
 
 from build_medal_report import ROOT, write_report
 from collection_io import write_json
+from publication import public_evidence
 
 
 def field_key(collection):
     info = collection['session']
     system, presentation = info['system'], info.get('presentation', 'software-null')
-    if system not in ('windows', 'macos', 'linux') or presentation not in ('software-null', 'native-window'):
+    if system not in ('windows', 'macos', 'linux') or presentation not in ('software-null', 'native-window', 'native-ui'):
         raise ValueError('Unsupported field identity')
     return system, 'hosted' if info.get('run_id') else 'local', presentation
 
@@ -38,7 +39,7 @@ def refresh(bundles, platform_dir, output, readme, runtime_dir=None):
                 collection = json.loads(path.read_text('utf-8'))
                 collection['measurements'] = json.loads(rows.read_text('utf-8'))
                 collections.append(collection)
-    selected = latest_collections(collections)
+    selected = latest_collections([public_evidence(c) for c in collections])
     if not selected:
         raise ValueError('No benchmark evidence found; refusing to replace reports with empty results')
     bundles.mkdir(parents=True, exist_ok=True)
@@ -56,7 +57,7 @@ def refresh(bundles, platform_dir, output, readme, runtime_dir=None):
         for row in collection['measurements']:
             row['source'] = references.get((row['player'], row['profile'], row['trial']), row['source'])
         write_json(destination, collection, compact=True)
-    runtime = [json.loads(path.read_text('utf-8')) for path in sorted(runtime_dir.glob('*.json'))] if runtime_dir else []
+    runtime = [public_evidence(json.loads(path.read_text('utf-8'))) for path in sorted(runtime_dir.glob('*.json'))] if runtime_dir else []
     if any(s['session'].get('scope') != 'inventory-only' or any(c.get('verified') is True for c in s['cases']) for s in runtime):
         raise ValueError('Runtime supplements must be inventory-only and cannot assert verified playback')
     boards = write_report(json.loads((ROOT/'benchmarks/features.json').read_text('utf-8')),

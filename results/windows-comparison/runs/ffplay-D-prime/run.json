@@ -4,7 +4,7 @@
   "fixture": "D",
   "prime": true,
   "command": [
-    "C:\\Users\\markm\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
+    "C:\\Users\\<user>\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-9.0.2-full_build\\bin\\ffplay.exe",
     "-hide_banner",
     "-loglevel",
     "info",
@@ -15,7 +15,7 @@
     "-y",
     "720",
     "-i",
-    "C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac"
+    "C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac"
   ],
   "duration_seconds": 3,
   "warmup_seconds": 0,
@@ -176,7 +176,7 @@
   "windows": [
     {
       "pid": 49100,
-      "title": "Benchmark Track 1 - C:\\Users\\markm\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac",
+      "title": "Benchmark Track 1 - C:\\Users\\<user>\\Github\\foxide\\media\\generated\\comparison\\D-audio.flac",
       "class": "SDL_app"
     }
   ],

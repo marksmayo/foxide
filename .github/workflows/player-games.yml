@@ -15,6 +15,10 @@ on:
       - 'scripts/prepare-event-media.py'
       - 'benchmarks/features.json'
       - 'benchmarks/performance-events.json'
+      - 'benchmarks/ui-events.json'
+      - 'scripts/ui_benchmarks.py'
+      - 'scripts/ui_drivers.py'
+      - 'scripts/run_ui_benchmarks.py'
 permissions:
   contents: read
 concurrency:
@@ -29,17 +33,17 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
         with:
           key: playback-release
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.12'
       - name: Cache verified mpv archive downloads
         if: runner.os == 'Windows'
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: tools/downloads
           key: mpv-archive-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('benchmarks/mpv-windows.json') }}
@@ -101,7 +105,7 @@ jobs:
           PY
       - name: Cache verified deterministic media
         id: media-cache
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             media/generated/games-seed
@@ -130,7 +134,7 @@ jobs:
           if [[ -f results/local/games/measurements.json ]]; then
             python scripts/build_medal_report.py --measurements results/local/games/measurements.json --sessions results/local/games/session.json --output results/local/games/report
           fi
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: player-games-${{ runner.os }}-${{ runner.arch }}
@@ -139,18 +143,54 @@ jobs:
             media/generated/games/manifest.json
             media/generated/games-seed/manifest.json
           if-no-files-found: warn
+  native-ui:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      LIBGL_ALWAYS_SOFTWARE: '1'
+      QT_LINUX_ACCESSIBILITY_ALWAYS_ON: '1'
+      LANG: C.UTF-8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
+        with:
+          key: hosted-native-ui-release
+      - name: Install isolated desktop and native accessibility adapters
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libmpv2 libxkbcommon-dev libwayland-dev libfontconfig1-dev libudev-dev libdbus-1-dev xvfb xauth openbox dbus-x11 at-spi2-core python3-pyatspi vlc smplayer
+      - name: Build release desktop
+        run: cargo build -p player-ui --features desktop --bin foxide-desktop --release --locked
+      - name: Collect real UI actions in an isolated desktop session
+        shell: bash
+        run: |
+          dbus-run-session -- xvfb-run -a -s '-screen 0 1920x1080x24 -dpi 96' bash -e -c '
+            dbus-update-activation-environment DISPLAY XAUTHORITY
+            busctl --user set-property org.a11y.Bus /org/a11y/bus org.a11y.Status IsEnabled b true
+            busctl --user set-property org.a11y.Bus /org/a11y/bus org.a11y.Status ScreenReaderEnabled b true
+            busctl --user get-property org.a11y.Bus /org/a11y/bus org.a11y.Status IsEnabled
+            openbox > /tmp/foxide-openbox.log 2>&1 &
+            /usr/bin/python3 scripts/run_ui_benchmarks.py --execute --require-comparable --players foxide vlc smplayer --repeats 10 --environment-label "Hosted Ubuntu X11 1920x1080 DPI96 C.UTF-8 Openbox accessibility-enabled application-default theme/window" --output results/local/ui-actions
+          '
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: player-games-ui-Linux
+          path: results/local/ui-actions/
+          if-no-files-found: warn
   report:
-    needs: benchmark
+    needs: [benchmark, native-ui]
     if: always()
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.12'
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: player-games-*
           path: results/local/platforms
@@ -176,7 +216,7 @@ jobs:
           assert 'hidden' not in active, 'Platform navigation did not activate macOS'
           assert page.count('<svg ') == 3, 'Expected three embedded platform graphs'
           PY
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: foxide-player-games-report
@@ -184,7 +224,7 @@ jobs:
             docs/scoreboards/
             results/local/report-qa/
       - name: Update the benchmark branch scoreboards for PR review
-        if: startsWith(github.ref, 'refs/heads/bench/')
+        if: startsWith(github.ref, 'refs/heads/bench/') || github.ref == 'refs/heads/fix/security-and-test-gaps'
         shell: bash
         run: |
           branch="$GITHUB_REF_NAME"

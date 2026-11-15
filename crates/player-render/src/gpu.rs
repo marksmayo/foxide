@@ -180,17 +180,38 @@ impl Renderer {
         Ok(renderer)
     }
 
-    fn frame(&mut self, width: u32, height: u32) -> Result<slint::Image, String> {
+    fn frame(&mut self, width: u32, height: u32) -> Result<Option<slint::Image>, String> {
         let (width, height) = (width.clamp(1, 8192), height.clamp(1, 8192));
         // SAFETY: exclusively called from this window's BeforeRendering callback.
         // The texture name remains valid until RenderingTeardown. Resizing replaces
         // texture storage, not its name, so previously issued GL work stays valid.
         unsafe {
+            // In default control mode update drains notifications without GPU
+            // allocations. An initial wake is not a decoded video frame.
+            let updates = (self.api.render_update)(self.context);
+            if self.size == (0, 0) && updates & 1 == 0 {
+                return Ok(None);
+            }
             let gl = &self.gl;
             let framebuffer = gl.get_parameter_framebuffer(glow::DRAW_FRAMEBUFFER_BINDING);
             let read_framebuffer = gl.get_parameter_framebuffer(glow::READ_FRAMEBUFFER_BINDING);
             let texture = gl.get_parameter_texture(glow::TEXTURE_BINDING_2D);
             let active_texture = gl.get_parameter_i32(glow::ACTIVE_TEXTURE);
+            // Slint finishes on texture unit 1 and can leave the borrowed video
+            // bound on unit 0. libmpv's render_gl.h requires standard GL defaults
+            // on entry. In particular, the destination must not remain bound as
+            // an input texture while libmpv initializes its passes.
+            let texture_zero = if active_texture as u32 != glow::TEXTURE0 {
+                gl.active_texture(glow::TEXTURE0);
+                let bound = gl.get_parameter_texture(glow::TEXTURE_BINDING_2D);
+                gl.active_texture(active_texture as u32);
+                gl.bind_texture(glow::TEXTURE_2D, None);
+                bound
+            } else {
+                texture
+            };
+            gl.active_texture(glow::TEXTURE0);
+            gl.bind_texture(glow::TEXTURE_2D, None);
             let program = gl.get_parameter_program(glow::CURRENT_PROGRAM);
             let vao = gl.get_parameter_vertex_array(glow::VERTEX_ARRAY_BINDING);
             let buffer = gl.get_parameter_buffer(glow::ARRAY_BUFFER_BINDING);
@@ -251,9 +272,22 @@ impl Renderer {
                 height: height as i32,
                 format: glow::RGBA8 as i32,
             };
+            // libmpv requires standard GL capability defaults on entry. Slint
+            // can leave clipping/blending enabled after flushing cached layers;
+            // inheriting those states can discard the entire offscreen frame.
+            // The caller's capability states are restored below.
+            for (flag, _) in flags {
+                gl.disable(flag);
+            }
+            // Resizing above temporarily binds the output texture for allocation.
+            gl.bind_texture(glow::TEXTURE_2D, None);
             let result = render_texture(self.api.render, self.context, &mut fbo);
             gl.bind_framebuffer(glow::DRAW_FRAMEBUFFER, framebuffer);
             gl.bind_framebuffer(glow::READ_FRAMEBUFFER, read_framebuffer);
+            if active_texture as u32 != glow::TEXTURE0 {
+                gl.active_texture(glow::TEXTURE0);
+                gl.bind_texture(glow::TEXTURE_2D, texture_zero);
+            }
             gl.active_texture(active_texture as u32);
             gl.bind_texture(glow::TEXTURE_2D, texture);
             gl.use_program(program);
@@ -278,16 +312,18 @@ impl Renderer {
             if result < 0 {
                 return Err(format!("Video rendering failed ({result})"));
             }
-            Ok(slint::BorrowedOpenGLTextureBuilder::new_gl_2d_rgba_texture(
-                self.texture.0,
-                [width, height].into(),
-            )
-            .origin(if TEXTURE_ORIGIN_BOTTOM_LEFT {
-                slint::BorrowedOpenGLTextureOrigin::BottomLeft
-            } else {
-                slint::BorrowedOpenGLTextureOrigin::TopLeft
-            })
-            .build())
+            Ok(Some(
+                slint::BorrowedOpenGLTextureBuilder::new_gl_2d_rgba_texture(
+                    self.texture.0,
+                    [width, height].into(),
+                )
+                .origin(if TEXTURE_ORIGIN_BOTTOM_LEFT {
+                    slint::BorrowedOpenGLTextureOrigin::BottomLeft
+                } else {
+                    slint::BorrowedOpenGLTextureOrigin::TopLeft
+                })
+                .build(),
+            ))
         }
     }
 }
@@ -360,7 +396,8 @@ fn attach_observed(
                             return;
                         }
                         match renderer.frame(width, height) {
-                            Ok(frame) => publish_frame(frame, &image),
+                            Ok(Some(frame)) => publish_frame(frame, &image),
+                            Ok(None) => {}
                             Err(message) => error(message),
                         }
                     }

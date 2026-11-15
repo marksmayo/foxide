@@ -22,7 +22,8 @@ class RefreshTests(unittest.TestCase):
         (temp/'runtime/windows.json').write_text(json.dumps(dict(session=dict(system='windows', scope='inventory-only', utc='2026-11-15T12:00:00Z'), inventory=[dict(player='wmp-modern', status='installed-adapter-needed', reason='Local post-collection registration verified')], cases=[])), encoding='utf-8')
         try:
             cases = [dict(player=p, profile='native-default-window/avc1080/test', trial=i,
-                          status='verified-playback', verified=True, source='original-case.json')
+                          status='verified-playback', verified=True, source='original-case.json',
+                          command=[r'C:\Users\private-account\media.mp4'])
                      for p in ('mpv', 'vlc') for i in range(3)]
             session = dict(session=dict(system='windows', utc='2026-11-15T00:00:00Z',
                                         host='local host', presentation='native-window', source_commit='abc'),
@@ -39,7 +40,9 @@ class RefreshTests(unittest.TestCase):
             self.assertIn('#/cases/', evidence['measurements'][0]['source'])
             self.assertEqual(evidence['cases'][0]['original_source'], 'original-case.json')
             self.assertIn('Windowed playback', (temp/'README.md').read_text('utf-8'))
-            self.assertIn('local host', (temp/'README.md').read_text('utf-8'))
+            self.assertNotIn('local host', (temp/'README.md').read_text('utf-8'))
+            self.assertNotIn('private-account', json.dumps(evidence))
+            self.assertEqual(evidence['session']['host'], 'windows-local')
             board = json.loads((temp/'report/medals.json').read_text('utf-8'))['boards']['windows']
             self.assertEqual(board['runtime']['wmp-modern']['status'], 'installed-adapter-needed')
             self.assertEqual(next(p for p in board['players'] if p['id']=='mpv')['performance_gold'], 1)
@@ -91,3 +94,10 @@ class RefreshTests(unittest.TestCase):
         self.assertFalse(absent.exists())
         with self.assertRaisesRegex(ValueError, "No benchmark evidence"):
             refresh(absent, absent, absent, None)
+
+    def test_native_ui_fields_remain_separate_from_playback(self):
+        from refresh_scoreboards import latest_collections, field_key
+        ui = dict(session=dict(system='linux', presentation='native-ui', run_id='42', utc='2026-11-16T00:00:00Z'))
+        video = dict(session=dict(system='linux', presentation='native-window', run_id='42', utc='2026-11-16T00:00:00Z'))
+        self.assertEqual(field_key(ui), ('linux', 'hosted', 'native-ui'))
+        self.assertEqual(len(latest_collections([ui, video])), 2)

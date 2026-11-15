@@ -2,13 +2,35 @@ use std::process::Command;
 use std::{
     fs,
     path::PathBuf,
-    sync::{
-        OnceLock,
-        atomic::{AtomicUsize, Ordering},
-    },
+    sync::atomic::{AtomicUsize, Ordering},
 };
 
-fn scratch() -> PathBuf {
+struct Scratch(PathBuf);
+
+impl std::ops::Deref for Scratch {
+    type Target = PathBuf;
+    fn deref(&self) -> &PathBuf {
+        &self.0
+    }
+}
+impl AsRef<std::ffi::OsStr> for Scratch {
+    fn as_ref(&self) -> &std::ffi::OsStr {
+        self.0.as_os_str()
+    }
+}
+impl AsRef<std::path::Path> for Scratch {
+    fn as_ref(&self) -> &std::path::Path {
+        &self.0
+    }
+}
+impl Drop for Scratch {
+    fn drop(&mut self) {
+        // Created uniquely below the test-owned root, never borrowed from a user.
+        fs::remove_dir_all(&self.0).expect("Remove launcher fixture");
+    }
+}
+
+fn scratch() -> Scratch {
     static NEXT: AtomicUsize = AtomicUsize::new(0);
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../target/test-tmp");
     fs::create_dir_all(&root).unwrap();
@@ -22,27 +44,24 @@ fn scratch() -> PathBuf {
         NEXT.fetch_add(1, Ordering::Relaxed)
     ));
     fs::create_dir(&path).unwrap();
-    path
+    Scratch(path)
 }
 
-fn engine() -> &'static PathBuf {
-    static ENGINE: OnceLock<PathBuf> = OnceLock::new();
-    ENGINE.get_or_init(|| {
-        let output = scratch().join(if cfg!(windows) {
-            "engine.exe"
-        } else {
-            "engine"
-        });
-        let compiler = std::env::var_os("RUSTC").unwrap_or_else(|| "rustc".into());
-        let status = Command::new(compiler)
-            .arg(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/engine.rs"))
-            .arg("-o")
-            .arg(&output)
-            .status()
-            .unwrap();
-        assert!(status.success());
-        output
-    })
+fn engine(dir: &std::path::Path) -> PathBuf {
+    let output = dir.join(if cfg!(windows) {
+        "engine.exe"
+    } else {
+        "engine"
+    });
+    let compiler = std::env::var_os("RUSTC").unwrap_or_else(|| "rustc".into());
+    let status = Command::new(compiler)
+        .arg(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/engine.rs"))
+        .arg("-o")
+        .arg(&output)
+        .status()
+        .unwrap();
+    assert!(status.success());
+    output
 }
 
 #[test]
@@ -150,12 +169,13 @@ fn local_folder_queue_starts_at_selected_episode_and_loads_subtitles() {
 #[test]
 fn engine_is_started_with_safe_argument_boundaries_and_errors_propagate() {
     let dir = scratch();
+    let engine = engine(&dir);
     let media = dir.join("media with spaces.mp4");
     let log = dir.join("engine.log");
     fs::write(&media, "Process-only fixture").unwrap();
     let output = Command::new(env!("CARGO_BIN_EXE_foxide"))
         .arg("--mpv")
-        .arg(engine())
+        .arg(&engine)
         .arg(&media)
         .env("FOXIDE_TEST_ENGINE_LOG", &log)
         .output()
@@ -171,7 +191,7 @@ fn engine_is_started_with_safe_argument_boundaries_and_errors_propagate() {
     assert!(command.contains("media with spaces.mp4"));
     let failed = Command::new(env!("CARGO_BIN_EXE_foxide"))
         .arg("--mpv")
-        .arg(engine())
+        .arg(&engine)
         .arg(&media)
         .env("FOXIDE_TEST_ENGINE_FAIL", "1")
         .output()
@@ -189,7 +209,7 @@ fn engine_is_started_with_safe_argument_boundaries_and_errors_propagate() {
 }
 
 #[test]
-fn discovery_respects_local_installation_and_explicit_overrides() {
+fn discovery_ignores_dependencies_planted_in_the_working_directory() {
     let dir = scratch();
     fs::create_dir_all(dir.join("tools/mpv")).unwrap();
     let local = dir
@@ -207,9 +227,9 @@ fn discovery_respects_local_installation_and_explicit_overrides() {
         .unwrap();
     assert!(output.status.success());
     let plan: Vec<String> = serde_json::from_slice(&output.stdout).unwrap();
-    assert_eq!(
-        PathBuf::from(&plan[0]).canonicalize().unwrap(),
-        local.canonicalize().unwrap()
+    assert_ne!(
+        PathBuf::from(&plan[0]).canonicalize().ok(),
+        Some(local.canonicalize().unwrap())
     );
     let output = Command::new(env!("CARGO_BIN_EXE_foxide"))
         .env("FOXIDE_MPV", "preferred-engine")
@@ -251,4 +271,42 @@ fn invalid_media_and_control_combinations_fail_before_engine_start() {
             .unwrap();
         assert!(!output.status.success());
     }
+}
+
+#[test]
+fn absent_engine_never_falls_back_to_an_implicit_working_directory_search() {
+    let dir = scratch();
+    let app = dir.join("app");
+    let media = dir.join("media");
+    fs::create_dir_all(&app).unwrap();
+    fs::create_dir_all(media.join("tools/mpv")).unwrap();
+    let executable = app.join(if cfg!(windows) {
+        "foxide.exe"
+    } else {
+        "foxide"
+    });
+    fs::copy(env!("CARGO_BIN_EXE_foxide"), &executable).unwrap();
+    let name = if cfg!(windows) { "mpv.exe" } else { "mpv" };
+    fs::write(media.join(name), "planted bare executable").unwrap();
+    fs::write(media.join("tools/mpv").join(name), "planted tool").unwrap();
+    let output = Command::new(&executable)
+        .current_dir(&media)
+        .env_remove("FOXIDE_MPV")
+        .env("PATH", "")
+        .args(["--print-command", "https://example.org/fixture.mp4"])
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let plan: Vec<String> = serde_json::from_slice(&output.stdout).unwrap();
+    let planned = PathBuf::from(&plan[0]);
+    assert!(planned.is_absolute());
+    assert_eq!(
+        planned.parent().unwrap().canonicalize().unwrap(),
+        app.canonicalize().unwrap()
+    );
+    assert_eq!(planned.file_name(), Some(std::ffi::OsStr::new(name)));
 }

@@ -1,6 +1,8 @@
 """Create a self-contained offline HTML report from actual Windows comparison trials."""
 from __future__ import annotations
 
+from publication import public_evidence
+
 import argparse
 import json
 from pathlib import Path
@@ -97,7 +99,7 @@ def main():
     p.add_argument('input', type=Path)
     p.add_argument('--output', type=Path)
     args = p.parse_args()
-    payload = json.loads(args.input.read_text('utf-8'))
+    payload = public_evidence(json.loads(args.input.read_text('utf-8')))
     if payload.get('schema_version') != 1:
         p.error('Unsupported comparison schema')
     view = {**payload, 'metrics': METRICS, 'summary': summarize(payload)}

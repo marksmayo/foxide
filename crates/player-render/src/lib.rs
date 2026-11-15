@@ -10,3 +10,6 @@ pub use native::{Engine, Snapshot, Track};
 
 #[cfg(any(feature = "desktop", test))]
 mod render_contract;
+
+#[cfg(any(feature = "desktop", test))]
+mod dependency_paths;

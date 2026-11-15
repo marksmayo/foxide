@@ -1,32 +1,33 @@
 [
   {
-    "slug": "windows-335ba50eba",
+    "slug": "windows-dedbb43b18",
     "label": "Software decode \u00b7 Foxide CLI \u00b7 Hosted",
-    "mode": "vm-software-null-output",
-    "host": "runnervmm7ud1",
-    "utc": "2026-11-14T12:18:38.147125+00:00",
+    "mode": "software-null-output",
+    "host": "windows-hosted",
+    "utc": "2026-11-15T13:18:28.960600+00:00",
     "info": {
-      "utc": "2026-11-14T12:18:38.147125+00:00",
+      "utc": "2026-11-15T13:18:28.960600+00:00",
       "system": "windows",
       "os": "Windows-2025Server-10.0.26100-SP0",
       "arch": "AMD64",
-      "cpu_count": 2,
-      "host": "runnervmm7ud1",
+      "cpu_count": 4,
+      "host": "windows-hosted",
       "runner_image": "20261103.298.1",
-      "run_id": "43593686026",
+      "run_id": "43717764774",
       "duration": 8,
       "warmup": 2,
-      "script_sha256": "3bef04a0c6d1adec76bbdf15f54fccdb128b0d1347507d9974c994339dc23850",
-      "source_commit": "2875cbeef9ed7243e73b44335eedb810cc60b540",
+      "script_sha256": "72682df2eba08ab504e05d6cd12e3f616fd8d30ee34f5d19b52d5510eea471fb",
       "presentation": "software-null",
-      "artifact_sha256": "b9f827a23a39784abd5b320fd246be075459c4f0401d043b9786a45e426fe929"
+      "source_commit": "726d4ce5a19dcf09bff676129dba0dc4a55958aa",
+      "order_seed": 20261115,
+      "window_policy": "No audio/video output"
     }
   },
   {
-    "slug": "windows-26e722ad83",
+    "slug": "windows-f9366948d9",
     "label": "Windowed playback \u00b7 Foxide Desktop \u00b7 Local",
     "mode": "native-default-window",
-    "host": "MM-Terem",
+    "host": "windows-local",
     "utc": "2026-11-15T04:01:52.019159+00:00",
     "info": {
       "utc": "2026-11-15T04:01:52.019159+00:00",
@@ -34,7 +35,7 @@
       "os": "Windows-11-10.0.26300-SP0",
       "arch": "",
       "cpu_count": 20,
-      "host": "MM-Terem",
+      "host": "windows-local",
       "runner_image": null,
       "run_id": null,
       "duration": 8,
@@ -47,10 +48,10 @@
     }
   },
   {
-    "slug": "windows-c6f67220e4",
+    "slug": "windows-0157c4dec0",
     "label": "Software decode \u00b7 Foxide CLI \u00b7 Local",
     "mode": "software-null-output",
-    "host": "MM-Terem",
+    "host": "windows-local",
     "utc": "2026-11-15T04:29:30.454755+00:00",
     "info": {
       "utc": "2026-11-15T04:29:30.454755+00:00",
@@ -58,7 +59,7 @@
       "os": "Windows-11-10.0.26300-SP0",
       "arch": "",
       "cpu_count": 20,
-      "host": "MM-Terem",
+      "host": "windows-local",
       "runner_image": null,
       "run_id": null,
       "duration": 8,
@@ -71,49 +72,66 @@
     }
   },
   {
-    "slug": "macos-1a4c0a188f",
+    "slug": "macos-1263c6a72f",
     "label": "Software decode \u00b7 Foxide CLI \u00b7 Hosted",
-    "mode": "vm-software-null-output",
-    "host": "dsm12-dh252-ff50306c-17b7-491f-9f18-ade1dde48def-128BE6880A2E.local",
-    "utc": "2026-11-14T12:16:24.783861+00:00",
+    "mode": "software-null-output",
+    "host": "macos-hosted",
+    "utc": "2026-11-15T13:18:16.957063+00:00",
     "info": {
-      "utc": "2026-11-14T12:16:24.783861+00:00",
+      "utc": "2026-11-15T13:18:16.957063+00:00",
       "system": "macos",
       "os": "macOS-15.8.2-arm64-arm-64bit",
       "arch": "arm64",
-      "cpu_count": 5,
-      "host": "dsm12-dh252-ff50306c-17b7-491f-9f18-ade1dde48def-128BE6880A2E.local",
+      "cpu_count": 3,
+      "host": "macos-hosted",
       "runner_image": "20261104.0514.1",
-      "run_id": "43593686026",
+      "run_id": "43717764774",
       "duration": 8,
       "warmup": 2,
-      "script_sha256": "32de94ebe133243751300040ea5e014a22494e90019c5a54b6e4c3c087fc1ba3",
-      "source_commit": "2875cbeef9ed7243e73b44335eedb810cc60b540",
+      "script_sha256": "8caef026368c6c8d74d5509fe98cefab3d2260bdb60c138c7949f8847c603e6f",
       "presentation": "software-null",
-      "artifact_sha256": "eaabe094607da5ae407d07390541e0c4c4a2c570acfb7721c14ef3103dd3277a"
+      "source_commit": "726d4ce5a19dcf09bff676129dba0dc4a55958aa",
+      "order_seed": 20261115,
+      "window_policy": "No audio/video output"
     }
   },
   {
-    "slug": "linux-3f69c35d40",
-    "label": "Software decode \u00b7 Foxide CLI \u00b7 Hosted",
-    "mode": "vm-software-null-output",
-    "host": "runnervm8axu0",
-    "utc": "2026-11-14T12:15:22.792611+00:00",
+    "slug": "linux-6940005584",
+    "label": "Native UI actions \u00b7 default application windows \u00b7 Hosted",
+    "mode": "native-ui",
+    "host": "linux-hosted",
+    "utc": "2026-11-15T15:37:42.217217+00:00",
     "info": {
-      "utc": "2026-11-14T12:15:22.792611+00:00",
+      "system": "linux",
+      "host": "linux-hosted",
+      "utc": "2026-11-15T15:37:42.217217+00:00",
+      "source_commit": "804348c78133d53069fa69ee283b4d7dc9e65f23",
+      "run_id": "43730420415",
+      "presentation": "native-ui"
+    }
+  },
+  {
+    "slug": "linux-b8c8cd7788",
+    "label": "Software decode \u00b7 Foxide CLI \u00b7 Hosted",
+    "mode": "software-null-output",
+    "host": "linux-hosted",
+    "utc": "2026-11-15T13:14:35.214843+00:00",
+    "info": {
+      "utc": "2026-11-15T13:14:35.214843+00:00",
       "system": "linux",
       "os": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
       "arch": "x86_64",
-      "cpu_count": 2,
-      "host": "runnervm8axu0",
+      "cpu_count": 4,
+      "host": "linux-hosted",
       "runner_image": "20261111.370.1",
-      "run_id": "43593686026",
+      "run_id": "43717764774",
       "duration": 8,
       "warmup": 2,
-      "script_sha256": "32de94ebe133243751300040ea5e014a22494e90019c5a54b6e4c3c087fc1ba3",
-      "source_commit": "2875cbeef9ed7243e73b44335eedb810cc60b540",
+      "script_sha256": "8caef026368c6c8d74d5509fe98cefab3d2260bdb60c138c7949f8847c603e6f",
       "presentation": "software-null",
-      "artifact_sha256": "aa77316bb41534a9f7073fcec569d4cfaf58e0d15d39caae1c0065ccd6ad8c93"
+      "source_commit": "726d4ce5a19dcf09bff676129dba0dc4a55958aa",
+      "order_seed": 20261115,
+      "window_policy": "No audio/video output"
     }
   }
 ]

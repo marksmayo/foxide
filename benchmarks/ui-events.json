@@ -4,7 +4,11 @@
     "Native UI action-to-state observation is not display presentation or decoder seek latency.",
     "Default menu measurements use an idle player, a fixed locale, screen geometry/DPI and the same native automation method.",
     "Each adapter must verify owned process identity, a false precondition, native action, and a true postcondition; absent adapters/permissions are unranked.",
-    "Requested actions requiring frame presentation stay pending until a content-aware presentation collector exists."
+    "Requested actions requiring frame presentation stay pending until a content-aware presentation collector exists.",
+    "Applications use their default window sizes; actual bounds are retained as evidence. This is not an equal-viewport comparison.",
+    "Every action has total, dispatch and observation latency, CPU time, post-action RSS and RSS growth events. Missing evidence remains unranked.",
+    "Linux uses native pointer input at observed owned accessibility bounds for every entrant. Hidden zero-area menu nodes and existing toolbar controls are not popup evidence.",
+    "Linux portal file dialogs require a broker-ownership adapter; an unrelated process window is never accepted as owned UI evidence."
   ],
   "actions": [
     {
@@ -294,6 +298,270 @@
         "video",
         "audio"
       ]
+    },
+    {
+      "id": "menu_view",
+      "name": "View menu",
+      "condition": "view-menu-visible",
+      "context": "idle",
+      "verification": "accessibility-state",
+      "collector": "native-accessibility",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "menu_video",
+      "name": "Video menu",
+      "condition": "video-menu-visible",
+      "context": "idle",
+      "verification": "accessibility-state",
+      "collector": "native-accessibility",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "menu_help",
+      "name": "Help menu",
+      "condition": "help-menu-visible",
+      "context": "idle",
+      "verification": "accessibility-state",
+      "collector": "native-accessibility",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "network_dialog",
+      "name": "Open network stream dialog",
+      "condition": "network-dialog-visible",
+      "context": "idle",
+      "verification": "accessibility-state",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "media_info",
+      "name": "Media information dialog",
+      "condition": "media-info-visible",
+      "context": "playback",
+      "verification": "accessibility-state",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "chapter_menu",
+      "name": "Chapter menu",
+      "condition": "chapter-menu-visible",
+      "context": "playback",
+      "verification": "accessibility-state",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "cast_picker",
+      "name": "Cast device picker",
+      "condition": "cast-picker-visible",
+      "context": "playback",
+      "verification": "accessibility-state",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "playlist_search_1000",
+      "name": "Search 1,000 queued items",
+      "condition": "matching-items-visible",
+      "context": "playlist-1000",
+      "verification": "accessibility-state",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "playlist_sort_1000",
+      "name": "Sort 1,000 queued items",
+      "condition": "sorted-items-verified",
+      "context": "playlist-1000",
+      "verification": "accessibility-state",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "enqueue_1000",
+      "name": "Enqueue 1,000 local files",
+      "condition": "1000-items-queued",
+      "context": "idle",
+      "verification": "accessibility-state",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "keyboard_focus",
+      "name": "Traverse ten focusable controls",
+      "condition": "expected-control-focused",
+      "context": "idle",
+      "verification": "accessibility-state",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "minimize_restore",
+      "name": "Minimize and restore window",
+      "condition": "restored-geometry",
+      "context": "playback",
+      "verification": "window-geometry",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "theme_change",
+      "name": "Switch light/dark theme",
+      "condition": "theme-applied",
+      "context": "idle",
+      "verification": "accessibility-state",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "dpi_change",
+      "name": "Move window between DPI scales",
+      "condition": "dpi-layout-presented",
+      "context": "mixed-dpi",
+      "verification": "presented-frame",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "rapid_resize",
+      "name": "Twenty rapid resize actions",
+      "condition": "final-layout-presented",
+      "context": "playback",
+      "verification": "presented-frame",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "scrub_100",
+      "name": "Scrub across 100 positions",
+      "condition": "final-video-frame-presented",
+      "context": "playback",
+      "verification": "presented-frame",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "osd_fade",
+      "name": "OSD fade during 4K playback",
+      "condition": "osd-hidden-video-presented",
+      "context": "4k-playback",
+      "verification": "presented-frame",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "menu_during_4k",
+      "name": "Open menu during 4K playback",
+      "condition": "menu-visible-with-video",
+      "context": "4k-playback",
+      "verification": "presented-frame",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "thumbnail_hover",
+      "name": "Timeline thumbnail hover",
+      "condition": "correct-thumbnail-presented",
+      "context": "playback",
+      "verification": "presented-frame",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "pip_transition",
+      "name": "Enter Picture-in-Picture",
+      "condition": "pip-video-presented",
+      "context": "playback",
+      "verification": "presented-frame",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "menu_cycle_100",
+      "name": "Open and dismiss menu 100 times",
+      "condition": "menu-closed-after-100-cycles",
+      "context": "idle",
+      "verification": "accessibility-state",
+      "collector": "native-accessibility",
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "resize_cycle_100",
+      "name": "Resize window 100 times",
+      "condition": "original-geometry-restored",
+      "context": "playback",
+      "verification": "window-geometry",
+      "collector": "adapter-required",
+      "media_types": [
+        "video",
+        "audio"
+      ]
     }
   ],
   "players": [
@@ -309,29 +577,102 @@
         "audio"
       ],
       "menus": {
-        "menu_media": [
-          "Media",
-          "Open files..."
-        ],
-        "menu_playback": [
-          "Playback",
-          "Stop"
-        ],
-        "menu_audio": [
-          "Audio",
-          "Mute"
-        ],
-        "menu_subtitles": [
-          "Subtitles",
-          "Load subtitle file..."
-        ],
+        "menu_media": {
+          "target": "Media",
+          "expected": "Quit",
+          "target_roles": {
+            "linux": [
+              "Text"
+            ]
+          },
+          "expected_roles": {
+            "linux": [
+              "Text"
+            ]
+          }
+        },
+        "menu_playback": {
+          "target": "Playback",
+          "expected": "Stop",
+          "target_roles": {
+            "linux": [
+              "Text"
+            ]
+          },
+          "expected_roles": {
+            "linux": [
+              "Text"
+            ]
+          }
+        },
+        "menu_audio": {
+          "target": "Audio",
+          "expected": "Mute",
+          "target_roles": {
+            "linux": [
+              "Text"
+            ]
+          },
+          "expected_roles": {
+            "linux": [
+              "Text"
+            ]
+          }
+        },
+        "menu_subtitles": {
+          "target": "Subtitles",
+          "expected": "Load subtitle file...",
+          "target_roles": {
+            "linux": [
+              "Text"
+            ]
+          },
+          "expected_roles": {
+            "linux": [
+              "Text"
+            ]
+          }
+        },
         "open_dialog": [
           "Open files",
           "Open media files"
-        ]
+        ],
+        "menu_view": {
+          "target": "View",
+          "expected": "Playback information",
+          "target_roles": {
+            "linux": [
+              "Text"
+            ]
+          },
+          "expected_roles": {
+            "linux": [
+              "Text"
+            ]
+          }
+        },
+        "menu_help": {
+          "target": "Help",
+          "expected": "About Foxide",
+          "target_roles": {
+            "linux": [
+              "Text"
+            ]
+          },
+          "expected_roles": {
+            "linux": [
+              "Text"
+            ]
+          }
+        }
       },
       "status": "locators-require-runtime-verification",
-      "not_applicable": []
+      "not_applicable": [],
+      "platform_adapter_required": {
+        "linux": [
+          "open_dialog"
+        ]
+      }
     },
     {
       "id": "vlc",
@@ -360,6 +701,18 @@
         "menu_subtitles": [
           "Subtitle",
           "Add Subtitle File..."
+        ],
+        "menu_view": [
+          "View",
+          "Playlist"
+        ],
+        "menu_video": [
+          "Video",
+          "Video Track"
+        ],
+        "menu_help": [
+          "Help",
+          "About"
         ]
       },
       "status": "locators-require-runtime-verification",
@@ -561,7 +914,8 @@
       "id": "plex",
       "platforms": [
         "windows",
-        "macos"
+        "macos",
+        "linux"
       ],
       "media_types": [
         "video",
