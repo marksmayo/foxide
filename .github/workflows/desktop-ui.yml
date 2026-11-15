@@ -21,6 +21,8 @@ jobs:
       - run: cargo build -p player-ui --features desktop --bin foxide-desktop --release --locked
       - name: Verify desktop state refresh without a native display
         run: cargo test -p player-ui --features desktop --bin foxide-desktop --locked
+      - name: Verify cached video layers see each published frame
+        run: cargo test -p player-ui -p player-render --features player-ui/desktop,player-render/gpu-integration --lib --locked publishing_a_new_frame
       - name: Render actual Slint layout without a native display
         shell: bash
         run: |

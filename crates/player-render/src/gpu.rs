@@ -1,4 +1,5 @@
 use crate::native::{Api, Engine, Handle, Param};
+use crate::render_contract::{Fbo, TEXTURE_ORIGIN_BOTTOM_LEFT, render_texture};
 use glow::HasContext;
 use libloading::Library;
 use std::{
@@ -71,13 +72,6 @@ extern "C" fn wake(context: *mut c_void) {
 struct Init {
     get_proc: extern "C" fn(*mut c_void, *const c_char) -> *mut c_void,
     context: *mut c_void,
-}
-#[repr(C)]
-struct Fbo {
-    id: i32,
-    width: i32,
-    height: i32,
-    format: i32,
 }
 
 struct Renderer {
@@ -257,27 +251,7 @@ impl Renderer {
                 height: height as i32,
                 format: glow::RGBA8 as i32,
             };
-            let mut flip = 1_i32;
-            let mut block = 0_i32;
-            let mut params = [
-                Param {
-                    kind: 3,
-                    data: (&mut fbo as *mut Fbo).cast(),
-                },
-                Param {
-                    kind: 4,
-                    data: (&mut flip as *mut i32).cast(),
-                },
-                Param {
-                    kind: 12,
-                    data: (&mut block as *mut i32).cast(),
-                },
-                Param {
-                    kind: 0,
-                    data: std::ptr::null_mut(),
-                },
-            ];
-            let result = (self.api.render)(self.context, params.as_mut_ptr());
+            let result = render_texture(self.api.render, self.context, &mut fbo);
             gl.bind_framebuffer(glow::DRAW_FRAMEBUFFER, framebuffer);
             gl.bind_framebuffer(glow::READ_FRAMEBUFFER, read_framebuffer);
             gl.active_texture(active_texture as u32);
@@ -308,6 +282,11 @@ impl Renderer {
                 self.texture.0,
                 [width, height].into(),
             )
+            .origin(if TEXTURE_ORIGIN_BOTTOM_LEFT {
+                slint::BorrowedOpenGLTextureOrigin::BottomLeft
+            } else {
+                slint::BorrowedOpenGLTextureOrigin::TopLeft
+            })
             .build())
         }
     }
@@ -335,6 +314,18 @@ pub fn attach(
     error: impl Fn(String) + 'static,
     wakeup: Arc<dyn Fn() + Send + Sync>,
 ) -> Result<(), String> {
+    attach_observed(window, engine, size, image, error, wakeup, |_, _| {})
+}
+
+fn attach_observed(
+    window: &slint::Window,
+    engine: &Engine,
+    size: impl Fn() -> (u32, u32) + 'static,
+    image: impl Fn(slint::Image) + 'static,
+    error: impl Fn(String) + 'static,
+    wakeup: Arc<dyn Fn() + Send + Sync>,
+    mut observe: impl FnMut(slint::RenderingState, &slint::GraphicsAPI) + 'static,
+) -> Result<(), String> {
     let api = engine.api.clone();
     let ready = engine.ready.clone();
     let changed = Arc::new(AtomicBool::new(true));
@@ -345,40 +336,56 @@ pub fn attach(
     });
     let mut renderer: Option<Renderer> = None;
     window
-        .set_rendering_notifier(move |state, graphics| match state {
-            slint::RenderingState::RenderingSetup => {
-                if let slint::GraphicsAPI::NativeOpenGL { get_proc_address } = graphics {
-                    match Renderer::new(api.clone(), get_proc_address, notify.clone()) {
-                        Ok(value) => {
-                            renderer = Some(value);
-                            ready.store(true, Ordering::Release);
+        .set_rendering_notifier(move |state, graphics| {
+            match state {
+                slint::RenderingState::RenderingSetup => {
+                    if let slint::GraphicsAPI::NativeOpenGL { get_proc_address } = graphics {
+                        match Renderer::new(api.clone(), get_proc_address, notify.clone()) {
+                            Ok(value) => {
+                                renderer = Some(value);
+                                ready.store(true, Ordering::Release);
+                            }
+                            Err(message) => error(message),
                         }
-                        Err(message) => error(message),
-                    }
-                } else {
-                    error("This playback build needs the OpenGL renderer".into());
-                }
-            }
-            slint::RenderingState::BeforeRendering => {
-                if let Some(renderer) = renderer.as_mut() {
-                    let (width, height) = size();
-                    if !changed.swap(false, Ordering::AcqRel)
-                        && renderer.size == (width.clamp(1, 8192), height.clamp(1, 8192))
-                    {
-                        return;
-                    }
-                    match renderer.frame(width, height) {
-                        Ok(frame) => image(frame),
-                        Err(message) => error(message),
+                    } else {
+                        error("This playback build needs the OpenGL renderer".into());
                     }
                 }
+                slint::RenderingState::BeforeRendering => {
+                    if let Some(renderer) = renderer.as_mut() {
+                        let (width, height) = size();
+                        if !changed.swap(false, Ordering::AcqRel)
+                            && renderer.size == (width.clamp(1, 8192), height.clamp(1, 8192))
+                        {
+                            return;
+                        }
+                        match renderer.frame(width, height) {
+                            Ok(frame) => publish_frame(frame, &image),
+                            Err(message) => error(message),
+                        }
+                    }
+                }
+                slint::RenderingState::RenderingTeardown => {
+                    ready.store(false, Ordering::Release);
+                    image(slint::Image::default());
+                    renderer = None;
+                }
+                _ => {}
             }
-            slint::RenderingState::RenderingTeardown => {
-                ready.store(false, Ordering::Release);
-                image(slint::Image::default());
-                renderer = None;
-            }
-            _ => {}
+            observe(state, graphics);
         })
         .map_err(|e| e.to_string())
 }
+
+fn publish_frame(frame: slint::Image, image: &impl Fn(slint::Image)) {
+    // Borrowed image equality includes texture id/size/origin, not its changing
+    // GPU pixels. Rebinding the same image alone leaves rounded clipping layers
+    // clean and displaying stale video. Invalidate and restore synchronously,
+    // before Slint draws, so no intermediate blank frame is presented.
+    image(slint::Image::default());
+    image(frame);
+}
+
+#[cfg(all(test, feature = "gpu-integration"))]
+#[path = "gpu_integration.rs"]
+mod integration;

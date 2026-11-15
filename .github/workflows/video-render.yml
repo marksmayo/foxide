@@ -1,0 +1,40 @@
+name: Video compositor regression
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches: [fix/video-texture-orientation-and-cadence]
+permissions:
+  contents: read
+jobs:
+  orientation-and-cadence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      LIBGL_ALWAYS_SOFTWARE: '1'
+      FOXIDE_RENDER_FIXTURE: ${{ github.workspace }}/results/local/orientation.mkv
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: desktop-ui
+          cache-on-failure: true
+      - name: Install software OpenGL and the native media engine
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg libmpv2 xvfb xauth libgl1-mesa-dri libegl1-mesa-dev libxkbcommon-dev libxkbcommon-x11-dev libfontconfig1-dev libwayland-dev
+      - name: Generate asymmetric moving video
+        run: |
+          mkdir -p results/local
+          ffmpeg -v error -f lavfi -i "testsrc2=size=320x180:rate=30:duration=10,drawbox=x=0:y=0:w=iw:h=ih/4:color=red:t=fill,drawbox=x=0:y=3*ih/4:w=iw:h=ih/4:color=blue:t=fill" -c:v ffv1 "$FOXIDE_RENDER_FIXTURE"
+      - name: Verify reused texture invalidates cached layers without a native display
+        run: cargo test -p player-render --features gpu-integration --locked publishing_a_new_frame -- --nocapture
+      - name: Verify actual composited orientation and changing video frames
+        shell: bash
+        run: |
+          set -o pipefail
+          xvfb-run -a -s '-screen 0 1280x720x24' cargo test -p player-render --features gpu-integration --locked -- --ignored --nocapture --test-threads=1 2>&1 | tee results/local/video-regression.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: video-compositor-regression
+          path: results/local/video-regression.log

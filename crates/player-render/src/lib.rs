@@ -7,3 +7,6 @@ mod native;
 pub use gpu::attach;
 #[cfg(feature = "desktop")]
 pub use native::{Engine, Snapshot, Track};
+
+#[cfg(any(feature = "desktop", test))]
+mod render_contract;
