@@ -31,6 +31,11 @@ jobs:
         run: |
           mkdir -p results/local
           ffmpeg -v error -f lavfi -i "testsrc2=size=320x180:rate=30:duration=10,drawbox=x=0:y=0:w=iw:h=ih/4:color=red:t=fill,drawbox=x=0:y=3*ih/4:w=iw:h=ih/4:color=blue:t=fill" -c:v ffv1 "$FOXIDE_RENDER_FIXTURE"
+      - name: Verify compositor with the same features without instrumentation
+        shell: bash
+        run: |
+          set -o pipefail
+          xvfb-run -a -s '-screen 0 1280x720x24' cargo test --workspace --features player-ui/desktop,player-render/gpu-integration --locked -- --ignored --nocapture --test-threads=1 2>&1 | tee results/local/video-uninstrumented.log
       - name: Reset coverage profiles before combining test passes
         run: cargo llvm-cov clean --workspace
       - name: Verify reused texture invalidates cached layers without a native display
@@ -48,5 +53,5 @@ jobs:
           name: video-compositor-regression
           path: |
             results/local/video-regression.log
+            results/local/video-uninstrumented.log
             results/local/coverage-desktop-gpu.json
-
