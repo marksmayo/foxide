@@ -13,10 +13,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        engine: [system, '0.40', '0.40-zero-lut']
+        engine: [system, '0.40', '0.40-nan-padding', '0.40-zero-lut']
     env:
       LIBGL_ALWAYS_SOFTWARE: '1'
-      MALLOC_PERTURB_: '128'
       FOXIDE_RENDER_FIXTURE: ${{ github.workspace }}/results/local/orientation.mkv
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -28,6 +27,18 @@ jobs:
           repository: mpv-player/mpv
           ref: e48ac7ce08462f5e33af6ef9deeac6fa87eef01e # v0.40.0
           path: results/local/mpv-source
+      - name: Reproduce allowed NaN contents of uninitialized scaler padding
+        if: matrix.engine == '0.40-nan-padding'
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('results/local/mpv-source/video/out/gpu/video.c')
+          source = path.read_text()
+          before = 'float *weights = talloc_array(NULL, float, lut_size * stride);'
+          after = before + '\n    for (int i = 0; i < lut_size * stride; i++) weights[i] = NAN;'
+          assert source.count(before) == 1
+          path.write_text(source.replace(before, after))
+          PY
       - name: Zero only scaler lookup-table padding in the control build
         if: matrix.engine == '0.40-zero-lut'
         run: |

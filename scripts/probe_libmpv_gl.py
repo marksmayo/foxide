@@ -1,5 +1,6 @@
 """Diagnostic control: libmpv -> SDL OpenGL FBO, with no Foxide or Slint code."""
 import ctypes as c
+import math
 import os
 import threading
 import time
@@ -137,6 +138,10 @@ def main():
                 sample(ident, 0, width // 2, y, 0, 1, 1, 1, 0x1908, 0x1401, 4, rgba)
                 values.append(list(rgba))
             print(f"texture={ident} dimensions={dimensions} samples={values}", flush=True)
+            if (width, height) == (2, 256):
+                values_float = (c.c_float * (width * height * 4))()
+                gl("glGetTextureImage", None, c.c_uint, c.c_int, c.c_uint, c.c_uint, c.c_int, c.c_void_p)(ident, 0, 0x1908, 0x1406, c.sizeof(values_float), values_float)
+                print(f"LUT finite_coefficients={all(math.isfinite(v) for i, v in enumerate(values_float) if i % 8 < 6)} padding_nan={sum(math.isnan(v) for i, v in enumerate(values_float) if i % 8 >= 6)}", flush=True)
     worker.join(timeout=2)
     bind(mpv, "mpv_render_context_free", None, c.c_void_p)(renderer)
     bind(mpv, "mpv_terminate_destroy", None, c.c_void_p)(handle)
