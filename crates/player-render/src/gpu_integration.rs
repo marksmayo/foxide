@@ -103,7 +103,7 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
     selector.select().unwrap();
     let ui = VideoProbe::new().unwrap();
     ui.set_clip_video(std::env::var_os("FOXIDE_PROBE_UNCLIPPED").is_none());
-    let engine = Engine::new().unwrap();
+    let engine = Rc::new(Engine::new().unwrap());
     let samples = Rc::new(RefCell::new(Samples::default()));
     let graphics = Rc::new(RefCell::new(None::<glow::Context>));
     let started = Instant::now();
@@ -113,6 +113,7 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
     let weak_probe = ui.as_weak();
     let errors = samples.clone();
     let observations = samples.clone();
+    let load_engine = engine.clone();
     attach_observed(
         ui.window(),
         &engine,
@@ -161,6 +162,14 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
                 let Some(w) = weak_probe.upgrade() else {
                     return;
                 };
+                if observations.borrow().presentations == 1 {
+                    if w.get_frame() != slint::Image::default() {
+                        observations.borrow_mut().errors.push("Published a video surface before any media was opened".into());
+                    }
+                    // This only queues a control command; no normal libmpv API
+                    // is called on the rendering thread.
+                    load_engine.command(vec!["loadfile".into(), fixture.clone(), "replace".into()]).unwrap();
+                }
                 let size = w.window().size();
                 if size.width == 0 || size.height < 8 {
                     return;
@@ -261,9 +270,6 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
         },
     )
     .unwrap();
-    engine
-        .command(vec!["loadfile".into(), fixture, "replace".into()])
-        .unwrap();
     let timer = slint::Timer::default();
     let sample_clock = samples.clone();
     timer.start(

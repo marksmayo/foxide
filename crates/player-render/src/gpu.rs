@@ -224,12 +224,18 @@ impl Renderer {
         Ok(renderer)
     }
 
-    fn frame(&mut self, width: u32, height: u32) -> Result<slint::Image, String> {
+    fn frame(&mut self, width: u32, height: u32) -> Result<Option<slint::Image>, String> {
         let (width, height) = (width.clamp(1, 8192), height.clamp(1, 8192));
         // SAFETY: exclusively called from this window's BeforeRendering callback.
         // The texture name remains valid until RenderingTeardown. Resizing replaces
         // texture storage, not its name, so previously issued GL work stays valid.
         unsafe {
+            // In default control mode update drains notifications without GPU
+            // allocations. An initial wake is not a decoded video frame.
+            let updates = (self.api.render_update)(self.context);
+            if self.size == (0, 0) && updates & 1 == 0 {
+                return Ok(None);
+            }
             let gl = &self.gl;
             #[cfg(test)]
             if self.created_context != 0 {
@@ -346,13 +352,12 @@ impl Renderer {
             // Resizing above temporarily binds the output texture for allocation.
             gl.bind_texture(glow::TEXTURE_2D, None);
             let result = render_texture(self.api.render, self.context, &mut fbo);
-            #[cfg(not(test))]
-            gl.flush();
             #[cfg(test)]
             match self.probe_sync.as_str() {
                 "none" => {}
                 "finish" => gl.finish(),
-                _ => gl.flush(),
+                "flush" => gl.flush(),
+                _ => {}
             }
             #[cfg(test)]
             if self.probe_readback {
@@ -408,16 +413,18 @@ impl Renderer {
             if result < 0 {
                 return Err(format!("Video rendering failed ({result})"));
             }
-            Ok(slint::BorrowedOpenGLTextureBuilder::new_gl_2d_rgba_texture(
-                self.texture.0,
-                [width, height].into(),
-            )
-            .origin(if TEXTURE_ORIGIN_BOTTOM_LEFT {
-                slint::BorrowedOpenGLTextureOrigin::BottomLeft
-            } else {
-                slint::BorrowedOpenGLTextureOrigin::TopLeft
-            })
-            .build())
+            Ok(Some(
+                slint::BorrowedOpenGLTextureBuilder::new_gl_2d_rgba_texture(
+                    self.texture.0,
+                    [width, height].into(),
+                )
+                .origin(if TEXTURE_ORIGIN_BOTTOM_LEFT {
+                    slint::BorrowedOpenGLTextureOrigin::BottomLeft
+                } else {
+                    slint::BorrowedOpenGLTextureOrigin::TopLeft
+                })
+                .build(),
+            ))
         }
     }
 }
@@ -494,7 +501,8 @@ fn attach_observed(
                             return;
                         }
                         match renderer.frame(width, height) {
-                            Ok(frame) => publish_frame(frame, &image),
+                            Ok(Some(frame)) => publish_frame(frame, &image),
+                            Ok(None) => {}
                             Err(message) => error(message),
                         }
                     }

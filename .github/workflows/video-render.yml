@@ -43,7 +43,7 @@ jobs:
               status=$?
               echo "GPU submission $mode trial $trial: exit $status"
               cat "results/local/video-$mode-$trial.log"
-              if [ "$mode" = flush ] && [ "$status" -ne 0 ]; then baseline_status=$status; fi
+              if [ "$mode" = none ] && [ "$status" -ne 0 ]; then baseline_status=$status; fi
             done
           done
           set -e

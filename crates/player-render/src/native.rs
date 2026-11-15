@@ -37,6 +37,7 @@ pub(crate) struct Api {
     initialized: bool,
     pub render_create: unsafe extern "C" fn(*mut Handle, Handle, *mut Param) -> c_int,
     pub render: unsafe extern "C" fn(Handle, *mut Param) -> c_int,
+    pub render_update: unsafe extern "C" fn(Handle) -> u64,
     pub render_free: unsafe extern "C" fn(Handle),
     pub render_callback:
         unsafe extern "C" fn(Handle, Option<extern "C" fn(*mut c_void)>, *mut c_void),
@@ -163,6 +164,10 @@ impl Api {
                 render: symbol!(
                     "mpv_render_context_render",
                     unsafe extern "C" fn(Handle, *mut Param) -> c_int
+                ),
+                render_update: symbol!(
+                    "mpv_render_context_update",
+                    unsafe extern "C" fn(Handle) -> u64
                 ),
                 render_free: symbol!("mpv_render_context_free", unsafe extern "C" fn(Handle)),
                 render_callback: symbol!(
