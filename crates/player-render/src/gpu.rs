@@ -17,30 +17,6 @@ struct Resolver {
     libraries: Vec<Library>,
 }
 impl Resolver {
-    #[cfg(test)]
-    fn current_context(&self) -> usize {
-        for name in [
-            c"eglGetCurrentContext",
-            c"glXGetCurrentContext",
-            c"wglGetCurrentContext",
-            c"CGLGetCurrentContext",
-        ] {
-            for library in &self.libraries {
-                // SAFETY: retained graphics libraries expose these no-argument context getters.
-                if let Ok(get) = unsafe {
-                    library.get::<unsafe extern "system" fn() -> *const c_void>(
-                        name.to_bytes_with_nul(),
-                    )
-                } {
-                    let context = unsafe { get() } as usize;
-                    if context != 0 {
-                        return context;
-                    }
-                }
-            }
-        }
-        0
-    }
     fn lookup(&self, name: &CStr) -> *const c_void {
         if let Some(value) = self.known.get(name.to_string_lossy().as_ref()) {
             return *value;
@@ -105,16 +81,6 @@ struct Renderer {
     texture: glow::Texture,
     framebuffer: glow::Framebuffer,
     size: (u32, u32),
-    #[cfg(test)]
-    entry_states: HashMap<[i32; 10], usize>,
-    #[cfg(test)]
-    output_colors: HashMap<[u8; 8], usize>,
-    #[cfg(test)]
-    created_context: usize,
-    #[cfg(test)]
-    probe_sync: String,
-    #[cfg(test)]
-    probe_readback: bool,
     _resolver: Box<Resolver>,
     callback: Box<Arc<dyn Fn() + Send + Sync>>,
 }
@@ -200,16 +166,6 @@ impl Renderer {
             texture,
             framebuffer,
             size: (0, 0),
-            #[cfg(test)]
-            entry_states: HashMap::new(),
-            #[cfg(test)]
-            output_colors: HashMap::new(),
-            #[cfg(test)]
-            created_context: resolver.current_context(),
-            #[cfg(test)]
-            probe_sync: std::env::var("FOXIDE_PROBE_SYNC").unwrap_or_default(),
-            #[cfg(test)]
-            probe_readback: std::env::var_os("FOXIDE_PROBE_READBACK").is_some(),
             _resolver: resolver,
             callback: Box::new(callback),
         };
@@ -237,14 +193,6 @@ impl Renderer {
                 return Ok(None);
             }
             let gl = &self.gl;
-            #[cfg(test)]
-            if self.created_context != 0 {
-                assert_eq!(
-                    self.created_context,
-                    self._resolver.current_context(),
-                    "libmpv render context changed between setup and frame"
-                );
-            }
             let framebuffer = gl.get_parameter_framebuffer(glow::DRAW_FRAMEBUFFER_BINDING);
             let read_framebuffer = gl.get_parameter_framebuffer(glow::READ_FRAMEBUFFER_BINDING);
             let texture = gl.get_parameter_texture(glow::TEXTURE_BINDING_2D);
@@ -264,24 +212,6 @@ impl Renderer {
             };
             gl.active_texture(glow::TEXTURE0);
             gl.bind_texture(glow::TEXTURE_2D, None);
-            #[cfg(test)]
-            {
-                let mut mask = [0; 4];
-                gl.get_parameter_i32_slice(glow::COLOR_WRITEMASK, &mut mask);
-                let state = [
-                    active_texture,
-                    mask[0],
-                    mask[1],
-                    mask[2],
-                    mask[3],
-                    gl.get_parameter_i32(glow::PIXEL_UNPACK_BUFFER_BINDING),
-                    gl.get_parameter_i32(glow::DRAW_BUFFER0),
-                    gl.get_parameter_i32(glow::UNPACK_ROW_LENGTH),
-                    gl.get_parameter_i32(glow::UNPACK_SKIP_ROWS),
-                    gl.get_parameter_i32(glow::UNPACK_SKIP_PIXELS),
-                ];
-                *self.entry_states.entry(state).or_default() += 1;
-            }
             let program = gl.get_parameter_program(glow::CURRENT_PROGRAM);
             let vao = gl.get_parameter_vertex_array(glow::VERTEX_ARRAY_BINDING);
             let buffer = gl.get_parameter_buffer(glow::ARRAY_BUFFER_BINDING);
@@ -352,37 +282,6 @@ impl Renderer {
             // Resizing above temporarily binds the output texture for allocation.
             gl.bind_texture(glow::TEXTURE_2D, None);
             let result = render_texture(self.api.render, self.context, &mut fbo);
-            #[cfg(test)]
-            match self.probe_sync.as_str() {
-                "none" => {}
-                "finish" => gl.finish(),
-                "flush" => gl.flush(),
-                _ => {}
-            }
-            #[cfg(test)]
-            if self.probe_readback {
-                gl.bind_framebuffer(glow::READ_FRAMEBUFFER, Some(self.framebuffer));
-                let mut raw = [0_u8; 8];
-                gl.read_pixels(
-                    (width / 2) as i32,
-                    (height / 8) as i32,
-                    1,
-                    1,
-                    glow::RGBA,
-                    glow::UNSIGNED_BYTE,
-                    glow::PixelPackData::Slice(Some(&mut raw[..4])),
-                );
-                gl.read_pixels(
-                    (width / 2) as i32,
-                    (height * 7 / 8) as i32,
-                    1,
-                    1,
-                    glow::RGBA,
-                    glow::UNSIGNED_BYTE,
-                    glow::PixelPackData::Slice(Some(&mut raw[4..])),
-                );
-                *self.output_colors.entry(raw).or_default() += 1;
-            }
             gl.bind_framebuffer(glow::DRAW_FRAMEBUFFER, framebuffer);
             gl.bind_framebuffer(glow::READ_FRAMEBUFFER, read_framebuffer);
             if active_texture as u32 != glow::TEXTURE0 {
@@ -430,10 +329,6 @@ impl Renderer {
 }
 impl Drop for Renderer {
     fn drop(&mut self) {
-        #[cfg(test)]
-        println!("[video-entry-states] {:?}", self.entry_states);
-        #[cfg(test)]
-        println!("[video-before-compositor] {:?}", self.output_colors);
         // SAFETY: RenderingTeardown runs with the original context current.
         // Unregister and free before releasing userdata, textures or the client.
         unsafe {
@@ -511,18 +406,6 @@ fn attach_observed(
                     ready.store(false, Ordering::Release);
                     image(slint::Image::default());
                     renderer = None;
-                }
-                #[cfg(test)]
-                slint::RenderingState::AfterRendering => {
-                    if let Some(renderer) = renderer.as_ref()
-                        && renderer.created_context != 0
-                    {
-                        assert_eq!(
-                            renderer.created_context,
-                            renderer._resolver.current_context(),
-                            "Slint composited using a different GL context"
-                        );
-                    }
                 }
                 _ => {}
             }

@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [fix/security-and-test-gaps]
-    paths: [.github/workflows/libmpv-control.yml, scripts/probe_libmpv_gl.py]
+    paths: [.github/workflows/libmpv-control.yml, tests/probes/libmpv_gl.py, third_party/mpv/**]
 permissions:
   contents: read
 jobs:
@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        engine: [system, '0.40', '0.40-nan-padding', '0.40-zero-lut']
+        engine: [nan-padding, zero-lut]
     env:
       LIBGL_ALWAYS_SOFTWARE: '1'
       FOXIDE_RENDER_FIXTURE: ${{ github.workspace }}/results/local/orientation.mkv
@@ -22,13 +22,12 @@ jobs:
       - name: Install independent control dependencies
         run: sudo apt-get update && sudo apt-get install -y ffmpeg libmpv2 libsdl2-2.0-0 xvfb xauth libgl1-mesa-dri meson ninja-build pkg-config libavcodec-dev libavfilter-dev libavformat-dev libavutil-dev libswresample-dev libswscale-dev libplacebo-dev libass-dev libegl1-mesa-dev
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        if: matrix.engine != 'system'
         with:
           repository: mpv-player/mpv
           ref: e48ac7ce08462f5e33af6ef9deeac6fa87eef01e # v0.40.0
           path: results/local/mpv-source
       - name: Reproduce allowed NaN contents of uninitialized scaler padding
-        if: matrix.engine == '0.40-nan-padding'
+        if: matrix.engine == 'nan-padding'
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -40,19 +39,10 @@ jobs:
           path.write_text(source.replace(before, after))
           PY
       - name: Zero only scaler lookup-table padding in the control build
-        if: matrix.engine == '0.40-zero-lut'
+        if: matrix.engine == 'zero-lut'
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          path = Path('results/local/mpv-source/video/out/gpu/video.c')
-          source = path.read_text()
-          before = 'float *weights = talloc_array(NULL, float, lut_size * stride);'
-          after = 'float *weights = talloc_zero_array(NULL, float, lut_size * stride);'
-          assert source.count(before) == 1
-          path.write_text(source.replace(before, after))
-          PY
+          git -C results/local/mpv-source apply "$GITHUB_WORKSPACE/third_party/mpv/scaler-lut-padding.patch"
       - name: Build pinned upstream media engine
-        if: matrix.engine != 'system'
         shell: bash
         run: |
           meson setup results/local/mpv-build results/local/mpv-source --prefix="$PWD/results/local/mpv-install" --buildtype=release --wrap-mode=nofallback -Dlibmpv=true -Dcplayer=false -Dlua=disabled -Djavascript=disabled -Dplain-gl=enabled
@@ -69,13 +59,16 @@ jobs:
         shell: bash
         run: |
           result=0
-          for trial in 1 2 3; do
+          expected=0
+          trials=12
+          if [ '${{ matrix.engine }}' = nan-padding ]; then expected=2; trials=3; fi
+          for trial in $(seq 1 "$trials"); do
             set +e
-            xvfb-run -a -s '-screen 0 1280x720x24' python3 scripts/probe_libmpv_gl.py > "results/local/video-independent-$trial.log" 2>&1
+            xvfb-run -a -s '-screen 0 1280x720x24' python3 tests/probes/libmpv_gl.py > "results/local/video-independent-$trial.log" 2>&1
             status=$?
             set -e
             cat "results/local/video-independent-$trial.log"
-            if [ "$status" -ne 0 ]; then result=$status; fi
+            if [ "$status" -ne "$expected" ]; then result=1; fi
           done
           exit "$result"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

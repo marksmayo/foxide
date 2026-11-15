@@ -117,6 +117,7 @@ def main():
             break
         time.sleep(0.001)
     print(f"SDL control unique={len(frames)} inverted={inverted} rendered={rendered} colors={colors}", flush=True)
+    poisoned_padding = False
     if not frames:
         exists = gl("glIsTexture", c.c_ubyte, c.c_uint)
         level = gl("glGetTextureLevelParameteriv", None, c.c_uint, c.c_int, c.c_uint, c.POINTER(c.c_int))
@@ -141,12 +142,18 @@ def main():
             if (width, height) == (2, 256):
                 values_float = (c.c_float * (width * height * 4))()
                 gl("glGetTextureImage", None, c.c_uint, c.c_int, c.c_uint, c.c_uint, c.c_int, c.c_void_p)(ident, 0, 0x1908, 0x1406, c.sizeof(values_float), values_float)
-                print(f"LUT finite_coefficients={all(math.isfinite(v) for i, v in enumerate(values_float) if i % 8 < 6)} padding_nan={sum(math.isnan(v) for i, v in enumerate(values_float) if i % 8 >= 6)}", flush=True)
+                finite = all(math.isfinite(v) for i, v in enumerate(values_float) if i % 8 < 6)
+                padding_nan = sum(math.isnan(v) for i, v in enumerate(values_float) if i % 8 >= 6)
+                poisoned_padding |= finite and padding_nan > 0
+                print(f"LUT finite_coefficients={finite} padding_nan={padding_nan}", flush=True)
+    read_error = gl("glGetError", c.c_uint)()
     worker.join(timeout=2)
     bind(mpv, "mpv_render_context_free", None, c.c_void_p)(renderer)
     bind(mpv, "mpv_terminate_destroy", None, c.c_void_p)(handle)
     bind(sdl, "SDL_Quit", None)()
-    assert ready.is_set() and first and len(frames) >= 75 and inverted == 0
+    if ready.is_set() and rendered >= 75 and not frames and not inverted and poisoned_padding and not read_error:
+        raise SystemExit(2)  # Verified upstream NaN-padding failure, not setup failure.
+    assert ready.is_set() and first and len(frames) >= 75 and inverted == 0 and not read_error
 
 
 if __name__ == "__main__":

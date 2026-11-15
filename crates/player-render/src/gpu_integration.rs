@@ -92,21 +92,13 @@ struct Samples {
 fn composited_video_is_upright_and_advances_at_video_cadence() {
     let fixture = std::env::var("FOXIDE_RENDER_FIXTURE")
         .expect("Set FOXIDE_RENDER_FIXTURE to the asymmetric test video");
-    let selector = slint::BackendSelector::new()
+    slint::BackendSelector::new()
         .backend_name("winit".into())
-        .renderer_name("femtovg".into());
-    let selector = if std::env::var("FOXIDE_PROBE_GL_API").as_deref() == Ok("desktop") {
-        selector.require_opengl_with_version(3, 3)
-    } else {
-        selector
-    };
-    selector.select().unwrap();
+        .renderer_name("femtovg".into())
+        .select()
+        .unwrap();
     let ui = VideoProbe::new().unwrap();
-    ui.set_clip_video(std::env::var_os("FOXIDE_PROBE_UNCLIPPED").is_none());
     let engine = Rc::new(Engine::new().unwrap());
-    let detached = std::env::var_os("FOXIDE_PROBE_DETACHED").is_some();
-    let latest_frame = Rc::new(RefCell::new(slint::Image::default()));
-    let published_frame = latest_frame.clone();
     let samples = Rc::new(RefCell::new(Samples::default()));
     let graphics = Rc::new(RefCell::new(None::<glow::Context>));
     let started = Instant::now();
@@ -130,8 +122,7 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
                 .unwrap_or((1, 1))
         },
         move |frame| {
-            *published_frame.borrow_mut() = frame.clone();
-            if !detached && let Some(w) = weak_image.upgrade() {
+            if let Some(w) = weak_image.upgrade() {
                 w.set_frame(frame);
             }
         },
@@ -155,9 +146,11 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
                     };
                     // SAFETY: setup observer runs with the current probe context.
                     unsafe {
-                        println!("[video-probe] GL_VERSION={} GL_RENDERER={}",
-                                 gl.get_parameter_string(glow::VERSION),
-                                 gl.get_parameter_string(glow::RENDERER));
+                        println!(
+                            "[video-probe] GL_VERSION={} GL_RENDERER={}",
+                            gl.get_parameter_string(glow::VERSION),
+                            gl.get_parameter_string(glow::RENDERER)
+                        );
                     }
                     *graphics.borrow_mut() = Some(gl);
                 }
@@ -168,11 +161,16 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
                 };
                 if observations.borrow().presentations == 1 {
                     if w.get_frame().size().width != 0 || w.get_frame().size().height != 0 {
-                        observations.borrow_mut().errors.push("Published a video surface before any media was opened".into());
+                        observations
+                            .borrow_mut()
+                            .errors
+                            .push("Published a video surface before any media was opened".into());
                     }
                     // This only queues a control command; no normal libmpv API
                     // is called on the rendering thread.
-                    load_engine.command(vec!["loadfile".into(), fixture.clone(), "replace".into()]).unwrap();
+                    load_engine
+                        .command(vec!["loadfile".into(), fixture.clone(), "replace".into()])
+                        .unwrap();
                 }
                 let size = w.window().size();
                 if size.width == 0 || size.height < 8 {
@@ -197,28 +195,13 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
                     );
                     gl.bind_framebuffer(glow::READ_FRAMEBUFFER, previous);
                 }
-                if detached {
-                    let source = latest_frame.borrow();
-                    let inner: &slint::private_unstable_api::re_exports::ImageInner = (&*source).into();
-                    let slint::private_unstable_api::re_exports::ImageInner::BorrowedOpenGLTexture(texture) = inner else { return };
-                    // SAFETY: source-only control uses the same live texture and current context.
-                    unsafe {
-                        let previous = gl.get_parameter_framebuffer(glow::READ_FRAMEBUFFER_BINDING);
-                        let fbo = gl.create_framebuffer().unwrap();
-                        gl.bind_framebuffer(glow::READ_FRAMEBUFFER, Some(fbo));
-                        gl.framebuffer_texture_2d(glow::READ_FRAMEBUFFER, glow::COLOR_ATTACHMENT0, glow::TEXTURE_2D, Some(glow::NativeTexture(texture.texture_id)), 0);
-                        gl.read_pixels(0, 0, size.width as i32, size.height as i32, glow::RGBA, glow::UNSIGNED_BYTE, glow::PixelPackData::Slice(Some(&mut pixels)));
-                        gl.bind_framebuffer(glow::READ_FRAMEBUFFER, previous);
-                        gl.delete_framebuffer(fbo);
-                    }
-                }
                 let pixel = |y: u32| {
                     let i = ((y * size.width + size.width / 2) * 4) as usize;
                     &pixels[i..i + 3]
                 };
                 // OpenGL readback row zero is the bottom of the final window.
-                let top = pixel(if detached { size.height / 8 } else { size.height * 7 / 8 });
-                let bottom = pixel(if detached { size.height * 7 / 8 } else { size.height / 8 });
+                let top = pixel(size.height * 7 / 8);
+                let bottom = pixel(size.height / 8);
                 let red = |p: &[u8]| p[0] > 150 && p[1] < 80 && p[2] < 80;
                 let blue = |p: &[u8]| p[2] > 150 && p[0] < 80 && p[1] < 80;
                 let mut samples = observations.borrow_mut();
@@ -232,23 +215,6 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
                         .count();
                     let source = w.get_frame();
                     let image = source.size();
-                    let inner: &slint::private_unstable_api::re_exports::ImageInner = (&source).into();
-                    if let slint::private_unstable_api::re_exports::ImageInner::BorrowedOpenGLTexture(texture) = inner {
-                        // SAFETY: test-only diagnostic readback; the borrowed texture
-                        // belongs to this current context and the FBO is deleted below.
-                        unsafe {
-                            let previous = gl.get_parameter_framebuffer(glow::READ_FRAMEBUFFER_BINDING);
-                            let fbo = gl.create_framebuffer().unwrap();
-                            gl.bind_framebuffer(glow::READ_FRAMEBUFFER, Some(fbo));
-                            gl.framebuffer_texture_2d(glow::READ_FRAMEBUFFER, glow::COLOR_ATTACHMENT0, glow::TEXTURE_2D, Some(glow::NativeTexture(texture.texture_id)), 0);
-                            let mut raw = [0_u8; 8];
-                            gl.read_pixels((size.width/2) as i32, (size.height/8) as i32, 1, 1, glow::RGBA, glow::UNSIGNED_BYTE, glow::PixelPackData::Slice(Some(&mut raw[..4])));
-                            gl.read_pixels((size.width/2) as i32, (size.height*7/8) as i32, 1, 1, glow::RGBA, glow::UNSIGNED_BYTE, glow::PixelPackData::Slice(Some(&mut raw[4..])));
-                            gl.bind_framebuffer(glow::READ_FRAMEBUFFER, previous);
-                            gl.delete_framebuffer(fbo);
-                            samples.summaries.push(format!("texture={} raw={raw:?}", texture.texture_id));
-                        }
-                    }
                     samples.summaries.push(format!(
                         "surface={}x{} image={}x{} first={:?} max={} nonblack={}",
                         size.width,
@@ -328,6 +294,11 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
     assert!(
         samples.timing.complete(started.elapsed()),
         "Video did not start within 15 seconds or complete the five-second cadence window"
+    );
+    assert!(
+        samples.read_errors.is_empty(),
+        "OpenGL readback errors: {:?}",
+        samples.read_errors
     );
     assert!(
         samples.errors.is_empty(),
