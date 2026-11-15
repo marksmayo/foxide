@@ -25,7 +25,7 @@ import urllib.error
 import urllib.request
 
 from collection_io import EventTail, write_json
-from event_benchmarks import measurement_rows, playback_verified, summarize_samples
+from event_benchmarks import measurement_rows, playback_verified, summarize_samples, vlc_software_decode_verified
 from telemetry import windows_snapshot, linux_snapshot, mac_snapshot
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -81,10 +81,11 @@ def command_for(player, executable, scenario, media, subtitle, port, password, p
         return [executable, *args, '--', str(media)]
     if player == 'vlc':
         args = ['--ignore-config', '--intf=dummy', '--vout=dummy', '--aout=dummy', '--avcodec-hw=none',
+                '--codec=avcodec,none', '--verbose=2',
                 '--repeat', '--no-video-title-show', '--extraintf=http', '--http-host=127.0.0.1',
                 '--http-port=' + str(port), '--http-password=' + password]
         if presentation == 'native-window':
-            args = [a for a in args if not a.startswith(('--intf=', '--vout=', '--aout=', '--avcodec-hw='))] + ['--avcodec-hw=any']
+            args = [a for a in args if not a.startswith(('--intf=', '--vout=', '--aout=', '--avcodec-hw=', '--codec=', '--verbose='))] + ['--avcodec-hw=any']
         if sys.platform != 'darwin': args.append('--no-one-instance')
         if scenario == 'speed2x': args.append('--rate=2')
         if scenario == 'paused': args.append('--start-paused')
@@ -211,6 +212,12 @@ def collect(player, executable, scenario, media, subtitle, directory, settings, 
     case['playback_events'] = read_events(directory / 'events.jsonl')
     verified = playback_verified(player, scenario, case['playback_events'], case['vlc_status'], presentation)
     case['verified'] = verified and case['status'] == 'sampled' and scenario != 'ass'
+    if player == 'vlc' and presentation == 'software-null':
+        decoder_log = (directory / 'stderr.log').read_text('utf-8', errors='replace') if (directory / 'stderr.log').exists() else ''
+        case['software_decode_verified'] = vlc_software_decode_verified(decoder_log, scenario)
+        case['verified'] = case['verified'] and case['software_decode_verified']
+        if not case['software_decode_verified']:
+            case['notes'].append('Software decoder not verified from VLC module logs; excluded from software medals.')
     if scenario == 'ass': case['notes'].append('Subtitle composition is disabled by null output; no ASS performance medal is eligible.')
     if case['status'] == 'sampled': case['status'] = 'verified-playback' if case['verified'] else 'sampled-playback-unverified'
     summary = summarize_samples(case['samples'], case.get('playback_ready_elapsed', 0), settings['warmup'])
