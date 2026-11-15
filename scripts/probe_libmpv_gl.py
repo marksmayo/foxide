@@ -21,7 +21,7 @@ class Fbo(c.Structure):
 
 def main():
     sdl = c.CDLL("libSDL2-2.0.so.0")
-    mpv = c.CDLL("libmpv.so.2")
+    mpv = c.CDLL(os.environ.get("FOXIDE_LIBMPV", "libmpv.so.2"))
     assert bind(sdl, "SDL_Init", c.c_int, c.c_uint)(0x20) == 0
     attr = bind(sdl, "SDL_GL_SetAttribute", c.c_int, c.c_int, c.c_int)
     attr(17, 3)  # major
@@ -116,6 +116,27 @@ def main():
             break
         time.sleep(0.001)
     print(f"SDL control unique={len(frames)} inverted={inverted} rendered={rendered} colors={colors}", flush=True)
+    if not frames:
+        exists = gl("glIsTexture", c.c_ubyte, c.c_uint)
+        level = gl("glGetTextureLevelParameteriv", None, c.c_uint, c.c_int, c.c_uint, c.POINTER(c.c_int))
+        sample = gl("glGetTextureSubImage", None, c.c_uint, c.c_int, c.c_int, c.c_int, c.c_int, c.c_int, c.c_int, c.c_int, c.c_uint, c.c_uint, c.c_int, c.c_void_p)
+        for ident in range(1, 65):
+            if not exists(ident):
+                continue
+            dimensions = []
+            for key in [0x1000, 0x1001, 0x1003]:
+                value = c.c_int()
+                level(ident, 0, key, c.byref(value))
+                dimensions.append(value.value)
+            width, height, fmt = dimensions
+            if width <= 0 or height <= 0:
+                continue
+            values = []
+            for y in [height // 8, height * 7 // 8]:
+                rgba = (c.c_ubyte * 4)()
+                sample(ident, 0, width // 2, y, 0, 1, 1, 1, 0x1908, 0x1401, 4, rgba)
+                values.append(list(rgba))
+            print(f"texture={ident} dimensions={dimensions} samples={values}", flush=True)
     worker.join(timeout=2)
     bind(mpv, "mpv_render_context_free", None, c.c_void_p)(renderer)
     bind(mpv, "mpv_terminate_destroy", None, c.c_void_p)(handle)

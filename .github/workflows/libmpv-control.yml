@@ -1,0 +1,61 @@
+name: Independent libmpv control
+on:
+  workflow_dispatch:
+  push:
+    branches: [fix/security-and-test-gaps]
+    paths: [.github/workflows/libmpv-control.yml, scripts/probe_libmpv_gl.py]
+permissions:
+  contents: read
+jobs:
+  independent-renderer:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [system, '0.40']
+    env:
+      LIBGL_ALWAYS_SOFTWARE: '1'
+      FOXIDE_RENDER_FIXTURE: ${{ github.workspace }}/results/local/orientation.mkv
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install independent control dependencies
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg libmpv2 libsdl2-2.0-0 xvfb xauth libgl1-mesa-dri meson ninja-build pkg-config libavcodec-dev libavfilter-dev libavformat-dev libavutil-dev libswresample-dev libswscale-dev libplacebo-dev libass-dev libegl1-mesa-dev
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: matrix.engine == '0.40'
+        with:
+          repository: mpv-player/mpv
+          ref: e48ac7ce08462f5e33af6ef9deeac6fa87eef01e # v0.40.0
+          path: results/local/mpv-source
+      - name: Build pinned upstream media engine
+        if: matrix.engine == '0.40'
+        shell: bash
+        run: |
+          meson setup results/local/mpv-build results/local/mpv-source --prefix="$PWD/results/local/mpv-install" --buildtype=release --wrap-mode=nofallback -Dlibmpv=true -Dcplayer=false -Dlua=disabled -Djavascript=disabled -Dplain-gl=enabled
+          meson compile -C results/local/mpv-build -j 2
+          meson install -C results/local/mpv-build
+          engine_path=$(find "$PWD/results/local/mpv-install" -name libmpv.so.2 -print -quit)
+          test -n "$engine_path"
+          echo "FOXIDE_LIBMPV=$engine_path" >> "$GITHUB_ENV"
+      - name: Generate identical asymmetric fixture
+        run: |
+          mkdir -p results/local
+          ffmpeg -v error -f lavfi -i "testsrc2=size=320x180:rate=30:duration=10,drawbox=x=0:y=0:w=iw:h=ih/4:color=red:t=fill,drawbox=x=0:y=3*ih/4:w=iw:h=ih/4:color=blue:t=fill" -c:v ffv1 "$FOXIDE_RENDER_FIXTURE"
+      - name: Verify independent default rendering
+        shell: bash
+        run: |
+          result=0
+          for trial in 1 2 3; do
+            set +e
+            xvfb-run -a -s '-screen 0 1280x720x24' python3 scripts/probe_libmpv_gl.py > "results/local/video-independent-$trial.log" 2>&1
+            status=$?
+            set -e
+            cat "results/local/video-independent-$trial.log"
+            if [ "$status" -ne 0 ]; then result=$status; fi
+          done
+          exit "$result"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: independent-renderer-${{ matrix.engine }}
+          path: results/local/video-independent-*.log
