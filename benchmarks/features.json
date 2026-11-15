@@ -701,7 +701,7 @@
         "video",
         "audio"
       ],
-      "note": "Current Foxide launches external mpv; it is not an independent playback engine."
+      "note": "Windowed fields use Foxide Desktop with libmpv; software-only fields use the Foxide CLI wrapper around external mpv. These are separate benchmark cohorts."
     },
     {
       "id": "vlc",

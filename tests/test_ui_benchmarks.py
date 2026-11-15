@@ -22,6 +22,10 @@ class UiBenchmarkTests(unittest.TestCase):
             subprocess.run([sys.executable, str(root/'scripts/run_ui_benchmarks.py'), '--players', 'foxide',
                             '--actions', 'menu_media', '--output', str(output)], check=True, capture_output=True)
             self.assertEqual(json.loads((output/'measurements.json').read_text()), [])
+            session = json.loads((output/'session.json').read_text())['session']
+            self.assertTrue(session['host'])
+            self.assertEqual(session['presentation'], 'native-ui')
+            self.assertIn('utc', session)
             subprocess.run([sys.executable, str(root/'scripts/build_medal_report.py'), '--measurements',
                             str(output/'measurements.json'), '--sessions', str(output/'session.json'),
                             '--output', str(report)], check=True, capture_output=True)
@@ -112,3 +116,35 @@ class UiBenchmarkTests(unittest.TestCase):
         self.assertEqual(one['window_policy'], 'application-default')
         self.assertNotEqual(one, action_cohort(settings, dict(context, backend='different'), 'menu_media'))
         self.assertNotEqual(one, action_cohort(settings, context, 'menu_audio'))
+
+    def test_invalid_native_action_stops_its_batch_without_hiding_the_failure(self):
+        from unittest.mock import patch
+        from run_ui_benchmarks import collect_batch
+        scenario = dict(id='menu_media', verification='accessibility-state', condition='media-menu-visible')
+        failed = dict(player='foxide', status='unverified', error='No visible owned UI')
+        with patch('run_ui_benchmarks.collect', return_value=failed) as collector:
+            cases, rows = collect_batch('foxide', 'binary', scenario, ['Media', 'Open'],
+                                        Path('unused-test-output'), {}, 'linux', 10, None)
+        self.assertEqual(collector.call_count, 1)
+        self.assertEqual(cases, [failed])
+        self.assertEqual(rows, [])
+
+    def test_verified_native_action_requires_the_entire_batch_before_emitting_rows(self):
+        from unittest.mock import patch
+        from run_ui_benchmarks import collect_batch
+        scenario = dict(id='menu_media', verification='accessibility-state', condition='media-menu-visible')
+        good = dict(player='foxide', platform='linux', profile='native-ui/same', trial=0,
+                    source='case.json', status='verified', verified=True, pid=42, input_ns=0, completed_ns=100,
+                    input_method='accessibility-action', before='before.json', after='after.json',
+                    verification=dict(kind='accessibility-state', condition='media-menu-visible', passed=True, pid=42))
+        failed = dict(player='foxide', status='unverified', error='Postcondition absent')
+        with patch('run_ui_benchmarks.collect', side_effect=[good, failed]) as collector:
+            cases, rows = collect_batch('foxide', 'binary', scenario, ['Media', 'Open'],
+                                        Path('unused-test-output'), {}, 'linux', 3, None)
+        self.assertEqual(len(cases), 2)
+        self.assertEqual(rows, [], 'Never publish the successful subset of an invalid batch')
+        with patch('run_ui_benchmarks.collect', side_effect=[dict(good, trial=i) for i in range(3)]):
+            cases, rows = collect_batch('foxide', 'binary', scenario, ['Media', 'Open'],
+                                        Path('unused-test-output'), {}, 'linux', 3, None)
+        self.assertEqual(len(rows), 3)
+        self.assertEqual([r['trial'] for r in rows], [0, 1, 2])

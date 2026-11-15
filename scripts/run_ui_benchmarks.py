@@ -138,6 +138,23 @@ def collect(player, executable, action, selectors, directory, settings, system, 
     return case
 
 
+def collect_batch(player, executable, action, selectors, directory, settings, system, repeats, snapshot):
+    cases = []
+    for trial in range(repeats):
+        case = collect(player, executable, action, selectors,
+                       directory / f'{player}-{action["id"]}-{trial}', settings, system, trial, snapshot)
+        cases.append(case)
+        if case.get('verified') is not True:
+            # A failed trial invalidates this whole batch. Further launches
+            # cannot restore eligibility; retain the failure and try the next action.
+            break
+    rows = []
+    if len(cases) == repeats and all(c.get('verified') is True for c in cases):
+        for case in cases:
+            rows.extend(action_rows(case, action))
+    return cases, rows
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--execute', action='store_true', help='Run only on an isolated logged-in interactive desktop')
@@ -182,18 +199,16 @@ def main():
         if not executable or not Path(executable).is_file():
             cases.append(dict(entry, status='not-installed', scope='native-ui'))
             continue
-        for trial in range(args.repeats):
-            case = collect(player, executable, actions[action_id], players[player]['menus'][action_id],
-                           args.output / f'{player}-{action_id}-{trial}', settings, system, trial, snapshot)
-            cases.append(case)
-        batch = cases[-args.repeats:]
-        # Never hide failed trials by ranking only the successful subset.
-        if all(c.get('verified') is True for c in batch):
-            for case in batch:
-                measurements.extend(action_rows(case, actions[action_id]))
+        batch, rows = collect_batch(player, executable, actions[action_id], players[player]['menus'][action_id],
+                                    args.output, settings, system, args.repeats, snapshot)
+        cases.extend(batch)
+        measurements.extend(rows)
+        print(f'{player} / {action_id}: {len(batch)}/{args.repeats} trials; '
+              f'{sum(c.get("verified") is True for c in batch)} verified; {len(rows)} metric rows', flush=True)
     write_json(args.output / 'measurements.json', measurements)
     write_json(args.output / 'session.json', dict(scope='native-ui',
-               session=dict(system=system, utc=datetime.now(timezone.utc).isoformat(),
+               session=dict(system=system, host=socket.gethostname(), utc=datetime.now(timezone.utc).isoformat(),
+                            source_commit=os.environ.get('GITHUB_SHA'),
                             run_id=os.environ.get('GITHUB_RUN_ID'), presentation='native-ui'),
                inventory=[], cases=cases, settings=settings))
     print(f'{len(cases)} action outcomes; {len(measurements)} verified metric rows. Output: {args.output}')
