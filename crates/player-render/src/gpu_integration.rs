@@ -14,7 +14,12 @@ slint::slint! {
     export component VideoProbe inherits Window {
         width: 320px; height: 180px; background: black;
         in property <image> frame;
-        Image { source: root.frame; image-fit: fill; }
+        in property <bool> clip-video: true;
+        Rectangle {
+            clip: root.clip-video;
+            border-radius: 12px;
+            Image { source: root.frame; image-fit: fill; }
+        }
     }
 }
 
@@ -37,6 +42,7 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
         .select()
         .unwrap();
     let ui = VideoProbe::new().unwrap();
+    ui.set_clip_video(std::env::var_os("FOXIDE_PROBE_UNCLIPPED").is_none());
     let engine = Engine::new().unwrap();
     let samples = Rc::new(RefCell::new(Samples::default()));
     let graphics = Rc::new(RefCell::new(None::<glow::Context>));

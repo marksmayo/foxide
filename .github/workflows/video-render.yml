@@ -19,8 +19,9 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           key: desktop-ui
+          cache-on-failure: true
       - name: Install software OpenGL and the native media engine
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg libmpv2 xvfb xauth libgl1-mesa-dri libegl1-mesa-dev libxkbcommon-dev libfontconfig1-dev libwayland-dev
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg libmpv2 xvfb xauth libgl1-mesa-dri libegl1-mesa-dev libxkbcommon-dev libxkbcommon-x11-dev libfontconfig1-dev libwayland-dev
       - name: Generate asymmetric moving video
         run: |
           mkdir -p results/local
