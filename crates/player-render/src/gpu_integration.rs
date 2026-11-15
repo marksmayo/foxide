@@ -104,6 +104,9 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
     let ui = VideoProbe::new().unwrap();
     ui.set_clip_video(std::env::var_os("FOXIDE_PROBE_UNCLIPPED").is_none());
     let engine = Rc::new(Engine::new().unwrap());
+    let detached = std::env::var_os("FOXIDE_PROBE_DETACHED").is_some();
+    let latest_frame = Rc::new(RefCell::new(slint::Image::default()));
+    let published_frame = latest_frame.clone();
     let samples = Rc::new(RefCell::new(Samples::default()));
     let graphics = Rc::new(RefCell::new(None::<glow::Context>));
     let started = Instant::now();
@@ -127,7 +130,8 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
                 .unwrap_or((1, 1))
         },
         move |frame| {
-            if let Some(w) = weak_image.upgrade() {
+            *published_frame.borrow_mut() = frame.clone();
+            if !detached && let Some(w) = weak_image.upgrade() {
                 w.set_frame(frame);
             }
         },
@@ -163,7 +167,7 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
                     return;
                 };
                 if observations.borrow().presentations == 1 {
-                    if w.get_frame() != slint::Image::default() {
+                    if w.get_frame().size().width != 0 || w.get_frame().size().height != 0 {
                         observations.borrow_mut().errors.push("Published a video surface before any media was opened".into());
                     }
                     // This only queues a control command; no normal libmpv API
@@ -193,13 +197,28 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
                     );
                     gl.bind_framebuffer(glow::READ_FRAMEBUFFER, previous);
                 }
+                if detached {
+                    let source = latest_frame.borrow();
+                    let inner: &slint::private_unstable_api::re_exports::ImageInner = (&*source).into();
+                    let slint::private_unstable_api::re_exports::ImageInner::BorrowedOpenGLTexture(texture) = inner else { return };
+                    // SAFETY: source-only control uses the same live texture and current context.
+                    unsafe {
+                        let previous = gl.get_parameter_framebuffer(glow::READ_FRAMEBUFFER_BINDING);
+                        let fbo = gl.create_framebuffer().unwrap();
+                        gl.bind_framebuffer(glow::READ_FRAMEBUFFER, Some(fbo));
+                        gl.framebuffer_texture_2d(glow::READ_FRAMEBUFFER, glow::COLOR_ATTACHMENT0, glow::TEXTURE_2D, Some(glow::NativeTexture(texture.texture_id)), 0);
+                        gl.read_pixels(0, 0, size.width as i32, size.height as i32, glow::RGBA, glow::UNSIGNED_BYTE, glow::PixelPackData::Slice(Some(&mut pixels)));
+                        gl.bind_framebuffer(glow::READ_FRAMEBUFFER, previous);
+                        gl.delete_framebuffer(fbo);
+                    }
+                }
                 let pixel = |y: u32| {
                     let i = ((y * size.width + size.width / 2) * 4) as usize;
                     &pixels[i..i + 3]
                 };
                 // OpenGL readback row zero is the bottom of the final window.
-                let top = pixel(size.height * 7 / 8);
-                let bottom = pixel(size.height / 8);
+                let top = pixel(if detached { size.height / 8 } else { size.height * 7 / 8 });
+                let bottom = pixel(if detached { size.height * 7 / 8 } else { size.height / 8 });
                 let red = |p: &[u8]| p[0] > 150 && p[1] < 80 && p[2] < 80;
                 let blue = |p: &[u8]| p[2] > 150 && p[0] < 80 && p[1] < 80;
                 let mut samples = observations.borrow_mut();
