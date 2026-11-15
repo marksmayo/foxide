@@ -1,6 +1,9 @@
 //! Opt-in compositor regression: real libmpv -> GL texture -> Slint -> pixels.
 //! Readback exists only in this test, never in the production playback path.
+#[path = "cadence_window.rs"]
+mod cadence_window;
 use super::*;
+use cadence_window::CadenceWindow;
 use slint::ComponentHandle;
 use std::{
     cell::RefCell,
@@ -73,6 +76,7 @@ fn publishing_a_new_frame_invalidates_layers_even_when_texture_identity_is_reuse
 
 #[derive(Default)]
 struct Samples {
+    timing: CadenceWindow,
     presentations: usize,
     summaries: Vec<String>,
     colors: Vec<[u8; 6]>,
@@ -143,9 +147,6 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
                 }
             } else if matches!(state, slint::RenderingState::AfterRendering) {
                 observations.borrow_mut().presentations += 1;
-                if started.elapsed().as_secs_f64() < 1.0 {
-                    return;
-                }
                 let Some(w) = weak_probe.upgrade() else {
                     return;
                 };
@@ -230,6 +231,10 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
                 if read_error != 0 {
                     samples.read_errors.push(read_error);
                 }
+                samples.timing.observe(
+                    started.elapsed(),
+                    (red(top) && blue(bottom)) || (blue(top) && red(bottom)),
+                );
                 if red(top) && blue(bottom) {
                     samples.upright += 1;
                 }
@@ -249,9 +254,16 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
         .command(vec!["loadfile".into(), fixture, "replace".into()])
         .unwrap();
     let timer = slint::Timer::default();
-    timer.start(slint::TimerMode::SingleShot, Duration::from_secs(6), || {
-        slint::quit_event_loop().unwrap();
-    });
+    let sample_clock = samples.clone();
+    timer.start(
+        slint::TimerMode::Repeated,
+        Duration::from_millis(20),
+        move || {
+            if sample_clock.borrow().timing.finished(started.elapsed()) {
+                slint::quit_event_loop().unwrap();
+            }
+        },
+    );
     ui.run().unwrap();
     if let Some(state) = engine.snapshot() {
         println!(
@@ -273,6 +285,10 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
         samples.errors
     );
     assert!(
+        samples.timing.complete(started.elapsed()),
+        "Video did not start within 15 seconds or complete the five-second cadence window"
+    );
+    assert!(
         samples.errors.is_empty(),
         "Native rendering errors: {:?}",
         samples.errors
@@ -285,7 +301,7 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
     );
     assert!(
         samples.frames.len() >= 75,
-        "Video stalled: only {} distinct composited frames over five seconds of 30fps media",
+        "Video stalled: only {} distinct composited frames over five seconds after first presented video",
         samples.frames.len()
     );
 }

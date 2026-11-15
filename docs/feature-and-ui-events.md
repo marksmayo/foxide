@@ -31,3 +31,7 @@ Windows UIA and macOS AX adapters remain available through the dedicated interac
 - [mpv manual](https://mpv.io/manual/stable/)
 
 The full per-claim source list is in the catalog. Support is a documentation finding, not a successful runtime acceptance test on every machine.
+
+The isolated hosted UI session explicitly activates AT-SPI and its screen-reader status before applications launch. The adapter dispatches GLib registration/state events and traverses nonvisual application roots before querying window geometry. A hosted run requires two eligible players in a shared UI cohort; zero verified measurements fails the collection gate while retaining evidence. UI-only follow-ups can refresh the joint report without repeating all playback installations.
+
+SMPlayer’s [Homebrew cask](https://github.com/Homebrew/homebrew-cask/blob/master/Casks/s/smplayer.rb) is disabled as of 2026-09-01 because it fails Gatekeeper checks. The macOS installation attempt records it as unavailable; the harness does not bypass Gatekeeper. Feature medals describe sourced capabilities, separately from installation and runtime outcomes.

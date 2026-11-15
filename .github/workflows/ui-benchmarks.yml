@@ -1,5 +1,13 @@
 name: Interactive UI benchmarks
 on:
+  push:
+    branches: [fix/security-and-test-gaps]
+    paths:
+      - '.github/workflows/ui-benchmarks.yml'
+      - 'scripts/ui_drivers.py'
+      - 'scripts/ui_benchmarks.py'
+      - 'scripts/run_ui_benchmarks.py'
+      - 'benchmarks/ui-events.json'
   workflow_dispatch:
     inputs:
       platform:
@@ -11,8 +19,12 @@ on:
         required: true
 permissions:
   contents: read
+concurrency:
+  group: native-ui-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   native-ui:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: [self-hosted, foxide-ui, '${{ inputs.platform }}']
     timeout-minutes: 90
     env:
@@ -33,3 +45,72 @@ jobs:
           path: |
             results/local/ui-actions
             results/local/ui-report
+  hosted-ui:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      LIBGL_ALWAYS_SOFTWARE: '1'
+      QT_LINUX_ACCESSIBILITY_ALWAYS_ON: '1'
+      LANG: C.UTF-8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
+        with:
+          key: hosted-native-ui-release
+      - name: Install isolated desktop and native accessibility adapters
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libmpv2 libxkbcommon-dev libwayland-dev libfontconfig1-dev libudev-dev libdbus-1-dev xvfb xauth openbox dbus-x11 at-spi2-core python3-pyatspi vlc smplayer
+      - name: Build release desktop
+        run: cargo build -p player-ui --features desktop --bin foxide-desktop --release --locked
+      - name: Collect real UI actions in an isolated desktop session
+        shell: bash
+        run: |
+          dbus-run-session -- xvfb-run -a -s '-screen 0 1920x1080x24 -dpi 96' bash -e -c '
+            dbus-update-activation-environment DISPLAY XAUTHORITY
+            busctl --user set-property org.a11y.Bus /org/a11y/bus org.a11y.Status IsEnabled b true
+            busctl --user set-property org.a11y.Bus /org/a11y/bus org.a11y.Status ScreenReaderEnabled b true
+            busctl --user get-property org.a11y.Bus /org/a11y/bus org.a11y.Status IsEnabled
+            openbox > /tmp/foxide-openbox.log 2>&1 &
+            /usr/bin/python3 scripts/run_ui_benchmarks.py --execute --require-comparable --players foxide vlc smplayer --repeats 10 --environment-label "Hosted Ubuntu X11 1920x1080 DPI96 C.UTF-8 Openbox accessibility-enabled application-default theme/window" --output results/local/ui-actions
+          '
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: native-ui-Linux-hosted
+          path: results/local/ui-actions/
+          if-no-files-found: warn
+  report:
+    needs: hosted-ui
+    if: github.event_name == 'push' && always()
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: native-ui-Linux-hosted
+          path: results/local/ui-platforms/linux
+      - name: Refresh joint playback and native UI scoreboards
+        run: python3 scripts/refresh_scoreboards.py --platform-dir results/local/ui-platforms --output docs/scoreboards --readme README.md
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: foxide-native-ui-report
+          path: docs/scoreboards/
+      - name: Publish results on the current PR branch
+        shell: bash
+        run: |
+          git fetch origin "$GITHUB_REF_NAME"
+          if [[ "$(git rev-parse "origin/$GITHUB_REF_NAME")" != "$GITHUB_SHA" ]]; then
+            echo 'Newer source exists; retaining report artifact without overwriting the branch.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add README.md docs/scoreboards benchmarks/results
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Update native UI results and combined medal tables'
+          git push origin "HEAD:$GITHUB_REF_NAME"

@@ -148,3 +148,12 @@ class UiBenchmarkTests(unittest.TestCase):
                                         Path('unused-test-output'), {}, 'linux', 3, None)
         self.assertEqual(len(rows), 3)
         self.assertEqual([r['trial'] for r in rows], [0, 1, 2])
+
+    def test_ui_quality_gate_needs_two_players_in_the_same_verified_cohort(self):
+        from ui_benchmarks import has_comparable_ui_measurements
+        rows = [dict(player=p, platform='linux', profile='native-ui/shared', trial=i, event='ui_menu_media_latency',
+                     value=1, verified=True, source='case.json') for p in ('foxide', 'vlc') for i in range(3)]
+        self.assertTrue(has_comparable_ui_measurements(rows))
+        self.assertFalse(has_comparable_ui_measurements(rows[:3]))
+        self.assertFalse(has_comparable_ui_measurements([dict(r, profile=r['player']) for r in rows]))
+        self.assertFalse(has_comparable_ui_measurements([dict(r, verified=False) if r['player']=='vlc' else r for r in rows]))

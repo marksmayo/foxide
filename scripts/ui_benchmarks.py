@@ -38,3 +38,10 @@ def action_rows(case, scenario):
     return [dict(player=case['player'], platform=case['platform'], profile=case['profile'],
                  trial=case['trial'], event='ui_' + scenario['id'] + '_' + suffix, value=value,
                  verified=True, source=case['source']) for suffix, value in values]
+
+
+def has_comparable_ui_measurements(rows):
+    from medal_events import performance_medals
+    cohorts = {(r['event'], r['platform'], r['profile']) for r in rows}
+    return any(performance_medals(rows, event, platform, profile)
+               for event, platform, profile in cohorts)

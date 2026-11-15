@@ -14,12 +14,13 @@ from pathlib import Path
 import platform
 import socket
 import subprocess
+import sys
 import time
 
 from collection_io import write_json
 from run_event_benchmarks import ROOT, digest, locate, stop_owned
 from telemetry import windows_snapshot, linux_snapshot, mac_snapshot
-from ui_benchmarks import action_cohort, action_rows
+from ui_benchmarks import action_cohort, action_rows, has_comparable_ui_measurements
 
 
 def plan(catalog, system):
@@ -61,6 +62,7 @@ def collect(player, executable, action, selectors, directory, settings, system, 
             case['pid'] = process.pid
             deadline = time.monotonic() + 15
             driver = None
+            last_attach_error = 'No owned process snapshot'
             while time.monotonic() < deadline:
                 if process.poll() is not None:
                     raise RuntimeError('New process exited; existing-instance attachment is forbidden')
@@ -77,11 +79,11 @@ def collect(player, executable, action, selectors, directory, settings, system, 
                         context = candidate.prepare()
                         driver = candidate
                         break
-                    except (RuntimeError, StopIteration):
-                        pass
+                    except (RuntimeError, StopIteration) as error:
+                        last_attach_error = f'{type(error).__name__}: {error}'
                 time.sleep(.1)
             if driver is None:
-                raise RuntimeError('No native UI adapter attached within startup deadline')
+                raise RuntimeError('No native UI adapter attached within startup deadline: ' + last_attach_error)
             # Settle before the timed action; any popup must first be absent.
             time.sleep(1)
             target_name, expected_name = selectors
@@ -158,6 +160,7 @@ def collect_batch(player, executable, action, selectors, directory, settings, sy
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--execute', action='store_true', help='Run only on an isolated logged-in interactive desktop')
+    parser.add_argument('--require-comparable', action='store_true', help='Fail if no two players have eligible measurements in a shared UI cohort')
     parser.add_argument('--players', nargs='+')
     parser.add_argument('--actions', nargs='+', default=['menu_media', 'menu_playback', 'menu_audio', 'menu_subtitles', 'open_dialog'])
     parser.add_argument('--repeats', type=int, default=10)
@@ -168,6 +171,8 @@ def main():
     args = parser.parse_args()
     if args.repeats < 3:
         parser.error('At least three repeats are required')
+    if args.require_comparable and not args.execute:
+        parser.error('--require-comparable requires --execute')
     if args.execute and not args.environment_label:
         parser.error('--execute requires --environment-label (screen, DPI, theme and desktop session)')
     system = {'Windows': 'windows', 'Darwin': 'macos', 'Linux': 'linux'}[platform.system()]
@@ -205,6 +210,8 @@ def main():
         measurements.extend(rows)
         print(f'{player} / {action_id}: {len(batch)}/{args.repeats} trials; '
               f'{sum(c.get("verified") is True for c in batch)} verified; {len(rows)} metric rows', flush=True)
+        for failed in (c for c in batch if c.get('error')):
+            print(failed['error'], flush=True)
     write_json(args.output / 'measurements.json', measurements)
     write_json(args.output / 'session.json', dict(scope='native-ui',
                session=dict(system=system, host=socket.gethostname(), utc=datetime.now(timezone.utc).isoformat(),
@@ -212,7 +219,11 @@ def main():
                             run_id=os.environ.get('GITHUB_RUN_ID'), presentation='native-ui'),
                inventory=[], cases=cases, settings=settings))
     print(f'{len(cases)} action outcomes; {len(measurements)} verified metric rows. Output: {args.output}')
+    if args.require_comparable and not has_comparable_ui_measurements(measurements):
+        print('No comparable verified native UI measurements; evidence retained without medals.', file=sys.stderr)
+        return 1
+    return 0
 
 
 if __name__ == '__main__':
-    main()
+    raise SystemExit(main())

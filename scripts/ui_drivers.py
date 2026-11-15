@@ -99,23 +99,37 @@ class LinuxDriver(Driver):
 
     def __init__(self, pid):
         import pyatspi
+        from gi.repository import GLib
+        self.context = GLib.MainContext.default()
+        self.pump()
         self.atspi, self.pid = pyatspi, pid
         self.app = next((app for app in pyatspi.Registry.getDesktop(0) if app.get_process_id() == pid), None)
         if self.app is None:
             raise RuntimeError('Owned application is absent from the AT-SPI desktop bus')
 
+    def pump(self):
+        # AT-SPI application registration and state changes arrive on GLib's
+        # default context. This polling adapter does not run Registry.start().
+        for _ in range(100):
+            if not self.context.pending():
+                break
+            self.context.iteration(False)
+
     def nodes(self):
+        self.pump()
         pending, nodes, budget = [self.app], [], 5000
         roles = {'menu item': 'MenuItem', 'menu': 'MenuItem', 'push button': 'Button', 'frame': 'Window', 'dialog': 'Window'}
         while pending and budget:
             item = pending.pop(); budget -= 1
             try:
+                # Application/group roots may lack Component but still own
+                # every visible window. Traverse them before querying geometry.
+                pending.extend(item.getChildAtIndex(i) for i in range(item.childCount))
                 state = item.getState()
                 bounds = item.queryComponent().getExtents(self.atspi.DESKTOP_COORDS)
                 nodes.append(Node(item, item.name, roles.get(item.getRoleName(), item.getRoleName()),
                                   item.get_process_id(), [bounds.x, bounds.y, bounds.x+bounds.width, bounds.y+bounds.height],
                                   state.contains(self.atspi.STATE_SHOWING)))
-                pending.extend(item.getChildAtIndex(i) for i in range(item.childCount))
             except Exception:
                 continue
         return nodes

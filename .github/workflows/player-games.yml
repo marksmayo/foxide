@@ -4,7 +4,7 @@ on:
   release:
     types: [published]
   push:
-    branches: [main, 'bench/**', fix/security-and-test-gaps]
+    branches: [main, 'bench/**']
     paths:
       - '.github/workflows/player-games.yml'
       - 'scripts/run_event_benchmarks.py'
@@ -166,8 +166,12 @@ jobs:
         shell: bash
         run: |
           dbus-run-session -- xvfb-run -a -s '-screen 0 1920x1080x24 -dpi 96' bash -e -c '
+            dbus-update-activation-environment DISPLAY XAUTHORITY
+            busctl --user set-property org.a11y.Bus /org/a11y/bus org.a11y.Status IsEnabled b true
+            busctl --user set-property org.a11y.Bus /org/a11y/bus org.a11y.Status ScreenReaderEnabled b true
+            busctl --user get-property org.a11y.Bus /org/a11y/bus org.a11y.Status IsEnabled
             openbox > /tmp/foxide-openbox.log 2>&1 &
-            /usr/bin/python3 scripts/run_ui_benchmarks.py --execute --players foxide vlc smplayer --repeats 10 --environment-label "Hosted Ubuntu X11 1920x1080 DPI96 C.UTF-8 Openbox application-default theme/window" --output results/local/ui-actions
+            /usr/bin/python3 scripts/run_ui_benchmarks.py --execute --require-comparable --players foxide vlc smplayer --repeats 10 --environment-label "Hosted Ubuntu X11 1920x1080 DPI96 C.UTF-8 Openbox accessibility-enabled application-default theme/window" --output results/local/ui-actions
           '
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()

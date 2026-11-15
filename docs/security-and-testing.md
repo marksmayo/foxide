@@ -6,14 +6,14 @@ Verified locally on 2026-11-16; Windows, offline dependency cache. This is a tar
 |---|---:|---|
 | Rust tests | 29 passed | Default workspace features |
 | Rust instrumented line coverage | 95.95% (1,065 / 1,110 lines) | Default features; not desktop/GPU |
-| Python tests | 80 passed | unittest discovery, offline |
+| Python tests | 93 passed | unittest discovery, offline |
 | Policy/report statement + branch coverage | 97% | Seven policy/report/publication modules; CI minimum 90% |
 | Installer statement + branch coverage | 95% | mpv + libmpv installers; separate CI minimum 90% |
-| All Python scripts, statement + branch coverage | 48.35% | Full scripts directory, including orchestration; no aggregate 90% claim |
+| All Python scripts, statement + branch coverage | 49.66% | Full scripts directory, including orchestration; no aggregate 90% claim |
 | Windows native rendering | Compile + Clippy passed | desktop feature |
 | Numeric evidence preservation | 43 JSON snapshots unchanged | Every numeric field compared before/after privacy filtering |
 
-The expanded whole-script inventory deliberately exposes the orchestration and platform collector gaps that the former six-module report omitted. The new desktop/GPU coverage artifact instruments the workspace with desktop and GPU integration features, including the ignored software-OpenGL compositor test under Xvfb. Its initial result is pending CI; no desktop coverage percentage is claimed here. A successful software-OpenGL test does not certify physical GPU decoding or battery efficiency.
+The expanded whole-script inventory deliberately exposes the orchestration and platform collector gaps that the former six-module report omitted. The new desktop/GPU coverage artifact instruments the workspace with desktop and GPU integration features, including the ignored software-OpenGL compositor test under Xvfb. Its initial result is pending CI; no desktop coverage percentage is claimed here. A successful software-OpenGL test does not certify physical GPU decoding or battery efficiency. The cadence probe now starts its fixed five-second sample window at the first observed colored video frame, with a separate 15-second startup deadline. The threshold remains 75 distinct frames and zero inverted observations; black or frozen video still fails.
 
 ## Security changes
 
