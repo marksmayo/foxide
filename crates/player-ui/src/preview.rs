@@ -17,7 +17,7 @@ impl Platform for PreviewPlatform {
 
 pub fn render(
     path: &Path,
-    preferences: &player_ui::Preferences,
+    preferences: &player_settings::Preferences,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let window = MinimalSoftwareWindow::new(RepaintBufferType::ReusedBuffer);
     slint::platform::set_platform(Box::new(PreviewPlatform(window.clone())))?;

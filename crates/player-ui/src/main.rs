@@ -1,6 +1,7 @@
 use clap::Parser;
 use player_render::{Engine, Snapshot};
-use player_ui::{Action, Effect, Preferences, UiState};
+use player_settings::Preferences;
+use player_ui::{Action, Effect, UiState};
 use slint::{ComponentHandle, ModelRc, VecModel};
 use std::{cell::RefCell, path::PathBuf, rc::Rc, sync::Arc, time::Duration};
 // Only pinned Slint compiler output may use its generated vtable unsafe code.
@@ -318,7 +319,7 @@ fn apply_preferences(
         .collect();
     ui.set_key_bindings(ModelRc::new(VecModel::from(rows)));
     ui.set_shortcut_actions(ModelRc::new(VecModel::from(
-        player_ui::SHORTCUT_ACTIONS
+        player_settings::SHORTCUT_ACTIONS
             .iter()
             .map(|entry| slint::SharedString::from(entry.0))
             .collect::<Vec<_>>(),
@@ -770,7 +771,7 @@ mod tests {
         let ui = PlayerWindow::new().unwrap();
         ui.window().set_size(slint::PhysicalSize::new(1180, 770));
         ui.show().unwrap();
-        let preferences = Rc::new(RefCell::new(player_ui::Preferences::default()));
+        let preferences = Rc::new(RefCell::new(player_settings::Preferences::default()));
         let settings_path = std::env::temp_dir().join(format!(
             "foxide-desktop-prefs-{}-{}.json",
             std::process::id(),
@@ -833,7 +834,7 @@ mod tests {
         assert!(ui.get_compact_mode());
         assert_eq!(ui.window().size(), slint::PhysicalSize::new(560, 280));
         capture_customization(&ui, &rendered_window, "compact");
-        let saved = player_ui::Preferences::load(&settings_path).unwrap();
+        let saved = player_settings::Preferences::load(&settings_path).unwrap();
         assert!(saved.compact());
         assert!(saved.light_theme());
         assert_eq!(
@@ -842,7 +843,10 @@ mod tests {
         );
         ui.invoke_save_binding("Escape".into(), "quit".into());
         assert!(!ui.get_preferences_error().is_empty());
-        assert_eq!(player_ui::Preferences::load(&settings_path).unwrap(), saved);
+        assert_eq!(
+            player_settings::Preferences::load(&settings_path).unwrap(),
+            saved
+        );
         ui.invoke_toggle_compact();
         assert!(!ui.get_compact_mode());
         assert_eq!(ui.window().size(), normal_size);
@@ -850,8 +854,8 @@ mod tests {
         assert!(!ui.invoke_shortcut("k".into(), true, false, false, false));
         ui.invoke_reset_preferences();
         assert_eq!(
-            player_ui::Preferences::load(&settings_path).unwrap(),
-            player_ui::Preferences::default()
+            player_settings::Preferences::load(&settings_path).unwrap(),
+            player_settings::Preferences::default()
         );
         assert!(!ui.get_light_theme());
         let state = Rc::new(RefCell::new(UiState::default()));

@@ -1,4 +1,4 @@
-use player_ui::Preferences;
+use player_settings::Preferences;
 
 #[test]
 fn keyboard_bindings_can_be_edited_saved_and_loaded_without_changing_defaults() {

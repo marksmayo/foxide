@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/player-core", "crates/player-bench", "crates/player-cli", "crates/player-ui", "crates/player-render"]
+members = ["crates/player-core", "crates/player-bench", "crates/player-cli", "crates/player-ui", "crates/player-render", "crates/player-settings"]
 resolver = "2"
 
 [workspace.package]

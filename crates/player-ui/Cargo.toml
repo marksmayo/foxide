@@ -7,9 +7,10 @@ publish.workspace = true
 
 [dependencies]
 player-core.workspace = true
+player-settings = { path = "../player-settings", optional = true }
 slint = { version = "=1.18.1", default-features = false, features = ["std", "backend-winit", "renderer-femtovg", "renderer-software", "accessibility", "compat-1-18"], optional = true }
 player-render = { path = "../player-render", features = ["desktop"], optional = true }
-serde_json.workspace = true
+serde_json = { workspace = true, optional = true }
 rfd = { version = "0.15", optional = true }
 futures-lite = { version = "2", optional = true }
 clap = { workspace = true, optional = true }
@@ -17,7 +18,7 @@ image = { version = "0.25", default-features = false, features = ["png", "webp"]
 
 [features]
 native-controls = ["desktop"]
-desktop = ["dep:slint", "dep:slint-build", "dep:player-render", "dep:rfd", "dep:futures-lite", "dep:clap", "dep:image"]
+desktop = ["dep:player-settings", "dep:slint", "dep:slint-build", "dep:player-render", "dep:serde_json", "dep:rfd", "dep:futures-lite", "dep:clap", "dep:image"]
 
 [build-dependencies]
 slint-build = { version = "=1.18.1", optional = true }

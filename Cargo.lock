@@ -3573,6 +3573,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "player-settings"
+version = "0.0.1"
+dependencies = [
+ "codspeed-divan-compat",
+ "serde_json",
+]
+
+[[package]]
 name = "player-ui"
 version = "0.0.1"
 dependencies = [
@@ -3582,6 +3590,7 @@ dependencies = [
  "image",
  "player-core",
  "player-render",
+ "player-settings",
  "rfd",
  "serde_json",
  "slint",
