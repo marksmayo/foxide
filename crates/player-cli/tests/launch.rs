@@ -330,11 +330,17 @@ fn unix_playback_replaces_the_launcher_instead_of_retaining_a_parent_process() {
     let pid_log = dir.join("engine.pid");
     fs::write(&media, "Process-only fixture").unwrap();
     let mut child = Command::new(env!("CARGO_BIN_EXE_foxide"))
-        .arg("--mpv").arg(executable).arg(media)
+        .arg("--mpv")
+        .arg(executable)
+        .arg(media)
         .env("FOXIDE_TEST_ENGINE_PID_LOG", &pid_log)
-        .spawn().unwrap();
+        .spawn()
+        .unwrap();
     let launcher_pid = child.id();
     assert!(child.wait().unwrap().success());
     let engine_pid: u32 = fs::read_to_string(pid_log).unwrap().parse().unwrap();
-    assert_eq!(engine_pid, launcher_pid, "Playback must not keep an idle wrapper process resident");
+    assert_eq!(
+        engine_pid, launcher_pid,
+        "Playback must not keep an idle wrapper process resident"
+    );
 }
