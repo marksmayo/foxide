@@ -151,7 +151,7 @@ export component PlayerWindow inherits Window {
                     screen := Rectangle { background: #080e17; border-radius: 12px; clip: true; vertical-stretch: 1;
                         Image { source: root.video-frame; image-fit: contain; visible: root.loaded; }
                         if (!root.loaded): VerticalLayout { alignment: center; spacing: 16px;
-                            Image { source: @image-url("../assets/foxide.webp"); height: min(280px, screen.height * 0.5); image-fit: contain; }
+                            HorizontalLayout { alignment: center; FoxMark {} }
                             Text { text: "Open something good."; color: #edf2f8; font-size: 29px; font-weight: 600; horizontal-alignment: center; }
                             Text { text: "Movies, music, and everything in between."; color: #8e9fb7; font-size: 14px; horizontal-alignment: center; }
                             HorizontalLayout { alignment: center; spacing: 12px;
