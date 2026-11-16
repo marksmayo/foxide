@@ -23,3 +23,6 @@ pub fn shortcut(key: &str) -> Option<Command> {
 
 #[cfg(all(test, feature = "native-controls"))]
 mod native_control_tests;
+
+mod preferences;
+pub use preferences::{Preferences, SHORTCUT_ACTIONS};

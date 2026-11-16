@@ -497,6 +497,32 @@ mod tests {
     fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
         slint::platform::set_platform(Box::new(TestPlatform)).unwrap();
         let ui = PlayerWindow::new().unwrap();
+        let preferences = Rc::new(RefCell::new(player_ui::Preferences::default()));
+        let settings_path = std::env::temp_dir().join(format!("foxide-desktop-prefs-{}-{}.json", std::process::id(), std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+        struct RemoveSettings(PathBuf);
+        impl Drop for RemoveSettings { fn drop(&mut self) { let _ = std::fs::remove_file(&self.0); } }
+        let _cleanup = RemoveSettings(settings_path.clone());
+        install_preferences(&ui, preferences.clone(), Some(settings_path.clone()));
+        ui.invoke_save_binding("Ctrl+K".into(), "pause".into());
+        let actions = Rc::new(RefCell::new(Vec::new()));
+        let recorded = actions.clone();
+        ui.on_action(move |name, value| recorded.borrow_mut().push((name.to_string(), value)));
+        assert!(ui.invoke_shortcut("k".into(), true, false, false, false));
+        assert_eq!(&*actions.borrow(), &[("pause".into(), 0.0)]);
+        ui.invoke_save_appearance(true, "#3178ce".into());
+        assert!(ui.get_light_theme());
+        assert_eq!(ui.get_accent_color(), slint::Color::from_rgb_u8(0x31, 0x78, 0xce));
+        ui.invoke_toggle_compact();
+        assert!(ui.get_compact_mode());
+        let saved = player_ui::Preferences::load(&settings_path).unwrap();
+        assert!(saved.compact());
+        assert!(saved.light_theme());
+        assert_eq!(saved.resolve_key("k", true, false, false, false), Some(("pause", 0.0)));
+        ui.invoke_save_binding("Escape".into(), "quit".into());
+        assert!(!ui.get_preferences_error().is_empty());
+        assert_eq!(player_ui::Preferences::load(&settings_path).unwrap(), saved);
+        ui.invoke_toggle_compact();
+        assert!(!ui.get_compact_mode());
         let state = Rc::new(RefCell::new(UiState::default()));
         state
             .borrow_mut()
