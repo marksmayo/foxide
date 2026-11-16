@@ -15,20 +15,40 @@ impl Platform for PreviewPlatform {
     }
 }
 
-pub fn render(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+pub fn render(
+    path: &Path,
+    preferences: &player_ui::Preferences,
+) -> Result<(), Box<dyn std::error::Error>> {
     let window = MinimalSoftwareWindow::new(RepaintBufferType::ReusedBuffer);
     slint::platform::set_platform(Box::new(PreviewPlatform(window.clone())))?;
     let ui = super::PlayerWindow::new()?;
-    ui.window().set_size(slint::PhysicalSize::new(1180, 770));
+    super::apply_preferences(
+        &ui,
+        preferences,
+        &std::cell::Cell::new(slint::PhysicalSize::new(1180, 770)),
+    );
+    let (width, height) = if preferences.compact() {
+        (560usize, 280usize)
+    } else {
+        (1180, 770)
+    };
+    ui.window()
+        .set_size(slint::PhysicalSize::new(width as u32, height as u32));
     ui.show()?;
-    let mut pixels = vec![Rgb8Pixel::default(); 1180 * 770];
+    let mut pixels = vec![Rgb8Pixel::default(); width * height];
     window.draw_if_needed(|renderer| {
-        renderer.render(&mut pixels, 1180);
+        renderer.render(&mut pixels, width);
     });
     let bytes: Vec<u8> = pixels
         .iter()
         .flat_map(|pixel| [pixel.r, pixel.g, pixel.b])
         .collect();
-    image::save_buffer(path, &bytes, 1180, 770, image::ColorType::Rgb8)?;
+    image::save_buffer(
+        path,
+        &bytes,
+        width as u32,
+        height as u32,
+        image::ColorType::Rgb8,
+    )?;
     Ok(())
 }

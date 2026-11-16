@@ -103,7 +103,7 @@ fn normalize_chord(chord: &str) -> Result<String, String> {
                 && !value.chars().any(char::is_control)
                 && !value.trim().is_empty() =>
         {
-            value.to_lowercase()
+            value.to_ascii_lowercase()
         }
         _ => return Err("Use a character, Space, an arrow, Enter, Tab or F1–F24".into()),
     };

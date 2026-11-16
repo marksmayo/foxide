@@ -1,6 +1,6 @@
 use clap::Parser;
 use player_render::{Engine, Snapshot};
-use player_ui::{Action, Effect, UiState};
+use player_ui::{Action, Effect, Preferences, UiState};
 use slint::{ComponentHandle, ModelRc, VecModel};
 use std::{cell::RefCell, path::PathBuf, rc::Rc, sync::Arc, time::Duration};
 // Only pinned Slint compiler output may use its generated vtable unsafe code.
@@ -17,6 +17,9 @@ mod preview;
 struct Args {
     /// Local media files or a stream URL.
     media: Vec<PathBuf>,
+    /// Read and save appearance and keyboard preferences at this path.
+    #[arg(long)]
+    config: Option<PathBuf>,
     /// Automatically close the window after this many seconds (UI diagnostics).
     #[arg(long, hide = true)]
     quit_after: Option<u64>,
@@ -274,17 +277,254 @@ fn refresh(
     *previous = snapshot.clone();
 }
 
+fn default_preferences_path() -> Option<PathBuf> {
+    #[cfg(windows)]
+    let base = std::env::var_os("APPDATA").map(PathBuf::from);
+    #[cfg(target_os = "macos")]
+    let base = std::env::var_os("HOME")
+        .map(|home| PathBuf::from(home).join("Library/Application Support"));
+    #[cfg(all(unix, not(target_os = "macos")))]
+    let base = std::env::var_os("XDG_CONFIG_HOME")
+        .map(PathBuf::from)
+        .filter(|path| path.is_absolute())
+        .or_else(|| std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".config")));
+    base.filter(|path| path.is_absolute())
+        .map(|base| base.join("Foxide/preferences.json"))
+}
+
+fn apply_preferences(
+    ui: &PlayerWindow,
+    preferences: &Preferences,
+    normal_size: &std::cell::Cell<slint::PhysicalSize>,
+) {
+    ui.set_light_theme(preferences.light_theme());
+    let rgb = preferences.accent_rgb();
+    let (r, g, b) = ((rgb >> 16) as u8, (rgb >> 8) as u8, rgb as u8);
+    ui.set_accent_color(slint::Color::from_rgb_u8(r, g, b));
+    ui.set_accent_text(
+        if u32::from(r) * 299 + u32::from(g) * 587 + u32::from(b) * 114 >= 128_000 {
+            slint::Color::from_rgb_u8(0x17, 0x1a, 0x20)
+        } else {
+            slint::Color::from_rgb_u8(255, 255, 255)
+        },
+    );
+    ui.set_accent_hex(format!("#{rgb:06x}").into());
+    let rows: Vec<_> = preferences
+        .bindings()
+        .map(|(key, action)| BindingRow {
+            key: key.into(),
+            action: action.into(),
+        })
+        .collect();
+    ui.set_key_bindings(ModelRc::new(VecModel::from(rows)));
+    ui.set_shortcut_actions(ModelRc::new(VecModel::from(
+        player_ui::SHORTCUT_ACTIONS
+            .iter()
+            .map(|entry| slint::SharedString::from(entry.0))
+            .collect::<Vec<_>>(),
+    )));
+    ui.set_shortcut_help(
+        preferences
+            .bindings()
+            .map(|(key, action)| format!("{key}  —  {action}"))
+            .collect::<Vec<_>>()
+            .join("\n")
+            .into(),
+    );
+    if ui.get_compact_mode() != preferences.compact() {
+        if preferences.compact() {
+            let current = ui.window().size();
+            if current.width > 0 && current.height > 0 {
+                normal_size.set(current);
+            }
+        }
+        ui.set_compact_mode(preferences.compact());
+        if preferences.compact() {
+            ui.window().set_size(slint::LogicalSize::new(560.0, 280.0));
+        } else {
+            ui.window().set_size(normal_size.get());
+        }
+    }
+}
+
+fn edit_preferences(
+    ui: &PlayerWindow,
+    preferences: &Rc<RefCell<Preferences>>,
+    path: Option<&std::path::Path>,
+    normal_size: &std::cell::Cell<slint::PhysicalSize>,
+    edit: impl FnOnce(&mut Preferences) -> Result<(), String>,
+) {
+    let mut candidate = preferences.borrow().clone();
+    let result =
+        edit(&mut candidate).and_then(|()| path.map_or(Ok(()), |path| candidate.save(path)));
+    match result {
+        Ok(()) => {
+            apply_preferences(ui, &candidate, normal_size);
+            *preferences.borrow_mut() = candidate;
+            ui.set_preferences_error(
+                if path.is_some() {
+                    ""
+                } else {
+                    "Changes apply to this session; no configuration directory is available."
+                }
+                .into(),
+            );
+        }
+        Err(error) => ui.set_preferences_error(error.into()),
+    }
+}
+
+fn desktop_key_name(text: &str) -> &str {
+    use slint::platform::Key;
+    for (key, name) in [
+        (Key::LeftArrow, "ArrowLeft"),
+        (Key::RightArrow, "ArrowRight"),
+        (Key::UpArrow, "ArrowUp"),
+        (Key::DownArrow, "ArrowDown"),
+        (Key::Return, "Enter"),
+        (Key::Tab, "Tab"),
+        (Key::F1, "F1"),
+        (Key::F2, "F2"),
+        (Key::F3, "F3"),
+        (Key::F4, "F4"),
+        (Key::F5, "F5"),
+        (Key::F6, "F6"),
+        (Key::F7, "F7"),
+        (Key::F8, "F8"),
+        (Key::F9, "F9"),
+        (Key::F10, "F10"),
+        (Key::F11, "F11"),
+        (Key::F12, "F12"),
+        (Key::F13, "F13"),
+        (Key::F14, "F14"),
+        (Key::F15, "F15"),
+        (Key::F16, "F16"),
+        (Key::F17, "F17"),
+        (Key::F18, "F18"),
+        (Key::F19, "F19"),
+        (Key::F20, "F20"),
+        (Key::F21, "F21"),
+        (Key::F22, "F22"),
+        (Key::F23, "F23"),
+        (Key::F24, "F24"),
+    ] {
+        let encoded: slint::SharedString = key.into();
+        if encoded.as_str() == text {
+            return name;
+        }
+    }
+    text
+}
+
+fn install_preferences(
+    ui: &PlayerWindow,
+    preferences: Rc<RefCell<Preferences>>,
+    path: Option<PathBuf>,
+) {
+    let normal_size = Rc::new(std::cell::Cell::new(slint::PhysicalSize::new(1180, 770)));
+    apply_preferences(ui, &preferences.borrow(), &normal_size);
+    let (weak, prefs) = (ui.as_weak(), preferences.clone());
+    ui.on_shortcut(move |key, ctrl, alt, shift, meta| {
+        let command =
+            prefs
+                .borrow()
+                .resolve_key(desktop_key_name(key.as_str()), ctrl, alt, shift, meta);
+        if let (Some(ui), Some((name, value))) = (weak.upgrade(), command) {
+            ui.invoke_action(name.into(), value as f32);
+            true
+        } else {
+            false
+        }
+    });
+    let (weak, prefs, location, size) = (
+        ui.as_weak(),
+        preferences.clone(),
+        path.clone(),
+        normal_size.clone(),
+    );
+    ui.on_save_binding(move |key, action| {
+        if let Some(ui) = weak.upgrade() {
+            edit_preferences(&ui, &prefs, location.as_deref(), &size, |prefs| {
+                prefs.bind(key.as_str(), action.as_str())
+            });
+        }
+    });
+    let (weak, prefs, location, size) = (
+        ui.as_weak(),
+        preferences.clone(),
+        path.clone(),
+        normal_size.clone(),
+    );
+    ui.on_remove_binding(move |key| {
+        if let Some(ui) = weak.upgrade() {
+            edit_preferences(&ui, &prefs, location.as_deref(), &size, |prefs| {
+                prefs.unbind(key.as_str())
+            });
+        }
+    });
+    let (weak, prefs, location, size) = (
+        ui.as_weak(),
+        preferences.clone(),
+        path.clone(),
+        normal_size.clone(),
+    );
+    ui.on_save_appearance(move |light, color| {
+        if let Some(ui) = weak.upgrade() {
+            edit_preferences(&ui, &prefs, location.as_deref(), &size, |prefs| {
+                prefs.set_appearance(light, color.as_str())
+            });
+        }
+    });
+    let (weak, prefs, location, size) = (
+        ui.as_weak(),
+        preferences.clone(),
+        path.clone(),
+        normal_size.clone(),
+    );
+    ui.on_reset_preferences(move || {
+        if let Some(ui) = weak.upgrade() {
+            edit_preferences(&ui, &prefs, location.as_deref(), &size, |prefs| {
+                *prefs = Preferences::default();
+                Ok(())
+            });
+        }
+    });
+    let weak = ui.as_weak();
+    ui.on_toggle_compact(move || {
+        if let Some(ui) = weak.upgrade() {
+            ui.set_panel("".into());
+            edit_preferences(&ui, &preferences, path.as_deref(), &normal_size, |prefs| {
+                prefs.set_compact(!prefs.compact());
+                Ok(())
+            });
+        }
+    });
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
     let startup = startup_commands(&args)?;
+    let config_path = args.config.clone().or_else(default_preferences_path);
+    let (preferences, config_error) = if args.preview_png.is_some() && args.config.is_none() {
+        (Preferences::default(), None)
+    } else {
+        match config_path.as_deref().map(Preferences::load).transpose() {
+            Ok(value) => (value.unwrap_or_default(), None),
+            Err(error) => (Preferences::default(), Some(error)),
+        }
+    };
     if let Some(path) = args.preview_png {
-        return preview::render(&path);
+        return preview::render(&path, &preferences);
     }
     slint::BackendSelector::new()
         .backend_name("winit".into())
         .renderer_name("femtovg".into())
         .select()?;
     let ui = PlayerWindow::new()?;
+    install_preferences(&ui, Rc::new(RefCell::new(preferences)), config_path);
+    if let Some(error) = config_error {
+        ui.set_preferences_error(format!("Could not load preferences: {error}").into());
+    }
     let state = Rc::new(RefCell::new(UiState::default()));
     let engine = match Engine::new() {
         Ok(engine) => Some(Rc::new(engine)),
@@ -346,6 +586,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     ui.on_action(move |name, value| {
         let Some(ui) = weak.upgrade() else { return };
         let action = match name.as_str() {
+            "url" | "preferences" => {
+                ui.set_panel(name);
+                return;
+            }
             "open" | "subtitle-file" => {
                 open_dialog(weak.clone(), name == "subtitle-file");
                 return;
@@ -486,43 +730,130 @@ mod tests {
         },
     };
 
-    struct TestPlatform;
+    struct TestPlatform(Rc<MinimalSoftwareWindow>);
     impl Platform for TestPlatform {
         fn create_window_adapter(&self) -> Result<Rc<dyn WindowAdapter>, slint::PlatformError> {
-            Ok(MinimalSoftwareWindow::new(RepaintBufferType::ReusedBuffer))
+            Ok(self.0.clone())
         }
+    }
+
+    fn capture_customization(ui: &PlayerWindow, window: &MinimalSoftwareWindow, name: &str) {
+        let Some(folder) = std::env::var_os("FOXIDE_UI_PREVIEW_DIR").map(PathBuf::from) else {
+            return;
+        };
+        std::fs::create_dir_all(&folder).unwrap();
+        let size = ui.window().size();
+        let width = size.width as usize;
+        let mut pixels = vec![slint::Rgb8Pixel::default(); width * size.height as usize];
+        ui.window().request_redraw();
+        window.draw_if_needed(|renderer| {
+            renderer.render(&mut pixels, width);
+        });
+        let bytes: Vec<_> = pixels
+            .iter()
+            .flat_map(|pixel| [pixel.r, pixel.g, pixel.b])
+            .collect();
+        image::save_buffer(
+            folder.join(format!("{name}.png")),
+            &bytes,
+            size.width,
+            size.height,
+            image::ColorType::Rgb8,
+        )
+        .unwrap();
     }
 
     #[test]
     fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
-        slint::platform::set_platform(Box::new(TestPlatform)).unwrap();
+        let rendered_window = MinimalSoftwareWindow::new(RepaintBufferType::NewBuffer);
+        slint::platform::set_platform(Box::new(TestPlatform(rendered_window.clone()))).unwrap();
         let ui = PlayerWindow::new().unwrap();
+        ui.window().set_size(slint::PhysicalSize::new(1180, 770));
+        ui.show().unwrap();
         let preferences = Rc::new(RefCell::new(player_ui::Preferences::default()));
-        let settings_path = std::env::temp_dir().join(format!("foxide-desktop-prefs-{}-{}.json", std::process::id(), std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+        let settings_path = std::env::temp_dir().join(format!(
+            "foxide-desktop-prefs-{}-{}.json",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
         struct RemoveSettings(PathBuf);
-        impl Drop for RemoveSettings { fn drop(&mut self) { let _ = std::fs::remove_file(&self.0); } }
+        impl Drop for RemoveSettings {
+            fn drop(&mut self) {
+                let _ = std::fs::remove_file(&self.0);
+            }
+        }
         let _cleanup = RemoveSettings(settings_path.clone());
         install_preferences(&ui, preferences.clone(), Some(settings_path.clone()));
+        capture_customization(&ui, &rendered_window, "dark");
         ui.invoke_save_binding("Ctrl+K".into(), "pause".into());
         let actions = Rc::new(RefCell::new(Vec::new()));
         let recorded = actions.clone();
         ui.on_action(move |name, value| recorded.borrow_mut().push((name.to_string(), value)));
         assert!(ui.invoke_shortcut("k".into(), true, false, false, false));
         assert_eq!(&*actions.borrow(), &[("pause".into(), 0.0)]);
+        ui.invoke_save_binding("F2".into(), "next".into());
+        ui.window()
+            .dispatch_event(slint::platform::WindowEvent::KeyPressed {
+                text: slint::platform::Key::F2.into(),
+            });
+        ui.window()
+            .dispatch_event(slint::platform::WindowEvent::KeyReleased {
+                text: slint::platform::Key::F2.into(),
+            });
+        assert_eq!(
+            actions.borrow().last(),
+            Some(&("next".into(), 0.0)),
+            "Native function keys must reach editable bindings"
+        );
         ui.invoke_save_appearance(true, "#3178ce".into());
         assert!(ui.get_light_theme());
-        assert_eq!(ui.get_accent_color(), slint::Color::from_rgb_u8(0x31, 0x78, 0xce));
+        assert_eq!(
+            ui.get_accent_color(),
+            slint::Color::from_rgb_u8(0x31, 0x78, 0xce)
+        );
+        capture_customization(&ui, &rendered_window, "light");
+        ui.set_panel("preferences".into());
+        let before_dialog_key = actions.borrow().len();
+        ui.window()
+            .dispatch_event(slint::platform::WindowEvent::KeyPressed { text: "p".into() });
+        ui.window()
+            .dispatch_event(slint::platform::WindowEvent::KeyReleased { text: "p".into() });
+        assert_eq!(
+            actions.borrow().len(),
+            before_dialog_key,
+            "Editing preferences cannot trigger playback shortcuts"
+        );
+        capture_customization(&ui, &rendered_window, "preferences");
+        ui.set_panel("".into());
+        let normal_size = ui.window().size();
         ui.invoke_toggle_compact();
         assert!(ui.get_compact_mode());
+        assert_eq!(ui.window().size(), slint::PhysicalSize::new(560, 280));
+        capture_customization(&ui, &rendered_window, "compact");
         let saved = player_ui::Preferences::load(&settings_path).unwrap();
         assert!(saved.compact());
         assert!(saved.light_theme());
-        assert_eq!(saved.resolve_key("k", true, false, false, false), Some(("pause", 0.0)));
+        assert_eq!(
+            saved.resolve_key("k", true, false, false, false),
+            Some(("pause", 0.0))
+        );
         ui.invoke_save_binding("Escape".into(), "quit".into());
         assert!(!ui.get_preferences_error().is_empty());
         assert_eq!(player_ui::Preferences::load(&settings_path).unwrap(), saved);
         ui.invoke_toggle_compact();
         assert!(!ui.get_compact_mode());
+        assert_eq!(ui.window().size(), normal_size);
+        ui.invoke_remove_binding("Ctrl+K".into());
+        assert!(!ui.invoke_shortcut("k".into(), true, false, false, false));
+        ui.invoke_reset_preferences();
+        assert_eq!(
+            player_ui::Preferences::load(&settings_path).unwrap(),
+            player_ui::Preferences::default()
+        );
+        assert!(!ui.get_light_theme());
         let state = Rc::new(RefCell::new(UiState::default()));
         state
             .borrow_mut()

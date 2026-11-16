@@ -1,0 +1,349 @@
+{
+  "source_commit": "49ea079dbe63c703c880e6c5b7bc328286cdf6fd",
+  "objective": "Feature parity across every non-gold feature event; a medal requires accepted frontend behavior, not engine capability alone.",
+  "features": [
+    {
+      "id": "thumbnails",
+      "name": "Seekbar thumbnail previews",
+      "group": "Interface",
+      "stage": "queued",
+      "acceptance": "Needs a bounded thumbnail decoder/cache and scrubbing presentation tests; not a decoder-readback shortcut."
+    },
+    {
+      "id": "pip",
+      "name": "Native picture in picture",
+      "group": "Interface",
+      "stage": "queued",
+      "acceptance": "Native picture-in-picture needs OS-specific window lifecycle, focus and multi-display acceptance."
+    },
+    {
+      "id": "gapless",
+      "name": "Gapless audio playback",
+      "group": "Audio",
+      "stage": "queued",
+      "acceptance": "Needs queued/preloaded tracks and audio-loopback evidence of gap-free transitions."
+    },
+    {
+      "id": "disc",
+      "name": "DVD / Blu-ray structure playback",
+      "group": "Playback",
+      "stage": "queued",
+      "acceptance": "Needs disc fixtures, optional navigation libraries and packaging/licensing review."
+    },
+    {
+      "id": "chromecast_output",
+      "name": "Chromecast video output",
+      "group": "Casting",
+      "stage": "queued",
+      "acceptance": "Needs device discovery, receiver sessions and a real cast destination for acceptance."
+    },
+    {
+      "id": "airplay_video_output",
+      "name": "AirPlay video output",
+      "group": "Casting",
+      "stage": "queued",
+      "acceptance": "Needs a platform sender integration and physical receiver validation."
+    },
+    {
+      "id": "airplay_audio_receiver",
+      "name": "AirPlay audio receiver",
+      "group": "Casting",
+      "stage": "queued",
+      "acceptance": "Needs receiver networking, protocol compatibility and audio output validation."
+    },
+    {
+      "id": "online_subtitles",
+      "name": "Search and download subtitles",
+      "group": "Subtitles",
+      "stage": "queued",
+      "acceptance": "Needs provider credentials, account/rate-limit handling and subtitle download validation."
+    },
+    {
+      "id": "youtube_urls",
+      "name": "Video-site URL playback",
+      "group": "Network",
+      "stage": "queued",
+      "acceptance": "Needs explicit supported yt-dlp integration, dependency discovery and network acceptance."
+    },
+    {
+      "id": "extensions",
+      "name": "User extension or scripting system",
+      "group": "Extensibility",
+      "stage": "queued",
+      "acceptance": "Executes third-party code; needs a trust, permission and lifecycle design."
+    },
+    {
+      "id": "custom_keys",
+      "name": "Editable keyboard bindings",
+      "group": "Interface",
+      "stage": "desktop-customization-in-progress",
+      "acceptance": "Needs persisted user settings and cross-platform key/modifier/focus handling."
+    },
+    {
+      "id": "custom_layout",
+      "name": "Customizable UI layout or skins",
+      "group": "Interface",
+      "stage": "desktop-customization-in-progress",
+      "acceptance": "Needs a layout/theme configuration model and accessibility/layout acceptance."
+    },
+    {
+      "id": "touch_gestures",
+      "name": "Touch or trackpad playback gestures",
+      "group": "Interface",
+      "stage": "queued",
+      "acceptance": "Needs touch/trackpad input adapters and real device gesture validation."
+    },
+    {
+      "id": "system_media_controls",
+      "name": "System media-control integration",
+      "group": "Interface",
+      "stage": "queued",
+      "acceptance": "Needs separate Windows/macOS/Linux session integrations and ownership handling."
+    },
+    {
+      "id": "compact_music_view",
+      "name": "Compact dedicated music view",
+      "group": "Interface",
+      "stage": "desktop-customization-in-progress",
+      "acceptance": "Needs a separate compact layout, resize/focus restoration and audio/video behavior tests."
+    },
+    {
+      "id": "music_artwork",
+      "name": "Music playback artwork view",
+      "group": "Library",
+      "stage": "queued",
+      "acceptance": "May already be available through the engine, but requires an embedded-art audio fixture and composited-image proof."
+    },
+    {
+      "id": "library_metadata",
+      "name": "Automatic movie and TV library metadata",
+      "group": "Library",
+      "stage": "queued",
+      "acceptance": "Needs a metadata provider, API credentials, cache/privacy policy and library indexing."
+    },
+    {
+      "id": "smb_browse",
+      "name": "Browse SMB network media",
+      "group": "Network",
+      "stage": "queued",
+      "acceptance": "Direct URL playback does not implement share browsing or credential storage."
+    },
+    {
+      "id": "cloud_storage",
+      "name": "Direct cloud-storage playback",
+      "group": "Network",
+      "stage": "queued",
+      "acceptance": "Needs OAuth/provider APIs and protected credential storage."
+    },
+    {
+      "id": "offline_downloads",
+      "name": "Download server media for offline viewing",
+      "group": "Library",
+      "stage": "queued",
+      "acceptance": "Needs authenticated server clients, storage quotas and cancellation/integrity handling."
+    },
+    {
+      "id": "watch_sync",
+      "name": "Cross-device playback progress sync",
+      "group": "Library",
+      "stage": "queued",
+      "acceptance": "Needs an authenticated sync service, conflict resolution and privacy controls."
+    },
+    {
+      "id": "live_tv",
+      "name": "Live TV and guide frontend",
+      "group": "Television",
+      "stage": "queued",
+      "acceptance": "Needs tuner/PVR provider integration and channel/guide fixtures."
+    },
+    {
+      "id": "pvr_record",
+      "name": "Schedule TV recordings from the player",
+      "group": "Television",
+      "stage": "queued",
+      "acceptance": "Needs scheduling, backend ownership and safe recording-file lifecycle."
+    },
+    {
+      "id": "http_remote",
+      "name": "HTTP remote-control interface",
+      "group": "Control",
+      "stage": "queued",
+      "acceptance": "Needs authentication, network binding and an explicit command-authorization policy."
+    },
+    {
+      "id": "json_ipc",
+      "name": "Documented JSON IPC control",
+      "group": "Control",
+      "stage": "queued",
+      "acceptance": "Needs a documented authenticated/permissioned local control endpoint; exposing arbitrary mpv commands is not a safe default."
+    },
+    {
+      "id": "hd_audio_passthrough",
+      "name": "HD audio bitstream passthrough",
+      "group": "Audio",
+      "stage": "queued",
+      "acceptance": "Needs a compatible physical receiver and audio route; cannot be certified by hosted null output."
+    },
+    {
+      "id": "video_360",
+      "name": "360-degree panoramic video",
+      "group": "Picture",
+      "stage": "queued",
+      "acceptance": "Needs projection controls and visual/presentation fixtures."
+    },
+    {
+      "id": "stereo_3d",
+      "name": "Stereoscopic 3D video",
+      "group": "Picture",
+      "stage": "queued",
+      "acceptance": "Needs stereoscopic output controls and display-format acceptance."
+    },
+    {
+      "id": "video_capture",
+      "name": "Capture playing video to a clip",
+      "group": "Capture",
+      "stage": "queued",
+      "acceptance": "Needs an explicit destination/overwrite policy and recording lifecycle."
+    },
+    {
+      "id": "screen_record",
+      "name": "Desktop screen recording",
+      "group": "Capture",
+      "stage": "queued",
+      "acceptance": "Needs OS capture permissions and capture-source selection."
+    },
+    {
+      "id": "video_trim",
+      "name": "Trim and rearrange video clips",
+      "group": "Editing",
+      "stage": "queued",
+      "acceptance": "Needs an editing/export pipeline with synchronization and output integrity tests."
+    },
+    {
+      "id": "audio_transcode",
+      "name": "Audio conversion or transcoding",
+      "group": "Editing",
+      "stage": "queued",
+      "acceptance": "Needs an export codec/profile API and safe output-file handling."
+    },
+    {
+      "id": "cd_rip",
+      "name": "Audio CD ripping",
+      "group": "Optical media",
+      "stage": "queued",
+      "acceptance": "Needs drive discovery, extraction/error handling and physical media."
+    },
+    {
+      "id": "cd_burn",
+      "name": "Audio or data CD burning",
+      "group": "Optical media",
+      "stage": "queued",
+      "acceptance": "Needs writing APIs and physical media; destructive recording is not a zero-risk change."
+    },
+    {
+      "id": "tag_edit",
+      "name": "Edit media tags",
+      "group": "Library",
+      "stage": "queued",
+      "acceptance": "Writes source media; requires explicit save semantics and format-specific integrity tests."
+    },
+    {
+      "id": "radio_directory",
+      "name": "Built-in internet-radio directory",
+      "group": "Network",
+      "stage": "queued",
+      "acceptance": "Needs a sourced provider/catalog, network failure handling and provider-term review."
+    },
+    {
+      "id": "icc_profiles",
+      "name": "ICC display color management",
+      "group": "Picture",
+      "stage": "queued",
+      "acceptance": "Needs profile loading, display switching and color-accuracy fixtures on each renderer."
+    },
+    {
+      "id": "user_shaders",
+      "name": "User GPU shader pipeline",
+      "group": "Picture",
+      "stage": "queued",
+      "acceptance": "Needs explicit file loading, shader error handling and GPU acceptance; arbitrary GPU code is not zero risk."
+    },
+    {
+      "id": "upnp_browse",
+      "name": "Browse UPnP / DLNA media servers",
+      "group": "Network",
+      "stage": "queued",
+      "acceptance": "Needs discovery/browsing adapters, XML validation and isolated server fixtures."
+    },
+    {
+      "id": "upnp_server",
+      "name": "Share a library as a UPnP server",
+      "group": "Network",
+      "stage": "queued",
+      "acceptance": "Introduces an inbound network service; needs permissions, discovery and access controls."
+    },
+    {
+      "id": "controller_navigation",
+      "name": "Game controller UI navigation",
+      "group": "Interface",
+      "stage": "queued",
+      "acceptance": "Needs controller mapping, hot-plug, focus and device acceptance."
+    },
+    {
+      "id": "webdav_browse",
+      "name": "Browse WebDAV media shares",
+      "group": "Network",
+      "stage": "queued",
+      "acceptance": "Needs a credentialed WebDAV client, safe XML/path handling and server fixtures."
+    },
+    {
+      "id": "nfs_browse",
+      "name": "Browse NFS media shares",
+      "group": "Network",
+      "stage": "queued",
+      "acceptance": "Needs network-share discovery/mount integration and platform permission handling."
+    },
+    {
+      "id": "trakt_sync",
+      "name": "Trakt watched-history scrobbling",
+      "group": "Library",
+      "stage": "queued",
+      "acceptance": "Needs user authentication, sync conflict handling and rate limits."
+    },
+    {
+      "id": "plex_server_client",
+      "name": "Native Plex server library integration",
+      "group": "Library",
+      "stage": "queued",
+      "acceptance": "Needs authenticated library/session integration, not direct URL playback."
+    },
+    {
+      "id": "emby_server_client",
+      "name": "Native Emby server library integration",
+      "group": "Library",
+      "stage": "queued",
+      "acceptance": "Needs authenticated library/session integration, not direct URL playback."
+    },
+    {
+      "id": "jellyfin_server_client",
+      "name": "Native Jellyfin server library integration",
+      "group": "Library",
+      "stage": "queued",
+      "acceptance": "Needs authenticated library/session integration, not direct URL playback."
+    },
+    {
+      "id": "skip_intro",
+      "name": "Skip detected episode intros",
+      "group": "Playback",
+      "stage": "queued",
+      "acceptance": "Needs marker detection/provider integration and seek-boundary acceptance."
+    },
+    {
+      "id": "audio_visualization",
+      "name": "Music visualization display",
+      "group": "Audio",
+      "stage": "queued",
+      "acceptance": "Needs an audio-analysis/render pipeline and resource/frame-pacing benchmarks."
+    }
+  ]
+}
