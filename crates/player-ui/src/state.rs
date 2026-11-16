@@ -117,7 +117,9 @@ impl PlaybackControl {
                 "replaygain".into(),
                 ["no", "track", "album"][mode as usize].into(),
             ]),
-            Self::Rotation(angle) if [0, 90, 180, 270].contains(&angle) => Some(vec!["set".into(), "video-rotate".into(), angle.to_string()]),
+            Self::Rotation(angle) if [0, 90, 180, 270].contains(&angle) => {
+                Some(vec!["set".into(), "video-rotate".into(), angle.to_string()])
+            }
             Self::Flip(vertical) => Some(vec![
                 "vf".into(),
                 "toggle".into(),
