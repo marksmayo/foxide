@@ -125,7 +125,13 @@ fn desktop_menu_commands_are_accepted_by_the_native_media_engine() {
         if let Some(status) = probe.child.as_mut().unwrap().try_wait().unwrap() {
             break status;
         }
-        assert!(Instant::now() < deadline, "Native control probe timed out");
+        if Instant::now() >= deadline {
+            let child = probe.child.as_mut().unwrap();
+            let _ = child.kill();
+            let _ = child.wait();
+            let log = fs::read_to_string(probe.directory.join("engine.log")).unwrap_or_default();
+            panic!("Native control probe timed out: {log}");
+        }
         std::thread::sleep(Duration::from_millis(20));
     };
     let log = fs::read_to_string(probe.directory.join("engine.log")).unwrap();

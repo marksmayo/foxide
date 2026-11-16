@@ -3,13 +3,6 @@ use std::path::PathBuf;
 #[derive(Debug, Clone, PartialEq)]
 pub enum Action {
     Open(Vec<PathBuf>),
-    FrameStep(bool),
-    SecondarySubtitle(u32),
-    Rotation(u16),
-    ReplayGain(u8),
-    Deband(bool),
-    Equalizer(u8),
-    Flip(bool),
     Seek(f64),
     TogglePause,
     ToggleMute,
@@ -25,11 +18,22 @@ pub enum Action {
     ToggleFullscreen,
     Stop,
     Quit,
+    Playback(PlaybackControl),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum PlaybackControl {
+    FrameStep(bool),
+    SecondarySubtitle(u32),
+    Rotation(u16),
+    ReplayGain(u8),
+    Deband(bool),
+    Equalizer(u8),
+    Flip(bool),
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Effect {
-    Engine(Vec<String>),
     Load(PathBuf),
     Pause(bool),
     Mute(bool),
@@ -41,6 +45,7 @@ pub enum Effect {
     SubtitleTrack(u32),
     Stop,
     Quit,
+    Engine(Vec<String>),
 }
 
 #[derive(Debug, Default)]
@@ -58,27 +63,86 @@ pub struct UiState {
 impl Action {
     /// Map only supported desktop controls; no arbitrary engine command input.
     pub fn control(name: &str, value: f64) -> Option<Self> {
-        Some(match name {
-            "frame-step" => Self::FrameStep(false),
-            "frame-back-step" => Self::FrameStep(true),
+        let control = match name {
+            "frame-step" => PlaybackControl::FrameStep(false),
+            "frame-back-step" => PlaybackControl::FrameStep(true),
             "secondary-subtitle"
                 if value.is_finite()
                     && value >= 0.0
                     && value <= u32::MAX as f64
                     && value.fract() == 0.0 =>
             {
-                Self::SecondarySubtitle(value as u32)
+                PlaybackControl::SecondarySubtitle(value as u32)
             }
             "rotation" if [0.0, 90.0, 180.0, 270.0].contains(&value) => {
-                Self::Rotation(value as u16)
+                PlaybackControl::Rotation(value as u16)
             }
-            "flip-vertical" => Self::Flip(true),
-            "flip-horizontal" => Self::Flip(false),
-            "replaygain" if [0.0, 1.0, 2.0].contains(&value) => Self::ReplayGain(value as u8),
-            "deband" if [0.0, 1.0].contains(&value) => Self::Deband(value == 1.0),
-            "equalizer" if [0.0, 1.0, 2.0].contains(&value) => Self::Equalizer(value as u8),
+            "flip-vertical" => PlaybackControl::Flip(true),
+            "flip-horizontal" => PlaybackControl::Flip(false),
+            "replaygain" if [0.0, 1.0, 2.0].contains(&value) => {
+                PlaybackControl::ReplayGain(value as u8)
+            }
+            "deband" if [0.0, 1.0].contains(&value) => PlaybackControl::Deband(value == 1.0),
+            "equalizer" if [0.0, 1.0, 2.0].contains(&value) => {
+                PlaybackControl::Equalizer(value as u8)
+            }
             _ => return None,
-        })
+        };
+        Some(Self::Playback(control))
+    }
+}
+
+impl PlaybackControl {
+    // Keep optional feature command construction out of the existing hot dispatch path.
+    #[inline(never)]
+    fn command(self) -> Option<Vec<String>> {
+        match self {
+            Self::Equalizer(preset) if preset <= 2 => Some(vec![
+                "af".into(),
+                "set".into(),
+                [
+                    "",
+                    "lavfi=[equalizer=f=100:t=o:w=2:g=6]",
+                    "lavfi=[equalizer=f=3000:t=o:w=2:g=4]",
+                ][preset as usize]
+                    .into(),
+            ]),
+            Self::Deband(enabled) => Some(vec![
+                "set".into(),
+                "deband".into(),
+                if enabled { "yes" } else { "no" }.into(),
+            ]),
+            Self::ReplayGain(mode) if mode <= 2 => Some(vec![
+                "set".into(),
+                "replaygain".into(),
+                ["no", "track", "album"][mode as usize].into(),
+            ]),
+            Self::Rotation(angle) if [0, 90, 180, 270].contains(&angle) => Some(vec!["set".into(), "video-rotate".into(), angle.to_string()]),
+            Self::Flip(vertical) => Some(vec![
+                "vf".into(),
+                "toggle".into(),
+                if vertical {
+                    "@foxide-vflip:vflip"
+                } else {
+                    "@foxide-hflip:hflip"
+                }
+                .into(),
+            ]),
+            Self::SecondarySubtitle(id) => Some(vec![
+                "set".into(),
+                "secondary-sid".into(),
+                if id == 0 { "no".into() } else { id.to_string() },
+            ]),
+            Self::FrameStep(backward) => Some(vec![
+                if backward {
+                    "frame-back-step"
+                } else {
+                    "frame-step"
+                }
+                .into(),
+            ]),
+            _ => None,
+        }
     }
 }
 
@@ -113,52 +177,6 @@ impl UiState {
 
     pub fn dispatch(&mut self, action: Action) -> Vec<Effect> {
         match action {
-            Action::Equalizer(preset) if self.loaded && preset <= 2 => vec![Effect::Engine(vec![
-                "af".into(),
-                "set".into(),
-                [
-                    "",
-                    "lavfi=[equalizer=f=100:t=o:w=2:g=6]",
-                    "lavfi=[equalizer=f=3000:t=o:w=2:g=4]",
-                ][preset as usize]
-                    .into(),
-            ])],
-            Action::Deband(enabled) if self.loaded => vec![Effect::Engine(vec![
-                "set".into(),
-                "deband".into(),
-                if enabled { "yes" } else { "no" }.into(),
-            ])],
-            Action::ReplayGain(mode) if self.loaded && mode <= 2 => vec![Effect::Engine(vec![
-                "set".into(),
-                "replaygain".into(),
-                ["no", "track", "album"][mode as usize].into(),
-            ])],
-            Action::Rotation(angle) if self.loaded && [0, 90, 180, 270].contains(&angle) => vec![
-                Effect::Engine(vec!["set".into(), "video-rotate".into(), angle.to_string()]),
-            ],
-            Action::Flip(vertical) if self.loaded => vec![Effect::Engine(vec![
-                "vf".into(),
-                "toggle".into(),
-                if vertical {
-                    "@foxide-vflip:vflip"
-                } else {
-                    "@foxide-hflip:hflip"
-                }
-                .into(),
-            ])],
-            Action::SecondarySubtitle(id) if self.loaded => vec![Effect::Engine(vec![
-                "set".into(),
-                "secondary-sid".into(),
-                if id == 0 { "no".into() } else { id.to_string() },
-            ])],
-            Action::FrameStep(backward) if self.loaded => vec![Effect::Engine(vec![
-                if backward {
-                    "frame-back-step"
-                } else {
-                    "frame-step"
-                }
-                .into(),
-            ])],
             Action::Open(files) => {
                 self.playlist = files;
                 self.selected = 0;
@@ -205,6 +223,9 @@ impl UiState {
                 vec![Effect::Stop]
             }
             Action::Quit => vec![Effect::Quit],
+            Action::Playback(control) if self.loaded => {
+                control.command().map(Effect::Engine).into_iter().collect()
+            }
             _ => Vec::new(),
         }
     }

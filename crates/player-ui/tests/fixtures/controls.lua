@@ -1,4 +1,5 @@
 local utils = require "mp.utils"
+local msg = require "mp.msg"
 local result = {completed=0, errors={}}
 local finished = false
 local function finish()
@@ -19,7 +20,9 @@ mp.register_event("file-loaded", function()
         local function step(index)
             if index > #requests then finish(); return end
             local request = requests[index]
+            msg.info("control-probe dispatch " .. index .. " " .. request.name)
             local ok, err = mp.commandv(unpack(request.command))
+            msg.info("control-probe returned " .. index .. " " .. tostring(ok) .. " " .. tostring(err))
             if not ok then table.insert(result.errors, request.name .. ": " .. tostring(err)) end
             local deadline = mp.get_time() + 2
             local function observe()
