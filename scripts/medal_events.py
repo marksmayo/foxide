@@ -82,6 +82,7 @@ def scoreboards(catalog, protocol, measurements, sessions=()):
                    for p in catalog['players'] if platform in p['platforms']]
         lookup = {p['id']: p for p in players}
         features = []
+        omitted_universal_features = []
         media_types = {p['id']: set(p.get('media_types', ['audio', 'video'])) for p in players}
         for feature in catalog['features']:
             types = set(feature.get('media_types', ['audio', 'video']))
@@ -89,6 +90,9 @@ def scoreboards(catalog, protocol, measurements, sessions=()):
             applicable_set = set(applicable)
             claims = [c for c in claims_by_feature[feature['id']] if c['player'] in applicable_set and platform in c.get('platforms', [platform])]
             awards = feature_medals(claims, valid_source)
+            if len(applicable_set) >= 2 and set(awards) == applicable_set:
+                omitted_universal_features.append({**feature, 'awards': awards, 'claims': claims, 'applicable': applicable})
+                continue
             for player in awards:
                 lookup[player]['feature_gold'] += 1
             features.append({**feature, 'awards': awards, 'claims': claims, 'applicable': applicable})
@@ -132,5 +136,5 @@ def scoreboards(catalog, protocol, measurements, sessions=()):
             runtime[player] = {'status': '; '.join(parts),
                                'details': ', '.join(sorted({c['status'] for c in cases}))}
         boards[platform] = {'players': players, 'features': features, 'performance': performances, 'runtime': runtime,
-                            'research_date': catalog['research_date']}
+                            'research_date': catalog['research_date'], 'omitted_universal_features': omitted_universal_features}
     return boards
