@@ -60,4 +60,5 @@ def vlc_software_decode_verified(log, scenario):
     kind = 'audio' if scenario == 'flac' else 'video'
     selected = re.findall(r'using ' + kind + r' decoder module "([^"\r\n]+)"', log)
     hardware = re.search(r'using hw decoder module|for hardware decoding|videotoolbox decoder:', log, re.IGNORECASE)
-    return bool(selected) and set(selected) == {'avcodec'} and hardware is None
+    failed = re.search(r'Failed to get pixel format|Get current frame error|decoder error:', log, re.IGNORECASE)
+    return bool(selected) and set(selected) == {'avcodec'} and hardware is None and failed is None
