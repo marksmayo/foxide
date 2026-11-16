@@ -1,0 +1,37 @@
+{
+  "Lua": {
+    "lines": 55,
+    "files": 1,
+    "color": "000080"
+  },
+  "Rust": {
+    "lines": 5045,
+    "files": 33,
+    "color": "dea584"
+  },
+  "TOML": {
+    "lines": 152,
+    "files": 6,
+    "color": "9c4221"
+  },
+  "Slint": {
+    "lines": 209,
+    "files": 1,
+    "color": "7c3aed"
+  },
+  "PowerShell": {
+    "lines": 197,
+    "files": 5,
+    "color": "5391fe"
+  },
+  "Python": {
+    "lines": 4963,
+    "files": 42,
+    "color": "3776ab"
+  },
+  "YAML": {
+    "lines": 819,
+    "files": 10,
+    "color": "cb171e"
+  }
+}
