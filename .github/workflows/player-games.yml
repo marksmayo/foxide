@@ -4,8 +4,11 @@ on:
   release:
     types: [published]
   push:
-    branches: [main, 'bench/**']
+    branches: [main, 'bench/**', 'perf/**']
     paths:
+      - 'crates/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
       - '.github/workflows/player-games.yml'
       - 'scripts/run_event_benchmarks.py'
       - 'scripts/event_benchmarks.py'
@@ -201,6 +204,7 @@ jobs:
           files=(results/local/platforms/**/measurements.json)
           sessions=(results/local/platforms/**/session.json)
           python scripts/refresh_scoreboards.py --platform-dir results/local/platforms --output docs/scoreboards --readme README.md
+          python scripts/source_lines.py
           cat docs/scoreboards/scoreboards.md >> "$GITHUB_STEP_SUMMARY"
       - name: Verify the rendered report and platform navigation
         shell: bash
@@ -224,9 +228,10 @@ jobs:
             README.md
             benchmarks/results/
             docs/scoreboards/
+            docs/source-lines.json
             results/local/report-qa/
       - name: Update the benchmark branch scoreboards for PR review
-        if: startsWith(github.ref, 'refs/heads/bench/') || github.ref == 'refs/heads/fix/security-and-test-gaps'
+        if: startsWith(github.ref, 'refs/heads/bench/') || startsWith(github.ref, 'refs/heads/perf/') || github.ref == 'refs/heads/fix/security-and-test-gaps'
         shell: bash
         run: |
           branch="$GITHUB_REF_NAME"
@@ -237,7 +242,7 @@ jobs:
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add README.md docs/scoreboards benchmarks/results
+          git add README.md docs/scoreboards docs/source-lines.json benchmarks/results
           if git diff --cached --quiet; then exit 0; fi
           git commit -m 'Update Player Games platform scores and graphs'
           git push origin "HEAD:$branch"

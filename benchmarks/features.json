@@ -2365,16 +2365,24 @@
     {
       "player": "foxide",
       "feature": "equalizer",
-      "status": "planned",
-      "sources": [],
-      "note": "Planned in Foxide; no medal until exposed by the application."
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/166c8893d6ee64f746d6f5b05d00054c6bd21650/docs/medal-features.md"
+      ],
+      "note": "Desktop preview: explicit user-facing controls and public dispatch tests; native command conformance for playback controls. See the feature guide for limits. No displayed-frame/power certification.",
+      "checked_utc": "2026-11-16",
+      "research_batch": "desktop-implementation-2026-11-16"
     },
     {
       "player": "foxide",
       "feature": "replaygain",
-      "status": "planned",
-      "sources": [],
-      "note": "Planned in Foxide; no medal until exposed by the application."
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/166c8893d6ee64f746d6f5b05d00054c6bd21650/docs/medal-features.md"
+      ],
+      "note": "Desktop preview: explicit user-facing controls and public dispatch tests; native command conformance for playback controls. See the feature guide for limits. No displayed-frame/power certification.",
+      "checked_utc": "2026-11-16",
+      "research_batch": "desktop-implementation-2026-11-16"
     },
     {
       "player": "foxide",
@@ -3323,10 +3331,13 @@
     {
       "player": "foxide",
       "feature": "dark_theme",
-      "status": "planned",
-      "sources": [],
-      "note": "No accepted Foxide desktop implementation for this event; no medal.",
-      "research_batch": "desktop-2026-11-16"
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/166c8893d6ee64f746d6f5b05d00054c6bd21650/docs/medal-features.md"
+      ],
+      "note": "Existing dark desktop shell and native-widget palette, verified by the rendered preview.",
+      "research_batch": "desktop-implementation-2026-11-16",
+      "checked_utc": "2026-11-16"
     },
     {
       "player": "wmp-modern",
@@ -3833,10 +3844,13 @@
     {
       "player": "foxide",
       "feature": "video_rotate",
-      "status": "planned",
-      "sources": [],
-      "note": "No accepted Foxide desktop implementation for this event; no medal.",
-      "research_batch": "desktop-2026-11-16"
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/166c8893d6ee64f746d6f5b05d00054c6bd21650/docs/medal-features.md"
+      ],
+      "note": "Desktop preview: explicit user-facing controls and public dispatch tests; native command conformance for playback controls. See the feature guide for limits. No displayed-frame/power certification.",
+      "research_batch": "desktop-implementation-2026-11-16",
+      "checked_utc": "2026-11-16"
     },
     {
       "player": "mpv",
@@ -3890,10 +3904,13 @@
     {
       "player": "foxide",
       "feature": "deband",
-      "status": "planned",
-      "sources": [],
-      "note": "No accepted Foxide desktop implementation for this event; no medal.",
-      "research_batch": "desktop-2026-11-16"
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/166c8893d6ee64f746d6f5b05d00054c6bd21650/docs/medal-features.md"
+      ],
+      "note": "Desktop preview: explicit user-facing controls and public dispatch tests; native command conformance for playback controls. See the feature guide for limits. No displayed-frame/power certification.",
+      "research_batch": "desktop-implementation-2026-11-16",
+      "checked_utc": "2026-11-16"
     },
     {
       "player": "mpv",
@@ -3920,10 +3937,13 @@
     {
       "player": "foxide",
       "feature": "frame_step",
-      "status": "planned",
-      "sources": [],
-      "note": "No accepted Foxide desktop implementation for this event; no medal.",
-      "research_batch": "desktop-2026-11-16"
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/166c8893d6ee64f746d6f5b05d00054c6bd21650/docs/medal-features.md"
+      ],
+      "note": "Desktop preview: explicit user-facing controls and public dispatch tests; native command conformance for playback controls. See the feature guide for limits. No displayed-frame/power certification.",
+      "research_batch": "desktop-implementation-2026-11-16",
+      "checked_utc": "2026-11-16"
     },
     {
       "player": "potplayer",
@@ -3942,10 +3962,13 @@
     {
       "player": "foxide",
       "feature": "playlist_search",
-      "status": "planned",
-      "sources": [],
-      "note": "No accepted Foxide desktop implementation for this event; no medal.",
-      "research_batch": "desktop-2026-11-16"
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/166c8893d6ee64f746d6f5b05d00054c6bd21650/docs/medal-features.md"
+      ],
+      "note": "Desktop preview: explicit user-facing controls and public dispatch tests; native command conformance for playback controls. See the feature guide for limits. No displayed-frame/power certification.",
+      "research_batch": "desktop-implementation-2026-11-16",
+      "checked_utc": "2026-11-16"
     },
     {
       "player": "mpv",
@@ -4197,9 +4220,13 @@
     {
       "player": "foxide",
       "feature": "dual_subtitles",
-      "status": "planned",
-      "sources": [],
-      "note": "No accepted desktop implementation; libmpv backend capability alone does not establish a Foxide UI feature."
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/166c8893d6ee64f746d6f5b05d00054c6bd21650/docs/medal-features.md"
+      ],
+      "note": "Desktop preview: explicit user-facing controls and public dispatch tests; native command conformance for playback controls. See the feature guide for limits. No displayed-frame/power certification.",
+      "checked_utc": "2026-11-16",
+      "research_batch": "desktop-implementation-2026-11-16"
     },
     {
       "player": "foxide",

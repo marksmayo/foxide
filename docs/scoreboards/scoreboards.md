@@ -13,9 +13,9 @@ Overall feature gold counts each feature once across applicable platforms; perfo
 |---|---:|---:|---:|---:|
 | mpv | 78 | 22 | 7 | 107 |
 | VLC | 58 | 18 | 20 | 96 |
-| Foxide | 47 | 46 | 24 | 117 |
-| IINA | 34 | 0 | 0 | 34 |
-| Infuse | 22 | 0 | 0 | 22 |
+| Foxide | 55 | 46 | 24 | 125 |
+| IINA | 33 | 0 | 0 | 33 |
+| Infuse | 21 | 0 | 0 | 21 |
 | Kodi | 20 | 0 | 0 | 20 |
 | SMPlayer | 19 | 2 | 6 | 27 |
 | MPC-BE | 19 | 0 | 0 | 19 |
@@ -25,8 +25,8 @@ Overall feature gold counts each feature once across applicable platforms; perfo
 | foobar2000 | 13 | 0 | 0 | 13 |
 | GOM Player | 11 | 0 | 0 | 11 |
 | Plex | 7 | 0 | 0 | 7 |
-| QuickTime Player | 6 | 0 | 0 | 6 |
 | FFplay | 5 | 0 | 0 | 5 |
+| QuickTime Player | 5 | 0 | 0 | 5 |
 | Windows Media Player | 4 | 0 | 0 | 4 |
 | Windows Media Player Legacy | 4 | 0 | 0 | 4 |
 
@@ -58,10 +58,10 @@ Overall feature gold counts each feature once across applicable platforms; perfo
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
 | mpv | 37 | 0 | 0 | 37 |
-| IINA | 34 | 0 | 0 | 34 |
+| IINA | 33 | 0 | 0 | 33 |
+| Foxide | 31 | 0 | 0 | 31 |
 | VLC | 25 | 0 | 0 | 25 |
-| Foxide | 23 | 0 | 0 | 23 |
-| Infuse | 22 | 0 | 0 | 22 |
+| Infuse | 21 | 0 | 0 | 21 |
 | Kodi | 20 | 0 | 0 | 20 |
 | MPC-BE | 19 | 0 | 0 | 19 |
 | MPC-HC | 15 | 0 | 0 | 15 |
@@ -71,8 +71,8 @@ Overall feature gold counts each feature once across applicable platforms; perfo
 | foobar2000 | 13 | 0 | 0 | 13 |
 | GOM Player | 11 | 0 | 0 | 11 |
 | Plex | 7 | 0 | 0 | 7 |
-| QuickTime Player | 6 | 0 | 0 | 6 |
 | FFplay | 5 | 0 | 0 | 5 |
+| QuickTime Player | 5 | 0 | 0 | 5 |
 | Windows Media Player | 4 | 0 | 0 | 4 |
 | Windows Media Player Legacy | 4 | 0 | 0 | 4 |
 
@@ -80,15 +80,13 @@ Overall feature gold counts each feature once across applicable platforms; perfo
 
 Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CLI** launcher. Engine playback evidence is distinct from physical frame presentation. UI-action metrics, displayed TTFF, power and battery results remain pending unless explicitly measured.
 
-### Windows
-
-![Windows medal scores](./windows.svg)
+### Windows medals
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
 | mpv | 58 | 16 | 5 | 79 |
+| Foxide | 39 | 22 | 12 | 73 |
 | VLC | 39 | 3 | 12 | 54 |
-| Foxide | 31 | 22 | 12 | 65 |
 | Kodi | 20 | 0 | 0 | 20 |
 | MPC-BE | 19 | 0 | 0 | 19 |
 | MPC-HC | 15 | 0 | 0 | 15 |
@@ -102,13 +100,7 @@ Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CL
 | Windows Media Player | 4 | 0 | 0 | 4 |
 | Windows Media Player Legacy | 4 | 0 | 0 | 4 |
 
-**Software decode · Foxide CLI · Hosted**
-
-windows-hosted · Windows-2025Server-10.0.26100-SP0 · AMD64 · 4 logical CPUs · 2026-11-16T10:13:32.630591+00:00.
-
-[Actions run](https://github.com/marksmayo/foxide/actions/runs/43845858649) · Source: `80ef311bc7b13dcbe02003c9d10c1bbaebe0b3b8`. Freshness is per field; older platform results are retained with their original collection dates.
-
-Sampling: 8s after engine readiness, 2s warmup excluded; randomized order (seed 20261115); cache state uncontrolled.
+**Windows · Software decode · Foxide CLI · Hosted**
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
@@ -116,66 +108,8 @@ Sampling: 8s after engine readiness, 2s warmup excluded; randomized order (seed 
 | VLC | 4 | 1 | 4 | 9 |
 | Foxide | 2 | 9 | 3 | 14 |
 
-![Windows: every measured metric](./windows-58f08bf147-scenarios.svg)
 
-<details><summary>Every measured metric — median values and podiums</summary>
-
-| Metric | Foxide | VLC | mpv |
-|---|---:|---:|---:|
-| Engine playback restart latency | 76.2 ms | — | **71.9** ms |
-| Paused video CPU | **0** % of one core | — | **0** % of one core |
-| Paused video steady RAM | 103 MiB | — | **98.8** MiB |
-| 1080p H.264 CPU | **26.7** % of one core | 28.9 % of one core | 31 % of one core |
-| 1080p H.264 steady RAM | 122 MiB | 157 MiB | **118** MiB |
-| 4K60 HEVC 10-bit CPU | 187 % of one core | **178** % of one core | 184 % of one core |
-| 4K60 HEVC 10-bit steady RAM | 438 MiB | 911 MiB | **434** MiB |
-| 4K AV1 CPU | 156 % of one core | — | **155** % of one core |
-| 4K AV1 steady RAM | 542 MiB | — | **537** MiB |
-| FLAC audio CPU | 1.06 % of one core | **0.26** % of one core | 0.79 % of one core |
-| FLAC audio steady RAM | 55.8 MiB | **25.5** MiB | 51.7 MiB |
-| 2× playback CPU | 58.8 % of one core | **54.8** % of one core | 61.1 % of one core |
-| 2× playback steady RAM | 124 MiB | 158 MiB | **119** MiB |
-| Peak playback RAM | 123 MiB | 158 MiB | **118** MiB |
-
-Bold values are gold medians. — means no eligible comparable result. Trial evidence and exact cohort IDs:
-
-| Metric | Cohort | Trials per eligible entrant |
-|---|---|---:|
-| Engine playback restart latency | `software-null-output/avc1080/a66ec10c23a67fd4` | 3, 3 |
-| Paused video CPU | `software-null-output/paused/fb54dace11c80034` | 3, 3 |
-| Paused video steady RAM | `software-null-output/paused/fb54dace11c80034` | 3, 3 |
-| 1080p H.264 CPU | `software-null-output/avc1080/a66ec10c23a67fd4` | 3, 3, 3 |
-| 1080p H.264 steady RAM | `software-null-output/avc1080/a66ec10c23a67fd4` | 3, 3, 3 |
-| 4K60 HEVC 10-bit CPU | `software-null-output/hevc4k/bb6e407e62a0ba02` | 3, 3, 3 |
-| 4K60 HEVC 10-bit steady RAM | `software-null-output/hevc4k/bb6e407e62a0ba02` | 3, 3, 3 |
-| 4K AV1 CPU | `software-null-output/av14k/edcfc7d025788188` | 3, 3 |
-| 4K AV1 steady RAM | `software-null-output/av14k/edcfc7d025788188` | 3, 3 |
-| FLAC audio CPU | `software-null-output/flac/8564eb292ebfdefc` | 3, 3, 3 |
-| FLAC audio steady RAM | `software-null-output/flac/8564eb292ebfdefc` | 3, 3, 3 |
-| 2× playback CPU | `software-null-output/speed2x/3387a8d510ff993b` | 3, 3, 3 |
-| 2× playback steady RAM | `software-null-output/speed2x/3387a8d510ff993b` | 3, 3, 3 |
-| Peak playback RAM | `software-null-output/avc1080/a66ec10c23a67fd4` | 3, 3, 3 |
-
-</details>
-
-
-**Windowed playback · Foxide Desktop · Local**
-
-windows-local · Windows-11-10.0.26300-SP0 · 20 logical CPUs · 2026-11-15T04:01:52.019159+00:00.
-
-Source: `372de990b8f2810a32e091b01a553a1ec5d3a76f`. Freshness is per field; older platform results are retained with their original collection dates.
-
-Sampling: 8s after engine readiness, 2s warmup excluded; randomized order (seed 20261115); cache state uncontrolled.
-
-Exploratory native playback at each player’s default window size and audio route; dimensions are not normalized. Hardware fallback and observer overhead differ. This field does not establish displayed FPS or battery efficiency.
-
-| Observed decoder | Foxide | VLC | mpv |
-|---|---|---|---|
-| 1080p H.264 | d3d11va-copy | Not reported | d3d11va |
-| 4K60 HEVC | d3d11va-copy | Not reported | d3d11va |
-| 4K60 AV1 | d3d11va-copy | Not reported | d3d11va |
-
-Engine observations, not scanout proof. The [mpv manual](https://mpv.io/manual/stable/#options-hwdec) identifies <code>d3d11va-copy</code> as copying decoded video into system RAM; this is not zero-copy.
+**Windows · Windowed playback · Foxide Desktop · Local**
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
@@ -183,56 +117,8 @@ Engine observations, not scanout proof. The [mpv manual](https://mpv.io/manual/s
 | Foxide | 4 | 6 | 4 | 14 |
 | VLC | 3 | 2 | 6 | 11 |
 
-![Windows: every measured metric](./windows-f9366948d9-scenarios.svg)
 
-<details><summary>Every measured metric — median values and podiums</summary>
-
-| Metric | Foxide | VLC | mpv |
-|---|---:|---:|---:|
-| Engine playback restart latency | 4.36e+03 ms | — | **3.16e+03** ms |
-| Paused video CPU | 0.256 % of one core | — | **0** % of one core |
-| Paused video steady RAM | 242 MiB | — | **229** MiB |
-| 1080p H.264 CPU | **9.39** % of one core | 9.75 % of one core | 9.49 % of one core |
-| 1080p H.264 steady RAM | 259 MiB | 379 MiB | **239** MiB |
-| 4K60 HEVC 10-bit CPU | 101 % of one core | **11.9** % of one core | 21.4 % of one core |
-| 4K60 HEVC 10-bit steady RAM | **1.17e+03** MiB | 1.56e+03 MiB | 1.2e+03 MiB |
-| 4K AV1 CPU | 87.5 % of one core | **15.1** % of one core | 24.3 % of one core |
-| 4K AV1 steady RAM | **801** MiB | 820 MiB | 803 MiB |
-| FLAC audio CPU | 4.14 % of one core | 2.31 % of one core | **1.31** % of one core |
-| FLAC audio steady RAM | 156 MiB | **65.9** MiB | 150 MiB |
-| 2× playback CPU | **10.5** % of one core | 10.5 % of one core | 21.9 % of one core |
-| 2× playback steady RAM | 264 MiB | 365 MiB | **242** MiB |
-| Peak playback RAM | 260 MiB | 379 MiB | **245** MiB |
-
-Bold values are gold medians. — means no eligible comparable result. Trial evidence and exact cohort IDs:
-
-| Metric | Cohort | Trials per eligible entrant |
-|---|---|---:|
-| Engine playback restart latency | `native-default-window/avc1080/e5a3127a89486db7` | 3, 3 |
-| Paused video CPU | `native-default-window/paused/4fe317a2a7ce449c` | 3, 3 |
-| Paused video steady RAM | `native-default-window/paused/4fe317a2a7ce449c` | 3, 3 |
-| 1080p H.264 CPU | `native-default-window/avc1080/e5a3127a89486db7` | 3, 3, 3 |
-| 1080p H.264 steady RAM | `native-default-window/avc1080/e5a3127a89486db7` | 3, 3, 3 |
-| 4K60 HEVC 10-bit CPU | `native-default-window/hevc4k/2e513aff25627cca` | 3, 3, 3 |
-| 4K60 HEVC 10-bit steady RAM | `native-default-window/hevc4k/2e513aff25627cca` | 3, 3, 3 |
-| 4K AV1 CPU | `native-default-window/av14k/50e9d1024fa3f2f7` | 3, 3, 3 |
-| 4K AV1 steady RAM | `native-default-window/av14k/50e9d1024fa3f2f7` | 3, 3, 3 |
-| FLAC audio CPU | `native-default-window/flac/3a05bf63a227e2b5` | 3, 3, 3 |
-| FLAC audio steady RAM | `native-default-window/flac/3a05bf63a227e2b5` | 3, 3, 3 |
-| 2× playback CPU | `native-default-window/speed2x/4c72021d4bdad5b6` | 3, 3, 3 |
-| 2× playback steady RAM | `native-default-window/speed2x/4c72021d4bdad5b6` | 3, 3, 3 |
-| Peak playback RAM | `native-default-window/avc1080/e5a3127a89486db7` | 3, 3, 3 |
-
-</details>
-
-
-**Software decode · Foxide CLI · Local**
-
-windows-local · Windows-11-10.0.26300-SP0 · 20 logical CPUs · 2026-11-15T04:29:30.454755+00:00.
-
-Source: `188f2e6b49b5d638b7f641b47d13ae0ee6906740`. Freshness is per field; older platform results are retained with their original collection dates.
-
-Sampling: 8s after engine readiness, 2s warmup excluded; randomized order (seed 20261115); cache state uncontrolled.
+**Windows · Software decode · Foxide CLI · Local**
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
@@ -240,67 +126,7 @@ Sampling: 8s after engine readiness, 2s warmup excluded; randomized order (seed 
 | mpv | 5 | 7 | 2 | 14 |
 | Foxide | 2 | 7 | 5 | 14 |
 
-![Windows: every measured metric](./windows-0157c4dec0-scenarios.svg)
-
-<details><summary>Every measured metric — median values and podiums</summary>
-
-| Metric | Foxide | VLC | mpv |
-|---|---:|---:|---:|
-| Engine playback restart latency | **2.35e+03** ms | — | 2.42e+03 ms |
-| Paused video CPU | 0.325 % of one core | — | **0.27** % of one core |
-| Paused video steady RAM | 175 MiB | — | **170** MiB |
-| 1080p H.264 CPU | 70.9 % of one core | **62.5** % of one core | 64.5 % of one core |
-| 1080p H.264 steady RAM | 200 MiB | **166** MiB | 196 MiB |
-| 4K60 HEVC 10-bit CPU | 216 % of one core | — | **207** % of one core |
-| 4K60 HEVC 10-bit steady RAM | **835** MiB | — | 848 MiB |
-| 4K AV1 CPU | 72.3 % of one core | **51** % of one core | 74.9 % of one core |
-| 4K AV1 steady RAM | 643 MiB | 698 MiB | **640** MiB |
-| FLAC audio CPU | 1.18 % of one core | 2.68 % of one core | **1.15** % of one core |
-| FLAC audio steady RAM | 58.7 MiB | **26.2** MiB | 53.7 MiB |
-| 2× playback CPU | 127 % of one core | **47** % of one core | 138 % of one core |
-| 2× playback steady RAM | 205 MiB | **174** MiB | 201 MiB |
-| Peak playback RAM | 201 MiB | **176** MiB | 198 MiB |
-
-Bold values are gold medians. — means no eligible comparable result. Trial evidence and exact cohort IDs:
-
-| Metric | Cohort | Trials per eligible entrant |
-|---|---|---:|
-| Engine playback restart latency | `software-null-output/avc1080/627de1d25dff605b` | 3, 3 |
-| Paused video CPU | `software-null-output/paused/daf715b1bd930d72` | 3, 3 |
-| Paused video steady RAM | `software-null-output/paused/daf715b1bd930d72` | 3, 3 |
-| 1080p H.264 CPU | `software-null-output/avc1080/627de1d25dff605b` | 3, 3, 3 |
-| 1080p H.264 steady RAM | `software-null-output/avc1080/627de1d25dff605b` | 3, 3, 3 |
-| 4K60 HEVC 10-bit CPU | `software-null-output/hevc4k/bef5bd64c814bebc` | 3, 3 |
-| 4K60 HEVC 10-bit steady RAM | `software-null-output/hevc4k/bef5bd64c814bebc` | 3, 3 |
-| 4K AV1 CPU | `software-null-output/av14k/4c0374fd24a77a8b` | 3, 3, 3 |
-| 4K AV1 steady RAM | `software-null-output/av14k/4c0374fd24a77a8b` | 3, 3, 3 |
-| FLAC audio CPU | `software-null-output/flac/243ea89a8ffb1188` | 3, 3, 3 |
-| FLAC audio steady RAM | `software-null-output/flac/243ea89a8ffb1188` | 3, 3, 3 |
-| 2× playback CPU | `software-null-output/speed2x/f035ebb00f869495` | 3, 3, 3 |
-| 2× playback steady RAM | `software-null-output/speed2x/f035ebb00f869495` | 3, 3, 3 |
-| Peak playback RAM | `software-null-output/avc1080/627de1d25dff605b` | 3, 3, 3 |
-
-</details>
-
-<details><summary>Runtime outcomes and feature events</summary>
-
-| Player | Runtime outcome | Evidence / limitation |
-|---|---|---|
-| Foxide | Verified playback 54/57 | sampled-playback-unverified, verified-playback |
-| VLC | Verified playback 41/57 | playback-readiness-timeout, sampled-playback-unverified, verified-playback |
-| mpv | Verified playback 54/57 | sampled-playback-unverified, verified-playback |
-| Windows Media Player | install-blocked | Local Store package was not registered; WinGet list/install both returned 0x8A150001. Store desktop control is unavailable. Interactive Store installation is pending. |
-| Windows Media Player Legacy | Unverified / diagnostic (6 cases) | early-exit, sampled-playback-unverified |
-| MPC-HC | Unverified / diagnostic (6 cases) | sampled-playback-unverified |
-| MPC-BE | Unverified / diagnostic (6 cases) | sampled-playback-unverified |
-| PotPlayer | Unverified / diagnostic (6 cases) | sampled-playback-unverified |
-| SMPlayer | Unverified / diagnostic (6 cases) | sampled-playback-unverified |
-| KMPlayer | Unverified / diagnostic (3 cases) | early-exit, sampled-playback-unverified |
-| GOM Player | Unverified / diagnostic (3 cases) | sampled-playback-unverified |
-| FFplay | Unverified / diagnostic (6 cases) | sampled-playback-unverified |
-| Kodi | Unverified / diagnostic (6 cases) | sampled-playback-unverified |
-| Plex | Unverified / diagnostic (6 cases) | early-exit, sampled-playback-unverified |
-| foobar2000 | Unverified / diagnostic (6 cases) | sampled-playback-unverified |
+<details><summary>Windows feature medals — shared gold</summary>
 
 | Feature | Foxide | VLC | mpv | Windows Media Player | Windows Media Player Legacy | MPC-HC | MPC-BE | PotPlayer | SMPlayer | KMPlayer | GOM Player | FFplay | Kodi | Plex | foobar2000 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -329,8 +155,8 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 | Borderless viewing mode | 🥇 | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? |
 | Video screenshots | 🥇 | 🥇 | 🥇 | ? | ? | ? | 🥇 | 🥇 | ? | 🥇 | 🥇 | ? | ? | ? | N/A |
 | A–B repeat | 🥇 | 🥇 | 🥇 | ? | ? | 🥇 | 🥇 | ? | ? | ? | 🥇 | ? | ? | ? | ? |
-| Audio equalizer / DSP | ? | 🥇 | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 |
-| ReplayGain | ? | 🥇 | 🥇 | ? | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | 🥇 |
+| Audio equalizer / DSP | 🥇 | 🥇 | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 |
+| ReplayGain | 🥇 | 🥇 | 🥇 | ? | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | 🥇 |
 | Gapless audio playback | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 |
 | DVD / Blu-ray structure playback | ? | 🥇 | 🥇 | ? | ? | ? | 🥇 | ? | ? | ? | 🥇 | ? | ? | ? | N/A |
 | Chromecast video output | ? | 🥇 | ? | ? | ? | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? | N/A |
@@ -344,7 +170,7 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 | Touch or trackpad playback gestures | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? |
 | System media-control integration | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? |
 | Compact dedicated music view | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? |
-| Dark interface theme | ? | ? | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? |
+| Dark interface theme | 🥇 | ? | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? |
 | Music playback artwork view | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? |
 | Automatic movie and TV library metadata | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? | N/A |
 | Browse SMB network media | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? | ? |
@@ -366,13 +192,13 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 | Audio or data CD burning | ? | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? |
 | Edit media tags | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 |
 | Built-in internet-radio directory | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 |
-| Video rotation and flip controls | ? | ? | 🥇 | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | N/A |
+| Video rotation and flip controls | 🥇 | ? | 🥇 | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | N/A |
 | ICC display color management | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | N/A |
 | User GPU shader pipeline | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | N/A |
-| Debanding control | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | N/A |
-| Single-frame advance | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? | ? | N/A |
-| Playlist search and filtering | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? |
-| Two simultaneous subtitle tracks | ? | ? | 🥇 | ? | ? | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? | N/A |
+| Debanding control | 🥇 | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | N/A |
+| Single-frame advance | 🥇 | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? | ? | N/A |
+| Playlist search and filtering | 🥇 | ? | ? | ? | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? |
+| Two simultaneous subtitle tracks | 🥇 | ? | 🥇 | ? | ? | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? | N/A |
 | Browse UPnP / DLNA media servers | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? | ? |
 | Share a library as a UPnP server | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? | ? |
 | Game controller UI navigation | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? | ? |
@@ -389,31 +215,23 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 
 </details>
 
-### macOS
-
-![macOS medal scores](./macos.svg)
+### macOS medals
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
-| mpv | 45 | 4 | 2 | 51 |
-| IINA | 34 | 0 | 0 | 34 |
-| VLC | 29 | 2 | 3 | 34 |
-| Foxide | 25 | 8 | 4 | 37 |
-| Infuse | 22 | 0 | 0 | 22 |
-| Kodi | 20 | 0 | 0 | 20 |
-| SMPlayer | 14 | 0 | 0 | 14 |
+| mpv | 44 | 4 | 2 | 50 |
+| IINA | 33 | 0 | 0 | 33 |
+| Foxide | 32 | 8 | 4 | 44 |
+| VLC | 28 | 2 | 3 | 33 |
+| Infuse | 21 | 0 | 0 | 21 |
+| Kodi | 19 | 0 | 0 | 19 |
+| SMPlayer | 13 | 0 | 0 | 13 |
 | foobar2000 | 12 | 0 | 0 | 12 |
-| Plex | 7 | 0 | 0 | 7 |
-| QuickTime Player | 6 | 0 | 0 | 6 |
-| FFplay | 5 | 0 | 0 | 5 |
+| Plex | 6 | 0 | 0 | 6 |
+| QuickTime Player | 5 | 0 | 0 | 5 |
+| FFplay | 4 | 0 | 0 | 4 |
 
-**Software decode · Foxide CLI · Hosted**
-
-macos-hosted · macOS-15.8.2-arm64-arm-64bit · arm64 · 3 logical CPUs · 2026-11-16T10:11:49.021719+00:00.
-
-[Actions run](https://github.com/marksmayo/foxide/actions/runs/43845858649) · Source: `80ef311bc7b13dcbe02003c9d10c1bbaebe0b3b8`. Freshness is per field; older platform results are retained with their original collection dates.
-
-Sampling: 8s after engine readiness, 2s warmup excluded; randomized order (seed 20261115); cache state uncontrolled.
+**macOS · Software decode · Foxide CLI · Hosted**
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
@@ -421,63 +239,9 @@ Sampling: 8s after engine readiness, 2s warmup excluded; randomized order (seed 
 | VLC | 4 | 2 | 3 | 9 |
 | Foxide | 2 | 8 | 4 | 14 |
 
-![macOS: every measured metric](./macos-ea5d3184dd-scenarios.svg)
+<details><summary>macOS feature medals — shared gold</summary>
 
-<details><summary>Every measured metric — median values and podiums</summary>
-
-| Metric | Foxide | VLC | mpv |
-|---|---:|---:|---:|
-| Engine playback restart latency | 219 ms | — | **176** ms |
-| Paused video CPU | 0.622 % of one core | — | **0.331** % of one core |
-| Paused video steady RAM | 151 MiB | — | **148** MiB |
-| 1080p H.264 CPU | 47 % of one core | 45.9 % of one core | **29.2** % of one core |
-| 1080p H.264 steady RAM | **192** MiB | 200 MiB | 196 MiB |
-| 4K60 HEVC 10-bit CPU | 205 % of one core | **165** % of one core | 206 % of one core |
-| 4K60 HEVC 10-bit steady RAM | 444 MiB | 885 MiB | **442** MiB |
-| 4K AV1 CPU | **110** % of one core | — | 111 % of one core |
-| 4K AV1 steady RAM | 550 MiB | — | **540** MiB |
-| FLAC audio CPU | 4.22 % of one core | **1.53** % of one core | 3.77 % of one core |
-| FLAC audio steady RAM | 158 MiB | **67.4** MiB | 150 MiB |
-| 2× playback CPU | 68.5 % of one core | **57** % of one core | 70.2 % of one core |
-| 2× playback steady RAM | 196 MiB | 200 MiB | **194** MiB |
-| Peak playback RAM | 213 MiB | 200 MiB | **196** MiB |
-
-Bold values are gold medians. — means no eligible comparable result. Trial evidence and exact cohort IDs:
-
-| Metric | Cohort | Trials per eligible entrant |
-|---|---|---:|
-| Engine playback restart latency | `software-null-output/avc1080/2b35c1bec079081b` | 3, 3 |
-| Paused video CPU | `software-null-output/paused/b88fdf47ebb54567` | 3, 3 |
-| Paused video steady RAM | `software-null-output/paused/b88fdf47ebb54567` | 3, 3 |
-| 1080p H.264 CPU | `software-null-output/avc1080/2b35c1bec079081b` | 3, 3, 3 |
-| 1080p H.264 steady RAM | `software-null-output/avc1080/2b35c1bec079081b` | 3, 3, 3 |
-| 4K60 HEVC 10-bit CPU | `software-null-output/hevc4k/161a4da04b64241d` | 3, 3, 3 |
-| 4K60 HEVC 10-bit steady RAM | `software-null-output/hevc4k/161a4da04b64241d` | 3, 3, 3 |
-| 4K AV1 CPU | `software-null-output/av14k/f3667f35c9c606d2` | 3, 3 |
-| 4K AV1 steady RAM | `software-null-output/av14k/f3667f35c9c606d2` | 3, 3 |
-| FLAC audio CPU | `software-null-output/flac/5681591eb6003d19` | 3, 3, 3 |
-| FLAC audio steady RAM | `software-null-output/flac/5681591eb6003d19` | 3, 3, 3 |
-| 2× playback CPU | `software-null-output/speed2x/7e187283375514d5` | 3, 3, 3 |
-| 2× playback steady RAM | `software-null-output/speed2x/7e187283375514d5` | 3, 3, 3 |
-| Peak playback RAM | `software-null-output/avc1080/2b35c1bec079081b` | 3, 3, 3 |
-
-</details>
-
-<details><summary>Runtime outcomes and feature events</summary>
-
-| Player | Runtime outcome | Evidence / limitation |
-|---|---|---|
-| Foxide | Verified playback 18/21 | sampled-playback-unverified, verified-playback |
-| VLC | Verified playback 12/21 | playback-readiness-timeout, sampled-playback-unverified, verified-playback |
-| mpv | Verified playback 18/21 | sampled-playback-unverified, verified-playback |
-| SMPlayer | not-detected | No native executable found; packaged-app/account/Store activation may need a dedicated adapter. |
-| FFplay | Unverified / diagnostic (3 cases) | sampled-playback-unverified |
-| Kodi | Unverified / diagnostic (3 cases) | early-exit |
-| Plex | Unverified / diagnostic (3 cases) | sampled-playback-unverified |
-| foobar2000 | Unverified / diagnostic (3 cases) | sampled-playback-unverified |
-| Infuse | not-detected | No native executable found; packaged-app/account/Store activation may need a dedicated adapter. |
-| IINA | Unverified / diagnostic (3 cases) | sampled-playback-unverified |
-| QuickTime Player | Unverified / diagnostic (3 cases) | sampled-playback-unverified |
+1 universal feature events omitted: every eligible player has documented gold. Evidence remains in the raw scores and feature sources.
 
 | Feature | Foxide | VLC | mpv | SMPlayer | FFplay | Kodi | Plex | foobar2000 | Infuse | IINA | QuickTime Player |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -485,7 +249,6 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 | FLAC audio | 🥇 | 🥇 | 🥇 | ? | ? | ? | ? | 🥇 | ? | 🥇 | ? |
 | Hardware decoding | 🥇 | 🥇 | 🥇 | ? | ? | 🥇 | ? | N/A | 🥇 | 🥇 | ? |
 | Audio track selection | 🥇 | 🥇 | 🥇 | 🥇 | 🥇 | 🥇 | 🥇 | N/A | 🥇 | 🥇 | ? |
-| Subtitle track selection | 🥇 | 🥇 | 🥇 | 🥇 | 🥇 | 🥇 | 🥇 | N/A | 🥇 | 🥇 | 🥇 |
 | External subtitle files | 🥇 | 🥇 | 🥇 | 🥇 | ? | 🥇 | ? | N/A | 🥇 | 🥇 | ? |
 | ASS/SSA subtitle rendering | 🥇 | 🥇 | 🥇 | ? | ? | ? | ? | N/A | 🥇 | 🥇 | ? |
 | Variable playback speed | 🥇 | 🥇 | 🥇 | 🥇 | ? | ? | 🥇 | ? | 🥇 | 🥇 | 🥇 |
@@ -506,8 +269,8 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 | Borderless viewing mode | 🥇 | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? |
 | Video screenshots | 🥇 | 🥇 | 🥇 | ? | ? | ? | ? | N/A | ? | 🥇 | ? |
 | A–B repeat | 🥇 | 🥇 | 🥇 | ? | ? | ? | ? | ? | ? | 🥇 | ? |
-| Audio equalizer / DSP | ? | 🥇 | 🥇 | ? | ? | ? | ? | 🥇 | ? | 🥇 | ? |
-| ReplayGain | ? | 🥇 | 🥇 | ? | ? | ? | ? | 🥇 | ? | 🥇 | ? |
+| Audio equalizer / DSP | 🥇 | 🥇 | 🥇 | ? | ? | ? | ? | 🥇 | ? | 🥇 | ? |
+| ReplayGain | 🥇 | 🥇 | 🥇 | ? | ? | ? | ? | 🥇 | ? | 🥇 | ? |
 | Gapless audio playback | ? | ? | 🥇 | ? | ? | ? | ? | 🥇 | ? | 🥇 | ? |
 | DVD / Blu-ray structure playback | ? | 🥇 | 🥇 | ? | ? | ? | ? | N/A | ? | ? | ? |
 | Chromecast video output | ? | 🥇 | ? | 🥇 | ? | ? | ? | N/A | ? | ? | ? |
@@ -521,7 +284,7 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 | Touch or trackpad playback gestures | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? |
 | System media-control integration | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? |
 | Compact dedicated music view | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? |
-| Dark interface theme | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? |
+| Dark interface theme | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? |
 | Music playback artwork view | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? |
 | Automatic movie and TV library metadata | ? | ? | ? | ? | ? | 🥇 | ? | N/A | 🥇 | ? | ? |
 | Browse SMB network media | ? | ? | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? |
@@ -543,13 +306,13 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 | Audio or data CD burning | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? |
 | Edit media tags | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? | ? | ? |
 | Built-in internet-radio directory | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? | ? | ? |
-| Video rotation and flip controls | ? | ? | 🥇 | ? | ? | ? | ? | N/A | ? | ? | 🥇 |
+| Video rotation and flip controls | 🥇 | ? | 🥇 | ? | ? | ? | ? | N/A | ? | ? | 🥇 |
 | ICC display color management | ? | ? | 🥇 | ? | ? | ? | ? | N/A | ? | ? | ? |
 | User GPU shader pipeline | ? | ? | 🥇 | ? | ? | ? | ? | N/A | ? | ? | ? |
-| Debanding control | ? | ? | 🥇 | ? | ? | ? | ? | N/A | ? | ? | ? |
-| Single-frame advance | ? | ? | 🥇 | ? | 🥇 | ? | ? | N/A | ? | ? | ? |
-| Playlist search and filtering | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? |
-| Two simultaneous subtitle tracks | ? | ? | 🥇 | 🥇 | ? | ? | ? | N/A | ? | ? | ? |
+| Debanding control | 🥇 | ? | 🥇 | ? | ? | ? | ? | N/A | ? | ? | ? |
+| Single-frame advance | 🥇 | ? | 🥇 | ? | 🥇 | ? | ? | N/A | ? | ? | ? |
+| Playlist search and filtering | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? |
+| Two simultaneous subtitle tracks | 🥇 | ? | 🥇 | 🥇 | ? | ? | ? | N/A | ? | ? | ? |
 | Browse UPnP / DLNA media servers | ? | ? | ? | ? | ? | 🥇 | ? | ? | 🥇 | ? | ? |
 | Share a library as a UPnP server | ? | ? | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? |
 | Game controller UI navigation | ? | ? | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? |
@@ -566,25 +329,19 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 
 </details>
 
-### Linux
-
-![Linux medal scores](./linux.svg)
+### Linux medals
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
-| mpv | 49 | 2 | 0 | 51 |
-| VLC | 40 | 13 | 5 | 58 |
-| Foxide | 37 | 16 | 8 | 61 |
-| Kodi | 20 | 0 | 0 | 20 |
-| SMPlayer | 18 | 2 | 6 | 26 |
-| Plex | 7 | 0 | 0 | 7 |
-| FFplay | 5 | 0 | 0 | 5 |
+| mpv | 47 | 2 | 0 | 49 |
+| Foxide | 43 | 16 | 8 | 67 |
+| VLC | 38 | 13 | 5 | 56 |
+| Kodi | 18 | 0 | 0 | 18 |
+| SMPlayer | 16 | 2 | 6 | 24 |
+| Plex | 5 | 0 | 0 | 5 |
+| FFplay | 3 | 0 | 0 | 3 |
 
-**Native UI actions · default application windows · Hosted**
-
-linux-hosted · 2026-11-16T10:14:43.101179+00:00.
-
-[Actions run](https://github.com/marksmayo/foxide/actions/runs/43845858649) · Source: `80ef311bc7b13dcbe02003c9d10c1bbaebe0b3b8`. Freshness is per field; older platform results are retained with their original collection dates.
+**Linux · Native UI actions · default application windows · Hosted**
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
@@ -592,76 +349,8 @@ linux-hosted · 2026-11-16T10:14:43.101179+00:00.
 | Foxide | 12 | 8 | 4 | 24 |
 | SMPlayer | 4 | 2 | 6 | 12 |
 
-![Linux: every measured metric](./linux-c0ce56f269-scenarios.svg)
 
-<details><summary>Every measured metric — median values and podiums</summary>
-
-| Metric | Foxide | VLC | SMPlayer |
-|---|---:|---:|---:|
-| Media/File menu — UI state latency | **90.3** ms | 144 ms | 330 ms |
-| Media/File menu — Action CPU time | 90 ms | **65** ms | 140 ms |
-| Media/File menu — Post-action RSS | 191 MiB | **96.2** MiB | 96.6 MiB |
-| Media/File menu — Native input dispatch | **0.22** ms | **0.189** ms | **0.201** ms |
-| Media/File menu — UI state observation after dispatch | **90.1** ms | 144 ms | 330 ms |
-| Media/File menu — Action RSS increase | 2.38 MiB | 1.12 MiB | **0.188** MiB |
-| Playback menu — UI state latency | **103** ms | 140 ms | 330 ms |
-| Playback menu — Action CPU time | 120 ms | **60** ms | 150 ms |
-| Playback menu — Post-action RSS | 189 MiB | **96.2** MiB | 96.8 MiB |
-| Playback menu — Native input dispatch | **0.213** ms | **0.189** ms | **0.199** ms |
-| Playback menu — UI state observation after dispatch | **103** ms | 139 ms | 330 ms |
-| Playback menu — Action RSS increase | 3.78 MiB | 1.06 MiB | **0.5** MiB |
-| Audio menu — UI state latency | **83.3** ms | 135 ms | — |
-| Audio menu — Action CPU time | 70 ms | **60** ms | — |
-| Audio menu — Post-action RSS | 187 MiB | **95.9** MiB | — |
-| Audio menu — Native input dispatch | **0.244** ms | **0.177** ms | — |
-| Audio menu — UI state observation after dispatch | **82.7** ms | 135 ms | — |
-| Audio menu — Action RSS increase | 1.58 MiB | **0.875** MiB | — |
-| Subtitle menu — UI state latency | **87.2** ms | 142 ms | — |
-| Subtitle menu — Action CPU time | 80 ms | **60** ms | — |
-| Subtitle menu — Post-action RSS | 186 MiB | **95.6** MiB | — |
-| Subtitle menu — Native input dispatch | **0.336** ms | **0.207** ms | — |
-| Subtitle menu — UI state observation after dispatch | **86.8** ms | 142 ms | — |
-| Subtitle menu — Action RSS increase | 1.59 MiB | **0.648** MiB | — |
-
-Bold values are gold medians. — means no eligible comparable result. Trial evidence and exact cohort IDs:
-
-| Metric | Cohort | Trials per eligible entrant |
-|---|---|---:|
-| Media/File menu — UI state latency | `native-ui/menu_media/1943adb5dfbdfbd6` | 10, 10, 10 |
-| Media/File menu — Action CPU time | `native-ui/menu_media/1943adb5dfbdfbd6` | 10, 10, 10 |
-| Media/File menu — Post-action RSS | `native-ui/menu_media/1943adb5dfbdfbd6` | 10, 10, 10 |
-| Media/File menu — Native input dispatch | `native-ui/menu_media/1943adb5dfbdfbd6` | 10, 10, 10 |
-| Media/File menu — UI state observation after dispatch | `native-ui/menu_media/1943adb5dfbdfbd6` | 10, 10, 10 |
-| Media/File menu — Action RSS increase | `native-ui/menu_media/1943adb5dfbdfbd6` | 10, 10, 10 |
-| Playback menu — UI state latency | `native-ui/menu_playback/a39ce9201910ff00` | 10, 10, 10 |
-| Playback menu — Action CPU time | `native-ui/menu_playback/a39ce9201910ff00` | 10, 10, 10 |
-| Playback menu — Post-action RSS | `native-ui/menu_playback/a39ce9201910ff00` | 10, 10, 10 |
-| Playback menu — Native input dispatch | `native-ui/menu_playback/a39ce9201910ff00` | 10, 10, 10 |
-| Playback menu — UI state observation after dispatch | `native-ui/menu_playback/a39ce9201910ff00` | 10, 10, 10 |
-| Playback menu — Action RSS increase | `native-ui/menu_playback/a39ce9201910ff00` | 10, 10, 10 |
-| Audio menu — UI state latency | `native-ui/menu_audio/2d4d4fccd3a22abb` | 10, 10 |
-| Audio menu — Action CPU time | `native-ui/menu_audio/2d4d4fccd3a22abb` | 10, 10 |
-| Audio menu — Post-action RSS | `native-ui/menu_audio/2d4d4fccd3a22abb` | 10, 10 |
-| Audio menu — Native input dispatch | `native-ui/menu_audio/2d4d4fccd3a22abb` | 10, 10 |
-| Audio menu — UI state observation after dispatch | `native-ui/menu_audio/2d4d4fccd3a22abb` | 10, 10 |
-| Audio menu — Action RSS increase | `native-ui/menu_audio/2d4d4fccd3a22abb` | 10, 10 |
-| Subtitle menu — UI state latency | `native-ui/menu_subtitles/e22c8bbd939ada0c` | 10, 10 |
-| Subtitle menu — Action CPU time | `native-ui/menu_subtitles/e22c8bbd939ada0c` | 10, 10 |
-| Subtitle menu — Post-action RSS | `native-ui/menu_subtitles/e22c8bbd939ada0c` | 10, 10 |
-| Subtitle menu — Native input dispatch | `native-ui/menu_subtitles/e22c8bbd939ada0c` | 10, 10 |
-| Subtitle menu — UI state observation after dispatch | `native-ui/menu_subtitles/e22c8bbd939ada0c` | 10, 10 |
-| Subtitle menu — Action RSS increase | `native-ui/menu_subtitles/e22c8bbd939ada0c` | 10, 10 |
-
-</details>
-
-
-**Software decode · Foxide CLI · Hosted**
-
-linux-hosted · Linux-7.0.0-1014-aws-x86_64-with-glibc2.39 · x86_64 · 4 logical CPUs · 2026-11-16T10:10:28.239948+00:00.
-
-[Actions run](https://github.com/marksmayo/foxide/actions/runs/43845858649) · Source: `80ef311bc7b13dcbe02003c9d10c1bbaebe0b3b8`. Freshness is per field; older platform results are retained with their original collection dates.
-
-Sampling: 8s after engine readiness, 2s warmup excluded; randomized order (seed 20261115); cache state uncontrolled.
+**Linux · Software decode · Foxide CLI · Hosted**
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
@@ -669,7 +358,140 @@ Sampling: 8s after engine readiness, 2s warmup excluded; randomized order (seed 
 | Foxide | 2 | 8 | 4 | 14 |
 | VLC | 1 | 3 | 5 | 9 |
 
+<details><summary>Linux feature medals — shared gold</summary>
+
+2 universal feature events omitted: every eligible player has documented gold. Evidence remains in the raw scores and feature sources.
+
+| Feature | Foxide | VLC | mpv | SMPlayer | FFplay | Kodi | Plex |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| MP4 and MKV playback | 🥇 | 🥇 | 🥇 | 🥇 | ? | ? | ? |
+| FLAC audio | 🥇 | 🥇 | 🥇 | ? | ? | ? | ? |
+| Hardware decoding | 🥇 | 🥇 | 🥇 | ? | ? | 🥇 | ? |
+| External subtitle files | 🥇 | 🥇 | 🥇 | 🥇 | ? | 🥇 | ? |
+| ASS/SSA subtitle rendering | 🥇 | 🥇 | 🥇 | ? | ? | ? | ? |
+| Variable playback speed | 🥇 | 🥇 | 🥇 | 🥇 | ? | ? | 🥇 |
+| Playlists | 🥇 | 🥇 | 🥇 | ? | ? | ? | ? |
+| Keyboard controls | 🥇 | 🥇 | 🥇 | ? | 🥇 | ? | 🥇 |
+| Frame-accurate seeking | 🥇 | ? | 🥇 | ? | ? | ? | ? |
+| Seekbar thumbnail previews | ? | ? | ? | ? | ? | ? | ? |
+| HDR video playback | 🥇 | ? | 🥇 | ? | ? | ? | ? |
+| HDR to SDR tone mapping | 🥇 | ? | 🥇 | ? | ? | ? | ? |
+| Audio synchronization offset | 🥇 | 🥇 | 🥇 | 🥇 | ? | 🥇 | ? |
+| Subtitle synchronization offset | 🥇 | 🥇 | 🥇 | 🥇 | ? | 🥇 | ? |
+| Video filters and adjustments | 🥇 | 🥇 | 🥇 | 🥇 | 🥇 | ? | ? |
+| Chapter navigation | 🥇 | 🥇 | 🥇 | ? | ? | 🥇 | ? |
+| Native picture in picture | ? | ? | ? | ? | ? | ? | ? |
+| Network stream playback | 🥇 | 🥇 | 🥇 | ? | ? | ? | ? |
+| Persistent playback resume | 🥇 | ? | 🥇 | 🥇 | ? | ? | ? |
+| Automatic folder playback | 🥇 | ? | ? | ? | ? | ? | ? |
+| Borderless viewing mode | 🥇 | ? | 🥇 | ? | ? | ? | ? |
+| Video screenshots | 🥇 | 🥇 | 🥇 | ? | ? | ? | ? |
+| A–B repeat | 🥇 | 🥇 | 🥇 | ? | ? | ? | ? |
+| Audio equalizer / DSP | 🥇 | 🥇 | 🥇 | ? | ? | ? | ? |
+| ReplayGain | 🥇 | 🥇 | 🥇 | ? | ? | ? | ? |
+| Gapless audio playback | ? | ? | 🥇 | ? | ? | ? | ? |
+| DVD / Blu-ray structure playback | ? | 🥇 | 🥇 | ? | ? | ? | ? |
+| Chromecast video output | ? | 🥇 | ? | 🥇 | ? | ? | ? |
+| AirPlay video output | ? | ? | ? | ? | ? | ? | ? |
+| AirPlay audio receiver | ? | ? | ? | ? | ? | 🥇 | ? |
+| Search and download subtitles | ? | ? | ? | 🥇 | ? | ? | ? |
+| Video-site URL playback | ? | ? | 🥇 | 🥇 | ? | ? | ? |
+| User extension or scripting system | ? | ? | 🥇 | ? | ? | 🥇 | ? |
+| Editable keyboard bindings | ? | ? | 🥇 | ? | ? | ? | ? |
+| Customizable UI layout or skins | ? | ? | ? | 🥇 | ? | ? | ? |
+| Touch or trackpad playback gestures | ? | ? | ? | ? | ? | ? | ? |
+| System media-control integration | ? | ? | ? | ? | ? | ? | ? |
+| Compact dedicated music view | ? | ? | ? | ? | ? | ? | ? |
+| Dark interface theme | 🥇 | ? | ? | ? | ? | ? | ? |
+| Music playback artwork view | ? | ? | ? | ? | ? | ? | ? |
+| Automatic movie and TV library metadata | ? | ? | ? | ? | ? | 🥇 | ? |
+| Browse SMB network media | ? | ? | ? | ? | ? | 🥇 | ? |
+| Direct cloud-storage playback | ? | ? | ? | ? | ? | ? | ? |
+| Download server media for offline viewing | ? | ? | ? | ? | ? | ? | 🥇 |
+| Cross-device playback progress sync | ? | ? | ? | ? | ? | ? | ? |
+| Live TV and guide frontend | ? | ? | ? | ? | ? | 🥇 | ? |
+| Schedule TV recordings from the player | ? | ? | ? | ? | ? | 🥇 | ? |
+| HTTP remote-control interface | ? | ? | ? | ? | ? | 🥇 | ? |
+| Documented JSON IPC control | ? | ? | 🥇 | ? | ? | ? | ? |
+| HD audio bitstream passthrough | ? | 🥇 | 🥇 | ? | ? | ? | ? |
+| 360-degree panoramic video | ? | 🥇 | ? | ? | ? | ? | ? |
+| Stereoscopic 3D video | ? | ? | ? | ? | ? | ? | ? |
+| Capture playing video to a clip | ? | ? | ? | ? | ? | ? | ? |
+| Desktop screen recording | ? | 🥇 | ? | ? | ? | ? | ? |
+| Trim and rearrange video clips | ? | ? | ? | ? | ? | ? | ? |
+| Audio conversion or transcoding | ? | ? | ? | ? | ? | ? | ? |
+| Audio CD ripping | ? | ? | ? | ? | ? | ? | ? |
+| Audio or data CD burning | ? | ? | ? | ? | ? | ? | ? |
+| Edit media tags | ? | ? | ? | ? | ? | ? | ? |
+| Built-in internet-radio directory | ? | ? | ? | ? | ? | ? | ? |
+| Video rotation and flip controls | 🥇 | ? | 🥇 | ? | ? | ? | ? |
+| ICC display color management | ? | ? | 🥇 | ? | ? | ? | ? |
+| User GPU shader pipeline | ? | ? | 🥇 | ? | ? | ? | ? |
+| Debanding control | 🥇 | ? | 🥇 | ? | ? | ? | ? |
+| Single-frame advance | 🥇 | ? | 🥇 | ? | 🥇 | ? | ? |
+| Playlist search and filtering | 🥇 | ? | ? | ? | ? | ? | ? |
+| Two simultaneous subtitle tracks | 🥇 | ? | 🥇 | 🥇 | ? | ? | ? |
+| Browse UPnP / DLNA media servers | ? | ? | ? | ? | ? | 🥇 | ? |
+| Share a library as a UPnP server | ? | ? | ? | ? | ? | 🥇 | ? |
+| Game controller UI navigation | ? | ? | ? | ? | ? | 🥇 | ? |
+| Browse WebDAV media shares | ? | ? | ? | ? | ? | 🥇 | ? |
+| Browse NFS media shares | ? | ? | ? | ? | ? | 🥇 | ? |
+| Trakt watched-history scrobbling | ? | ? | ? | ? | ? | ? | ? |
+| Native Plex server library integration | ? | ? | ? | ? | ? | ? | 🥇 |
+| Native Emby server library integration | ? | ? | ? | ? | ? | ? | ? |
+| Native Jellyfin server library integration | ? | ? | ? | ? | ? | ? | ? |
+| Skip detected episode intros | ? | ? | ? | ? | ? | ? | 🥇 |
+| Music visualization display | ? | 🥇 | ? | ? | ? | 🥇 | ? |
+
+? = undocumented/unverified. N/A = inapplicable media type.
+
+</details>
+
+### Charts
+
+#### Windows
+
+![Windows medal scores](./windows.svg)
+
+**Windows · Software decode · Foxide CLI · Hosted**
+
+![Windows: every measured metric](./windows-58f08bf147-scenarios.svg)
+
+**Windows · Windowed playback · Foxide Desktop · Local**
+
+![Windows: every measured metric](./windows-f9366948d9-scenarios.svg)
+
+**Windows · Software decode · Foxide CLI · Local**
+
+![Windows: every measured metric](./windows-0157c4dec0-scenarios.svg)
+
+#### macOS
+
+![macOS medal scores](./macos.svg)
+
+**macOS · Software decode · Foxide CLI · Hosted**
+
+![macOS: every measured metric](./macos-ea5d3184dd-scenarios.svg)
+
+#### Linux
+
+![Linux medal scores](./linux.svg)
+
+**Linux · Native UI actions · default application windows · Hosted**
+
+![Linux: every measured metric](./linux-c0ce56f269-scenarios.svg)
+
+**Linux · Software decode · Foxide CLI · Hosted**
+
 ![Linux: every measured metric](./linux-efcd21edc8-scenarios.svg)
+
+### Measurement details
+
+linux-hostedLinux-7.0.0-1014-aws-x86_64-with-glibc2.39x86_644 logical CPUs2026-11-16T10:10:28.239948+00:00linux-hosted · Linux-7.0.0-1014-aws-x86_64-with-glibc2.39 · x86_64 · 4 logical CPUs · 2026-11-16T10:10:28.239948+00:00.
+
+[Actions run](https://github.com/marksmayo/foxide/actions/runs/43845858649) · Source: `80ef311bc7b13dcbe02003c9d10c1bbaebe0b3b8`. Freshness is per field; older platform results are retained with their original collection dates.
+
+Sampling: 8s after engine readiness, 2s warmup excluded; randomized order (seed 20261115); cache state uncontrolled.
 
 <details><summary>Every measured metric — median values and podiums</summary>
 
@@ -711,7 +533,7 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 
 </details>
 
-<details><summary>Runtime outcomes and feature events</summary>
+<details><summary>Linux runtime outcomes</summary>
 
 | Player | Runtime outcome | Evidence / limitation |
 |---|---|---|
@@ -722,91 +544,6 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 | FFplay | Unverified / diagnostic (3 cases) | sampled-playback-unverified |
 | Kodi | Unverified / diagnostic (3 cases) | early-exit |
 | Plex | not-detected | No native executable found; packaged-app/account/Store activation may need a dedicated adapter. |
-
-| Feature | Foxide | VLC | mpv | SMPlayer | FFplay | Kodi | Plex |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| MP4 and MKV playback | 🥇 | 🥇 | 🥇 | 🥇 | ? | ? | ? |
-| FLAC audio | 🥇 | 🥇 | 🥇 | ? | ? | ? | ? |
-| Hardware decoding | 🥇 | 🥇 | 🥇 | ? | ? | 🥇 | ? |
-| Audio track selection | 🥇 | 🥇 | 🥇 | 🥇 | 🥇 | 🥇 | 🥇 |
-| Subtitle track selection | 🥇 | 🥇 | 🥇 | 🥇 | 🥇 | 🥇 | 🥇 |
-| External subtitle files | 🥇 | 🥇 | 🥇 | 🥇 | ? | 🥇 | ? |
-| ASS/SSA subtitle rendering | 🥇 | 🥇 | 🥇 | ? | ? | ? | ? |
-| Variable playback speed | 🥇 | 🥇 | 🥇 | 🥇 | ? | ? | 🥇 |
-| Playlists | 🥇 | 🥇 | 🥇 | ? | ? | ? | ? |
-| Keyboard controls | 🥇 | 🥇 | 🥇 | ? | 🥇 | ? | 🥇 |
-| Frame-accurate seeking | 🥇 | ? | 🥇 | ? | ? | ? | ? |
-| Seekbar thumbnail previews | ? | ? | ? | ? | ? | ? | ? |
-| HDR video playback | 🥇 | ? | 🥇 | ? | ? | ? | ? |
-| HDR to SDR tone mapping | 🥇 | ? | 🥇 | ? | ? | ? | ? |
-| Audio synchronization offset | 🥇 | 🥇 | 🥇 | 🥇 | ? | 🥇 | ? |
-| Subtitle synchronization offset | 🥇 | 🥇 | 🥇 | 🥇 | ? | 🥇 | ? |
-| Video filters and adjustments | 🥇 | 🥇 | 🥇 | 🥇 | 🥇 | ? | ? |
-| Chapter navigation | 🥇 | 🥇 | 🥇 | ? | ? | 🥇 | ? |
-| Native picture in picture | ? | ? | ? | ? | ? | ? | ? |
-| Network stream playback | 🥇 | 🥇 | 🥇 | ? | ? | ? | ? |
-| Persistent playback resume | 🥇 | ? | 🥇 | 🥇 | ? | ? | ? |
-| Automatic folder playback | 🥇 | ? | ? | ? | ? | ? | ? |
-| Borderless viewing mode | 🥇 | ? | 🥇 | ? | ? | ? | ? |
-| Video screenshots | 🥇 | 🥇 | 🥇 | ? | ? | ? | ? |
-| A–B repeat | 🥇 | 🥇 | 🥇 | ? | ? | ? | ? |
-| Audio equalizer / DSP | ? | 🥇 | 🥇 | ? | ? | ? | ? |
-| ReplayGain | ? | 🥇 | 🥇 | ? | ? | ? | ? |
-| Gapless audio playback | ? | ? | 🥇 | ? | ? | ? | ? |
-| DVD / Blu-ray structure playback | ? | 🥇 | 🥇 | ? | ? | ? | ? |
-| Chromecast video output | ? | 🥇 | ? | 🥇 | ? | ? | ? |
-| AirPlay video output | ? | ? | ? | ? | ? | ? | ? |
-| AirPlay audio receiver | ? | ? | ? | ? | ? | 🥇 | ? |
-| Search and download subtitles | ? | ? | ? | 🥇 | ? | ? | ? |
-| Video-site URL playback | ? | ? | 🥇 | 🥇 | ? | ? | ? |
-| User extension or scripting system | ? | ? | 🥇 | ? | ? | 🥇 | ? |
-| Editable keyboard bindings | ? | ? | 🥇 | ? | ? | ? | ? |
-| Customizable UI layout or skins | ? | ? | ? | 🥇 | ? | ? | ? |
-| Touch or trackpad playback gestures | ? | ? | ? | ? | ? | ? | ? |
-| System media-control integration | ? | ? | ? | ? | ? | ? | ? |
-| Compact dedicated music view | ? | ? | ? | ? | ? | ? | ? |
-| Dark interface theme | ? | ? | ? | ? | ? | ? | ? |
-| Music playback artwork view | ? | ? | ? | ? | ? | ? | ? |
-| Automatic movie and TV library metadata | ? | ? | ? | ? | ? | 🥇 | ? |
-| Browse SMB network media | ? | ? | ? | ? | ? | 🥇 | ? |
-| Direct cloud-storage playback | ? | ? | ? | ? | ? | ? | ? |
-| Download server media for offline viewing | ? | ? | ? | ? | ? | ? | 🥇 |
-| Cross-device playback progress sync | ? | ? | ? | ? | ? | ? | ? |
-| Live TV and guide frontend | ? | ? | ? | ? | ? | 🥇 | ? |
-| Schedule TV recordings from the player | ? | ? | ? | ? | ? | 🥇 | ? |
-| HTTP remote-control interface | ? | ? | ? | ? | ? | 🥇 | ? |
-| Documented JSON IPC control | ? | ? | 🥇 | ? | ? | ? | ? |
-| HD audio bitstream passthrough | ? | 🥇 | 🥇 | ? | ? | ? | ? |
-| 360-degree panoramic video | ? | 🥇 | ? | ? | ? | ? | ? |
-| Stereoscopic 3D video | ? | ? | ? | ? | ? | ? | ? |
-| Capture playing video to a clip | ? | ? | ? | ? | ? | ? | ? |
-| Desktop screen recording | ? | 🥇 | ? | ? | ? | ? | ? |
-| Trim and rearrange video clips | ? | ? | ? | ? | ? | ? | ? |
-| Audio conversion or transcoding | ? | ? | ? | ? | ? | ? | ? |
-| Audio CD ripping | ? | ? | ? | ? | ? | ? | ? |
-| Audio or data CD burning | ? | ? | ? | ? | ? | ? | ? |
-| Edit media tags | ? | ? | ? | ? | ? | ? | ? |
-| Built-in internet-radio directory | ? | ? | ? | ? | ? | ? | ? |
-| Video rotation and flip controls | ? | ? | 🥇 | ? | ? | ? | ? |
-| ICC display color management | ? | ? | 🥇 | ? | ? | ? | ? |
-| User GPU shader pipeline | ? | ? | 🥇 | ? | ? | ? | ? |
-| Debanding control | ? | ? | 🥇 | ? | ? | ? | ? |
-| Single-frame advance | ? | ? | 🥇 | ? | 🥇 | ? | ? |
-| Playlist search and filtering | ? | ? | ? | ? | ? | ? | ? |
-| Two simultaneous subtitle tracks | ? | ? | 🥇 | 🥇 | ? | ? | ? |
-| Browse UPnP / DLNA media servers | ? | ? | ? | ? | ? | 🥇 | ? |
-| Share a library as a UPnP server | ? | ? | ? | ? | ? | 🥇 | ? |
-| Game controller UI navigation | ? | ? | ? | ? | ? | 🥇 | ? |
-| Browse WebDAV media shares | ? | ? | ? | ? | ? | 🥇 | ? |
-| Browse NFS media shares | ? | ? | ? | ? | ? | 🥇 | ? |
-| Trakt watched-history scrobbling | ? | ? | ? | ? | ? | ? | ? |
-| Native Plex server library integration | ? | ? | ? | ? | ? | ? | 🥇 |
-| Native Emby server library integration | ? | ? | ? | ? | ? | ? | ? |
-| Native Jellyfin server library integration | ? | ? | ? | ? | ? | ? | ? |
-| Skip detected episode intros | ? | ? | ? | ? | ? | ? | 🥇 |
-| Music visualization display | ? | 🥇 | ? | ? | ? | 🥇 | ? |
-
-? = undocumented/unverified. N/A = inapplicable media type.
 
 </details>
 
