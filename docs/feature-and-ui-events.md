@@ -1,6 +1,6 @@
 # Feature medals and native UI measurements
 
-The 2026-11-16 research expands the catalog from 30 broad features to 68 desktop feature events. Every documented supporting player receives gold; there is no silver or bronze for simply having a feature. Unknown claims remain unknown. Sources, platform restrictions, optional helper requirements and subscription conditions live beside each claim in [features.json](../benchmarks/features.json).
+The 2026-11-16 research expands the catalog to 80 desktop feature events (12 added in this refresh). Every documented supporting player receives gold; there is no silver or bronze for simply having a feature. Unknown claims remain unknown. Sources, platform restrictions, optional helper requirements and subscription conditions live beside each claim in [features.json](../benchmarks/features.json).
 
 Chromecast output, AirPlay video output and AirPlay audio receiving are separate events. VideoLAN documents Chromecast in VLC 3.x; SMPlayer documents its browser-mediated Chromecast workflow. Apple's QuickTime guide documents AirPlay video output on macOS. Kodi's service documentation describes an AirPlay receiver with version restrictions. Generic mobile marketing does not establish desktop support. Foxide's new feature entries remain planned until accepted in the application.
 
@@ -8,7 +8,7 @@ Other events cover subtitle search, online video URLs, plugins, custom keys/layo
 
 ## UI medal events
 
-There are 46 action scenarios, each with six potential metric events (276 total): total action-to-state latency, native action dispatch latency, state observation after dispatch, process-tree CPU time, post-action RSS and nonnegative RSS increase. Dispatch and observation are complementary parts of total latency, not independent proof of display presentation. Observation includes accessibility API overhead and 10 ms polling. CPU and RSS are measured across this same action window; RSS is not a peak or leak measurement.
+There are 58 action scenarios, each with six potential metric events (348 total): total action-to-state latency, native action dispatch latency, state observation after dispatch, process-tree CPU time, post-action RSS and nonnegative RSS increase. Dispatch and observation are complementary parts of total latency, not independent proof of display presentation. Observation includes accessibility API overhead and 10 ms polling. CPU and RSS are measured across this same action window; RSS is not a peak or leak measurement.
 
 Beyond menus and file dialogs, scenarios include 1,000-item playlist search/sort/enqueue, focus traversal, minimize/restore, theme/DPI changes, rapid resizing, 100-position scrubbing, thumbnail hover, PiP, OSD fading, menus during 4K playback, and repeated menu/resize cycles. Playback, geometry and presented-frame scenarios without a verified adapter stay pending. Planned events do not earn medals.
 
@@ -37,3 +37,28 @@ The isolated hosted UI session explicitly activates AT-SPI and its screen-reader
 SMPlayer’s [Homebrew cask](https://github.com/Homebrew/homebrew-cask/blob/master/Casks/s/smplayer.rb) is disabled as of 2026-09-01 because it fails Gatekeeper checks. The macOS installation attempt records it as unavailable; the harness does not bypass Gatekeeper. Feature medals describe sourced capabilities, separately from installation and runtime outcomes.
 
 Linux entrants share native pointer input, using owned, positive-area accessibility rectangles rather than guessed coordinates. Foxide menu text labels have platform-specific selectors; popup checks exclude toolbar buttons and zero-area collapsed menu items. The Qt VLC first-run privacy dialog is disabled through its command-line option. Other platforms retain their native accessibility action adapters and use separate cohorts.
+
+## Expanded desktop research and UI workloads
+
+This refresh adds dual subtitles, UPnP browsing and serving, controller navigation, WebDAV/NFS browsing, Trakt scrobbling, separate Plex/Emby/Jellyfin server clients, intro skipping and music visualizations. These are capabilities, not runtime results. Every sourced supporter shares gold. Network browsing is distinct from playing an already-known URL; a server client requires library integration, not merely HTTP playback. Foxide gets no inherited awards from libmpv. Legacy WMP visualizations do not imply modern Windows Media Player support.
+
+New sources include [mpv secondary subtitles](https://mpv.io/manual/stable/#options-secondary-sid), [SMPlayer dual-subtitle screenshots](https://www.smplayer.info/en/screenshots), [Kodi UPnP roles](https://kodi.wiki/view/Settings/Services/UPnP_DLNA), [Kodi controller navigation](https://kodi.wiki/view/Settings/System/Input), [Kodi network sources](https://kodi.wiki/view/Sources.xml/Types), [Infuse network browsing](https://support.firecore.com/hc/en-us/articles/215090977-Streaming-From-a-Mac-PC-or-NAS), [Infuse server clients](https://support.firecore.com/hc/en-us/articles/360006462093-Streaming-from-Plex-Emby-and-Jellyfin), [Trakt tier restrictions](https://support.firecore.com/hc/en-us/articles/4405098078743-Trakt-Sync), [Plex intro requirements](https://support.plex.tv/articles/skip-content/), [VLC visualizations](https://docs.videolan.me/vlc-user/desktop/3.0/en/basic/audio.html), and [Microsoft legacy visualization documentation](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/wmp/windows-media-player-custom-visualizations).
+
+Each of the following adds six candidate events using the same latency/CPU/RSS definitions above. They are **adapter-required**, including audio-output and process-exit observers: a changed label cannot establish an audible output switch or successful shutdown. No synthetic timing is published.
+
+| Workload | Fixed setup and completion evidence |
+|---|---|
+| Secondary subtitle selection | Two known text tracks with distinguishable lines; selected track and rendered line must match. |
+| Browse 1,000 network entries | Seeded names on an isolated local server; verify final count/order, log protocol, RTT, server version and cache state. |
+| Search 10,000 server titles | Seeded library, fixed query and exact result IDs; identical server snapshot and cold/warm cache policy. |
+| Cast connect | Fixed destination/firmware/network; receiver-side content watermark proves presentation. Pairing/login excluded and documented. |
+| Cast disconnect | Same destination; verify disconnect and restored local content presentation. |
+| Subtitle style preview | Fixed font/size and subtitle timestamp; capture proves glyph/style change. |
+| Audio output switch | Two fixed devices; output loopback proves the new device has audio, with permission and sample-rate settings retained. |
+| Thirty keyboard seeks | Fixed sequence/intervals; final watermark must match last target; retain intermediate failures and presentation timestamps. |
+| Reorder 1,000 playlist items | Seeded list; native drag from index 900 to 100; verify complete final order. |
+| Move between displays | Fixed 100%/150% DPI monitors, resolution/refresh logged; verify target monitor and presented video. |
+| Screen-reader traversal | Fixed reader/version/speech settings; twenty controls in known order, verify focus and accessible announcements. |
+| Shutdown during 4K playback | Fixed 4K fixture and shutdown point; verify every owned process exits and record cleanup failures. |
+
+Server, casting, audio-device and multi-display workloads require isolated resources and comparable configuration. Screen-reader work measures accessibility completion, not spoken-word playback duration. A future collector must preserve process ownership, false-before/true-after evidence, all-trial verification and separate cohorts before awarding medals. Six derived events describe different observations of one action; aggregate medal counts are not an overall quality score.

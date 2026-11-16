@@ -686,6 +686,119 @@
         "video"
       ],
       "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "dual_subtitles",
+      "name": "Two simultaneous subtitle tracks",
+      "group": "Subtitles",
+      "tier": 2,
+      "media_types": [
+        "video"
+      ]
+    },
+    {
+      "id": "upnp_browse",
+      "name": "Browse UPnP / DLNA media servers",
+      "group": "Network",
+      "tier": 2,
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "upnp_server",
+      "name": "Share a library as a UPnP server",
+      "group": "Network",
+      "tier": 2,
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "controller_navigation",
+      "name": "Game controller UI navigation",
+      "group": "Interface",
+      "tier": 2,
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "webdav_browse",
+      "name": "Browse WebDAV media shares",
+      "group": "Network",
+      "tier": 2,
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "nfs_browse",
+      "name": "Browse NFS media shares",
+      "group": "Network",
+      "tier": 2,
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "trakt_sync",
+      "name": "Trakt watched-history scrobbling",
+      "group": "Library",
+      "tier": 2,
+      "media_types": [
+        "video"
+      ]
+    },
+    {
+      "id": "plex_server_client",
+      "name": "Native Plex server library integration",
+      "group": "Library",
+      "tier": 2,
+      "media_types": [
+        "video"
+      ]
+    },
+    {
+      "id": "emby_server_client",
+      "name": "Native Emby server library integration",
+      "group": "Library",
+      "tier": 2,
+      "media_types": [
+        "video"
+      ]
+    },
+    {
+      "id": "jellyfin_server_client",
+      "name": "Native Jellyfin server library integration",
+      "group": "Library",
+      "tier": 2,
+      "media_types": [
+        "video"
+      ]
+    },
+    {
+      "id": "skip_intro",
+      "name": "Skip detected episode intros",
+      "group": "Playback",
+      "tier": 2,
+      "media_types": [
+        "video"
+      ]
+    },
+    {
+      "id": "audio_visualization",
+      "name": "Music visualization display",
+      "group": "Audio",
+      "tier": 2,
+      "media_types": [
+        "audio"
+      ]
     }
   ],
   "players": [
@@ -3833,6 +3946,337 @@
       "sources": [],
       "note": "No accepted Foxide desktop implementation for this event; no medal.",
       "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "player": "mpv",
+      "feature": "dual_subtitles",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/#options-secondary-sid"
+      ],
+      "note": "Primary and secondary subtitle selection; secondary styling restrictions apply.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "smplayer",
+      "feature": "dual_subtitles",
+      "status": "supported",
+      "sources": [
+        "https://www.smplayer.info/en/screenshots"
+      ],
+      "note": "Official desktop screenshots explicitly document simultaneous subtitles; backend/build dependent.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "kodi",
+      "feature": "upnp_browse",
+      "status": "supported",
+      "sources": [
+        "https://kodi.wiki/view/Settings/Services/UPnP_DLNA"
+      ],
+      "note": "Enable UPnP support to discover servers.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "kodi",
+      "feature": "upnp_server",
+      "status": "supported",
+      "sources": [
+        "https://kodi.wiki/view/Settings/Services/UPnP_DLNA"
+      ],
+      "note": "Share my libraries enables the UPnP server; requires a configured library.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "kodi",
+      "feature": "controller_navigation",
+      "status": "supported",
+      "sources": [
+        "https://kodi.wiki/view/Settings/System/Input"
+      ],
+      "note": "Configured game controller can navigate the player as a remote.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "kodi",
+      "feature": "webdav_browse",
+      "status": "supported",
+      "sources": [
+        "https://kodi.wiki/view/Sources.xml/Types"
+      ],
+      "note": "Native network source; server authentication and access configuration required.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "kodi",
+      "feature": "nfs_browse",
+      "status": "supported",
+      "sources": [
+        "https://kodi.wiki/view/Sources.xml/Types"
+      ],
+      "note": "Native network source; server authentication and access configuration required.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "infuse",
+      "feature": "upnp_browse",
+      "status": "supported",
+      "sources": [
+        "https://support.firecore.com/hc/en-us/articles/215090977-Streaming-From-a-Mac-PC-or-NAS"
+      ],
+      "note": "Documented macOS network share connection; UPnP/DLNA does not support Infuse library features.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16",
+      "platforms": [
+        "macos"
+      ]
+    },
+    {
+      "player": "infuse",
+      "feature": "webdav_browse",
+      "status": "supported",
+      "sources": [
+        "https://support.firecore.com/hc/en-us/articles/215090977-Streaming-From-a-Mac-PC-or-NAS"
+      ],
+      "note": "Documented macOS network share connection; UPnP/DLNA does not support Infuse library features.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16",
+      "platforms": [
+        "macos"
+      ]
+    },
+    {
+      "player": "infuse",
+      "feature": "nfs_browse",
+      "status": "supported",
+      "sources": [
+        "https://support.firecore.com/hc/en-us/articles/215090977-Streaming-From-a-Mac-PC-or-NAS"
+      ],
+      "note": "Documented macOS network share connection; UPnP/DLNA does not support Infuse library features.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16",
+      "platforms": [
+        "macos"
+      ]
+    },
+    {
+      "player": "infuse",
+      "feature": "trakt_sync",
+      "status": "supported",
+      "sources": [
+        "https://support.firecore.com/hc/en-us/articles/4405098078743-Trakt-Sync"
+      ],
+      "note": "Trakt account required. Free tier sends history; Pro adds two-way sync, with media-server restrictions.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16",
+      "platforms": [
+        "macos"
+      ]
+    },
+    {
+      "player": "infuse",
+      "feature": "plex_server_client",
+      "status": "supported",
+      "sources": [
+        "https://support.firecore.com/hc/en-us/articles/360006462093-Streaming-from-Plex-Emby-and-Jellyfin"
+      ],
+      "note": "Native integration with authenticated server libraries, metadata and watch state; server required.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16",
+      "platforms": [
+        "macos"
+      ]
+    },
+    {
+      "player": "infuse",
+      "feature": "emby_server_client",
+      "status": "supported",
+      "sources": [
+        "https://support.firecore.com/hc/en-us/articles/360006462093-Streaming-from-Plex-Emby-and-Jellyfin"
+      ],
+      "note": "Native integration with authenticated server libraries, metadata and watch state; server required.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16",
+      "platforms": [
+        "macos"
+      ]
+    },
+    {
+      "player": "infuse",
+      "feature": "jellyfin_server_client",
+      "status": "supported",
+      "sources": [
+        "https://support.firecore.com/hc/en-us/articles/360006462093-Streaming-from-Plex-Emby-and-Jellyfin"
+      ],
+      "note": "Native integration with authenticated server libraries, metadata and watch state; server required.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16",
+      "platforms": [
+        "macos"
+      ]
+    },
+    {
+      "player": "plex",
+      "feature": "plex_server_client",
+      "status": "supported",
+      "sources": [
+        "https://support.plex.tv/articles/200288286-what-is-plex/"
+      ],
+      "note": "Plex desktop client connects to a Plex Media Server; server required.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "plex",
+      "feature": "skip_intro",
+      "status": "supported",
+      "sources": [
+        "https://support.plex.tv/articles/skip-content/"
+      ],
+      "note": "Desktop clients support Skip Intro when server markers exist; Plex Pass and eligible server analysis required.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "infuse",
+      "feature": "skip_intro",
+      "status": "supported",
+      "sources": [
+        "https://firecore.com/infuse"
+      ],
+      "note": "Intro skipping documented for current product; IntroDB/TheIntroDB data and compatible version required.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16",
+      "platforms": [
+        "macos"
+      ]
+    },
+    {
+      "player": "vlc",
+      "feature": "audio_visualization",
+      "status": "supported",
+      "sources": [
+        "https://docs.videolan.me/vlc-user/desktop/3.0/en/basic/audio.html"
+      ],
+      "note": "Audio menu offers visualizations; module availability depends on build.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "wmp-legacy",
+      "feature": "audio_visualization",
+      "status": "supported",
+      "sources": [
+        "https://learn.microsoft.com/en-us/previous-versions/windows/desktop/wmp/windows-media-player-custom-visualizations"
+      ],
+      "note": "Legacy Windows Media Player visualization API; does not establish support in the modern Media Player app.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16",
+      "platforms": [
+        "windows"
+      ]
+    },
+    {
+      "player": "kodi",
+      "feature": "audio_visualization",
+      "status": "supported",
+      "sources": [
+        "https://kodi.wiki/view/Ubuntu_binary_add-ons"
+      ],
+      "note": "Visualization add-on required; Ubuntu packages visualization binaries separately.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "dual_subtitles",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted desktop implementation; libmpv backend capability alone does not establish a Foxide UI feature."
+    },
+    {
+      "player": "foxide",
+      "feature": "upnp_browse",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted desktop implementation; libmpv backend capability alone does not establish a Foxide UI feature."
+    },
+    {
+      "player": "foxide",
+      "feature": "upnp_server",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted desktop implementation; libmpv backend capability alone does not establish a Foxide UI feature."
+    },
+    {
+      "player": "foxide",
+      "feature": "controller_navigation",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted desktop implementation; libmpv backend capability alone does not establish a Foxide UI feature."
+    },
+    {
+      "player": "foxide",
+      "feature": "webdav_browse",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted desktop implementation; libmpv backend capability alone does not establish a Foxide UI feature."
+    },
+    {
+      "player": "foxide",
+      "feature": "nfs_browse",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted desktop implementation; libmpv backend capability alone does not establish a Foxide UI feature."
+    },
+    {
+      "player": "foxide",
+      "feature": "trakt_sync",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted desktop implementation; libmpv backend capability alone does not establish a Foxide UI feature."
+    },
+    {
+      "player": "foxide",
+      "feature": "plex_server_client",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted desktop implementation; libmpv backend capability alone does not establish a Foxide UI feature."
+    },
+    {
+      "player": "foxide",
+      "feature": "emby_server_client",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted desktop implementation; libmpv backend capability alone does not establish a Foxide UI feature."
+    },
+    {
+      "player": "foxide",
+      "feature": "jellyfin_server_client",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted desktop implementation; libmpv backend capability alone does not establish a Foxide UI feature."
+    },
+    {
+      "player": "foxide",
+      "feature": "skip_intro",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted desktop implementation; libmpv backend capability alone does not establish a Foxide UI feature."
+    },
+    {
+      "player": "foxide",
+      "feature": "audio_visualization",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted desktop implementation; libmpv backend capability alone does not establish a Foxide UI feature."
     }
   ],
   "sources": {
