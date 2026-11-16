@@ -24,3 +24,18 @@ class MedalGapReportTests(unittest.TestCase):
         self.assertEqual(board['players'][0]['feature_gold'], 2)
         self.assertEqual(board['players'][1]['feature_gold'], 1)
         self.assertEqual(len(catalog['features']), 3, 'Source evidence must survive report filtering')
+
+    def test_every_medal_table_precedes_every_chart(self):
+        def board(prefix):
+            players = [dict(id=prefix, name=prefix, feature_gold=1, performance_gold=1,
+                            performance_silver=0, performance_bronze=0)]
+            return dict(players=players, runtime={prefix:dict(status='Verified playback')},
+                        features=[dict(id='f', name='Feature', applicable=[prefix], awards={prefix:'gold'}, claims=[])],
+                        performance=[dict(id='cpu', name='CPU', profile='software-null-output/x/' + prefix, unit='%',
+                                          rankings=[dict(player=prefix,value=1,medal='gold',trials=3)])])
+        text = markdown({'windows':board('Win'), 'macos':board('Mac'), 'linux':board('Linux')}, 'scores')
+        first_chart = text.index('![')
+        self.assertLess(text.rindex('| Player | 🥇'), first_chart)
+        self.assertLess(text.rindex('| Feature |'), first_chart)
+        self.assertEqual(text.count('scenarios.svg'), 3)
+        self.assertIn('### Charts', text)

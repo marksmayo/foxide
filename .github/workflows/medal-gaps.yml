@@ -25,6 +25,7 @@ jobs:
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
         with:
           key: desktop-ui
+      - run: sudo apt-get update && sudo apt-get install -y libfontconfig1-dev libxkbcommon-dev
       - run: cargo test -p player-cli --locked --test launch
       - run: cargo test -p player-render --features desktop --lib --locked cloning_snapshot
   rust-format:
