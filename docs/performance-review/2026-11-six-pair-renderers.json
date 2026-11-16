@@ -1,0 +1,176 @@
+{
+  "session": {
+    "utc": "2026-11-16T04:26:13.429929+00:00",
+    "system": "windows",
+    "presentation": "native-window",
+    "duration": 30,
+    "warmup": 5,
+    "repeat": 6,
+    "seed": 20261116,
+    "binary_sha256": "4f202af0d220dc26d3340a57ed8365573974e8d26f36a4400809ff6b1c11837e",
+    "libmpv_sha256": "88504ee5560942a955405e99dfb5971368e4cf851321f36565bf2a667271db1b",
+    "runtime_sha256": {
+      "libEGL.dll": "687710d6572174d6c5216f29b1fbf0a7e5c41c90801195d5e1652c0f2194d192",
+      "libGLESv2.dll": "cd4e94481823d463e71739a22a10a6567a54275a008a103f690222eecb2b5f10"
+    },
+    "fixture_sha256": "fee06245bb4331fce3e1843eb799736e401757ef2eb5200dc9bb304fbab1a84c",
+    "source_commit": null,
+    "source_description": "Local GLES3 build validated by native compositor and transition tests",
+    "window_policy": "Same binary, default application window; no geometry normalization against other players",
+    "note": "Paired sequential local collection; engine observations are not scanout or battery measurements"
+  },
+  "summary": {
+    "default": {
+      "trials": 6,
+      "cpu": {
+        "mean": 103.44732280149356,
+        "median": 103.37977441194047,
+        "min": 89.88277809903866,
+        "max": 111.5347588278116,
+        "sample_stddev": 7.7744026259785795
+      },
+      "rss_mib": {
+        "mean": 1165.1088666483165,
+        "median": 1168.7276755712364,
+        "min": 1144.8399697580646,
+        "max": 1175.8382646276596,
+        "sample_stddev": 11.373249712577957
+      },
+      "output_drops_per_engine_second": {
+        "mean": 42.05609402193903,
+        "median": 45.12671955962322,
+        "min": 31.383666632231808,
+        "max": 48.48853246207272,
+        "sample_stddev": 7.068558943830717
+      },
+      "decoders": [
+        "d3d11va-copy"
+      ]
+    },
+    "angle": {
+      "trials": 6,
+      "cpu": {
+        "mean": 154.56125617764084,
+        "median": 154.8178119732694,
+        "min": 152.1395718244773,
+        "max": 156.51755211460272,
+        "sample_stddev": 1.7816534111371
+      },
+      "rss_mib": {
+        "mean": 1194.5875498311968,
+        "median": 1195.3541610529815,
+        "min": 1189.5371890943877,
+        "max": 1198.4426663306451,
+        "sample_stddev": 4.18079591039111
+      },
+      "output_drops_per_engine_second": {
+        "mean": 2.0410216547941205,
+        "median": 0.059993890222219765,
+        "min": 0,
+        "max": 9.895499292048257,
+        "sample_stddev": 3.947567719155424
+      },
+      "decoders": [
+        "dxva2"
+      ]
+    },
+    "paired_cpu_delta": {
+      "mean": 51.11393337614728,
+      "median": 51.99887474126346,
+      "values": [
+        52.35191584260144,
+        51.64583363992547,
+        62.25679372543863,
+        53.14610172455825,
+        41.29149661184974,
+        45.991458712510166
+      ]
+    }
+  },
+  "trials": [
+    {
+      "pair": 1,
+      "mode": "angle",
+      "verified": true,
+      "cpu": 156.2485337405649,
+      "rss_mib": 1190.4144652061855
+    },
+    {
+      "pair": 1,
+      "mode": "default",
+      "verified": true,
+      "cpu": 103.89661789796347,
+      "rss_mib": 1175.8382646276596
+    },
+    {
+      "pair": 2,
+      "mode": "angle",
+      "verified": true,
+      "cpu": 154.50876456584297,
+      "rss_mib": 1192.7341282894736
+    },
+    {
+      "pair": 2,
+      "mode": "default",
+      "verified": true,
+      "cpu": 102.8629309259175,
+      "rss_mib": 1168.232904905914
+    },
+    {
+      "pair": 3,
+      "mode": "default",
+      "verified": true,
+      "cpu": 89.88277809903866,
+      "rss_mib": 1173.022772606383
+    },
+    {
+      "pair": 3,
+      "mode": "angle",
+      "verified": true,
+      "cpu": 152.1395718244773,
+      "rss_mib": 1197.9741938164893
+    },
+    {
+      "pair": 4,
+      "mode": "default",
+      "verified": true,
+      "cpu": 101.98075765613756,
+      "rss_mib": 1169.222446236559
+    },
+    {
+      "pair": 4,
+      "mode": "angle",
+      "verified": true,
+      "cpu": 155.1268593806958,
+      "rss_mib": 1198.4426663306451
+    },
+    {
+      "pair": 5,
+      "mode": "default",
+      "verified": true,
+      "cpu": 111.5347588278116,
+      "rss_mib": 1159.496841755319
+    },
+    {
+      "pair": 5,
+      "mode": "angle",
+      "verified": true,
+      "cpu": 152.82625543966134,
+      "rss_mib": 1198.42265625
+    },
+    {
+      "pair": 6,
+      "mode": "angle",
+      "verified": true,
+      "cpu": 156.51755211460272,
+      "rss_mib": 1189.5371890943877
+    },
+    {
+      "pair": 6,
+      "mode": "default",
+      "verified": true,
+      "cpu": 110.52609340209256,
+      "rss_mib": 1144.8399697580646
+    }
+  ]
+}

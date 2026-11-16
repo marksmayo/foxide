@@ -102,12 +102,24 @@ impl Renderer {
                 pointer
             })
         };
-        let names = if cfg!(windows) {
-            vec!["opengl32.dll"]
+        let names: Vec<String> = if cfg!(windows) {
+            if let Some(directory) = std::env::var_os("FOXIDE_ANGLE_RUNTIME") {
+                ["libEGL.dll", "libGLESv2.dll"]
+                    .into_iter()
+                    .map(|name| {
+                        std::path::PathBuf::from(&directory)
+                            .join(name)
+                            .to_string_lossy()
+                            .into_owned()
+                    })
+                    .collect()
+            } else {
+                vec!["opengl32.dll".into()]
+            }
         } else if cfg!(target_os = "macos") {
-            vec!["/System/Library/Frameworks/OpenGL.framework/OpenGL"]
+            vec!["/System/Library/Frameworks/OpenGL.framework/OpenGL".into()]
         } else {
-            vec!["libGL.so.1", "libEGL.so.1"]
+            vec!["libGL.so.1".into(), "libEGL.so.1".into()]
         };
         // SAFETY: system graphics libraries are retained for the entire resolver lifetime.
         let libraries = names
