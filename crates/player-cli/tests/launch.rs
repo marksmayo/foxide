@@ -351,3 +351,71 @@ fn unix_playback_replaces_the_launcher_instead_of_retaining_a_parent_process() {
         "Playback must not keep an idle wrapper process resident"
     );
 }
+
+#[cfg(unix)]
+#[test]
+fn path_lookup_skips_relative_directories_and_non_executable_files() {
+    use std::os::unix::fs::PermissionsExt;
+
+    let dir = scratch();
+    let app = dir.join("app");
+    let relative = dir.join("relative");
+    let blocked = dir.join("blocked");
+    let not_a_file = dir.join("directory");
+    let working = dir.join("working");
+    for path in [&app, &relative, &blocked, &not_a_file, &working] {
+        fs::create_dir(path).unwrap();
+    }
+    let executable = app.join("foxide");
+    fs::copy(env!("CARGO_BIN_EXE_foxide"), &executable).unwrap();
+    let installed = working.join("mpv");
+    fs::rename(engine(&working), &installed).unwrap();
+    fs::copy(&installed, relative.join("mpv")).unwrap();
+    let blocked_engine = blocked.join("mpv");
+    fs::write(&blocked_engine, "not executable").unwrap();
+    fs::set_permissions(&blocked_engine, fs::Permissions::from_mode(0o644)).unwrap();
+    fs::create_dir(not_a_file.join("mpv")).unwrap();
+    let search = std::env::join_paths([
+        std::path::Path::new("relative"),
+        blocked.as_path(),
+        not_a_file.as_path(),
+        working.as_path(),
+    ])
+    .unwrap();
+    let launch = || {
+        let mut command = Command::new(&executable);
+        command
+            .current_dir(&dir)
+            .env_remove("FOXIDE_MPV")
+            .env("PATH", &search);
+        command
+    };
+    let plan = launch()
+        .args(["--print-command", "https://example.org/fixture.mp4"])
+        .output()
+        .unwrap();
+    assert!(
+        plan.status.success(),
+        "{}",
+        String::from_utf8_lossy(&plan.stderr)
+    );
+    let args: Vec<String> = serde_json::from_slice(&plan.stdout).unwrap();
+    assert_eq!(PathBuf::from(&args[0]), installed);
+
+    let log = dir.join("engine.log");
+    let played = launch()
+        .arg("https://example.org/fixture.mp4")
+        .env("FOXIDE_TEST_ENGINE_LOG", &log)
+        .output()
+        .unwrap();
+    assert!(
+        played.status.success(),
+        "{}",
+        String::from_utf8_lossy(&played.stderr)
+    );
+    assert!(
+        fs::read_to_string(log)
+            .unwrap()
+            .contains("https://example.org/fixture.mp4")
+    );
+}
