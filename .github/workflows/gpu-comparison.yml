@@ -1,0 +1,78 @@
+name: Isolated Windows GPU comparison
+on:
+  workflow_dispatch:
+    inputs:
+      runner_label:
+        description: Configured dedicated Windows GPU runner label (hosted GPU or remote self-hosted desktop)
+        required: true
+        type: string
+      angle_runtime:
+        description: Absolute trusted ANGLE runtime directory on that runner
+        required: true
+        type: string
+      libmpv:
+        description: Absolute libmpv ABI2 DLL path on that runner
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: isolated-windows-gpu
+  cancel-in-progress: false
+jobs:
+  compare:
+    runs-on: ${{ inputs.runner_label }}
+    timeout-minutes: 60
+    env:
+      FOXIDE_ANGLE_RUNTIME: ${{ inputs.angle_runtime }}
+      FOXIDE_LIBMPV: ${{ inputs.libmpv }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
+      - name: Verify isolated Windows GPU prerequisites
+        shell: pwsh
+        run: |
+          if ($env:RUNNER_OS -ne 'Windows') { throw 'A Windows GPU desktop runner is required' }
+          if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) { throw 'Install FFmpeg on the dedicated runner first' }
+          if (-not (Get-Command ffprobe -ErrorAction SilentlyContinue)) { throw 'Install ffprobe on the dedicated runner first' }
+          foreach ($name in @('libEGL.dll', 'libGLESv2.dll')) {
+            if (-not (Test-Path -LiteralPath (Join-Path $env:FOXIDE_ANGLE_RUNTIME $name))) { throw "Missing ANGLE runtime: $name" }
+          }
+          if (-not (Test-Path -LiteralPath $env:FOXIDE_LIBMPV)) { throw 'Missing explicit libmpv DLL' }
+          New-Item -ItemType Directory -Force results/local/gpu | Out-Null
+          Get-CimInstance Win32_VideoController | Select-Object Name, DriverVersion, VideoProcessor | ConvertTo-Json | Set-Content results/local/gpu/adapters.json
+      - name: Build once before taking any measurements
+        shell: pwsh
+        run: |
+          cargo build -p player-ui --features desktop --bin foxide-desktop --release --locked
+          if ($LASTEXITCODE -ne 0) { throw 'Desktop build failed' }
+          cargo test -p player-render --features gpu-integration --release --locked --no-run --message-format=json > results/local/gpu/test-build.jsonl
+          if ($LASTEXITCODE -ne 0) { throw 'Compositor test build failed' }
+      - name: Prepare deterministic HEVC and asymmetric pixel fixtures
+        shell: pwsh
+        run: |
+          python scripts/generate-media.py --profile smoke --seconds 3 --files A B C D --output media/generated/gpu-seed
+          if ($LASTEXITCODE -ne 0) { throw 'Seed generation failed' }
+          python scripts/prepare-event-media.py --seed media/generated/gpu-seed --output media/generated/gpu
+          if ($LASTEXITCODE -ne 0) { throw 'Fixture preparation failed' }
+          ffmpeg -v error -f lavfi -i "testsrc2=size=320x180:rate=30:duration=30,drawbox=x=0:y=0:w=iw:h=ih/4:color=red:t=fill,drawbox=x=0:y=3*ih/4:w=iw:h=ih/4:color=blue:t=fill" -c:v libx264 -pix_fmt yuv420p results/local/gpu/orientation.mp4
+          if ($LASTEXITCODE -ne 0) { throw 'Pixel fixture generation failed' }
+      - name: Collect randomized same-machine A/B trials after pixel acceptance
+        shell: pwsh
+        run: |
+          $artifacts = Get-Content results/local/gpu/test-build.jsonl | ForEach-Object { $_ | ConvertFrom-Json }
+          $probe = @($artifacts | Where-Object { $_.reason -eq 'compiler-artifact' -and $_.target.name -eq 'player_render' -and $_.profile.test -and $_.executable })
+          if ($probe.Count -ne 1) { throw 'Expected exactly one compiled compositor test executable' }
+          python scripts/compare_render_modes.py --binary target/release/foxide-desktop.exe --probe $probe[0].executable --pixel-fixture results/local/gpu/orientation.mp4 --media-dir media/generated/gpu --output results/local/gpu/comparison --repeats 5 --duration 30 --warmup 5
+          if ($LASTEXITCODE -ne 0) { throw 'GPU acceptance/comparison failed; inspect raw evidence' }
+          Get-Content results/local/gpu/comparison/summary.md >> $env:GITHUB_STEP_SUMMARY
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: isolated-windows-gpu-comparison
+          path: |
+            results/local/gpu/
+            media/generated/gpu/manifest.json
