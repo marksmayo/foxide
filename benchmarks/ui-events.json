@@ -562,6 +562,151 @@
         "video",
         "audio"
       ]
+    },
+    {
+      "id": "dual_subtitle_select",
+      "name": "Enable secondary subtitles",
+      "verification": "accessibility-state",
+      "condition": "secondary-subtitle-selected",
+      "context": "playback",
+      "collector": "adapter-required",
+      "media_types": [
+        "video"
+      ],
+      "workload": "See docs/feature-and-ui-events.md for fixed fixtures and evidence requirements."
+    },
+    {
+      "id": "network_browse_1000",
+      "name": "Browse a 1,000-entry network share",
+      "verification": "accessibility-state",
+      "condition": "network-list-complete",
+      "context": "network",
+      "collector": "adapter-required",
+      "media_types": [
+        "video"
+      ],
+      "workload": "See docs/feature-and-ui-events.md for fixed fixtures and evidence requirements."
+    },
+    {
+      "id": "server_library_search_10000",
+      "name": "Search a 10,000-title server library",
+      "verification": "accessibility-state",
+      "condition": "server-search-results-complete",
+      "context": "network",
+      "collector": "adapter-required",
+      "media_types": [
+        "video"
+      ],
+      "workload": "See docs/feature-and-ui-events.md for fixed fixtures and evidence requirements."
+    },
+    {
+      "id": "cast_connect",
+      "name": "Connect to a cast destination",
+      "verification": "presented-frame",
+      "condition": "receiver-content-presented",
+      "context": "network",
+      "collector": "adapter-required",
+      "media_types": [
+        "video"
+      ],
+      "workload": "See docs/feature-and-ui-events.md for fixed fixtures and evidence requirements."
+    },
+    {
+      "id": "cast_disconnect",
+      "name": "Disconnect casting and restore local video",
+      "verification": "presented-frame",
+      "condition": "local-content-presented",
+      "context": "network",
+      "collector": "adapter-required",
+      "media_types": [
+        "video"
+      ],
+      "workload": "See docs/feature-and-ui-events.md for fixed fixtures and evidence requirements."
+    },
+    {
+      "id": "subtitle_style_preview",
+      "name": "Apply subtitle font and size preview",
+      "verification": "presented-frame",
+      "condition": "subtitle-style-presented",
+      "context": "playback",
+      "collector": "adapter-required",
+      "media_types": [
+        "video"
+      ],
+      "workload": "See docs/feature-and-ui-events.md for fixed fixtures and evidence requirements."
+    },
+    {
+      "id": "audio_device_switch",
+      "name": "Switch audio output device",
+      "verification": "audio-output",
+      "condition": "new-device-audio-observed",
+      "context": "playback",
+      "collector": "adapter-required",
+      "media_types": [
+        "audio",
+        "video"
+      ],
+      "workload": "See docs/feature-and-ui-events.md for fixed fixtures and evidence requirements."
+    },
+    {
+      "id": "keyboard_seek_burst_30",
+      "name": "Thirty keyboard seeks to final stable frame",
+      "verification": "presented-frame",
+      "condition": "final-seek-frame-presented",
+      "context": "playback",
+      "collector": "adapter-required",
+      "media_types": [
+        "video"
+      ],
+      "workload": "See docs/feature-and-ui-events.md for fixed fixtures and evidence requirements."
+    },
+    {
+      "id": "playlist_reorder_1000",
+      "name": "Drag-reorder a 1,000-item playlist",
+      "verification": "accessibility-state",
+      "condition": "playlist-final-order-verified",
+      "context": "playback",
+      "collector": "adapter-required",
+      "media_types": [
+        "video"
+      ],
+      "workload": "See docs/feature-and-ui-events.md for fixed fixtures and evidence requirements."
+    },
+    {
+      "id": "window_move_displays",
+      "name": "Move video between displays with different DPI",
+      "verification": "presented-frame",
+      "condition": "destination-display-content-presented",
+      "context": "playback",
+      "collector": "adapter-required",
+      "media_types": [
+        "video"
+      ],
+      "workload": "See docs/feature-and-ui-events.md for fixed fixtures and evidence requirements."
+    },
+    {
+      "id": "screen_reader_traversal",
+      "name": "Traverse twenty controls with a screen reader",
+      "verification": "accessibility-state",
+      "condition": "twenty-correct-focus-announcements",
+      "context": "idle",
+      "collector": "adapter-required",
+      "media_types": [
+        "video"
+      ],
+      "workload": "See docs/feature-and-ui-events.md for fixed fixtures and evidence requirements."
+    },
+    {
+      "id": "shutdown_during_4k",
+      "name": "Close player during 4K playback",
+      "verification": "process-exit",
+      "condition": "owned-process-tree-exited",
+      "context": "playback",
+      "collector": "adapter-required",
+      "media_types": [
+        "video"
+      ],
+      "workload": "See docs/feature-and-ui-events.md for fixed fixtures and evidence requirements."
     }
   ],
   "players": [
