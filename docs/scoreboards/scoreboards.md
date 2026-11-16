@@ -11,12 +11,12 @@ Overall feature gold counts each feature once across applicable platforms; perfo
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
-| mpv | 71 | 27 | 8 | 106 |
-| VLC | 65 | 13 | 23 | 101 |
-| Foxide | 46 | 45 | 26 | 117 |
+| mpv | 75 | 25 | 6 | 106 |
+| VLC | 55 | 16 | 24 | 95 |
+| Foxide | 51 | 45 | 21 | 117 |
 | IINA | 34 | 0 | 0 | 34 |
 | MPC-BE | 19 | 0 | 0 | 19 |
-| SMPlayer | 17 | 4 | 5 | 26 |
+| SMPlayer | 17 | 3 | 6 | 26 |
 | MPC-HC | 15 | 0 | 0 | 15 |
 | Infuse | 14 | 0 | 0 | 14 |
 | Kodi | 14 | 0 | 0 | 14 |
@@ -34,10 +34,10 @@ Overall feature gold counts each feature once across applicable platforms; perfo
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
-| VLC | 41 | 13 | 23 | 77 |
-| mpv | 35 | 27 | 8 | 70 |
-| Foxide | 23 | 45 | 26 | 94 |
-| SMPlayer | 3 | 4 | 5 | 12 |
+| mpv | 39 | 25 | 6 | 70 |
+| VLC | 31 | 16 | 24 | 71 |
+| Foxide | 28 | 45 | 21 | 94 |
+| SMPlayer | 3 | 3 | 6 | 12 |
 | FFplay | 0 | 0 | 0 | 0 |
 | GOM Player | 0 | 0 | 0 | 0 |
 | IINA | 0 | 0 | 0 | 0 |
@@ -86,9 +86,9 @@ Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CL
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
-| mpv | 57 | 16 | 5 | 78 |
-| VLC | 38 | 3 | 14 | 55 |
-| Foxide | 31 | 22 | 12 | 65 |
+| mpv | 58 | 16 | 4 | 78 |
+| VLC | 37 | 2 | 14 | 53 |
+| Foxide | 31 | 23 | 11 | 65 |
 | MPC-BE | 19 | 0 | 0 | 19 |
 | MPC-HC | 15 | 0 | 0 | 15 |
 | Kodi | 14 | 0 | 0 | 14 |
@@ -104,57 +104,57 @@ Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CL
 
 **Software decode · Foxide CLI · Hosted**
 
-windows-hosted · Windows-2025Server-10.0.26100-SP0 · AMD64 · 4 logical CPUs · 2026-11-15T13:18:28.960600+00:00.
+windows-hosted · Windows-2025Server-10.0.26100-SP0 · AMD64 · 4 logical CPUs · 2026-11-16T01:47:02.586593+00:00.
 
-[Actions run](https://github.com/marksmayo/foxide/actions/runs/43717764774) · Source: `726d4ce5a19dcf09bff676129dba0dc4a55958aa`. Freshness is per field; older platform results are retained with their original collection dates.
+[Actions run](https://github.com/marksmayo/foxide/actions/runs/43787689931) · Source: `cbdbf6b4ea6e5ce1e07733bfe52b9613bece5dba`. Freshness is per field; older platform results are retained with their original collection dates.
 
 Sampling: 8s after engine readiness, 2s warmup excluded; randomized order (seed 20261115); cache state uncontrolled.
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
-| mpv | 9 | 3 | 2 | 14 |
-| VLC | 4 | 1 | 6 | 11 |
-| Foxide | 2 | 9 | 3 | 14 |
+| mpv | 10 | 3 | 1 | 14 |
+| VLC | 3 | 0 | 6 | 9 |
+| Foxide | 2 | 10 | 2 | 14 |
 
-![Windows: every measured metric](./windows-dedbb43b18-scenarios.svg)
+![Windows: every measured metric](./windows-e0cbcf5b97-scenarios.svg)
 
 <details><summary>Every measured metric — median values and podiums</summary>
 
 | Metric | Foxide | VLC | mpv |
 |---|---:|---:|---:|
-| Engine playback restart latency | 88.7 ms | — | **84.9** ms |
+| Engine playback restart latency | 64.8 ms | — | **60.9** ms |
 | Paused video CPU | **0** % of one core | — | **0** % of one core |
-| Paused video steady RAM | 103 MiB | — | **99** MiB |
-| 1080p H.264 CPU | 34.6 % of one core | **32.5** % of one core | 35.5 % of one core |
-| 1080p H.264 steady RAM | 122 MiB | 157 MiB | **118** MiB |
-| 4K60 HEVC 10-bit CPU | 220 % of one core | **214** % of one core | 222 % of one core |
+| Paused video steady RAM | 103 MiB | — | **98.6** MiB |
+| 1080p H.264 CPU | 27.1 % of one core | **23.5** % of one core | 27.7 % of one core |
+| 1080p H.264 steady RAM | 123 MiB | 158 MiB | **117** MiB |
+| 4K60 HEVC 10-bit CPU | 157 % of one core | 157 % of one core | **151** % of one core |
 | 4K60 HEVC 10-bit steady RAM | 438 MiB | 911 MiB | **434** MiB |
-| 4K AV1 CPU | 177 % of one core | **165** % of one core | 170 % of one core |
-| 4K AV1 steady RAM | 557 MiB | 555 MiB | **538** MiB |
-| FLAC audio CPU | 0.766 % of one core | 1.57 % of one core | **0** % of one core |
-| FLAC audio steady RAM | 55.6 MiB | **25.1** MiB | 52 MiB |
-| 2× playback CPU | **69** % of one core | 71.5 % of one core | 71.3 % of one core |
-| 2× playback steady RAM | 124 MiB | 158 MiB | **119** MiB |
+| 4K AV1 CPU | **102** % of one core | — | 117 % of one core |
+| 4K AV1 steady RAM | 541 MiB | — | **537** MiB |
+| FLAC audio CPU | 1.02 % of one core | 1.31 % of one core | **1.02** % of one core |
+| FLAC audio steady RAM | 56.2 MiB | **25.5** MiB | 51.6 MiB |
+| 2× playback CPU | 55.3 % of one core | **52.3** % of one core | 53.5 % of one core |
+| 2× playback steady RAM | 124 MiB | 157 MiB | **120** MiB |
 | Peak playback RAM | 123 MiB | 158 MiB | **118** MiB |
 
 Bold values are gold medians. — means no eligible comparable result. Trial evidence and exact cohort IDs:
 
 | Metric | Cohort | Trials per eligible entrant |
 |---|---|---:|
-| Engine playback restart latency | `software-null-output/avc1080/2fb4cab117524f55` | 3, 3 |
-| Paused video CPU | `software-null-output/paused/0c603b229bd9780d` | 3, 3 |
-| Paused video steady RAM | `software-null-output/paused/0c603b229bd9780d` | 3, 3 |
-| 1080p H.264 CPU | `software-null-output/avc1080/2fb4cab117524f55` | 3, 3, 3 |
-| 1080p H.264 steady RAM | `software-null-output/avc1080/2fb4cab117524f55` | 3, 3, 3 |
-| 4K60 HEVC 10-bit CPU | `software-null-output/hevc4k/f6737f49fef618dd` | 3, 3, 3 |
-| 4K60 HEVC 10-bit steady RAM | `software-null-output/hevc4k/f6737f49fef618dd` | 3, 3, 3 |
-| 4K AV1 CPU | `software-null-output/av14k/b19695a828afa461` | 3, 3, 3 |
-| 4K AV1 steady RAM | `software-null-output/av14k/b19695a828afa461` | 3, 3, 3 |
-| FLAC audio CPU | `software-null-output/flac/a4a1dd7c9840a8e3` | 3, 3, 3 |
-| FLAC audio steady RAM | `software-null-output/flac/a4a1dd7c9840a8e3` | 3, 3, 3 |
-| 2× playback CPU | `software-null-output/speed2x/630f141fc38206b1` | 3, 3, 3 |
-| 2× playback steady RAM | `software-null-output/speed2x/630f141fc38206b1` | 3, 3, 3 |
-| Peak playback RAM | `software-null-output/avc1080/2fb4cab117524f55` | 3, 3, 3 |
+| Engine playback restart latency | `software-null-output/avc1080/720757a5419bbfc3` | 3, 3 |
+| Paused video CPU | `software-null-output/paused/9cae31d974b1be5f` | 3, 3 |
+| Paused video steady RAM | `software-null-output/paused/9cae31d974b1be5f` | 3, 3 |
+| 1080p H.264 CPU | `software-null-output/avc1080/720757a5419bbfc3` | 3, 3, 3 |
+| 1080p H.264 steady RAM | `software-null-output/avc1080/720757a5419bbfc3` | 3, 3, 3 |
+| 4K60 HEVC 10-bit CPU | `software-null-output/hevc4k/598d1c7d82a16f5e` | 3, 3, 3 |
+| 4K60 HEVC 10-bit steady RAM | `software-null-output/hevc4k/598d1c7d82a16f5e` | 3, 3, 3 |
+| 4K AV1 CPU | `software-null-output/av14k/a3603cef3df72f31` | 3, 3 |
+| 4K AV1 steady RAM | `software-null-output/av14k/a3603cef3df72f31` | 3, 3 |
+| FLAC audio CPU | `software-null-output/flac/beb5ca88ec0867c8` | 3, 3, 3 |
+| FLAC audio steady RAM | `software-null-output/flac/beb5ca88ec0867c8` | 3, 3, 3 |
+| 2× playback CPU | `software-null-output/speed2x/e34a97ebb497dfbb` | 3, 3, 3 |
+| 2× playback steady RAM | `software-null-output/speed2x/e34a97ebb497dfbb` | 3, 3, 3 |
+| Peak playback RAM | `software-null-output/avc1080/720757a5419bbfc3` | 3, 3, 3 |
 
 </details>
 
@@ -287,7 +287,7 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 | Player | Runtime outcome | Evidence / limitation |
 |---|---|---|
 | Foxide | Verified playback 54/57 | sampled-playback-unverified, verified-playback |
-| VLC | Verified playback 44/57 | playback-readiness-timeout, sampled-playback-unverified, verified-playback |
+| VLC | Verified playback 41/57 | playback-readiness-timeout, sampled-playback-unverified, verified-playback |
 | mpv | Verified playback 54/57 | sampled-playback-unverified, verified-playback |
 | Windows Media Player | install-blocked | Local Store package was not registered; WinGet list/install both returned 0x8A150001. Store desktop control is unavailable. Interactive Store installation is pending. |
 | Windows Media Player Legacy | Unverified / diagnostic (6 cases) | early-exit, sampled-playback-unverified |
@@ -383,10 +383,10 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
-| mpv | 40 | 8 | 2 | 50 |
-| VLC | 34 | 0 | 1 | 35 |
+| mpv | 43 | 5 | 2 | 50 |
 | IINA | 34 | 0 | 0 | 34 |
-| Foxide | 23 | 6 | 8 | 37 |
+| VLC | 28 | 2 | 3 | 33 |
+| Foxide | 26 | 7 | 4 | 37 |
 | Infuse | 14 | 0 | 0 | 14 |
 | Kodi | 14 | 0 | 0 | 14 |
 | SMPlayer | 13 | 0 | 0 | 13 |
@@ -397,57 +397,57 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 
 **Software decode · Foxide CLI · Hosted**
 
-macos-hosted · macOS-15.8.2-arm64-arm-64bit · arm64 · 3 logical CPUs · 2026-11-15T13:18:16.957063+00:00.
+macos-hosted · macOS-15.8.2-arm64-arm-64bit · arm64 · 3 logical CPUs · 2026-11-16T01:46:38.886625+00:00.
 
-[Actions run](https://github.com/marksmayo/foxide/actions/runs/43717764774) · Source: `726d4ce5a19dcf09bff676129dba0dc4a55958aa`. Freshness is per field; older platform results are retained with their original collection dates.
+[Actions run](https://github.com/marksmayo/foxide/actions/runs/43787689931) · Source: `cbdbf6b4ea6e5ce1e07733bfe52b9613bece5dba`. Freshness is per field; older platform results are retained with their original collection dates.
 
 Sampling: 8s after engine readiness, 2s warmup excluded; randomized order (seed 20261115); cache state uncontrolled.
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
-| VLC | 10 | 0 | 1 | 11 |
-| mpv | 4 | 8 | 2 | 14 |
-| Foxide | 0 | 6 | 8 | 14 |
+| mpv | 7 | 5 | 2 | 14 |
+| VLC | 4 | 2 | 3 | 9 |
+| Foxide | 3 | 7 | 4 | 14 |
 
-![macOS: every measured metric](./macos-1263c6a72f-scenarios.svg)
+![macOS: every measured metric](./macos-e5d3ba1437-scenarios.svg)
 
 <details><summary>Every measured metric — median values and podiums</summary>
 
 | Metric | Foxide | VLC | mpv |
 |---|---:|---:|---:|
-| Engine playback restart latency | 533 ms | — | **318** ms |
-| Paused video CPU | 0.893 % of one core | — | **0.815** % of one core |
-| Paused video steady RAM | 152 MiB | — | **148** MiB |
-| 1080p H.264 CPU | 43 % of one core | **9.29** % of one core | 37.4 % of one core |
-| 1080p H.264 steady RAM | 198 MiB | **91.4** MiB | 187 MiB |
-| 4K60 HEVC 10-bit CPU | 269 % of one core | **6.3** % of one core | 240 % of one core |
-| 4K60 HEVC 10-bit steady RAM | 449 MiB | **111** MiB | 440 MiB |
-| 4K AV1 CPU | 168 % of one core | **143** % of one core | 165 % of one core |
-| 4K AV1 steady RAM | 546 MiB | 617 MiB | **543** MiB |
-| FLAC audio CPU | 5.25 % of one core | **2.02** % of one core | 6.1 % of one core |
-| FLAC audio steady RAM | 156 MiB | **66.8** MiB | 156 MiB |
-| 2× playback CPU | 69.9 % of one core | **15.7** % of one core | 70.8 % of one core |
-| 2× playback steady RAM | 201 MiB | **93.6** MiB | 197 MiB |
-| Peak playback RAM | 208 MiB | **92.6** MiB | 195 MiB |
+| Engine playback restart latency | **467** ms | — | 494 ms |
+| Paused video CPU | 1.02 % of one core | — | **0.669** % of one core |
+| Paused video steady RAM | 150 MiB | — | **148** MiB |
+| 1080p H.264 CPU | 44.6 % of one core | 44 % of one core | **42.8** % of one core |
+| 1080p H.264 steady RAM | **193** MiB | 200 MiB | 195 MiB |
+| 4K60 HEVC 10-bit CPU | 268 % of one core | **245** % of one core | 252 % of one core |
+| 4K60 HEVC 10-bit steady RAM | 450 MiB | 830 MiB | **445** MiB |
+| 4K AV1 CPU | 169 % of one core | — | **153** % of one core |
+| 4K AV1 steady RAM | 550 MiB | — | **542** MiB |
+| FLAC audio CPU | 4.5 % of one core | **1.44** % of one core | 5.39 % of one core |
+| FLAC audio steady RAM | 155 MiB | **67.5** MiB | 149 MiB |
+| 2× playback CPU | 69.2 % of one core | **68.3** % of one core | 83.9 % of one core |
+| 2× playback steady RAM | **193** MiB | 199 MiB | 198 MiB |
+| Peak playback RAM | 208 MiB | 200 MiB | **199** MiB |
 
 Bold values are gold medians. — means no eligible comparable result. Trial evidence and exact cohort IDs:
 
 | Metric | Cohort | Trials per eligible entrant |
 |---|---|---:|
-| Engine playback restart latency | `software-null-output/avc1080/761400ac79770c3d` | 3, 3 |
-| Paused video CPU | `software-null-output/paused/6d66a91a70030cbf` | 3, 3 |
-| Paused video steady RAM | `software-null-output/paused/6d66a91a70030cbf` | 3, 3 |
-| 1080p H.264 CPU | `software-null-output/avc1080/761400ac79770c3d` | 3, 3, 3 |
-| 1080p H.264 steady RAM | `software-null-output/avc1080/761400ac79770c3d` | 3, 3, 3 |
-| 4K60 HEVC 10-bit CPU | `software-null-output/hevc4k/8f8015cfd8f2fddd` | 3, 3, 3 |
-| 4K60 HEVC 10-bit steady RAM | `software-null-output/hevc4k/8f8015cfd8f2fddd` | 3, 3, 3 |
-| 4K AV1 CPU | `software-null-output/av14k/970f4ee76f3b8977` | 3, 3, 3 |
-| 4K AV1 steady RAM | `software-null-output/av14k/970f4ee76f3b8977` | 3, 3, 3 |
-| FLAC audio CPU | `software-null-output/flac/da815b7499b2a69a` | 3, 3, 3 |
-| FLAC audio steady RAM | `software-null-output/flac/da815b7499b2a69a` | 3, 3, 3 |
-| 2× playback CPU | `software-null-output/speed2x/bf036ff63a244677` | 3, 3, 3 |
-| 2× playback steady RAM | `software-null-output/speed2x/bf036ff63a244677` | 3, 3, 3 |
-| Peak playback RAM | `software-null-output/avc1080/761400ac79770c3d` | 3, 3, 3 |
+| Engine playback restart latency | `software-null-output/avc1080/414e2151fff3ef34` | 3, 3 |
+| Paused video CPU | `software-null-output/paused/f44f4b3a6faf3bbc` | 3, 3 |
+| Paused video steady RAM | `software-null-output/paused/f44f4b3a6faf3bbc` | 3, 3 |
+| 1080p H.264 CPU | `software-null-output/avc1080/414e2151fff3ef34` | 3, 3, 3 |
+| 1080p H.264 steady RAM | `software-null-output/avc1080/414e2151fff3ef34` | 3, 3, 3 |
+| 4K60 HEVC 10-bit CPU | `software-null-output/hevc4k/7d30fbde773c152e` | 3, 3, 3 |
+| 4K60 HEVC 10-bit steady RAM | `software-null-output/hevc4k/7d30fbde773c152e` | 3, 3, 3 |
+| 4K AV1 CPU | `software-null-output/av14k/21e1acc101644f7d` | 3, 3 |
+| 4K AV1 steady RAM | `software-null-output/av14k/21e1acc101644f7d` | 3, 3 |
+| FLAC audio CPU | `software-null-output/flac/ec481a0fe14c1d71` | 3, 3, 3 |
+| FLAC audio steady RAM | `software-null-output/flac/ec481a0fe14c1d71` | 3, 3, 3 |
+| 2× playback CPU | `software-null-output/speed2x/42ec63e2facfe37f` | 3, 3, 3 |
+| 2× playback steady RAM | `software-null-output/speed2x/42ec63e2facfe37f` | 3, 3, 3 |
+| Peak playback RAM | `software-null-output/avc1080/414e2151fff3ef34` | 3, 3, 3 |
 
 </details>
 
@@ -456,7 +456,7 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 | Player | Runtime outcome | Evidence / limitation |
 |---|---|---|
 | Foxide | Verified playback 18/21 | sampled-playback-unverified, verified-playback |
-| VLC | Verified playback 15/21 | playback-readiness-timeout, sampled-playback-unverified, verified-playback |
+| VLC | Verified playback 12/21 | playback-readiness-timeout, sampled-playback-unverified, verified-playback |
 | mpv | Verified playback 18/21 | sampled-playback-unverified, verified-playback |
 | SMPlayer | not-detected | No native executable found; packaged-app/account/Store activation may need a dedicated adapter. |
 | FFplay | Unverified / diagnostic (3 cases) | sampled-playback-unverified |
@@ -548,142 +548,142 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
-| mpv | 46 | 3 | 1 | 50 |
-| VLC | 41 | 10 | 8 | 59 |
-| Foxide | 38 | 17 | 6 | 61 |
-| SMPlayer | 16 | 4 | 5 | 25 |
+| mpv | 46 | 4 | 0 | 50 |
+| Foxide | 40 | 15 | 6 | 61 |
+| VLC | 38 | 12 | 7 | 57 |
+| SMPlayer | 16 | 3 | 6 | 25 |
 | Kodi | 14 | 0 | 0 | 14 |
 | FFplay | 5 | 0 | 0 | 5 |
 | Plex | 5 | 0 | 0 | 5 |
 
 **Native UI actions · default application windows · Hosted**
 
-linux-hosted · 2026-11-15T15:37:42.217217+00:00.
+linux-hosted · 2026-11-16T01:47:01.290860+00:00.
 
-[Actions run](https://github.com/marksmayo/foxide/actions/runs/43730420415) · Source: `804348c78133d53069fa69ee283b4d7dc9e65f23`. Freshness is per field; older platform results are retained with their original collection dates.
+[Actions run](https://github.com/marksmayo/foxide/actions/runs/43787689931) · Source: `cbdbf6b4ea6e5ce1e07733bfe52b9613bece5dba`. Freshness is per field; older platform results are retained with their original collection dates.
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
 | Foxide | 14 | 7 | 3 | 24 |
 | VLC | 13 | 10 | 1 | 24 |
-| SMPlayer | 3 | 4 | 5 | 12 |
+| SMPlayer | 3 | 3 | 6 | 12 |
 
-![Linux: every measured metric](./linux-6940005584-scenarios.svg)
+![Linux: every measured metric](./linux-4843eff128-scenarios.svg)
 
 <details><summary>Every measured metric — median values and podiums</summary>
 
 | Metric | Foxide | VLC | SMPlayer |
 |---|---:|---:|---:|
-| Media/File menu — UI state latency | **89.4** ms | 145 ms | 303 ms |
-| Media/File menu — Action CPU time | 100 ms | **60** ms | 130 ms |
-| Media/File menu — Post-action RSS | 181 MiB | **96.2** MiB | 96.7 MiB |
-| Media/File menu — Native input dispatch | **0.299** ms | **0.255** ms | **0.215** ms |
-| Media/File menu — UI state observation after dispatch | **89.2** ms | 145 ms | 303 ms |
-| Media/File menu — Action RSS increase | **0** MiB | 1.19 MiB | 0.266 MiB |
-| Playback menu — UI state latency | **97.2** ms | 140 ms | 323 ms |
-| Playback menu — Action CPU time | 130 ms | **65** ms | 130 ms |
-| Playback menu — Post-action RSS | 180 MiB | **96.1** MiB | 97 MiB |
-| Playback menu — Native input dispatch | **0.251** ms | **0.238** ms | **0.209** ms |
-| Playback menu — UI state observation after dispatch | **97** ms | 140 ms | 323 ms |
-| Playback menu — Action RSS increase | 2.19 MiB | 1.14 MiB | **0.57** MiB |
-| Audio menu — UI state latency | **81.4** ms | 144 ms | — |
-| Audio menu — Action CPU time | 80 ms | **70** ms | — |
+| Media/File menu — UI state latency | **89.6** ms | 143 ms | 328 ms |
+| Media/File menu — Action CPU time | 95 ms | **60** ms | 135 ms |
+| Media/File menu — Post-action RSS | 181 MiB | **96.2** MiB | 96.6 MiB |
+| Media/File menu — Native input dispatch | **0.219** ms | **0.243** ms | **0.245** ms |
+| Media/File menu — UI state observation after dispatch | **89.3** ms | 143 ms | 327 ms |
+| Media/File menu — Action RSS increase | **0** MiB | 1.14 MiB | 0.25 MiB |
+| Playback menu — UI state latency | **98.1** ms | 137 ms | 317 ms |
+| Playback menu — Action CPU time | 130 ms | **60** ms | 140 ms |
+| Playback menu — Post-action RSS | 179 MiB | **96.1** MiB | 96.9 MiB |
+| Playback menu — Native input dispatch | **0.237** ms | **0.229** ms | **0.206** ms |
+| Playback menu — UI state observation after dispatch | **97.8** ms | 137 ms | 317 ms |
+| Playback menu — Action RSS increase | 1.16 MiB | 1.12 MiB | **0.5** MiB |
+| Audio menu — UI state latency | **81** ms | 142 ms | — |
+| Audio menu — Action CPU time | 70 ms | **60** ms | — |
 | Audio menu — Post-action RSS | 179 MiB | **96** MiB | — |
-| Audio menu — Native input dispatch | **0.237** ms | **0.208** ms | — |
-| Audio menu — UI state observation after dispatch | **81.1** ms | 144 ms | — |
-| Audio menu — Action RSS increase | 1.3 MiB | **0.881** MiB | — |
-| Subtitle menu — UI state latency | **85.1** ms | 138 ms | — |
-| Subtitle menu — Action CPU time | 80 ms | **60** ms | — |
-| Subtitle menu — Post-action RSS | 177 MiB | **95.8** MiB | — |
-| Subtitle menu — Native input dispatch | **0.245** ms | **0.224** ms | — |
-| Subtitle menu — UI state observation after dispatch | **84.7** ms | 137 ms | — |
-| Subtitle menu — Action RSS increase | **0** MiB | 0.688 MiB | — |
+| Audio menu — Native input dispatch | **0.307** ms | **0.293** ms | — |
+| Audio menu — UI state observation after dispatch | **80.6** ms | 142 ms | — |
+| Audio menu — Action RSS increase | 1.35 MiB | **0.938** MiB | — |
+| Subtitle menu — UI state latency | **83.3** ms | 135 ms | — |
+| Subtitle menu — Action CPU time | 80 ms | **65** ms | — |
+| Subtitle menu — Post-action RSS | 178 MiB | **95.7** MiB | — |
+| Subtitle menu — Native input dispatch | **0.275** ms | **0.317** ms | — |
+| Subtitle menu — UI state observation after dispatch | **83** ms | 135 ms | — |
+| Subtitle menu — Action RSS increase | **0.662** MiB | 0.754 MiB | — |
 
 Bold values are gold medians. — means no eligible comparable result. Trial evidence and exact cohort IDs:
 
 | Metric | Cohort | Trials per eligible entrant |
 |---|---|---:|
-| Media/File menu — UI state latency | `native-ui/menu_media/c4ad8107410586ca` | 10, 10, 10 |
-| Media/File menu — Action CPU time | `native-ui/menu_media/c4ad8107410586ca` | 10, 10, 10 |
-| Media/File menu — Post-action RSS | `native-ui/menu_media/c4ad8107410586ca` | 10, 10, 10 |
-| Media/File menu — Native input dispatch | `native-ui/menu_media/c4ad8107410586ca` | 10, 10, 10 |
-| Media/File menu — UI state observation after dispatch | `native-ui/menu_media/c4ad8107410586ca` | 10, 10, 10 |
-| Media/File menu — Action RSS increase | `native-ui/menu_media/c4ad8107410586ca` | 10, 10, 10 |
-| Playback menu — UI state latency | `native-ui/menu_playback/41ffb8adc45e4dbc` | 10, 10, 10 |
-| Playback menu — Action CPU time | `native-ui/menu_playback/41ffb8adc45e4dbc` | 10, 10, 10 |
-| Playback menu — Post-action RSS | `native-ui/menu_playback/41ffb8adc45e4dbc` | 10, 10, 10 |
-| Playback menu — Native input dispatch | `native-ui/menu_playback/41ffb8adc45e4dbc` | 10, 10, 10 |
-| Playback menu — UI state observation after dispatch | `native-ui/menu_playback/41ffb8adc45e4dbc` | 10, 10, 10 |
-| Playback menu — Action RSS increase | `native-ui/menu_playback/41ffb8adc45e4dbc` | 10, 10, 10 |
-| Audio menu — UI state latency | `native-ui/menu_audio/d971fe7a2d668879` | 10, 10 |
-| Audio menu — Action CPU time | `native-ui/menu_audio/d971fe7a2d668879` | 10, 10 |
-| Audio menu — Post-action RSS | `native-ui/menu_audio/d971fe7a2d668879` | 10, 10 |
-| Audio menu — Native input dispatch | `native-ui/menu_audio/d971fe7a2d668879` | 10, 10 |
-| Audio menu — UI state observation after dispatch | `native-ui/menu_audio/d971fe7a2d668879` | 10, 10 |
-| Audio menu — Action RSS increase | `native-ui/menu_audio/d971fe7a2d668879` | 10, 10 |
-| Subtitle menu — UI state latency | `native-ui/menu_subtitles/d76fe8a4698ede9a` | 10, 10 |
-| Subtitle menu — Action CPU time | `native-ui/menu_subtitles/d76fe8a4698ede9a` | 10, 10 |
-| Subtitle menu — Post-action RSS | `native-ui/menu_subtitles/d76fe8a4698ede9a` | 10, 10 |
-| Subtitle menu — Native input dispatch | `native-ui/menu_subtitles/d76fe8a4698ede9a` | 10, 10 |
-| Subtitle menu — UI state observation after dispatch | `native-ui/menu_subtitles/d76fe8a4698ede9a` | 10, 10 |
-| Subtitle menu — Action RSS increase | `native-ui/menu_subtitles/d76fe8a4698ede9a` | 10, 10 |
+| Media/File menu — UI state latency | `native-ui/menu_media/08509d70f889af38` | 10, 10, 10 |
+| Media/File menu — Action CPU time | `native-ui/menu_media/08509d70f889af38` | 10, 10, 10 |
+| Media/File menu — Post-action RSS | `native-ui/menu_media/08509d70f889af38` | 10, 10, 10 |
+| Media/File menu — Native input dispatch | `native-ui/menu_media/08509d70f889af38` | 10, 10, 10 |
+| Media/File menu — UI state observation after dispatch | `native-ui/menu_media/08509d70f889af38` | 10, 10, 10 |
+| Media/File menu — Action RSS increase | `native-ui/menu_media/08509d70f889af38` | 10, 10, 10 |
+| Playback menu — UI state latency | `native-ui/menu_playback/25729964eea4f45f` | 10, 10, 10 |
+| Playback menu — Action CPU time | `native-ui/menu_playback/25729964eea4f45f` | 10, 10, 10 |
+| Playback menu — Post-action RSS | `native-ui/menu_playback/25729964eea4f45f` | 10, 10, 10 |
+| Playback menu — Native input dispatch | `native-ui/menu_playback/25729964eea4f45f` | 10, 10, 10 |
+| Playback menu — UI state observation after dispatch | `native-ui/menu_playback/25729964eea4f45f` | 10, 10, 10 |
+| Playback menu — Action RSS increase | `native-ui/menu_playback/25729964eea4f45f` | 10, 10, 10 |
+| Audio menu — UI state latency | `native-ui/menu_audio/da62dd47366534cf` | 10, 10 |
+| Audio menu — Action CPU time | `native-ui/menu_audio/da62dd47366534cf` | 10, 10 |
+| Audio menu — Post-action RSS | `native-ui/menu_audio/da62dd47366534cf` | 10, 10 |
+| Audio menu — Native input dispatch | `native-ui/menu_audio/da62dd47366534cf` | 10, 10 |
+| Audio menu — UI state observation after dispatch | `native-ui/menu_audio/da62dd47366534cf` | 10, 10 |
+| Audio menu — Action RSS increase | `native-ui/menu_audio/da62dd47366534cf` | 10, 10 |
+| Subtitle menu — UI state latency | `native-ui/menu_subtitles/1287d50fceb70c74` | 10, 10 |
+| Subtitle menu — Action CPU time | `native-ui/menu_subtitles/1287d50fceb70c74` | 10, 10 |
+| Subtitle menu — Post-action RSS | `native-ui/menu_subtitles/1287d50fceb70c74` | 10, 10 |
+| Subtitle menu — Native input dispatch | `native-ui/menu_subtitles/1287d50fceb70c74` | 10, 10 |
+| Subtitle menu — UI state observation after dispatch | `native-ui/menu_subtitles/1287d50fceb70c74` | 10, 10 |
+| Subtitle menu — Action RSS increase | `native-ui/menu_subtitles/1287d50fceb70c74` | 10, 10 |
 
 </details>
 
 
 **Software decode · Foxide CLI · Hosted**
 
-linux-hosted · Linux-7.0.0-1017-azure-x86_64-with-glibc2.39 · x86_64 · 4 logical CPUs · 2026-11-15T13:14:35.214843+00:00.
+linux-hosted · Linux-7.0.0-1014-aws-x86_64-with-glibc2.39 · x86_64 · 4 logical CPUs · 2026-11-16T01:43:19.068175+00:00.
 
-[Actions run](https://github.com/marksmayo/foxide/actions/runs/43717764774) · Source: `726d4ce5a19dcf09bff676129dba0dc4a55958aa`. Freshness is per field; older platform results are retained with their original collection dates.
+[Actions run](https://github.com/marksmayo/foxide/actions/runs/43787689931) · Source: `cbdbf6b4ea6e5ce1e07733bfe52b9613bece5dba`. Freshness is per field; older platform results are retained with their original collection dates.
 
 Sampling: 8s after engine readiness, 2s warmup excluded; randomized order (seed 20261115); cache state uncontrolled.
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
-| mpv | 10 | 3 | 1 | 14 |
-| VLC | 4 | 0 | 7 | 11 |
-| Foxide | 1 | 10 | 3 | 14 |
+| mpv | 10 | 4 | 0 | 14 |
+| Foxide | 3 | 8 | 3 | 14 |
+| VLC | 1 | 2 | 6 | 9 |
 
-![Linux: every measured metric](./linux-b8c8cd7788-scenarios.svg)
+![Linux: every measured metric](./linux-21c6ce35f9-scenarios.svg)
 
 <details><summary>Every measured metric — median values and podiums</summary>
 
 | Metric | Foxide | VLC | mpv |
 |---|---:|---:|---:|
-| Engine playback restart latency | 98.2 ms | — | **97.1** ms |
-| Paused video CPU | **0** % of one core | — | **0** % of one core |
-| Paused video steady RAM | 115 MiB | — | **112** MiB |
-| 1080p H.264 CPU | 27.6 % of one core | 27.8 % of one core | **27.4** % of one core |
-| 1080p H.264 steady RAM | 133 MiB | 170 MiB | **131** MiB |
-| 4K60 HEVC 10-bit CPU | 171 % of one core | **168** % of one core | 170 % of one core |
+| Engine playback restart latency | **92.7** ms | — | 93.3 ms |
+| Paused video CPU | 0.163 % of one core | — | **0** % of one core |
+| Paused video steady RAM | 115 MiB | — | **113** MiB |
+| 1080p H.264 CPU | 28.1 % of one core | 28.5 % of one core | **27.8** % of one core |
+| 1080p H.264 steady RAM | 134 MiB | 180 MiB | **131** MiB |
+| 4K60 HEVC 10-bit CPU | 212 % of one core | 209 % of one core | **208** % of one core |
 | 4K60 HEVC 10-bit steady RAM | 469 MiB | 955 MiB | **466** MiB |
-| 4K AV1 CPU | 142 % of one core | **138** % of one core | 143 % of one core |
-| 4K AV1 steady RAM | 548 MiB | 571 MiB | **545** MiB |
-| FLAC audio CPU | 0.325 % of one core | 0.661 % of one core | **0.325** % of one core |
-| FLAC audio steady RAM | 67.8 MiB | **37.9** MiB | 65.1 MiB |
-| 2× playback CPU | 55.1 % of one core | **54.5** % of one core | 54.8 % of one core |
-| 2× playback steady RAM | 135 MiB | 179 MiB | **132** MiB |
-| Peak playback RAM | 134 MiB | 170 MiB | **131** MiB |
+| 4K AV1 CPU | **157** % of one core | — | 163 % of one core |
+| 4K AV1 steady RAM | 548 MiB | — | **545** MiB |
+| FLAC audio CPU | **0.326** % of one core | 0.66 % of one core | 0.327 % of one core |
+| FLAC audio steady RAM | 68.2 MiB | **29.2** MiB | 65.4 MiB |
+| 2× playback CPU | 56.6 % of one core | 55.7 % of one core | **55.3** % of one core |
+| 2× playback steady RAM | 135 MiB | 180 MiB | **132** MiB |
+| Peak playback RAM | 134 MiB | 180 MiB | **131** MiB |
 
 Bold values are gold medians. — means no eligible comparable result. Trial evidence and exact cohort IDs:
 
 | Metric | Cohort | Trials per eligible entrant |
 |---|---|---:|
-| Engine playback restart latency | `software-null-output/avc1080/d1e775b8e1007a78` | 3, 3 |
-| Paused video CPU | `software-null-output/paused/4f3fe8e4cced8fa9` | 3, 3 |
-| Paused video steady RAM | `software-null-output/paused/4f3fe8e4cced8fa9` | 3, 3 |
-| 1080p H.264 CPU | `software-null-output/avc1080/d1e775b8e1007a78` | 3, 3, 3 |
-| 1080p H.264 steady RAM | `software-null-output/avc1080/d1e775b8e1007a78` | 3, 3, 3 |
-| 4K60 HEVC 10-bit CPU | `software-null-output/hevc4k/6959934ae057823e` | 3, 3, 3 |
-| 4K60 HEVC 10-bit steady RAM | `software-null-output/hevc4k/6959934ae057823e` | 3, 3, 3 |
-| 4K AV1 CPU | `software-null-output/av14k/47451fb131155ed4` | 3, 3, 3 |
-| 4K AV1 steady RAM | `software-null-output/av14k/47451fb131155ed4` | 3, 3, 3 |
-| FLAC audio CPU | `software-null-output/flac/b47220d3fbcd49b8` | 3, 3, 3 |
-| FLAC audio steady RAM | `software-null-output/flac/b47220d3fbcd49b8` | 3, 3, 3 |
-| 2× playback CPU | `software-null-output/speed2x/cc7734c634e52354` | 3, 3, 3 |
-| 2× playback steady RAM | `software-null-output/speed2x/cc7734c634e52354` | 3, 3, 3 |
-| Peak playback RAM | `software-null-output/avc1080/d1e775b8e1007a78` | 3, 3, 3 |
+| Engine playback restart latency | `software-null-output/avc1080/868823ead0474786` | 3, 3 |
+| Paused video CPU | `software-null-output/paused/62a4fa15dcc18b07` | 3, 3 |
+| Paused video steady RAM | `software-null-output/paused/62a4fa15dcc18b07` | 3, 3 |
+| 1080p H.264 CPU | `software-null-output/avc1080/868823ead0474786` | 3, 3, 3 |
+| 1080p H.264 steady RAM | `software-null-output/avc1080/868823ead0474786` | 3, 3, 3 |
+| 4K60 HEVC 10-bit CPU | `software-null-output/hevc4k/0ce76b57118a3f2b` | 3, 3, 3 |
+| 4K60 HEVC 10-bit steady RAM | `software-null-output/hevc4k/0ce76b57118a3f2b` | 3, 3, 3 |
+| 4K AV1 CPU | `software-null-output/av14k/3e65aae717b828b4` | 3, 3 |
+| 4K AV1 steady RAM | `software-null-output/av14k/3e65aae717b828b4` | 3, 3 |
+| FLAC audio CPU | `software-null-output/flac/8410bdb0bc5d973a` | 3, 3, 3 |
+| FLAC audio steady RAM | `software-null-output/flac/8410bdb0bc5d973a` | 3, 3, 3 |
+| 2× playback CPU | `software-null-output/speed2x/3bcd4db7c6013d52` | 3, 3, 3 |
+| 2× playback steady RAM | `software-null-output/speed2x/3bcd4db7c6013d52` | 3, 3, 3 |
+| Peak playback RAM | `software-null-output/avc1080/868823ead0474786` | 3, 3, 3 |
 
 </details>
 
@@ -692,7 +692,7 @@ Bold values are gold medians. — means no eligible comparable result. Trial evi
 | Player | Runtime outcome | Evidence / limitation |
 |---|---|---|
 | Foxide | Verified playback 18/21; Verified UI actions 40/41 | adapter-required, sampled-playback-unverified, verified, verified-playback |
-| VLC | Verified playback 15/21; Verified UI actions 40/41 | adapter-required, playback-readiness-timeout, sampled-playback-unverified, verified, verified-playback |
+| VLC | Verified playback 12/21; Verified UI actions 40/41 | adapter-required, playback-readiness-timeout, sampled-playback-unverified, verified, verified-playback |
 | mpv | Verified playback 18/21 | sampled-playback-unverified, verified-playback |
 | SMPlayer | Unverified / diagnostic (3 cases); Verified UI actions 20/23 | adapter-required, sampled-playback-unverified, verified |
 | FFplay | Unverified / diagnostic (3 cases) | sampled-playback-unverified |

@@ -221,6 +221,8 @@ jobs:
         with:
           name: foxide-player-games-report
           path: |
+            README.md
+            benchmarks/results/
             docs/scoreboards/
             results/local/report-qa/
       - name: Update the benchmark branch scoreboards for PR review

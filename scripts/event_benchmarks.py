@@ -1,6 +1,7 @@
 """Cross-platform event collection. Unverified frontends remain diagnostics."""
 from __future__ import annotations
 import statistics
+import re
 
 
 def measurement_rows(case):
@@ -48,3 +49,16 @@ def summarize_samples(samples, ready_elapsed, warmup):
     return dict(cpu=statistics.mean(s['cpu'] for s in samples if s['elapsed'] >= threshold and s['cpu'] is not None) if has_cpu else None,
                 rss_mib=statistics.mean(s['rss'] for s in samples if s['elapsed'] >= threshold) / 1048576 if has_steady else None,
                 rss_peak_mib=max((s['rss'] for s in samples), default=0) / 1048576 if samples else None)
+
+
+def vlc_software_decode_verified(log, scenario):
+    """Require selected decoder evidence, not only --avcodec-hw=none.
+
+    VLC's independent VideoToolbox module ignores that avcodec option.
+    Unknown/missing logs remain unverified rather than earning medals.
+    """
+    kind = 'audio' if scenario == 'flac' else 'video'
+    selected = re.findall(r'using ' + kind + r' decoder module "([^"\r\n]+)"', log)
+    hardware = re.search(r'using hw decoder module|for hardware decoding|videotoolbox decoder:', log, re.IGNORECASE)
+    failed = re.search(r'Failed to get pixel format|Get current frame error|decoder error:', log, re.IGNORECASE)
+    return bool(selected) and set(selected) == {'avcodec'} and hardware is None and failed is None
