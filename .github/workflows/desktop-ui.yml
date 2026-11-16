@@ -19,6 +19,10 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libxkbcommon-dev libfontconfig1-dev libwayland-dev libegl1-mesa-dev
       - run: cargo build -p player-ui --features desktop --bin foxide-desktop --release --locked
+      - name: Reject invalid explicit ANGLE runtimes before opening a window
+        shell: bash
+        run: |
+          FOXIDE_DESKTOP_TEST_BINARY="$GITHUB_WORKSPACE/target/release/foxide-desktop${{ runner.os == 'Windows' && '.exe' || '' }}" python -m unittest discover -s tests -p test_angle_runtime.py
       - name: Verify desktop state refresh without a native display
         run: cargo test -p player-ui --features desktop --bin foxide-desktop --locked
       - name: Verify cached video layers see each published frame
