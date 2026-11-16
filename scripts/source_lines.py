@@ -8,7 +8,7 @@ LANGUAGES = {'.rs': ('Rust', 'dea584'), '.py': ('Python', '3776ab'), '.slint': (
 
 def counts(root):
     totals = {}
-    paths = [p for prefix in ('crates', 'scripts', 'tests', '.github') for p in sorted((root / prefix).rglob('*'))]
+    paths = [p for prefix in ('crates', 'scripts', 'tests', '.github', 'packaging') for p in sorted((root / prefix).rglob('*'))]
     paths.append(root / 'Cargo.toml')
     for path in paths:
         if not path.is_file() or path.suffix not in LANGUAGES or '__pycache__' in path.parts:
@@ -25,7 +25,7 @@ def main():
     for language, item in sorted(totals.items()):
         url = 'https://img.shields.io/badge/' + quote(language + ' source lines', safe='') + '-' + str(item['lines']) + '-' + item['color']
         badges.append('![' + language + ' source lines](' + url + ')')
-    body = '\n'.join(badges) + '\n\nPhysical source lines include comments and blank lines in crates/, scripts/, tests/, .github/ and the root Cargo manifest. Vendored code, lockfiles, generated reports and build output are excluded. Refresh with python scripts/source_lines.py.\n'
+    body = '\n'.join(badges) + '\n\nPhysical source lines include comments and blank lines in crates/, scripts/, tests/, .github/, packaging/ and the root Cargo manifest. Vendored code, lockfiles, generated reports and build output are excluded. Refresh with python scripts/source_lines.py.\n'
     readme = ROOT / 'README.md'
     text = readme.read_text('utf-8')
     begin, end = '<!-- source-lines:start -->', '<!-- source-lines:end -->'

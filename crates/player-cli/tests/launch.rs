@@ -31,8 +31,11 @@ impl Drop for Scratch {
 }
 
 fn scratch() -> Scratch {
+    scratch_below(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../target/test-tmp"))
+}
+
+fn scratch_below(root: PathBuf) -> Scratch {
     static NEXT: AtomicUsize = AtomicUsize::new(0);
-    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../target/test-tmp");
     fs::create_dir_all(&root).unwrap();
     let path = root.join(format!(
         "launcher-{}-{}-{}",
@@ -275,7 +278,9 @@ fn invalid_media_and_control_combinations_fail_before_engine_start() {
 
 #[test]
 fn absent_engine_never_falls_back_to_an_implicit_working_directory_search() {
-    let dir = scratch();
+    // Keep the link on the Cargo executable filesystem even with a custom target directory.
+    let root = PathBuf::from(env!("CARGO_BIN_EXE_foxide"));
+    let dir = scratch_below(root.parent().unwrap().join("launcher-test-tmp"));
     let app = dir.join("app");
     let media = dir.join("media");
     fs::create_dir_all(&app).unwrap();
@@ -285,6 +290,11 @@ fn absent_engine_never_falls_back_to_an_implicit_working_directory_search() {
     } else {
         "foxide"
     });
+    // Linux may reject exec of a freshly copied inode with ETXTBSY.
+    // The immutable Cargo binary can be linked without opening a writer.
+    #[cfg(target_os = "linux")]
+    fs::hard_link(env!("CARGO_BIN_EXE_foxide"), &executable).unwrap();
+    #[cfg(not(target_os = "linux"))]
     fs::copy(env!("CARGO_BIN_EXE_foxide"), &executable).unwrap();
     let name = if cfg!(windows) { "mpv.exe" } else { "mpv" };
     fs::write(media.join(name), "planted bare executable").unwrap();
