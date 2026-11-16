@@ -192,7 +192,14 @@ impl Api {
                 (c"config", c"no"),
                 (c"load-scripts", c"no"),
                 (c"vo", c"libmpv"),
-                (c"hwdec", c"auto-safe"),
+                (
+                    c"hwdec",
+                    if cfg!(windows) && std::env::var_os("FOXIDE_ANGLE_RUNTIME").is_some() {
+                        c"dxva2,d3d11va-copy"
+                    } else {
+                        c"auto-safe"
+                    },
+                ),
                 (c"keep-open", c"yes"),
                 (c"terminal", c"no"),
                 (c"input-default-bindings", c"no"),
