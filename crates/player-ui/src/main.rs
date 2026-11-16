@@ -265,6 +265,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(path) = args.preview_png {
         return preview::render(&path);
     }
+    let _angle_runtime = player_render::AngleRuntime::from_environment()?;
     slint::BackendSelector::new()
         .backend_name("winit".into())
         .renderer_name("femtovg".into())
