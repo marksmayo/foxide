@@ -35,3 +35,30 @@ class PublicationTests(unittest.TestCase):
         self.assertEqual(public['session']['host'], 'linux-hosted')
         self.assertEqual(public['session']['run_id'], '42')
         self.assertEqual(public_evidence(public), public)
+
+    def test_hostname_collisions_preserve_field_identity_and_opaque_metadata(self):
+        from refresh_scoreboards import field_key
+        for host in ('linux', 'a', 'abc'):
+            for run_id in (None, '42'):
+                with self.subTest(host=host, run_id=run_id):
+                    data = dict(
+                        session=dict(system='linux', host=host, run_id=run_id,
+                                     presentation='native-ui', source_commit='abcdef'),
+                        cases=[dict(cohort=dict(host=host),
+                                    profile='linux/native/abc', sha256='abcdef',
+                                    command=['/home/private-account/movie.mp4'],
+                                    source='https://example.org/linux/abc')],
+                        measurements=[dict(platform='linux', event='cpu_avc1080',
+                                           value=12.25, profile='linux/native/abc')])
+                    original = json.loads(json.dumps(data))
+                    result = public_evidence(data)
+                    alias = 'linux-hosted' if run_id else 'linux-local'
+                    self.assertEqual(result['session'], dict(original['session'], host=alias))
+                    self.assertEqual(result['cases'][0], dict(
+                        original['cases'][0], cohort=dict(host=alias),
+                        command=['/home/<user>/movie.mp4']))
+                    self.assertEqual(result['measurements'], original['measurements'])
+                    self.assertEqual(field_key(result),
+                                     ('linux', 'hosted' if run_id else 'local', 'native-ui'))
+                    self.assertEqual(public_evidence(result), result)
+                    self.assertEqual(data, original)
