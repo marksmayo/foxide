@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import os
 from pathlib import Path
 import shutil
 import sys
@@ -61,6 +62,13 @@ class WindowsPackagingTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.build()
         self.assertFalse((self.root/'dist').exists())
+
+    def test_registry_notices_with_unix_epoch_timestamps_can_be_packaged(self):
+        os.utime(self.root / "dependency/LICENSE", (1, 1))
+        archive = self.build()
+        with zipfile.ZipFile(archive) as bundle:
+            info = next(i for i in bundle.infolist() if "/notices/" in i.filename)
+            self.assertGreaterEqual(info.date_time[0], 1980)
 
     def test_license_file_cannot_escape_dependency_directory(self):
         data = json.loads(self.metadata.read_text())

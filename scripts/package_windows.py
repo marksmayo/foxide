@@ -23,7 +23,7 @@ def package(binary, metadata, output, version, commit):
     name = f'Foxide-{version}-windows-x64'
     archive = output / (name + '.zip')
     inventory = []
-    with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED) as bundle:
+    with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED, strict_timestamps=False) as bundle:
         def add(path, destination):
             bundle.write(path, name + '/' + destination)
         add(binary, 'Foxide.exe')
