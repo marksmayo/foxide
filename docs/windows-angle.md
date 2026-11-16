@@ -9,3 +9,5 @@ Local HEVC experiment on merged PR6 baseline: original copy-back median 94.33% o
 The local prototype used an already-installed Plex ANGLE runtime solely for investigation. Distribution needs an independently pinned, licensed runtime and notices.
 
 third_party/glutin-winit is upstream0.5.0 (MIT), with one opt-in preference adjustment in DisplayBuilder::with_preference. The small bootstrap dependency is vendored because Slint1.18.1 explicitly requests WGL-first and exposes no public EGL preference selector. Changes should be proposed upstream and the patch retired when Slint exposes this policy.
+
+Integrated-build single-trial checks: HEVC21.30% CPU with dxva2; H.26411.38% with dxva2 and zero reported output drops; AV1116.56% with d3d11va-copy fallback. These confirm that AV1 remains a copy-back limitation. The normal non-opt-in release executable was restored after each experimental build.
