@@ -168,7 +168,7 @@ impl UiState {
             .collect()
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn confirm_loaded(&mut self, duration: f64) {
         self.loaded = true;
         self.duration = if duration.is_finite() {
@@ -178,7 +178,7 @@ impl UiState {
         };
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn dispatch(&mut self, action: Action) -> Vec<Effect> {
         match action {
             Action::Open(files) => {
