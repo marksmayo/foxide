@@ -19,6 +19,8 @@ class VlcSoftwareTests(unittest.TestCase):
         software = '[abc] main decoder debug: using video decoder module "avcodec"\n'
         self.assertTrue(vlc_software_decode_verified(software, 'hevc4k'))
         self.assertFalse(vlc_software_decode_verified('', 'hevc4k'))
+        for error in ('Failed to get pixel format.', 'Get current frame error', 'avcodec decoder error: decoding failed'):
+            self.assertFalse(vlc_software_decode_verified(software + error, 'hevc4k'))
         self.assertFalse(vlc_software_decode_verified('[abc] videotoolbox decoder: Using Video Toolbox to decode', 'hevc4k'))
         self.assertFalse(vlc_software_decode_verified(software + '[abc] main generic debug: using hw decoder module "d3d11va"', 'hevc4k'))
         self.assertFalse(vlc_software_decode_verified(software + '[abc] avcodec decoder: Using D3D11VA for hardware decoding', 'hevc4k'))
