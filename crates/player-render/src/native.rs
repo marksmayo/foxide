@@ -458,3 +458,16 @@ impl Drop for Engine {
         self.stop.store(true, Ordering::Release);
     }
 }
+
+#[cfg(test)]
+mod snapshot_allocation_tests {
+    use super::*;
+    #[test]
+    fn cloning_snapshot_shares_immutable_track_metadata() {
+        let snapshot = Snapshot { tracks: vec![Track { id: 1, label: "English".into(), kind: "audio".into(), selected: true }], ..Default::default() };
+        let copy = snapshot.clone();
+        assert_eq!(copy, snapshot);
+        assert_eq!(copy.tracks.as_ptr(), snapshot.tracks.as_ptr(),
+            "A position update must not allocate and clone immutable track strings");
+    }
+}

@@ -1,4 +1,4 @@
-use anyhow::{Context, Result, bail, ensure};
+use anyhow::{Context, Result, ensure};
 use clap::Parser;
 use player_core::PlaybackOptions;
 use std::{ffi::OsString, path::PathBuf, process::Command};
@@ -209,12 +209,19 @@ fn main() -> Result<()> {
         return Ok(());
     }
     eprintln!("Foxide bootstrap: playback is provided by an external mpv process.");
-    let status = Command::new(executable)
-        .args(engine_args)
-        .status()
-        .context("Install mpv or supply --mpv <path-to-mpv>")?;
-    if !status.success() {
-        bail!("mpv exited with {status}");
+    let mut command = Command::new(executable);
+    command.args(engine_args);
+    #[cfg(unix)]
+    {
+        use std::os::unix::process::CommandExt;
+        // Preserve PID, inherited handles and the engine's exit status while
+        // releasing the launcher's address space for the whole playback session.
+        Err(command.exec()).context("Install mpv or supply --mpv <path-to-mpv>")
     }
-    Ok(())
+    #[cfg(not(unix))]
+    {
+        let status = command.status().context("Install mpv or supply --mpv <path-to-mpv>")?;
+        ensure!(status.success(), "mpv exited with {status}");
+        Ok(())
+    }
 }

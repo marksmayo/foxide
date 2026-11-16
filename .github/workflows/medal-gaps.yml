@@ -1,0 +1,50 @@
+name: Medal gap validation
+on:
+  push:
+    branches: [perf/medal-gap-improvements]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: medal-gap-validation-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  report-behavior:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -p test_medal_gap_report.py
+  rust-policy:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
+        with:
+          key: desktop-ui
+      - run: cargo test -p player-cli --locked --test launch
+      - run: cargo test -p player-render --features desktop --lib --locked cloning_snapshot
+  rust-format:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
+        with:
+          components: rustfmt
+      - run: cargo fmt --all
+      - name: Preserve formatted Rust source for review
+        run: |
+          mkdir -p results/local
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          paths = sorted(Path('crates').rglob('*.rs'))
+          Path('results/local/formatted-source.json').write_text(json.dumps({p.as_posix(): p.read_text() for p in paths}))
+          PY
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: medal-gap-formatted-source
+          path: results/local/formatted-source.json
