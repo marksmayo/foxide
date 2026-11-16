@@ -171,8 +171,8 @@ impl UiState {
     #[inline(always)]
     pub fn confirm_loaded(&mut self, duration: f64) {
         self.loaded = true;
-        self.duration = if duration.is_finite() {
-            duration.max(0.0)
+        self.duration = if duration > 0.0 && duration.is_finite() {
+            duration
         } else {
             0.0
         };

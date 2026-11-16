@@ -5,7 +5,7 @@ mod state;
 pub use state::{Action, Effect, PlaybackControl, UiState};
 
 /// Initial mpv-compatible shortcut subset. Modifiers and text editing are handled by the UI.
-#[inline]
+#[inline(always)]
 pub fn shortcut(key: &str) -> Option<Command> {
     Some(match key {
         " " | "p" => Command::TogglePause,
