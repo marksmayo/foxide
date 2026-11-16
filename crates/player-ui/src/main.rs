@@ -266,7 +266,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return preview::render(&path);
     }
     let _angle_runtime = player_render::AngleRuntime::from_environment()?;
-    slint::BackendSelector::new()
+    let selector = slint::BackendSelector::new();
+    let selector = if std::env::var_os("FOXIDE_ANGLE_RUNTIME").is_some() {
+        selector.require_opengl_es_with_version(3, 0)
+    } else {
+        selector
+    };
+    selector
         .backend_name("winit".into())
         .renderer_name("femtovg".into())
         .select()?;
