@@ -91,3 +91,7 @@ Seven missing features are implemented, and the existing dark theme is verified 
 ## Report rules
 
 Medal tables (overall, performance, feature, per-platform, per-field and feature matrices) appear before every chart. Measurement and runtime details follow the charts. A feature contest is omitted on a platform when at least two eligible entrants all have documented gold; inapplicable media types do not block exclusion, but unknown/planned/invalid claims do. Source evidence is preserved in features.json and omitted_universal_features in medals.json, and omitted events do not inflate scores. Single-entrant events are retained rather than being treated as a competitive universal result.
+
+## Completed verification
+
+See [fresh hosted results and limitations](results.md) for platform medals, native UI timing, CodSpeed regression checks and coverage scopes. All source checks and the full hosted suite passed. Optional command construction is isolated from the original action variants; inline dispatch/shortcut helpers resolved the intermediate CodSpeed regressions without changing benchmark thresholds.
