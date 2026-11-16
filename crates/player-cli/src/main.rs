@@ -96,7 +96,23 @@ fn mpv_path(explicit: Option<PathBuf>) -> PathBuf {
         .flat_map(|paths| std::env::split_paths(&paths).collect::<Vec<_>>())
         .filter(|directory| directory.is_absolute())
         .map(|directory| directory.join(filename))
-        .find(|path| path.is_file())
+        .find(|path| {
+            let Ok(metadata) = path.metadata() else {
+                return false;
+            };
+            if !metadata.is_file() {
+                return false;
+            }
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                metadata.permissions().mode() & 0o111 != 0
+            }
+            #[cfg(not(unix))]
+            {
+                true
+            }
+        })
     {
         return path;
     }
