@@ -2,6 +2,8 @@
 
 Foxide starts this work at 49 feature events without gold. The complete [acceptance checklist](remaining.json) preserves every event. This first batch implements three desktop events; the other 46 remain queued. Full parity is not claimed.
 
+[Measured verification and limitations](verification.md).
+
 ## Desktop customization
 
 Open **View → Preferences** to switch dark/light skins, choose a six-digit RGB accent color, or add/remove keyboard bindings. Changes apply immediately after a successful save. Existing key assignments must be removed before reuse; Escape remains available for closing dialogs and leaving fullscreen. Open **Help → Keyboard shortcuts** for the current bindings. Text editing and open dialogs do not dispatch playback shortcuts.
@@ -16,9 +18,17 @@ Preferences are saved to:
 | macOS | ~/Library/Application Support/Foxide/preferences.json |
 | Linux | $XDG_CONFIG_HOME/Foxide/preferences.json, falling back to ~/.config/Foxide/preferences.json |
 
-Use foxide-desktop --config PATH to choose a different file. Missing files use defaults. Invalid files are left untouched and the preferences panel reports the error. Writes use a synced sibling temporary file followed by replacement; a failed write leaves the active settings unchanged. There is no script or shell-command setting. Reset preferences is an explicit UI action.
+Use foxide-desktop --config PATH to choose a different file. Missing files use defaults. Invalid files are left untouched on startup and the preferences panel reports the error; an explicit save/reset can replace them. Writes use a synced sibling temporary file followed by replacement; a failed write leaves the active settings unchanged. There is no script or shell-command setting. Reset preferences is an explicit UI action.
 
 The three event claims require the public preferences tests plus the headless desktop acceptance test on Windows, macOS and Linux. CI archives dark, light, preferences and compact previews. Native hardware playback measurements remain separate.
+
+## Rendered previews
+
+![Preferences editor with a custom light skin](images/preferences.png)
+
+![Compact music view](images/compact.png)
+
+Settings storage/validation lives in the independent player-settings crate. The existing player-ui playback-policy library and action benchmarks remain unchanged, so adding configuration code does not enlarge their compilation unit. Customization benchmarks run as a sixth target; all existing cases and thresholds remain intact.
 
 ## Implementation order
 

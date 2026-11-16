@@ -12,8 +12,8 @@ Overall feature gold counts each feature once across applicable platforms; perfo
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
 | mpv | 72 | 27 | 8 | 107 |
+| Foxide | 61 | 46 | 21 | 128 |
 | VLC | 61 | 13 | 22 | 96 |
-| Foxide | 58 | 46 | 21 | 125 |
 | IINA | 33 | 0 | 0 | 33 |
 | Infuse | 21 | 0 | 0 | 21 |
 | Kodi | 20 | 0 | 0 | 20 |
@@ -58,8 +58,8 @@ Overall feature gold counts each feature once across applicable platforms; perfo
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
 | mpv | 37 | 0 | 0 | 37 |
+| Foxide | 34 | 0 | 0 | 34 |
 | IINA | 33 | 0 | 0 | 33 |
-| Foxide | 31 | 0 | 0 | 31 |
 | VLC | 25 | 0 | 0 | 25 |
 | Infuse | 21 | 0 | 0 | 21 |
 | Kodi | 20 | 0 | 0 | 20 |
@@ -85,7 +85,7 @@ Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CL
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
 | mpv | 58 | 16 | 5 | 79 |
-| Foxide | 39 | 23 | 11 | 73 |
+| Foxide | 42 | 23 | 11 | 76 |
 | VLC | 39 | 2 | 13 | 54 |
 | Kodi | 20 | 0 | 0 | 20 |
 | MPC-BE | 19 | 0 | 0 | 19 |
@@ -165,11 +165,11 @@ Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CL
 | Search and download subtitles | ? | ? | ? | ? | ? | 🥇 | ? | ? | 🥇 | ? | ? | ? | ? | ? | N/A |
 | Video-site URL playback | ? | ? | 🥇 | ? | ? | 🥇 | ? | ? | 🥇 | 🥇 | ? | ? | ? | ? | N/A |
 | User extension or scripting system | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? | 🥇 |
-| Editable keyboard bindings | ? | ? | 🥇 | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 |
-| Customizable UI layout or skins | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? | 🥇 |
+| Editable keyboard bindings | 🥇 | ? | 🥇 | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 |
+| Customizable UI layout or skins | 🥇 | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? | 🥇 |
 | Touch or trackpad playback gestures | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? |
 | System media-control integration | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? |
-| Compact dedicated music view | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? |
+| Compact dedicated music view | 🥇 | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? |
 | Dark interface theme | 🥇 | ? | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? |
 | Music playback artwork view | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? |
 | Automatic movie and TV library metadata | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? | N/A |
@@ -220,8 +220,8 @@ Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CL
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
 | mpv | 44 | 5 | 1 | 50 |
+| Foxide | 35 | 8 | 4 | 47 |
 | IINA | 33 | 0 | 0 | 33 |
-| Foxide | 32 | 8 | 4 | 44 |
 | VLC | 28 | 1 | 4 | 33 |
 | Infuse | 21 | 0 | 0 | 21 |
 | Kodi | 19 | 0 | 0 | 19 |
@@ -279,11 +279,11 @@ Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CL
 | Search and download subtitles | ? | ? | ? | 🥇 | ? | ? | ? | N/A | ? | 🥇 | ? |
 | Video-site URL playback | ? | ? | 🥇 | 🥇 | ? | ? | ? | N/A | ? | ? | ? |
 | User extension or scripting system | ? | ? | 🥇 | ? | ? | 🥇 | ? | 🥇 | ? | 🥇 | ? |
-| Editable keyboard bindings | ? | ? | 🥇 | ? | ? | ? | ? | 🥇 | ? | ? | ? |
-| Customizable UI layout or skins | ? | ? | ? | 🥇 | ? | ? | ? | 🥇 | ? | 🥇 | ? |
+| Editable keyboard bindings | 🥇 | ? | 🥇 | ? | ? | ? | ? | 🥇 | ? | ? | ? |
+| Customizable UI layout or skins | 🥇 | ? | ? | 🥇 | ? | ? | ? | 🥇 | ? | 🥇 | ? |
 | Touch or trackpad playback gestures | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? |
 | System media-control integration | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? |
-| Compact dedicated music view | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? |
+| Compact dedicated music view | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? |
 | Dark interface theme | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? |
 | Music playback artwork view | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? |
 | Automatic movie and TV library metadata | ? | ? | ? | ? | ? | 🥇 | ? | N/A | 🥇 | ? | ? |
@@ -333,7 +333,7 @@ Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CL
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
-| Foxide | 46 | 15 | 6 | 67 |
+| Foxide | 49 | 15 | 6 | 70 |
 | VLC | 41 | 10 | 5 | 56 |
 | mpv | 41 | 6 | 2 | 49 |
 | Kodi | 18 | 0 | 0 | 18 |
@@ -397,11 +397,11 @@ Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CL
 | Search and download subtitles | ? | ? | ? | 🥇 | ? | ? | ? |
 | Video-site URL playback | ? | ? | 🥇 | 🥇 | ? | ? | ? |
 | User extension or scripting system | ? | ? | 🥇 | ? | ? | 🥇 | ? |
-| Editable keyboard bindings | ? | ? | 🥇 | ? | ? | ? | ? |
-| Customizable UI layout or skins | ? | ? | ? | 🥇 | ? | ? | ? |
+| Editable keyboard bindings | 🥇 | ? | 🥇 | ? | ? | ? | ? |
+| Customizable UI layout or skins | 🥇 | ? | ? | 🥇 | ? | ? | ? |
 | Touch or trackpad playback gestures | ? | ? | ? | ? | ? | ? | ? |
 | System media-control integration | ? | ? | ? | ? | ? | ? | ? |
-| Compact dedicated music view | ? | ? | ? | ? | ? | ? | ? |
+| Compact dedicated music view | 🥇 | ? | ? | ? | ? | ? | ? |
 | Dark interface theme | 🥇 | ? | ? | ? | ? | ? | ? |
 | Music playback artwork view | ? | ? | ? | ? | ? | ? | ? |
 | Automatic movie and TV library metadata | ? | ? | ? | ? | ? | 🥇 | ? |

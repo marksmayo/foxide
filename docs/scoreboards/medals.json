@@ -1,8 +1,8 @@
 {
   "provenance": {
-    "generated_utc": "2026-11-16T12:36:25.158056+00:00",
-    "source_commit": "268ff8a0e8b86e9af7dcdef8ef0dc2421c076f23",
-    "run_url": "https://github.com/marksmayo/foxide/actions/runs/43864616988",
+    "generated_utc": "2026-11-16T22:47:15.866398+00:00",
+    "source_commit": null,
+    "run_url": null,
     "fields": [
       {
         "system": "linux",
@@ -123,7 +123,7 @@
             "audio"
           ],
           "note": "Windowed fields use Foxide Desktop with libmpv; software-only fields use the Foxide CLI wrapper around external mpv. These are separate benchmark cohorts.",
-          "feature_gold": 31,
+          "feature_gold": 34,
           "performance_gold": 8,
           "performance_silver": 23,
           "performance_bronze": 11
@@ -3302,7 +3302,8 @@
           "awards": {
             "mpv": "gold",
             "mpc-hc": "gold",
-            "foobar2000": "gold"
+            "foobar2000": "gold",
+            "foxide": "gold"
           },
           "claims": [
             {
@@ -3341,10 +3342,13 @@
             {
               "player": "foxide",
               "feature": "custom_keys",
-              "status": "planned",
-              "sources": [],
-              "note": "No accepted Foxide desktop implementation for this event; no medal.",
-              "research_batch": "desktop-2026-11-16"
+              "status": "supported",
+              "sources": [
+                "https://github.com/marksmayo/foxide/blob/f957f4da08af3a4a1171f3ac5f5475068ba6d887/docs/feature-parity/README.md"
+              ],
+              "note": "Editable, validated desktop bindings with modifiers, native function-key handling, persistence and reset. Public UI acceptance passed on Windows/macOS/Linux.",
+              "research_batch": "foxide-customization-2026-11-16",
+              "checked_utc": "2026-11-16"
             }
           ],
           "applicable": [
@@ -3377,7 +3381,8 @@
           "research_batch": "desktop-2026-11-16",
           "awards": {
             "foobar2000": "gold",
-            "smplayer": "gold"
+            "smplayer": "gold",
+            "foxide": "gold"
           },
           "claims": [
             {
@@ -3405,10 +3410,13 @@
             {
               "player": "foxide",
               "feature": "custom_layout",
-              "status": "planned",
-              "sources": [],
-              "note": "No accepted Foxide desktop implementation for this event; no medal.",
-              "research_batch": "desktop-2026-11-16"
+              "status": "supported",
+              "sources": [
+                "https://github.com/marksmayo/foxide/blob/f957f4da08af3a4a1171f3ac5f5475068ba6d887/docs/feature-parity/README.md"
+              ],
+              "note": "User-selectable light/dark skins, editable accent and compact/full layout. Not a free-form widget/layout designer. Persisted settings and rendered previews accepted on Windows/macOS/Linux.",
+              "research_batch": "foxide-customization-2026-11-16",
+              "checked_utc": "2026-11-16"
             }
           ],
           "applicable": [
@@ -3534,7 +3542,8 @@
           ],
           "research_batch": "desktop-2026-11-16",
           "awards": {
-            "wmp-modern": "gold"
+            "wmp-modern": "gold",
+            "foxide": "gold"
           },
           "claims": [
             {
@@ -3551,10 +3560,13 @@
             {
               "player": "foxide",
               "feature": "compact_music_view",
-              "status": "planned",
-              "sources": [],
-              "note": "No accepted Foxide desktop implementation for this event; no medal.",
-              "research_batch": "desktop-2026-11-16"
+              "status": "supported",
+              "sources": [
+                "https://github.com/marksmayo/foxide/blob/f957f4da08af3a4a1171f3ac5f5475068ba6d887/docs/feature-parity/README.md"
+              ],
+              "note": "Dedicated compact music layout with transport, seeking and volume; persists across restarts and restores normal window size. Does not claim gapless playback, album art or native PiP.",
+              "research_batch": "foxide-customization-2026-11-16",
+              "checked_utc": "2026-11-16"
             }
           ],
           "applicable": [
@@ -7384,7 +7396,7 @@
             "audio"
           ],
           "note": "Windowed fields use Foxide Desktop with libmpv; software-only fields use the Foxide CLI wrapper around external mpv. These are separate benchmark cohorts.",
-          "feature_gold": 30,
+          "feature_gold": 33,
           "performance_gold": 2,
           "performance_silver": 8,
           "performance_bronze": 4
@@ -10014,7 +10026,8 @@
           "research_batch": "desktop-2026-11-16",
           "awards": {
             "mpv": "gold",
-            "foobar2000": "gold"
+            "foobar2000": "gold",
+            "foxide": "gold"
           },
           "claims": [
             {
@@ -10042,10 +10055,13 @@
             {
               "player": "foxide",
               "feature": "custom_keys",
-              "status": "planned",
-              "sources": [],
-              "note": "No accepted Foxide desktop implementation for this event; no medal.",
-              "research_batch": "desktop-2026-11-16"
+              "status": "supported",
+              "sources": [
+                "https://github.com/marksmayo/foxide/blob/f957f4da08af3a4a1171f3ac5f5475068ba6d887/docs/feature-parity/README.md"
+              ],
+              "note": "Editable, validated desktop bindings with modifiers, native function-key handling, persistence and reset. Public UI acceptance passed on Windows/macOS/Linux.",
+              "research_batch": "foxide-customization-2026-11-16",
+              "checked_utc": "2026-11-16"
             }
           ],
           "applicable": [
@@ -10075,7 +10091,8 @@
           "awards": {
             "foobar2000": "gold",
             "iina": "gold",
-            "smplayer": "gold"
+            "smplayer": "gold",
+            "foxide": "gold"
           },
           "claims": [
             {
@@ -10114,10 +10131,13 @@
             {
               "player": "foxide",
               "feature": "custom_layout",
-              "status": "planned",
-              "sources": [],
-              "note": "No accepted Foxide desktop implementation for this event; no medal.",
-              "research_batch": "desktop-2026-11-16"
+              "status": "supported",
+              "sources": [
+                "https://github.com/marksmayo/foxide/blob/f957f4da08af3a4a1171f3ac5f5475068ba6d887/docs/feature-parity/README.md"
+              ],
+              "note": "User-selectable light/dark skins, editable accent and compact/full layout. Not a free-form widget/layout designer. Persisted settings and rendered previews accepted on Windows/macOS/Linux.",
+              "research_batch": "foxide-customization-2026-11-16",
+              "checked_utc": "2026-11-16"
             }
           ],
           "applicable": [
@@ -10241,7 +10261,8 @@
           ],
           "research_batch": "desktop-2026-11-16",
           "awards": {
-            "iina": "gold"
+            "iina": "gold",
+            "foxide": "gold"
           },
           "claims": [
             {
@@ -10258,10 +10279,13 @@
             {
               "player": "foxide",
               "feature": "compact_music_view",
-              "status": "planned",
-              "sources": [],
-              "note": "No accepted Foxide desktop implementation for this event; no medal.",
-              "research_batch": "desktop-2026-11-16"
+              "status": "supported",
+              "sources": [
+                "https://github.com/marksmayo/foxide/blob/f957f4da08af3a4a1171f3ac5f5475068ba6d887/docs/feature-parity/README.md"
+              ],
+              "note": "Dedicated compact music layout with transport, seeking and volume; persists across restarts and restores normal window size. Does not claim gapless playback, album art or native PiP.",
+              "research_batch": "foxide-customization-2026-11-16",
+              "checked_utc": "2026-11-16"
             }
           ],
           "applicable": [
@@ -13022,7 +13046,7 @@
             "audio"
           ],
           "note": "Windowed fields use Foxide Desktop with libmpv; software-only fields use the Foxide CLI wrapper around external mpv. These are separate benchmark cohorts.",
-          "feature_gold": 29,
+          "feature_gold": 32,
           "performance_gold": 17,
           "performance_silver": 15,
           "performance_bronze": 6
@@ -14878,7 +14902,8 @@
           ],
           "research_batch": "desktop-2026-11-16",
           "awards": {
-            "mpv": "gold"
+            "mpv": "gold",
+            "foxide": "gold"
           },
           "claims": [
             {
@@ -14895,10 +14920,13 @@
             {
               "player": "foxide",
               "feature": "custom_keys",
-              "status": "planned",
-              "sources": [],
-              "note": "No accepted Foxide desktop implementation for this event; no medal.",
-              "research_batch": "desktop-2026-11-16"
+              "status": "supported",
+              "sources": [
+                "https://github.com/marksmayo/foxide/blob/f957f4da08af3a4a1171f3ac5f5475068ba6d887/docs/feature-parity/README.md"
+              ],
+              "note": "Editable, validated desktop bindings with modifiers, native function-key handling, persistence and reset. Public UI acceptance passed on Windows/macOS/Linux.",
+              "research_batch": "foxide-customization-2026-11-16",
+              "checked_utc": "2026-11-16"
             }
           ],
           "applicable": [
@@ -14922,7 +14950,8 @@
           ],
           "research_batch": "desktop-2026-11-16",
           "awards": {
-            "smplayer": "gold"
+            "smplayer": "gold",
+            "foxide": "gold"
           },
           "claims": [
             {
@@ -14939,10 +14968,13 @@
             {
               "player": "foxide",
               "feature": "custom_layout",
-              "status": "planned",
-              "sources": [],
-              "note": "No accepted Foxide desktop implementation for this event; no medal.",
-              "research_batch": "desktop-2026-11-16"
+              "status": "supported",
+              "sources": [
+                "https://github.com/marksmayo/foxide/blob/f957f4da08af3a4a1171f3ac5f5475068ba6d887/docs/feature-parity/README.md"
+              ],
+              "note": "User-selectable light/dark skins, editable accent and compact/full layout. Not a free-form widget/layout designer. Persisted settings and rendered previews accepted on Windows/macOS/Linux.",
+              "research_batch": "foxide-customization-2026-11-16",
+              "checked_utc": "2026-11-16"
             }
           ],
           "applicable": [
@@ -15027,15 +15059,20 @@
             "video"
           ],
           "research_batch": "desktop-2026-11-16",
-          "awards": {},
+          "awards": {
+            "foxide": "gold"
+          },
           "claims": [
             {
               "player": "foxide",
               "feature": "compact_music_view",
-              "status": "planned",
-              "sources": [],
-              "note": "No accepted Foxide desktop implementation for this event; no medal.",
-              "research_batch": "desktop-2026-11-16"
+              "status": "supported",
+              "sources": [
+                "https://github.com/marksmayo/foxide/blob/f957f4da08af3a4a1171f3ac5f5475068ba6d887/docs/feature-parity/README.md"
+              ],
+              "note": "Dedicated compact music layout with transport, seeking and volume; persists across restarts and restores normal window size. Does not claim gapless playback, album art or native PiP.",
+              "research_batch": "foxide-customization-2026-11-16",
+              "checked_utc": "2026-11-16"
             }
           ],
           "applicable": [

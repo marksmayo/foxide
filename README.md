@@ -3,11 +3,11 @@
 <!-- source-lines:start -->
 ![Lua source lines](https://img.shields.io/badge/Lua%20source%20lines-105-000080)
 ![PowerShell source lines](https://img.shields.io/badge/PowerShell%20source%20lines-206-5391fe)
-![Python source lines](https://img.shields.io/badge/Python%20source%20lines-5237-3776ab)
-![Rust source lines](https://img.shields.io/badge/Rust%20source%20lines-5643-dea584)
-![Slint source lines](https://img.shields.io/badge/Slint%20source%20lines-246-7c3aed)
-![TOML source lines](https://img.shields.io/badge/TOML%20source%20lines-153-9c4221)
-![YAML source lines](https://img.shields.io/badge/YAML%20source%20lines-1010-cb171e)
+![Python source lines](https://img.shields.io/badge/Python%20source%20lines-5263-3776ab)
+![Rust source lines](https://img.shields.io/badge/Rust%20source%20lines-6633-dea584)
+![Slint source lines](https://img.shields.io/badge/Slint%20source%20lines-315-7c3aed)
+![TOML source lines](https://img.shields.io/badge/TOML%20source%20lines-173-9c4221)
+![YAML source lines](https://img.shields.io/badge/YAML%20source%20lines-1013-cb171e)
 
 Physical source lines include comments and blank lines in crates/, scripts/, tests/, .github/, packaging/ and the root Cargo manifest. Vendored code, lockfiles, generated reports and build output are excluded. Refresh with python scripts/source_lines.py.
 <!-- source-lines:end -->
@@ -54,7 +54,7 @@ The **Player Games** workflow installs/attempts each platform's native field, re
 
 Development follows red → green tests. CI enforces **90% Rust workspace line coverage** for default features and **90% coverage for medal/report policies and installers**, in separate gates. Feature-gated desktop/native rendering has a separate instrumented GPU CI report; the default-feature threshold does not cover it. [Measured coverage and security follow-up](docs/security-and-testing.md). A separate three-platform desktop workflow builds the GUI and renders a layout preview. Native PiP, thumbnails, drag-and-drop, persistent GUI resume, complete GUI coverage and physical GPU acceptance remain open.
 
-CodSpeed tracks **233 CPU benchmark cases** across playback policy, UI actions, playlists and telemetry processing. [Suite and run commands](docs/codspeed.md) · [Case inventory](benchmarks/codspeed-inventory.json).
+CodSpeed tracks **279 CPU benchmark cases** across playback policy, UI actions, playlists and telemetry processing. [Suite and run commands](docs/codspeed.md) · [Case inventory](benchmarks/codspeed-inventory.json).
 
 [Windows preview release packaging](docs/windows-releases.md) — automated tag builds, checksums and draft releases.
 

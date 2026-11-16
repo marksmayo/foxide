@@ -1,0 +1,21 @@
+# Customization acceptance
+
+Implementation source: f957f4da08af3a4a1171f3ac5f5475068ba6d887.
+
+[Three-platform desktop acceptance](https://github.com/marksmayo/foxide/actions/runs/43972156451), [platform checks and coverage gates](https://github.com/marksmayo/foxide/actions/runs/43972156649), [native playback controls](https://github.com/marksmayo/foxide/actions/runs/43972156518), [compositor regression](https://github.com/marksmayo/foxide/actions/runs/43972156442), Windows packaging and [CodSpeed](https://github.com/marksmayo/foxide/actions/runs/43972156363) pass for the implementation source.
+
+| Coverage scope | Measured line coverage |
+|---|---:|
+| Default Rust workspace | 95.44% |
+| New settings module | 94.19% |
+| Full feature-gated desktop/GPU Rust | 82.83% |
+
+The default and new-module scopes exceed 90%. Full desktop/GPU coverage remains below the 90% target; no badge or claim treats default coverage as full application coverage. All 111 Python tests pass after refreshing the three feature claims.
+
+CodSpeed reports 263 existing cases unchanged and 16 new cases, with no regressions. Five existing optimized-out cases and three syscall-dominated cases retain measurement warnings. The 279 cases run across six targets. This is CPU policy/settings evidence, not a displayed-frame, startup, GPU-power or battery measurement.
+
+Intermediate combined-crate builds regressed existing tiny state benchmarks despite unchanged policy source. Explicit inlining and duration rewrites did not fully solve that; those experimental policy edits were reverted. Settings parsing/storage and its 16 benchmarks now live in the separate player-settings crate/target. The original playback-policy library and existing action benchmark source are byte-for-byte unchanged from main; the full hosted comparison is green with every existing case retained and thresholds unchanged. This result is consistent with code-generation coupling, rather than evidence of a player-wide speed gain.
+
+Three feature events are accepted: editable keys, customizable light/dark skins with an editable accent, and compact music layout. Counts after scoring are 34 Windows / 33 macOS / 32 Linux feature golds. The different totals reflect platform eligibility and omitted universal events; do not add them across platforms. All 46 other baseline feature gaps remain queued in remaining.json.
+
+The README retains previously collected playback measurements and their original source/run identities. This feature-score refresh does not represent a new full playback benchmark run. The raw measurement bundles remain byte-for-byte unchanged. Medal tables and feature matrices remain above all charts, and universal gold events remain excluded.

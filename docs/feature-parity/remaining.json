@@ -76,14 +76,14 @@
       "id": "custom_keys",
       "name": "Editable keyboard bindings",
       "group": "Interface",
-      "stage": "desktop-customization-in-progress",
+      "stage": "accepted",
       "acceptance": "Needs persisted user settings and cross-platform key/modifier/focus handling."
     },
     {
       "id": "custom_layout",
       "name": "Customizable UI layout or skins",
       "group": "Interface",
-      "stage": "desktop-customization-in-progress",
+      "stage": "accepted",
       "acceptance": "Needs a layout/theme configuration model and accessibility/layout acceptance."
     },
     {
@@ -104,7 +104,7 @@
       "id": "compact_music_view",
       "name": "Compact dedicated music view",
       "group": "Interface",
-      "stage": "desktop-customization-in-progress",
+      "stage": "accepted",
       "acceptance": "Needs a separate compact layout, resize/focus restoration and audio/video behavior tests."
     },
     {
@@ -345,5 +345,14 @@
       "stage": "queued",
       "acceptance": "Needs an audio-analysis/render pipeline and resource/frame-pacing benchmarks."
     }
-  ]
+  ],
+  "baseline_gap_count": 49,
+  "accepted_count": 3,
+  "remaining_count": 46,
+  "implementation_commit": "f957f4da08af3a4a1171f3ac5f5475068ba6d887",
+  "acceptance_jobs": {
+    "linux": "https://github.com/marksmayo/foxide/actions/runs/43972156451/job/133666803073",
+    "macos": "https://github.com/marksmayo/foxide/actions/runs/43972156451/job/133666803258",
+    "windows": "https://github.com/marksmayo/foxide/actions/runs/43972156451/job/133666802683"
+  }
 }

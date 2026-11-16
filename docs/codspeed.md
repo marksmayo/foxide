@@ -1,15 +1,16 @@
 # CodSpeed CPU regression suite
 
-Foxide registers **233 benchmark cases** across five targets. Of these, 225 were added with the expanded suite. The [argument-expanded inventory](../benchmarks/codspeed-inventory.json) records the exact names exercised by the local smoke run.
+Foxide registers **279 benchmark cases** across six targets. The existing 263 cases are retained and desktop customization adds 16 cases. The [argument-expanded inventory](../benchmarks/codspeed-inventory.json) records the exact names exercised by the hosted smoke run.
 
 | Target | Cases | Workloads |
 |---|---:|---|
 | [player-core / core](../crates/player-core/benches/core.rs) | 6 | Default/full/rejected mpv arguments, decoder classification, folder queueing |
 | [player-core / policy](../crates/player-core/benches/policy.rs) | 63 | Speed limits, 0–128 subtitles, controls, validation failures, decoder names and external-player paths |
 | [player-ui / shortcuts](../crates/player-ui/benches/shortcuts.rs) | 2 | Aggregate and unmapped-key checks |
-| [player-ui / actions](../crates/player-ui/benches/actions.rs) | 106 | Thirty actions in loaded/unloaded states, playlists, navigation boundaries, scrubbing, duration validation and shortcuts |
+| [player-ui / actions](../crates/player-ui/benches/actions.rs) | 136 | Optional controls, filtering, thirty actions in loaded/unloaded states, playlists, navigation boundaries, scrubbing, duration validation and shortcuts |
 | [player-bench / statistics](../crates/player-bench/benches/statistics.rs) | 56 | p50/p95/p99, distributions/non-finite values, missing CPU samples, warmup exclusion, summarization and JSON processing |
-| **Total** | **233** | |
+| [player-settings / preferences](../crates/player-settings/benches/preferences.rs) | 16 | Configured shortcut lookup, preference JSON decoding/encoding and validated edits |
+| **Total** | **279** | |
 
 Percentiles cover 0–65,536 values; summarization covers 0–40,000 samples; playlists cover 0–4,096 entries. The 2,400-sample case represents ten minutes at 250ms intervals. JSON cases use 0, 40 and 2,400 samples. Sample contents and operation sequences are deterministic.
 

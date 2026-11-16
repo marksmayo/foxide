@@ -3178,10 +3178,13 @@
     {
       "player": "foxide",
       "feature": "custom_keys",
-      "status": "planned",
-      "sources": [],
-      "note": "No accepted Foxide desktop implementation for this event; no medal.",
-      "research_batch": "desktop-2026-11-16"
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/f957f4da08af3a4a1171f3ac5f5475068ba6d887/docs/feature-parity/README.md"
+      ],
+      "note": "Editable, validated desktop bindings with modifiers, native function-key handling, persistence and reset. Public UI acceptance passed on Windows/macOS/Linux.",
+      "research_batch": "foxide-customization-2026-11-16",
+      "checked_utc": "2026-11-16"
     },
     {
       "player": "foobar2000",
@@ -3219,10 +3222,13 @@
     {
       "player": "foxide",
       "feature": "custom_layout",
-      "status": "planned",
-      "sources": [],
-      "note": "No accepted Foxide desktop implementation for this event; no medal.",
-      "research_batch": "desktop-2026-11-16"
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/f957f4da08af3a4a1171f3ac5f5475068ba6d887/docs/feature-parity/README.md"
+      ],
+      "note": "User-selectable light/dark skins, editable accent and compact/full layout. Not a free-form widget/layout designer. Persisted settings and rendered previews accepted on Windows/macOS/Linux.",
+      "research_batch": "foxide-customization-2026-11-16",
+      "checked_utc": "2026-11-16"
     },
     {
       "player": "iina",
@@ -3301,10 +3307,13 @@
     {
       "player": "foxide",
       "feature": "compact_music_view",
-      "status": "planned",
-      "sources": [],
-      "note": "No accepted Foxide desktop implementation for this event; no medal.",
-      "research_batch": "desktop-2026-11-16"
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/f957f4da08af3a4a1171f3ac5f5475068ba6d887/docs/feature-parity/README.md"
+      ],
+      "note": "Dedicated compact music layout with transport, seeking and volume; persists across restarts and restores normal window size. Does not claim gapless playback, album art or native PiP.",
+      "research_batch": "foxide-customization-2026-11-16",
+      "checked_utc": "2026-11-16"
     },
     {
       "player": "iina",
