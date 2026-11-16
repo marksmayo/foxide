@@ -203,7 +203,11 @@ fn engine_is_started_with_safe_argument_boundaries_and_errors_propagate() {
     #[cfg(not(unix))]
     assert!(String::from_utf8_lossy(&failed.stderr).contains("mpv exited"));
     #[cfg(unix)]
-    assert_eq!(failed.status.code(), Some(7), "Unix handoff preserves the engine exit code");
+    assert_eq!(
+        failed.status.code(),
+        Some(7),
+        "Unix handoff preserves the engine exit code"
+    );
     let missing = Command::new(env!("CARGO_BIN_EXE_foxide"))
         .arg("--mpv")
         .arg(dir.join("does-not-exist"))

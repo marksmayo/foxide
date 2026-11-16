@@ -220,7 +220,9 @@ fn main() -> Result<()> {
     }
     #[cfg(not(unix))]
     {
-        let status = command.status().context("Install mpv or supply --mpv <path-to-mpv>")?;
+        let status = command
+            .status()
+            .context("Install mpv or supply --mpv <path-to-mpv>")?;
         ensure!(status.success(), "mpv exited with {status}");
         Ok(())
     }

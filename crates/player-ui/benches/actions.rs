@@ -138,3 +138,32 @@ fn load_confirmation(bencher: Bencher, duration: f64) {
 fn shortcut_lookup(bencher: Bencher, key: &str) {
     bencher.bench_local(|| shortcut(black_box(key)));
 }
+
+#[divan::bench(
+    consts = [false, true],
+    args = ["frame-step", "frame-back-step", "secondary-subtitle", "rotation", "flip-vertical", "flip-horizontal", "replaygain", "deband", "equalizer"]
+)]
+fn optional_playback_controls<const LOADED: bool>(bencher: Bencher, name: &str) {
+    let value = match name {
+        "rotation" => 90.0,
+        "secondary-subtitle" | "replaygain" => 2.0,
+        "deband" | "equalizer" => 1.0,
+        _ => 0.0,
+    };
+    let mut check = state(1, LOADED);
+    let action = Action::control(name, value).unwrap();
+    assert_eq!(check.dispatch(action.clone()).len(), usize::from(LOADED));
+    bencher
+        .with_inputs(|| state(1, LOADED))
+        .bench_local_refs(|state| {
+            state.dispatch(black_box(
+                Action::control(black_box(name), black_box(value)).unwrap(),
+            ))
+        });
+}
+
+#[divan::bench(consts = [16, 256, 4096], args = ["episode", "00012", "missing", ""])]
+fn playlist_filter<const COUNT: usize>(bencher: Bencher, query: &str) {
+    let queue = state(COUNT, true);
+    bencher.bench(|| black_box(&queue).filtered_indices(black_box(query)));
+}

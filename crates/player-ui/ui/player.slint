@@ -41,6 +41,7 @@ export component PlayerWindow inherits Window {
     background: #101722; default-font-size: 14px;
     in-out property <image> video-frame;
     in-out property <bool> loaded: false;
+    in-out property <bool> has-video: false;
     in-out property <bool> paused: false;
     in-out property <bool> queue-visible: false;
     in-out property <bool> fullscreen-mode: false;
@@ -78,8 +79,8 @@ export component PlayerWindow inherits Window {
         }
         Menu { title: "Playback";
             MenuItem { title: root.paused ? "Play" : "Pause"; enabled: root.loaded; activated => { root.action("pause", 0); } }
-            MenuItem { title: "Next frame"; enabled: root.loaded; activated => { root.action("frame-step", 0); } }
-            MenuItem { title: "Previous frame"; enabled: root.loaded; activated => { root.action("frame-back-step", 0); } }
+            MenuItem { title: "Next frame"; enabled: root.loaded && root.has-video; activated => { root.action("frame-step", 0); } }
+            MenuItem { title: "Previous frame"; enabled: root.loaded && root.has-video; activated => { root.action("frame-back-step", 0); } }
             MenuItem { title: "Stop"; enabled: root.loaded; activated => { root.action("stop", 0); } }
             MenuSeparator {}
             MenuItem { title: "Back 5 seconds"; enabled: root.loaded; activated => { root.action("seek-relative", -5); } }
@@ -111,16 +112,16 @@ export component PlayerWindow inherits Window {
         }
         Menu { title: "Video";
             Menu { title: "Rotation";
-                MenuItem { title: "Original"; enabled: root.loaded; activated => { root.action("rotation", 0); } }
-                MenuItem { title: "90° clockwise"; enabled: root.loaded; activated => { root.action("rotation", 90); } }
-                MenuItem { title: "180°"; enabled: root.loaded; activated => { root.action("rotation", 180); } }
-                MenuItem { title: "270° clockwise"; enabled: root.loaded; activated => { root.action("rotation", 270); } }
+                MenuItem { title: "Original"; enabled: root.loaded && root.has-video; activated => { root.action("rotation", 0); } }
+                MenuItem { title: "90° clockwise"; enabled: root.loaded && root.has-video; activated => { root.action("rotation", 90); } }
+                MenuItem { title: "180°"; enabled: root.loaded && root.has-video; activated => { root.action("rotation", 180); } }
+                MenuItem { title: "270° clockwise"; enabled: root.loaded && root.has-video; activated => { root.action("rotation", 270); } }
             }
-            MenuItem { title: "Flip vertically"; enabled: root.loaded; activated => { root.action("flip-vertical", 0); } }
-            MenuItem { title: "Flip horizontally"; enabled: root.loaded; activated => { root.action("flip-horizontal", 0); } }
+            MenuItem { title: "Flip vertically"; enabled: root.loaded && root.has-video; activated => { root.action("flip-vertical", 0); } }
+            MenuItem { title: "Flip horizontally"; enabled: root.loaded && root.has-video; activated => { root.action("flip-horizontal", 0); } }
             Menu { title: "Debanding";
-                MenuItem { title: "Off"; enabled: root.loaded; activated => { root.action("deband", 0); } }
-                MenuItem { title: "On"; enabled: root.loaded; activated => { root.action("deband", 1); } }
+                MenuItem { title: "Off"; enabled: root.loaded && root.has-video; activated => { root.action("deband", 0); } }
+                MenuItem { title: "On"; enabled: root.loaded && root.has-video; activated => { root.action("deband", 1); } }
             }
             MenuItem { title: "Fullscreen"; checked: root.fullscreen-mode; shortcut: @keys(F11); activated => { root.action("fullscreen", 0); } } }
         Menu { title: "Subtitles";

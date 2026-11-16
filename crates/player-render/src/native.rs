@@ -297,7 +297,7 @@ pub struct Snapshot {
     pub volume: f64,
     pub muted: bool,
     pub hwdec: String,
-    pub tracks: Vec<Track>,
+    pub tracks: Arc<[Track]>,
     pub error: String,
 }
 pub struct Engine {
@@ -326,7 +326,7 @@ impl Engine {
             .name("foxide-engine".into())
             .spawn(move || {
                 let mut last_path = String::new();
-                let mut tracks = Vec::new();
+                let mut tracks: Arc<[Track]> = Arc::from([]);
                 let mut error = String::new();
                 while !stopped.load(Ordering::Acquire) {
                     if !active.load(Ordering::Acquire) {
@@ -342,7 +342,7 @@ impl Engine {
                             if let Err(e) = client.send(&args) {
                                 error = e;
                             }
-                            tracks.clear();
+                            tracks = Arc::from([]);
                         }
                         Err(mpsc::RecvTimeoutError::Disconnected) => break,
                         Err(mpsc::RecvTimeoutError::Timeout) => {}
@@ -384,7 +384,7 @@ impl Engine {
                     }
                     let path = client.get(c"path");
                     if path != last_path || tracks.is_empty() {
-                        tracks.clear();
+                        let mut next_tracks = Vec::new();
                         let count = client.number(c"track-list/count").clamp(0.0, 256.0) as u32;
                         for i in 0..count {
                             let kind = client.track_property(i, "type");
@@ -403,13 +403,14 @@ impl Engine {
                             } else {
                                 title
                             };
-                            tracks.push(Track {
+                            next_tracks.push(Track {
                                 id,
                                 label: format!("{id} · {label}"),
                                 kind,
                                 selected: client.track_property(i, "selected") == "yes",
                             });
                         }
+                        tracks = next_tracks.into();
                         last_path.clone_from(&path);
                     }
                     let next = Snapshot {
@@ -464,10 +465,22 @@ mod snapshot_allocation_tests {
     use super::*;
     #[test]
     fn cloning_snapshot_shares_immutable_track_metadata() {
-        let snapshot = Snapshot { tracks: vec![Track { id: 1, label: "English".into(), kind: "audio".into(), selected: true }], ..Default::default() };
+        let snapshot = Snapshot {
+            tracks: vec![Track {
+                id: 1,
+                label: "English".into(),
+                kind: "audio".into(),
+                selected: true,
+            }]
+            .into(),
+            ..Default::default()
+        };
         let copy = snapshot.clone();
         assert_eq!(copy, snapshot);
-        assert_eq!(copy.tracks.as_ptr(), snapshot.tracks.as_ptr(),
-            "A position update must not allocate and clone immutable track strings");
+        assert_eq!(
+            copy.tracks.as_ptr(),
+            snapshot.tracks.as_ptr(),
+            "A position update must not allocate and clone immutable track strings"
+        );
     }
 }

@@ -19,3 +19,6 @@ pub fn shortcut(key: &str) -> Option<Command> {
         _ => return None,
     })
 }
+
+#[cfg(all(test, feature = "native-controls"))]
+mod native_control_tests;
