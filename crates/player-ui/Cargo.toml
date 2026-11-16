@@ -16,6 +16,7 @@ clap = { workspace = true, optional = true }
 image = { version = "0.25", default-features = false, features = ["png", "webp"], optional = true }
 
 [features]
+native-controls = ["desktop"]
 desktop = ["dep:slint", "dep:slint-build", "dep:player-render", "dep:serde_json", "dep:rfd", "dep:futures-lite", "dep:clap", "dep:image"]
 
 [build-dependencies]

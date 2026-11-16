@@ -21,13 +21,18 @@ class ExpandedEventTests(unittest.TestCase):
             self.assertTrue(supported, feature)
             self.assertTrue(all(c.get('sources') and c.get('checked_utc') for c in supported))
 
-    def test_dual_subtitle_support_is_shared_gold_without_backend_inheritance(self):
+    def test_dual_subtitle_support_is_shared_gold_after_desktop_acceptance(self):
         catalog = json.loads((ROOT/'benchmarks/features.json').read_text())
         boards = scoreboards(catalog, {'events': []}, [])
         event = next(f for f in boards['windows']['features'] if f['id'] == 'dual_subtitles')
         self.assertEqual(event['awards'].get('mpv'), 'gold')
         self.assertEqual(event['awards'].get('smplayer'), 'gold')
-        self.assertNotIn('foxide', event['awards'])
+        self.assertEqual(event['awards'].get('foxide'), 'gold')
+        claim = next(c for c in catalog['claims'] if c['player'] == 'foxide' and c['feature'] == 'dual_subtitles')
+        self.assertTrue(any('/docs/medal-features.md' in source for source in claim['sources']))
+        claim['status'] = 'planned'
+        pending = scoreboards(catalog, {'events': []}, [])['windows']
+        self.assertNotIn('foxide', next(f for f in pending['features'] if f['id'] == 'dual_subtitles')['awards'])
         self.assertFalse(boards['windows']['performance'])
 
     def test_new_ui_workloads_are_catalogued_but_cannot_claim_measurements(self):

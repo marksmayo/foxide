@@ -1,21 +1,21 @@
 {
-  "Lua": {
-    "lines": 55,
-    "files": 1,
-    "color": "000080"
-  },
-  "Rust": {
-    "lines": 5055,
-    "files": 33,
-    "color": "dea584"
-  },
   "TOML": {
-    "lines": 152,
+    "lines": 153,
     "files": 6,
     "color": "9c4221"
   },
+  "Lua": {
+    "lines": 105,
+    "files": 2,
+    "color": "000080"
+  },
+  "Rust": {
+    "lines": 5643,
+    "files": 34,
+    "color": "dea584"
+  },
   "Slint": {
-    "lines": 209,
+    "lines": 246,
     "files": 1,
     "color": "7c3aed"
   },
@@ -25,13 +25,13 @@
     "color": "5391fe"
   },
   "Python": {
-    "lines": 5170,
-    "files": 45,
+    "lines": 5237,
+    "files": 46,
     "color": "3776ab"
   },
   "YAML": {
-    "lines": 963,
-    "files": 11,
+    "lines": 1010,
+    "files": 12,
     "color": "cb171e"
   }
 }

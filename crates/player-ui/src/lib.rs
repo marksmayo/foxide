@@ -2,9 +2,10 @@
 #![forbid(unsafe_code)]
 use player_core::Command;
 mod state;
-pub use state::{Action, Effect, UiState};
+pub use state::{Action, Effect, PlaybackControl, UiState};
 
 /// Initial mpv-compatible shortcut subset. Modifiers and text editing are handled by the UI.
+#[inline]
 pub fn shortcut(key: &str) -> Option<Command> {
     Some(match key {
         " " | "p" => Command::TogglePause,
@@ -19,3 +20,6 @@ pub fn shortcut(key: &str) -> Option<Command> {
         _ => return None,
     })
 }
+
+#[cfg(all(test, feature = "native-controls"))]
+mod native_control_tests;

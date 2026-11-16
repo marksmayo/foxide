@@ -62,6 +62,27 @@ fn clock(seconds: f64) -> String {
     }
 }
 
+fn update_queue(ui: &PlayerWindow, state: &UiState) {
+    let rows = state
+        .filtered_indices(ui.get_queue_filter().as_str())
+        .into_iter()
+        .map(|index| {
+            let path = &state.playlist[index];
+            QueueRow {
+                source_index: index as i32,
+                label: path
+                    .file_name()
+                    .unwrap_or(path.as_os_str())
+                    .to_string_lossy()
+                    .into_owned()
+                    .into(),
+            }
+        })
+        .collect::<Vec<_>>();
+    ui.set_queue_count(state.playlist.len() as i32);
+    ui.set_queue(ModelRc::new(VecModel::from(rows)));
+}
+
 fn dispatch(
     ui: &PlayerWindow,
     state: &Rc<RefCell<UiState>>,
@@ -72,19 +93,8 @@ fn dispatch(
     let mut state = state.borrow_mut();
     let effects = state.dispatch(action);
     if queue_changed {
-        ui.set_queue(ModelRc::new(VecModel::from(
-            state
-                .playlist
-                .iter()
-                .map(|p| {
-                    p.file_name()
-                        .unwrap_or(p.as_os_str())
-                        .to_string_lossy()
-                        .into_owned()
-                        .into()
-                })
-                .collect::<Vec<slint::SharedString>>(),
-        )));
+        ui.set_queue_filter("".into());
+        update_queue(ui, &state);
         ui.set_status("Opening media…".into());
     }
     ui.set_selected_row(state.selected as i32);
@@ -93,6 +103,7 @@ fn dispatch(
     ui.set_loaded(state.loaded);
     for effect in effects {
         let args: Vec<String> = match effect {
+            Effect::Engine(command) => command,
             Effect::Load(path) => vec![
                 "loadfile".into(),
                 player_core::external_path(path)
@@ -196,6 +207,7 @@ fn refresh(
         });
     if snapshot.loaded && expected.as_deref() == Some(snapshot.path.as_str()) {
         let mut state = state.borrow_mut();
+        let newly_loaded = !state.loaded;
         state.confirm_loaded(snapshot.duration);
         state.paused = snapshot.paused;
         state.muted = snapshot.muted;
@@ -218,14 +230,16 @@ fn refresh(
         }
         ui.set_volume(snapshot.volume as f32);
         ui.set_muted(snapshot.muted);
-        ui.set_status(
-            format!(
-                "{} · {:.2}×",
-                if snapshot.paused { "Paused" } else { "Playing" },
-                snapshot.speed
-            )
-            .into(),
-        );
+        if newly_loaded || snapshot.paused != previous.paused || snapshot.speed != previous.speed {
+            ui.set_status(
+                format!(
+                    "{} · {:.2}×",
+                    if snapshot.paused { "Paused" } else { "Playing" },
+                    snapshot.speed
+                )
+                .into(),
+            );
+        }
     }
     if !snapshot.error.is_empty() {
         ui.set_status(snapshot.error.clone().into());
@@ -233,6 +247,7 @@ fn refresh(
         state.borrow_mut().loaded = false;
     }
     if snapshot.tracks != previous.tracks {
+        ui.set_has_video(snapshot.tracks.iter().any(|track| track.kind == "video"));
         let model = |kind| {
             ModelRc::new(VecModel::from(
                 snapshot
@@ -319,6 +334,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }),
         )?;
     }
+    let filter_state = state.clone();
+    let filter_window = ui.as_weak();
+    ui.on_filter_queue(move |query| {
+        if let Some(ui) = filter_window.upgrade() {
+            ui.set_queue_filter(query);
+            update_queue(&ui, &filter_state.borrow());
+        }
+    });
     let (weak, controller, playback) = (ui.as_weak(), state.clone(), engine.clone());
     ui.on_action(move |name, value| {
         let Some(ui) = weak.upgrade() else { return };
@@ -342,7 +365,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "fullscreen" => Action::ToggleFullscreen,
             "quit" => Action::Quit,
             "mute" => Action::ToggleMute,
-            _ => return,
+            _ => match Action::control(name.as_str(), value as f64) {
+                Some(action) => action,
+                None => return,
+            },
         };
         dispatch(&ui, &controller, &playback, action);
     });
@@ -490,7 +516,8 @@ mod tests {
                 kind: "audio".into(),
                 label: "English".into(),
                 selected: true,
-            }],
+            }]
+            .into(),
             ..Default::default()
         };
         refresh(&ui, &state, &snapshot, &mut previous);
@@ -500,11 +527,30 @@ mod tests {
         assert_eq!(ui.get_duration_label(), "02:05");
         assert_eq!(ui.get_status(), "Playing · 1.00×");
         assert_eq!(ui.get_audio_tracks().row_count(), 1);
+        assert!(
+            !ui.get_has_video(),
+            "Audio-only playback must not enable frame/video controls"
+        );
+        update_queue(&ui, &state.borrow());
+        assert_eq!(ui.get_queue().row_count(), 1);
+        ui.set_queue_filter("missing".into());
+        update_queue(&ui, &state.borrow());
+        assert_eq!(ui.get_queue().row_count(), 0);
+        assert_eq!(ui.get_queue_count(), 1);
+        ui.set_queue_filter("movie".into());
+        update_queue(&ui, &state.borrow());
+        assert_eq!(ui.get_queue().row_data(0).unwrap().source_index, 0);
         let diagnostics = ui.get_diagnostics();
         assert!(diagnostics.contains("Active decoder: not active"));
+        ui.set_status("Command rejected".into());
         snapshot.position = 65.9;
         refresh(&ui, &state, &snapshot, &mut previous);
         assert_eq!(ui.get_position(), 65.9);
+        assert_eq!(
+            ui.get_status(),
+            "Command rejected",
+            "Position ticks must not rebuild and overwrite unchanged playback status"
+        );
         assert_eq!(ui.get_time_label(), "01:05");
         assert_eq!(ui.get_diagnostics(), diagnostics);
         snapshot.position = 66.0;
@@ -513,7 +559,7 @@ mod tests {
         snapshot.title = "New title".into();
         snapshot.duration = 126.0;
         snapshot.hwdec = "d3d11va".into();
-        snapshot.tracks[0].selected = false;
+        Arc::make_mut(&mut snapshot.tracks)[0].selected = false;
         refresh(&ui, &state, &snapshot, &mut previous);
         assert_eq!(ui.get_time_label(), "01:06");
         assert_eq!(ui.get_duration_label(), "02:06");
@@ -526,5 +572,17 @@ mod tests {
         assert!(!ui.get_loaded());
         assert_eq!(ui.get_status(), "Decode failed");
         assert!(ui.get_diagnostics().contains("Decode failed"));
+        state
+            .borrow_mut()
+            .dispatch(Action::Open(vec!["next.mkv".into()]));
+        ui.set_status("Opening media…".into());
+        snapshot.path = "next.mkv".into();
+        snapshot.error.clear();
+        refresh(&ui, &state, &snapshot, &mut previous);
+        assert_eq!(
+            ui.get_status(),
+            "Paused · 1.50×",
+            "A newly loaded file replaces the opening status even when pause and speed are unchanged"
+        );
     }
 }

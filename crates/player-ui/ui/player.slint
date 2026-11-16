@@ -1,4 +1,5 @@
 import { Slider, ScrollView, LineEdit, Palette } from "std-widgets.slint";
+export struct QueueRow { source-index: int, label: string }
 export struct TrackRow { id: int, label: string, selected: bool }
 
 component ToolButton inherits Rectangle {
@@ -40,6 +41,7 @@ export component PlayerWindow inherits Window {
     background: #101722; default-font-size: 14px;
     in-out property <image> video-frame;
     in-out property <bool> loaded: false;
+    in-out property <bool> has-video: false;
     in-out property <bool> paused: false;
     in-out property <bool> queue-visible: false;
     in-out property <bool> fullscreen-mode: false;
@@ -52,7 +54,10 @@ export component PlayerWindow inherits Window {
     in-out property <string> duration-label: "00:00";
     in-out property <string> status: "Ready when you are";
     in-out property <string> diagnostics: "No media loaded";
-    in-out property <[string]> queue;
+    in-out property <[QueueRow]> queue;
+    in-out property <int> queue-count: 0;
+    in-out property <string> queue-filter;
+    callback filter-queue(string);
     in-out property <int> selected-row: 0;
     in-out property <[TrackRow]> audio-tracks;
     in-out property <[TrackRow]> subtitle-tracks;
@@ -74,6 +79,8 @@ export component PlayerWindow inherits Window {
         }
         Menu { title: "Playback";
             MenuItem { title: root.paused ? "Play" : "Pause"; enabled: root.loaded; activated => { root.action("pause", 0); } }
+            MenuItem { title: "Next frame"; enabled: root.loaded && root.has-video; activated => { root.action("frame-step", 0); } }
+            MenuItem { title: "Previous frame"; enabled: root.loaded && root.has-video; activated => { root.action("frame-back-step", 0); } }
             MenuItem { title: "Stop"; enabled: root.loaded; activated => { root.action("stop", 0); } }
             MenuSeparator {}
             MenuItem { title: "Back 5 seconds"; enabled: root.loaded; activated => { root.action("seek-relative", -5); } }
@@ -85,16 +92,43 @@ export component PlayerWindow inherits Window {
                 MenuItem { title: "2×"; enabled: root.loaded; activated => { root.action("speed", 2); } }
             }
             MenuSeparator {}
-            MenuItem { title: "Previous item"; enabled: root.queue.length > 0; activated => { root.action("previous", 0); } }
-            MenuItem { title: "Next item"; enabled: root.queue.length > 0; activated => { root.action("next", 0); } }
+            MenuItem { title: "Previous item"; enabled: root.queue-count > 0; activated => { root.action("previous", 0); } }
+            MenuItem { title: "Next item"; enabled: root.queue-count > 0; activated => { root.action("next", 0); } }
         }
         Menu { title: "Audio";
+            Menu { title: "ReplayGain";
+                MenuItem { title: "Off"; enabled: root.loaded; activated => { root.action("replaygain", 0); } }
+                MenuItem { title: "Track gain"; enabled: root.loaded; activated => { root.action("replaygain", 1); } }
+                MenuItem { title: "Album gain"; enabled: root.loaded; activated => { root.action("replaygain", 2); } }
+            }
+            Menu { title: "Equalizer";
+                MenuItem { title: "Off / reset audio filters"; enabled: root.loaded; activated => { root.action("equalizer", 0); } }
+                MenuItem { title: "Bass boost"; enabled: root.loaded; activated => { root.action("equalizer", 1); } }
+                MenuItem { title: "Voice clarity"; enabled: root.loaded; activated => { root.action("equalizer", 2); } }
+            }
             MenuItem { title: "Mute"; checked: root.muted; activated => { root.action("mute", 0); } }
             MenuSeparator {}
             for track in root.audio-tracks: MenuItem { title: track.label; checked: track.selected; enabled: root.loaded; activated => { root.action("audio-track", track.id); } }
         }
-        Menu { title: "Video"; MenuItem { title: "Fullscreen"; checked: root.fullscreen-mode; shortcut: @keys(F11); activated => { root.action("fullscreen", 0); } } }
+        Menu { title: "Video";
+            Menu { title: "Rotation";
+                MenuItem { title: "Original"; enabled: root.loaded && root.has-video; activated => { root.action("rotation", 0); } }
+                MenuItem { title: "90° clockwise"; enabled: root.loaded && root.has-video; activated => { root.action("rotation", 90); } }
+                MenuItem { title: "180°"; enabled: root.loaded && root.has-video; activated => { root.action("rotation", 180); } }
+                MenuItem { title: "270° clockwise"; enabled: root.loaded && root.has-video; activated => { root.action("rotation", 270); } }
+            }
+            MenuItem { title: "Flip vertically"; enabled: root.loaded && root.has-video; activated => { root.action("flip-vertical", 0); } }
+            MenuItem { title: "Flip horizontally"; enabled: root.loaded && root.has-video; activated => { root.action("flip-horizontal", 0); } }
+            Menu { title: "Debanding";
+                MenuItem { title: "Off"; enabled: root.loaded && root.has-video; activated => { root.action("deband", 0); } }
+                MenuItem { title: "On"; enabled: root.loaded && root.has-video; activated => { root.action("deband", 1); } }
+            }
+            MenuItem { title: "Fullscreen"; checked: root.fullscreen-mode; shortcut: @keys(F11); activated => { root.action("fullscreen", 0); } } }
         Menu { title: "Subtitles";
+            Menu { title: "Secondary subtitles";
+                MenuItem { title: "Off"; enabled: root.loaded; activated => { root.action("secondary-subtitle", 0); } }
+                for track in root.subtitle-tracks: MenuItem { title: track.label; enabled: root.loaded; activated => { root.action("secondary-subtitle", track.id); } }
+            }
             MenuItem { title: "Load subtitle file…"; enabled: root.loaded; activated => { root.action("subtitle-file", 0); } }
             MenuItem { title: "Off"; enabled: root.loaded; activated => { root.action("subtitle-track", 0); } }
             MenuSeparator {}
@@ -113,6 +147,8 @@ export component PlayerWindow inherits Window {
         if (event.text == Key.Escape && root.panel != "") { root.panel = ""; return accept; }
         if (root.panel != "") { return reject; }
         if (event.text == " ") { root.action("pause", 0); return accept; }
+        if (event.text == ".") { root.action("frame-step", 0); return accept; }
+        if (event.text == ",") { root.action("frame-back-step", 0); return accept; }
         if (event.text == "f") { root.action("fullscreen", 0); return accept; }
         if (event.text == Key.Escape && root.fullscreen-mode) { root.action("fullscreen", 0); return accept; }
         if (event.text == Key.RightArrow) { root.action("seek-relative", 5); return accept; }
@@ -135,11 +171,12 @@ export component PlayerWindow inherits Window {
                 VerticalLayout { padding: 18px; spacing: 16px;
                     HorizontalLayout { Text { text: "PLAYLIST"; color: #8293ab; font-size: 11px; font-weight: 700; } Text { text: root.queue.length; color: #ed975f; horizontal-alignment: right; } }
                     if (root.queue.length == 0): Text { text: "Your queue is clear.\nOpen a few files to get started."; color: #8b9bb1; wrap: word-wrap; }
+                    LineEdit { text <=> root.queue-filter; placeholder-text: "Filter playlist…"; edited(text) => { root.filter-queue(text); } }
                     ScrollView { vertical-stretch: 1;
                         VerticalLayout { spacing: 6px;
-                            for item[index] in root.queue: Rectangle { height: 52px; border-radius: 8px; background: index == root.selected-row ? #293649 : row-touch.has-hover ? #202c3b : transparent;
-                                Text { x: 12px; width: parent.width - 24px; height: parent.height; text: item; overflow: elide; color: index == root.selected-row ? #f4b48c : #b9c7d8; vertical-alignment: center; font-size: 13px; }
-                                row-touch := TouchArea { clicked => { root.action("select", index); } }
+                            for item in root.queue: Rectangle { height: 52px; border-radius: 8px; background: item.source-index == root.selected-row ? #293649 : row-touch.has-hover ? #202c3b : transparent;
+                                Text { x: 12px; width: parent.width - 24px; height: parent.height; text: item.label; overflow: elide; color: item.source-index == root.selected-row ? #f4b48c : #b9c7d8; vertical-alignment: center; font-size: 13px; }
+                                row-touch := TouchArea { clicked => { root.action("select", item.source-index); } }
                             }
                         }
                     }
@@ -172,9 +209,9 @@ export component PlayerWindow inherits Window {
                     Text { text: root.duration-label; color: #7e92ad; width: 55px; font-size: 11px; horizontal-alignment: right; vertical-alignment: center; }
                 }
                 HorizontalLayout { spacing: 10px;
-                    ToolButton { label: "◀|"; description: "Previous item"; available: root.queue.length > 0; clicked => { root.action("previous", 0); } }
+                    ToolButton { label: "◀|"; description: "Previous item"; available: root.queue-count > 0; clicked => { root.action("previous", 0); } }
                     ToolButton { label: root.loaded && !root.paused ? "Ⅱ" : "▶"; description: root.paused ? "Play" : "Pause"; available: root.loaded; primary: true; width: 48px; clicked => { root.action("pause", 0); } }
-                    ToolButton { label: "|▶"; description: "Next item"; available: root.queue.length > 0; clicked => { root.action("next", 0); } }
+                    ToolButton { label: "|▶"; description: "Next item"; available: root.queue-count > 0; clicked => { root.action("next", 0); } }
                     VerticalLayout { padding-left: 12px; spacing: 1px;
                         Text { text: root.media-title == "" ? "Nothing playing" : root.media-title; color: #dce5f0; font-size: 13px; overflow: elide; }
                         Text { text: root.status; color: #8196b1; font-size: 11px; overflow: elide; }
