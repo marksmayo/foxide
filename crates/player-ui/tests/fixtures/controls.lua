@@ -1,12 +1,18 @@
 local utils = require "mp.utils"
 local msg = require "mp.msg"
-local result = {completed=0, errors={}}
+local result = assert(utils.parse_json('{"completed":0,"errors":[]}'))
 local finished = false
 local function finish()
     if finished then return end
     finished = true
+    local encoded, err = utils.format_json(result)
+    if not encoded then
+        msg.error("Could not serialize control results: " .. tostring(err))
+        mp.commandv("quit", "1")
+        return
+    end
     local file = assert(io.open(os.getenv("FOXIDE_CONTROL_RESULTS"), "wb"))
-    file:write(utils.format_json(result)); file:close()
+    file:write(encoded); file:close()
     mp.commandv("quit", #result.errors == 0 and "0" or "1")
 end
 mp.add_timeout(12, function()
