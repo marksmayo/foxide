@@ -356,3 +356,18 @@ fn dropping_an_origin_revokes_its_url_without_an_explicit_shutdown_call() {
         std::thread::sleep(std::time::Duration::from_millis(10));
     }
 }
+
+#[test]
+fn reports_receiver_transport_progress_without_identifiers_or_urls() {
+    let media = MediaFile::new();
+    let origin = MediaOrigin::new(&media.path, "127.0.0.1".parse().unwrap()).unwrap();
+    assert_eq!(origin.transfer_stats().bytes_sent, 0);
+    let response = request(origin.url(), "GET", "");
+    assert_eq!(split(&response).1.len(), 256);
+    let stats = origin.transfer_stats();
+    assert_eq!(stats.connections, 1);
+    assert_eq!(stats.selected_peer_connections, 1);
+    assert_eq!(stats.valid_requests, 1);
+    assert_eq!(stats.bytes_sent, 256);
+    origin.shutdown();
+}

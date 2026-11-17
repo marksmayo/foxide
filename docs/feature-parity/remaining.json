@@ -35,7 +35,7 @@
       "name": "Chromecast video output",
       "group": "Casting",
       "stage": "queued",
-      "acceptance": "Pinned read-only transport passes loopback and two private receiver probes. Discovery, desktop pairing, owned playback sessions and physical media acceptance remain; no casting medal awarded."
+      "acceptance": "Pinned transport, restricted file serving and owned playback APIs pass real TLS/HTTP fixtures. Physical media acceptance is blocked by local Windows firewall rules; desktop discovery/pairing/session controls and display/audio acceptance remain. No casting gold is claimed."
     },
     {
       "id": "airplay_video_output",

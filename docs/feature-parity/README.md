@@ -59,7 +59,7 @@ The client uses the [Radio Browser API](https://docs.radio-browser.info/), disco
 
 Tests cover query encoding, station filtering, mirror failover/bounds/cache, malformed responses, real HTTP transport against a loopback fixture, helper argument preservation, output limits, timeout and cancellation. The desktop acceptance test drives search, selection, cancellation and provider failure through public callbacks and archives a radio panel preview. Separate live-provider acceptance searched the directory and decoded a returned FLAC stream on all three platforms; see acceptance.json. Provider availability can change.
 
-Two owner-provided Chromecasts and a Samsung TV are available for future receiver tests. TV protocol support remains unverified. No casting session has been started.
+Two owner-provided Chromecasts and a Samsung TV are available for receiver tests. Identifying details remain private. Chromecast read-only status succeeds; media acceptance awaits a local firewall exception. Samsung receiver-protocol support remains unverified.
 
 ## Video-site URLs
 
@@ -107,6 +107,6 @@ The accepted manual ICC event brings the current total to **8 of 49 gaps closed;
 
 The desktop status view now receives notifications only when the native snapshot changes, replacing its repeating 200 ms UI timer. The control worker retains its sampling interval and the native audio/video clock is unchanged. Registration publishes the current state, and a transient snapshot-lock miss reschedules the UI read. A native paused-playback test checks quiescence and delivery after a volume change. This removes avoidable UI wakeups; CPU/Watt savings are not yet quantified and no performance medal is changed from this mechanism alone.
 
-## Chromecast transport in progress
+## Chromecast implementation in progress
 
-The [bounded, pinned read-only transport](casting.md) passes real loopback TLS tests and private status queries against both owner-provided receivers. It does not launch applications or send media. Discovery, desktop pairing, media serving and playback acceptance remain; the accepted total stays at **8/49**, with **41 gaps remaining**.
+The [casting checkpoint](casting.md) now includes pinned transport, restricted file serving and owned load/pause/seek/play/stop APIs with real TLS/HTTP fixtures. Physical attempts have not reached playback: Windows blocks the test executable's incoming media connections. A scoped local helper awaits administrator action. Discovery, desktop pairing/session controls and display/audio acceptance remain. No casting medal is claimed; the accepted total stays at **8/49**, with **41 gaps remaining**.

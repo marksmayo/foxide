@@ -41,4 +41,7 @@ mod transport;
 pub use transport::{inspect_receiver_certificate, receiver_status};
 
 mod media_origin;
-pub use media_origin::MediaOrigin;
+pub use media_origin::{MediaOrigin, TransferStats};
+
+mod session;
+pub use session::{CastOptions, CastPlayback, CastState, CastStatus};

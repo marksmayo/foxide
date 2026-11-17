@@ -37,7 +37,7 @@ const RECEIVER: &str = "urn:x-cast:com.google.cast.receiver";
 type FixtureStream = StreamOwned<ServerConnection, std::net::TcpStream>;
 fn fixture(
     version: &'static rustls::SupportedProtocolVersion,
-    respond: impl FnOnce(&mut FixtureStream) -> std::io::Result<()> + Send + 'static,
+    respond: impl FnOnce(&mut FixtureStream, u64) -> std::io::Result<()> + Send + 'static,
 ) -> (
     SocketAddr,
     CertificatePin,
@@ -77,11 +77,12 @@ fn fixture(
         );
         let status = Message::read(&mut tls).map_err(|e| e.to_string())?;
         assert_eq!(status.namespace(), RECEIVER);
-        assert_eq!(
-            status.payload(),
-            &Payload::Json(serde_json::json!({"type":"GET_STATUS","requestId":1}))
-        );
-        respond(&mut tls).map_err(|e| e.to_string())
+        let Payload::Json(payload) = status.payload() else {
+            panic!("Expected JSON status request")
+        };
+        assert_eq!(payload["type"], "GET_STATUS");
+        let id = payload["requestId"].as_u64().filter(|id| *id > 0).unwrap();
+        respond(&mut tls, id).map_err(|e| e.to_string())
     });
     ready_rx.recv_timeout(Duration::from_secs(5)).unwrap();
     (address, pin, worker)
@@ -96,13 +97,13 @@ fn send(
     Message::json(source, dest, ns, value)?.write(tls)?;
     std::io::Write::flush(tls)
 }
-fn good_status(tls: &mut FixtureStream) -> std::io::Result<()> {
+fn good_status(tls: &mut FixtureStream, id: u64) -> std::io::Result<()> {
     send(
         tls,
         "receiver-0",
         "sender-0",
         RECEIVER,
-        serde_json::json!({"type":"RECEIVER_STATUS", "requestId":1, "status":{"applications":[{"appId":"test-app"}]}}),
+        serde_json::json!({"type":"RECEIVER_STATUS", "requestId":id, "status":{"applications":[{"appId":"test-app"}]}}),
     )
 }
 fn receiver_fixture() -> (
@@ -152,7 +153,7 @@ fn supports_tls12_receivers_without_disabling_handshake_signature_checks() {
 }
 #[test]
 fn answers_heartbeats_while_ignoring_unrelated_messages() {
-    let (address, pin, worker) = fixture(&rustls::version::TLS13, |tls| {
+    let (address, pin, worker) = fixture(&rustls::version::TLS13, |tls, id| {
         let heartbeat = "urn:x-cast:com.google.cast.tp.heartbeat";
         send(
             tls,
@@ -175,32 +176,32 @@ fn answers_heartbeats_while_ignoring_unrelated_messages() {
                 "receiver-0",
                 "sender-0",
                 RECEIVER,
-                serde_json::json!({"type":"RECEIVER_STATUS","requestId":2,"status":{}}),
+                serde_json::json!({"type":"RECEIVER_STATUS","requestId":id+1,"status":{}}),
             ),
             (
                 "receiver-0",
                 "sender-0",
                 RECEIVER,
-                serde_json::json!({"type":"UNEXPECTED","requestId":1}),
+                serde_json::json!({"type":"UNEXPECTED","requestId":id}),
             ),
         ] {
             send(tls, src, dest, ns, value)?;
         }
         Message::binary("receiver-0", "sender-0", "urn:x", vec![0])?.write(tls)?;
-        good_status(tls)
+        good_status(tls, id)
     });
     assert!(receiver_status(address, pin, Duration::from_secs(5)).is_ok());
     worker.join().unwrap().unwrap();
 }
 #[test]
 fn accepts_a_broadcast_status_only_with_the_expected_request_id() {
-    let (address, pin, worker) = fixture(&rustls::version::TLS13, |tls| {
+    let (address, pin, worker) = fixture(&rustls::version::TLS13, |tls, id| {
         send(
             tls,
             "receiver-0",
             "*",
             RECEIVER,
-            serde_json::json!({"type":"RECEIVER_STATUS","requestId":1,"status":{}}),
+            serde_json::json!({"type":"RECEIVER_STATUS","requestId":id,"status":{}}),
         )
     });
     assert_eq!(
@@ -212,19 +213,19 @@ fn accepts_a_broadcast_status_only_with_the_expected_request_id() {
 #[test]
 fn rejects_malformed_or_excessive_responses() {
     for status in [serde_json::json!(null), serde_json::json!([])] {
-        let (address, pin, worker) = fixture(&rustls::version::TLS13, move |tls| {
+        let (address, pin, worker) = fixture(&rustls::version::TLS13, move |tls, id| {
             send(
                 tls,
                 "receiver-0",
                 "sender-0",
                 RECEIVER,
-                serde_json::json!({"type":"RECEIVER_STATUS","requestId":1,"status":status}),
+                serde_json::json!({"type":"RECEIVER_STATUS","requestId":id,"status":status}),
             )
         });
         assert!(receiver_status(address, pin, Duration::from_secs(5)).is_err());
         worker.join().unwrap().unwrap();
     }
-    let (address, pin, worker) = fixture(&rustls::version::TLS13, |tls| {
+    let (address, pin, worker) = fixture(&rustls::version::TLS13, |tls, _id| {
         for _ in 0..64 {
             send(tls, "other", "sender-0", RECEIVER, serde_json::json!({}))?;
         }
@@ -297,7 +298,7 @@ fn missing_or_non_tls_receivers_fail_without_returning_a_trusted_pin() {
 }
 #[test]
 fn absolute_deadline_stops_a_trickled_frame() {
-    let (address, pin, worker) = fixture(&rustls::version::TLS13, |tls| {
+    let (address, pin, worker) = fixture(&rustls::version::TLS13, |tls, _id| {
         use std::io::Write;
         let mut frame = Vec::new();
         Message::json(
@@ -323,5 +324,30 @@ fn absolute_deadline_stops_a_trickled_frame() {
         ),
         "{failure}"
     );
+    worker.join().unwrap().unwrap();
+}
+
+#[test]
+fn answers_transport_heartbeats_before_application_destination_filtering() {
+    let (address, pin, worker) = fixture(&rustls::version::TLS13, |tls, id| {
+        let heartbeat = "urn:x-cast:com.google.cast.tp.heartbeat";
+        send(
+            tls,
+            "transport-0",
+            "transport-0",
+            heartbeat,
+            serde_json::json!({"type":"PING"}),
+        )?;
+        let reply = Message::read(tls)?;
+        assert_eq!(reply.source(), "transport-0");
+        assert_eq!(reply.destination(), "transport-0");
+        assert_eq!(reply.namespace(), heartbeat);
+        assert_eq!(
+            reply.payload(),
+            &Payload::Json(serde_json::json!({"type":"PONG"}))
+        );
+        good_status(tls, id)
+    });
+    assert!(receiver_status(address, pin, Duration::from_secs(5)).is_ok());
     worker.join().unwrap().unwrap();
 }

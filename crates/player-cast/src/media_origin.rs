@@ -6,7 +6,7 @@ use std::{
     path::Path,
     sync::{
         Arc, Mutex,
-        atomic::{AtomicBool, Ordering},
+        atomic::{AtomicBool, AtomicU64, Ordering},
     },
     thread::{self, JoinHandle},
     time::{Duration, Instant},
@@ -20,6 +20,7 @@ pub struct MediaOrigin {
     stop: Arc<AtomicBool>,
     worker: Option<JoinHandle<()>>,
     waker: Arc<mio::Waker>,
+    counts: Arc<TransferCounts>,
 }
 struct Resource {
     file: Mutex<File>,
@@ -28,8 +29,38 @@ struct Resource {
     authority: String,
     media_type: &'static str,
     stop: Arc<AtomicBool>,
+    counts: Arc<TransferCounts>,
+}
+
+/// File-transport diagnostics; queued bytes do not prove decoding or display.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct TransferStats {
+    pub connections: u64,
+    pub selected_peer_connections: u64,
+    pub valid_requests: u64,
+    pub bytes_sent: u64,
+}
+#[derive(Default)]
+struct TransferCounts {
+    connections: AtomicU64,
+    selected_peer_connections: AtomicU64,
+    valid_requests: AtomicU64,
+    bytes_sent: AtomicU64,
+}
+impl TransferCounts {
+    fn snapshot(&self) -> TransferStats {
+        TransferStats {
+            connections: self.connections.load(Ordering::Relaxed),
+            selected_peer_connections: self.selected_peer_connections.load(Ordering::Relaxed),
+            valid_requests: self.valid_requests.load(Ordering::Relaxed),
+            bytes_sent: self.bytes_sent.load(Ordering::Relaxed),
+        }
+    }
 }
 impl MediaOrigin {
+    pub fn transfer_stats(&self) -> TransferStats {
+        self.counts.snapshot()
+    }
     pub fn new(path: &Path, receiver: IpAddr) -> io::Result<Self> {
         crate::transport::deadline(SocketAddr::new(receiver, 8009), Duration::from_secs(1))?;
         if !path.is_absolute() {
@@ -85,6 +116,7 @@ impl MediaOrigin {
         );
         let url = format!("http://{authority}{route}");
         let stop = Arc::new(AtomicBool::new(false));
+        let counts = Arc::new(TransferCounts::default());
         let resource = Arc::new(Resource {
             file: Mutex::new(file),
             size: metadata.len(),
@@ -92,6 +124,7 @@ impl MediaOrigin {
             authority,
             media_type,
             stop: stop.clone(),
+            counts: counts.clone(),
         });
         let mut poll = mio::Poll::new()?;
         let mut listener = mio::net::TcpListener::from_std(listener);
@@ -130,6 +163,7 @@ impl MediaOrigin {
                                 }
                                 Err(_) => break 'listen,
                             };
+                            resource.counts.connections.fetch_add(1, Ordering::Relaxed);
                             let mut index = 0;
                             while index < workers.len() {
                                 if workers[index].is_finished() {
@@ -138,7 +172,14 @@ impl MediaOrigin {
                                     index += 1;
                                 }
                             }
-                            if peer.ip() != receiver || workers.len() >= 4 {
+                            if peer.ip() != receiver {
+                                continue;
+                            }
+                            resource
+                                .counts
+                                .selected_peer_connections
+                                .fetch_add(1, Ordering::Relaxed);
+                            if workers.len() >= 4 {
                                 continue;
                             }
                             let socket: TcpStream = socket.into();
@@ -168,6 +209,7 @@ impl MediaOrigin {
             stop,
             worker: Some(worker),
             waker,
+            counts,
         })
     }
     /// Contains a private address and bearer token; do not publish or log this URL.
@@ -187,6 +229,10 @@ impl MediaOrigin {
 }
 impl Drop for MediaOrigin {
     fn drop(&mut self) {
+        #[cfg(feature = "device-integration")]
+        if std::env::var_os("FOXIDE_CAST_TRACE").is_some() {
+            eprintln!("[cast-origin] {:?}", self.transfer_stats());
+        }
         self.stop.store(true, Ordering::Release);
         let _ = self.waker.wake();
     }
@@ -265,6 +311,10 @@ fn serve(mut socket: TcpStream, resource: &Resource) -> io::Result<()> {
     if !matches!(request[0], "GET" | "HEAD") {
         return error(&mut socket, "405 Method Not Allowed");
     }
+    resource
+        .counts
+        .valid_requests
+        .fetch_add(1, Ordering::Relaxed);
     let (start, end) = match range {
         None => (0, resource.size - 1),
         Some(value) => match byte_range(value, resource.size) {
@@ -319,6 +369,10 @@ fn serve(mut socket: TcpStream, resource: &Resource) -> io::Result<()> {
             return Err(io::ErrorKind::UnexpectedEof.into());
         }
         socket.write_all(&buffer[..count])?;
+        resource
+            .counts
+            .bytes_sent
+            .fetch_add(count as u64, Ordering::Relaxed);
         position += count as u64;
     }
     Ok(())

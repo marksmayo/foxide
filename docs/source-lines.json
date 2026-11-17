@@ -5,12 +5,12 @@
     "color": "000080"
   },
   "Rust": {
-    "lines": 12433,
-    "files": 69,
+    "lines": 13572,
+    "files": 72,
     "color": "dea584"
   },
   "TOML": {
-    "lines": 222,
+    "lines": 225,
     "files": 9,
     "color": "9c4221"
   },
