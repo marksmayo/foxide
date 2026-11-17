@@ -32,11 +32,30 @@ fn unset_native_properties_cannot_be_reported_as_real_decoders() {
     }
 }
 
+fn selected_decoder(api: &Api, kind: &str, legacy: &CStr) -> String {
+    let name = CString::new(format!("current-tracks/{kind}/decoder")).unwrap();
+    let current = api.get(&name);
+    if decoder_ready(&current) {
+        return current;
+    }
+    let count = api.number(c"track-list/count").clamp(0.0, 256.0) as u32;
+    for index in 0..count {
+        if api.track_property(index, "type") == kind
+            && api.track_property(index, "selected") == "yes"
+        {
+            let decoder = api.track_property(index, "decoder");
+            if decoder_ready(&decoder) {
+                return decoder;
+            }
+        }
+    }
+    // Older engines lack the decoder subproperty. Their valid legacy name plus
+    // configured output and an advancing clock provides the compatibility proof.
+    api.get(legacy)
+}
+
 fn probe(url: &str, helper: Option<&Path>, video: bool) -> Result<serde_json::Value, String> {
-    let selected = helper
-        .map(player_services::VideoSiteTool::new)
-        .transpose()?;
-    let api = Api::load(selected.as_ref())?;
+    let engine = Engine::with_video_site_helper(helper)?;
     for (name, value) in [
         ("vo", "null"),
         ("ao", "null"),
@@ -45,46 +64,40 @@ fn probe(url: &str, helper: Option<&Path>, video: bool) -> Result<serde_json::Va
         ("demuxer-max-bytes", "5242880"),
         ("demuxer-readahead-secs", "1"),
     ] {
-        api.send(&["set".into(), name.into(), value.into()])?;
+        engine.command(vec!["set".into(), name.into(), value.into()])?;
     }
-    api.send(&["loadfile".into(), url.into(), "replace".into()])?;
+    engine.ready.store(true, Ordering::Release);
+    engine.command(vec!["loadfile".into(), url.into(), "replace".into()])?;
+    let api = engine.api.as_ref();
     let deadline = Instant::now() + Duration::from_secs(60);
-    let mut restarted = false;
     while Instant::now() < deadline {
-        // SAFETY: this test owns the client; event contents are read before the next wait.
-        unsafe {
-            let event = (api.wait_event)(api.handle, 0.1);
-            if !event.is_null() {
-                if (*event).kind == 21 {
-                    restarted = true;
-                }
-                if (*event).kind == 7 && !(*event).data.is_null() {
-                    let end = &*((*event).data.cast::<End>());
-                    if end.reason == 4 {
-                        return Err(format!(
-                            "Provider media failed to load (engine error {})",
-                            end.error
-                        ));
-                    }
-                }
-            }
+        let snapshot = engine.snapshot().unwrap_or_default();
+        if !snapshot.error.is_empty() {
+            return Err(snapshot.error);
         }
-        let audio = api.get(c"audio-codec-name");
-        let image = api.get(c"video-format");
+        if !snapshot.command_error.is_empty() {
+            return Err(snapshot.command_error);
+        }
+        let source_matches = snapshot.requested_path.as_ref() == url;
+        let audio = selected_decoder(api, "audio", c"audio-codec-name");
+        let image = selected_decoder(api, "video", c"video-format");
         let video_width = api.number(c"video-out-params/w");
-        if restarted
+        if snapshot.loaded
+            && source_matches
             && decoder_ready(&audio)
             && (!video || (decoder_ready(&image) && video_width > 0.0))
-            && api.number(c"time-pos") >= 0.3
+            && api.number(c"audio-out-params/samplerate") > 0.0
+            && snapshot.position >= 0.3
         {
-            api.send(&["stop".into()])?;
+            engine.command(vec!["stop".into()])?;
             return Ok(
-                serde_json::json!({"audio_decoder": audio, "video_decoder": image, "video_output_width": video_width, "clock_advanced": true, "displayed_frame_measured": false, "output": "null"}),
+                serde_json::json!({"audio_decoder": audio, "video_decoder": image, "video_output_width": video_width, "clock_advanced": true, "source_identity_preserved": true, "displayed_frame_measured": false, "output": "null"}),
             );
         }
+        thread::sleep(Duration::from_millis(50));
     }
     Err(format!(
-        "Provider did not establish real decoders and advance its clock within 60 seconds (audio={}, video={}, width={}, restarted={restarted})",
+        "Provider did not establish real decoders and advance its clock within 60 seconds (audio={}, video={}, width={})",
         api.get(c"audio-codec-name"),
         api.get(c"video-format"),
         api.number(c"video-out-params/w")
@@ -153,7 +166,7 @@ fn video_site_page_uses_the_real_selected_helper_and_decodes_audio_and_video() {
         let helper = std::env::var_os("FOXIDE_LIVE_YTDLP")
             .ok_or("Select the verified helper with FOXIDE_LIVE_YTDLP")?;
         probe(
-            "ytdl://https://archive.org/details/BigBuckBunny_328",
+            "https://archive.org/details/BigBuckBunny_328",
             Some(Path::new(&helper)),
             true,
         )

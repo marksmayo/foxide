@@ -4,7 +4,7 @@
 ![Lua source lines](https://img.shields.io/badge/Lua%20source%20lines-105-000080)
 ![PowerShell source lines](https://img.shields.io/badge/PowerShell%20source%20lines-206-5391fe)
 ![Python source lines](https://img.shields.io/badge/Python%20source%20lines-5726-3776ab)
-![Rust source lines](https://img.shields.io/badge/Rust%20source%20lines-9941-dea584)
+![Rust source lines](https://img.shields.io/badge/Rust%20source%20lines-10007-dea584)
 ![Slint source lines](https://img.shields.io/badge/Slint%20source%20lines-375-7c3aed)
 ![TOML source lines](https://img.shields.io/badge/TOML%20source%20lines-198-9c4221)
 ![YAML source lines](https://img.shields.io/badge/YAML%20source%20lines-1215-cb171e)

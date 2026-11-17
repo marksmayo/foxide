@@ -6,6 +6,6 @@
   "radio_query": "Radio Paradise",
   "output": "null",
   "credentials_required": false,
-  "revision": 2,
-  "reason": "Reject unset native codec properties and repeat the actual decoder proof."
+  "revision": 3,
+  "reason": "Read actual selected-track decoder properties, require configured audio output and recheck observed track readiness."
 }

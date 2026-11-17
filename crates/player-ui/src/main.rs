@@ -223,7 +223,10 @@ fn refresh(
                 .to_string_lossy()
                 .into_owned()
         });
-    if snapshot.loaded && expected.as_deref() == Some(snapshot.path.as_str()) {
+    let matches_selection = expected
+        .as_deref()
+        .is_some_and(|path| path == snapshot.path || path == snapshot.requested_path.as_ref());
+    if snapshot.loaded && matches_selection {
         let mut state = state.borrow_mut();
         let newly_loaded = !state.loaded;
         state.confirm_loaded(snapshot.duration);
@@ -275,7 +278,7 @@ fn refresh(
         ui.get_loaded()
             && snapshot.loaded
             && snapshot.has_artwork
-            && expected.as_deref() == Some(snapshot.path.as_str())
+            && matches_selection
             && snapshot.error.is_empty(),
     );
     if snapshot.tracks != previous.tracks {

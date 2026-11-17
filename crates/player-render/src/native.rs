@@ -174,6 +174,10 @@ impl Api {
                 "mpv_set_option",
                 unsafe extern "C" fn(Handle, *const c_char, c_int, *mut c_void) -> c_int
             );
+            let observe = symbol!(
+                "mpv_observe_property",
+                unsafe extern "C" fn(Handle, u64, *const c_char, c_int) -> c_int
+            );
             let mut api = Self {
                 handle: std::ptr::null_mut(),
                 command: symbol!(
@@ -283,6 +287,9 @@ impl Api {
                 return Err("libmpv initialization failed".into());
             }
             api.initialized = true;
+            if observe(api.handle, 1, c"track-list".as_ptr(), 0) < 0 {
+                return Err("Cannot observe playback track metadata".into());
+            }
             {
                 let logs = api
                     ._library
@@ -423,6 +430,8 @@ pub struct Track {
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Snapshot {
     pub path: String,
+    /// Original user selection, retained across helper redirects without per-tick allocation.
+    pub requested_path: Arc<str>,
     pub title: String,
     pub loaded: bool,
     pub paused: bool,
@@ -477,6 +486,8 @@ impl Engine {
             .name("foxide-engine".into())
             .spawn(move || {
                 let mut last_path = String::new();
+                let mut requested_path: Arc<str> = Arc::from("");
+                let mut file_loaded = false;
                 let mut tracks: Arc<[Track]> = Arc::from([]);
                 let mut has_artwork = false;
                 let mut error = String::new();
@@ -498,6 +509,10 @@ impl Engine {
                         Ok(Request::Command(args)) => {
                             let loading = args.first().is_some_and(|s| s == "loadfile");
                             if loading {
+                                file_loaded = false;
+                                requested_path = args
+                                    .get(1)
+                                    .map_or_else(|| Arc::from(""), |path| Arc::from(path.as_str()));
                                 error.clear();
                                 last_path.clear();
                             }
@@ -551,6 +566,16 @@ impl Engine {
                                     command_error = warning;
                                 }
                             }
+                            if matches!((*event).kind, 6 | 7) {
+                                file_loaded = false;
+                            }
+                            if (*event).kind == 8 {
+                                file_loaded = true;
+                            }
+                            if (*event).kind == 8 || ((*event).kind == 22 && (*event).userdata == 1)
+                            {
+                                tracks = Arc::from([]);
+                            }
                             if (*event).kind == 7 && !(*event).data.is_null() {
                                 let end = &*((*event).data.cast::<End>());
                                 if end.reason == 4 {
@@ -599,10 +624,12 @@ impl Engine {
                         last_path.clone_from(&path);
                     }
                     let next = Snapshot {
-                        loaded: !path.is_empty()
+                        loaded: file_loaded
+                            && !path.is_empty()
                             && client.get(c"idle-active") == "no"
                             && error.is_empty(),
                         path,
+                        requested_path: requested_path.clone(),
                         title: client.get(c"media-title"),
                         paused: client.get(c"pause") == "yes",
                         position: client.number(c"time-pos"),

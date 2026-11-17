@@ -582,4 +582,27 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
     shader_ui::install_with_apply(&ui, Rc::new(|_| Err("Renderer queue is full".into())));
     ui.invoke_clear_shaders();
     assert_eq!(ui.get_shader_notice(), "Renderer queue is full");
+    let redirected = Rc::new(RefCell::new(UiState::default()));
+    redirected
+        .borrow_mut()
+        .dispatch(Action::Open(vec!["https://page.example.org/watch".into()]));
+    ui.set_loaded(false);
+    let redirected_snapshot = Snapshot {
+        path: "https://cdn.example.org/resolved-video.mp4".into(),
+        requested_path: "https://page.example.org/watch".into(),
+        loaded: true,
+        duration: 30.0,
+        speed: 1.0,
+        ..Default::default()
+    };
+    refresh(
+        &ui,
+        &redirected,
+        &redirected_snapshot,
+        &mut Snapshot::default(),
+    );
+    assert!(
+        ui.get_loaded() && redirected.borrow().loaded,
+        "An extracted stream must remain associated with the page the user opened"
+    );
 }
