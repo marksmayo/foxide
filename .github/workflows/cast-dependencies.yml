@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     env:
-      CARGO_HOME: ${{ runner.temp }}/cast-cargo
+      CARGO_HOME: /tmp/foxide-cast-cargo-${{ github.run_id }}
     steps:
       - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
       - name: Fetch isolated, pinned transport dependencies
