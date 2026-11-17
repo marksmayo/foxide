@@ -5,13 +5,13 @@
     "color": "000080"
   },
   "Rust": {
-    "lines": 10658,
-    "files": 61,
+    "lines": 11714,
+    "files": 67,
     "color": "dea584"
   },
   "TOML": {
-    "lines": 202,
-    "files": 8,
+    "lines": 220,
+    "files": 9,
     "color": "9c4221"
   },
   "Slint": {
@@ -30,8 +30,8 @@
     "color": "3776ab"
   },
   "YAML": {
-    "lines": 1218,
-    "files": 14,
+    "lines": 1261,
+    "files": 15,
     "color": "cb171e"
   }
 }

@@ -16,3 +16,6 @@ pub use shaders::ShaderFile;
 
 mod color_profiles;
 pub use color_profiles::DisplayProfile;
+
+/// Transport-independent Cast protocol framing.
+pub mod cast_wire;

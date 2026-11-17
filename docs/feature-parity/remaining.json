@@ -35,14 +35,14 @@
       "name": "Chromecast video output",
       "group": "Casting",
       "stage": "queued",
-      "acceptance": "Needs discovery, receiver sessions and physical acceptance. Owner has two local Chromecast devices available; no device session started."
+      "acceptance": "Pinned read-only transport passes loopback and two private receiver probes. Discovery, desktop pairing, owned playback sessions and physical media acceptance remain; no casting medal awarded."
     },
     {
       "id": "airplay_video_output",
       "name": "AirPlay video output",
       "group": "Casting",
       "stage": "queued",
-      "acceptance": "Needs platform sender integration and receiver validation. Owner has a Samsung TV; supported receiver protocols and model remain unverified."
+      "acceptance": "Needs platform sender integration and receiver validation. A Samsung TV model was supplied privately; receiver-protocol support remains unverified."
     },
     {
       "id": "airplay_audio_receiver",

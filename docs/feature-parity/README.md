@@ -106,3 +106,7 @@ The accepted manual ICC event brings the current total to **8 of 49 gaps closed;
 ## Status-update efficiency
 
 The desktop status view now receives notifications only when the native snapshot changes, replacing its repeating 200 ms UI timer. The control worker retains its sampling interval and the native audio/video clock is unchanged. Registration publishes the current state, and a transient snapshot-lock miss reschedules the UI read. A native paused-playback test checks quiescence and delivery after a volume change. This removes avoidable UI wakeups; CPU/Watt savings are not yet quantified and no performance medal is changed from this mechanism alone.
+
+## Chromecast transport in progress
+
+The [bounded, pinned read-only transport](casting.md) passes real loopback TLS tests and private status queries against both owner-provided receivers. It does not launch applications or send media. Discovery, desktop pairing, media serving and playback acceptance remain; the accepted total stays at **8/49**, with **41 gaps remaining**.
