@@ -19,3 +19,7 @@ Intermediate combined-crate builds regressed existing tiny state benchmarks desp
 Three feature events are accepted: editable keys, customizable light/dark skins with an editable accent, and compact music layout. Counts after scoring are 34 Windows / 33 macOS / 32 Linux feature golds. The different totals reflect platform eligibility and omitted universal events; do not add them across platforms. All 46 other baseline feature gaps remain queued in remaining.json.
 
 The README retains previously collected playback measurements and their original source/run identities. This feature-score refresh does not represent a new full playback benchmark run. The raw measurement bundles remain byte-for-byte unchanged. Medal tables and feature matrices remain above all charts, and universal gold events remain excluded.
+
+## Audit checkpoint a31fb55
+
+[Hosted desktop/GPU coverage](https://github.com/marksmayo/foxide/actions/runs/44007076549) measured **90.605%** (3,115/3,438 lines), including real desktop startup/shutdown, normal/compact previews and compositor tests. The 90% aggregate gate passed without source exclusions. CodSpeed passed at this checkpoint after the single-pass statistics change. The later video-site implementation requires its own new verification; these numbers are not a claim for later commits. The Windows loopback HTTP fixture subsequently received an explicit blocking-mode/partial-read correction.

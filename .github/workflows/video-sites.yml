@@ -1,0 +1,57 @@
+name: Native video-site helper acceptance
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'crates/player-services/**'
+      - 'crates/player-render/**'
+      - 'crates/player-ui/**'
+      - 'crates/player-settings/**'
+      - '.github/workflows/video-sites.yml'
+      - 'Cargo.lock'
+permissions:
+  contents: read
+concurrency:
+  group: video-sites-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  native-helper:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
+        with:
+          key: native-video-sites
+      - name: Linux media engine
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libmpv2 libfontconfig1-dev libxkbcommon-dev libwayland-dev libegl1-mesa-dev
+      - name: macOS media engine
+        if: runner.os == 'macOS'
+        run: brew install mpv
+      - name: Windows media engine
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          python scripts/install-libmpv.py
+          if ($LASTEXITCODE -ne 0) { throw 'Verified libmpv installation failed' }
+          "FOXIDE_LIBMPV=$((Resolve-Path tools/libmpv/libmpv-2.dll).Path)" >> $env:GITHUB_ENV
+      - name: Verify the selected helper, hook, HTTP headers and actual audio decode
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p results/local
+          cargo test -p player-render --features video-site-integration --lib --locked video_site_hook -- --ignored --nocapture 2>&1 | tee results/local/video-site-acceptance.log
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: video-sites-${{ runner.os }}
+          path: results/local/video-site-acceptance.log

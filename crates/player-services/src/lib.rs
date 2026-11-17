@@ -7,3 +7,6 @@ pub use http::CurlClient;
 pub mod process;
 
 pub use url::Url;
+
+mod video_sites;
+pub use video_sites::VideoSiteTool;

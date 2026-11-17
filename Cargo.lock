@@ -3568,6 +3568,7 @@ version = "0.0.1"
 dependencies = [
  "glow 0.16.0",
  "libloading",
+ "player-services",
  "serde_json",
  "slint",
 ]
@@ -3576,6 +3577,7 @@ dependencies = [
 name = "player-services"
 version = "0.0.1"
 dependencies = [
+ "player-core",
  "serde_json",
  "url",
 ]

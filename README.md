@@ -4,10 +4,10 @@
 ![Lua source lines](https://img.shields.io/badge/Lua%20source%20lines-105-000080)
 ![PowerShell source lines](https://img.shields.io/badge/PowerShell%20source%20lines-206-5391fe)
 ![Python source lines](https://img.shields.io/badge/Python%20source%20lines-5726-3776ab)
-![Rust source lines](https://img.shields.io/badge/Rust%20source%20lines-8145-dea584)
-![Slint source lines](https://img.shields.io/badge/Slint%20source%20lines-346-7c3aed)
-![TOML source lines](https://img.shields.io/badge/TOML%20source%20lines-187-9c4221)
-![YAML source lines](https://img.shields.io/badge/YAML%20source%20lines-1043-cb171e)
+![Rust source lines](https://img.shields.io/badge/Rust%20source%20lines-8677-dea584)
+![Slint source lines](https://img.shields.io/badge/Slint%20source%20lines-358-7c3aed)
+![TOML source lines](https://img.shields.io/badge/TOML%20source%20lines-190-9c4221)
+![YAML source lines](https://img.shields.io/badge/YAML%20source%20lines-1112-cb171e)
 
 Physical source lines include comments and blank lines in crates/, scripts/, tests/, .github/, packaging/ and the root Cargo manifest. Vendored code, lockfiles, generated reports and build output are excluded. Refresh with python scripts/source_lines.py.
 <!-- source-lines:end -->
@@ -46,7 +46,7 @@ The desktop needs a libmpv ABI 2 library: Windows `tools/libmpv/libmpv-2.dll` or
 .\target\release\foxide.exe --autoqueue --resume-dir ".\results\local\resume" "C:\series\episode2.mkv"
 ```
 
-Build with `cargo build --release --locked`. On Windows, `python scripts/install-mpv.py` installs a verified engine under `tools/mpv`. Playback controls include Space/pause, arrows/seek, Shift+arrows/exact seek, F/fullscreen, J/subtitles, #/audio track, S/screenshot, and Q/quit. Run `foxide --help` for tracks, offsets, tone mapping, picture controls, chapters, URLs, playlists, and window options.
+Build with `cargo build --release --locked`. On Windows, `python scripts/install-mpv.py` installs a verified engine under `tools/mpv`; development CLI builds need an explicit `--mpv tools/mpv/mpv.exe` or `FOXIDE_MPV` override. Desktop builds use the separate libmpv setup in [desktop instructions](docs/desktop.md). Playback controls include Space/pause, arrows/seek, Shift+arrows/exact seek, F/fullscreen, J/subtitles, #/audio track, S/screenshot, and Q/quit. Run `foxide --help` for tracks, offsets, tone mapping, picture controls, chapters, URLs, playlists, and window options.
 
 [Performance implementation ledger](docs/performance-review/IMPLEMENTATION.md) · [Capabilities and remaining work](docs/features.md) · [Local players](docs/local-players.md) · [Benchmark protocol](docs/player-games.md) · [Architecture](docs/architecture.md) · [Actions](https://github.com/marksmayo/foxide/actions)
 

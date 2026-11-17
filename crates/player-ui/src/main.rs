@@ -22,6 +22,9 @@ struct Args {
     /// Override the Radio Browser-compatible directory origin.
     #[arg(long)]
     radio_directory: Option<String>,
+    /// Explicit trusted yt-dlp executable (overrides the saved helper for this launch).
+    #[arg(long)]
+    yt_dlp: Option<PathBuf>,
     /// Read and save appearance and keyboard preferences at this path.
     #[arg(long)]
     config: Option<PathBuf>,
@@ -308,6 +311,7 @@ fn apply_preferences(
     preferences: &Preferences,
     normal_size: &std::cell::Cell<slint::PhysicalSize>,
 ) {
+    ui.set_video_site_helper(preferences.video_site_helper().unwrap_or("").into());
     ui.set_light_theme(preferences.light_theme());
     let rgb = preferences.accent_rgb();
     let (r, g, b) = ((rgb >> 16) as u8, (rgb >> 8) as u8, rgb as u8);
@@ -492,6 +496,53 @@ fn install_preferences(
         path.clone(),
         normal_size.clone(),
     );
+    ui.on_save_video_site_helper(move |chosen| {
+        if let Some(ui) = weak.upgrade() {
+            let selection = if chosen.is_empty() {
+                Ok(None)
+            } else {
+                player_services::VideoSiteTool::new(std::path::Path::new(chosen.as_str())).map(Some)
+            };
+            match selection {
+                Ok(tool) => {
+                    edit_preferences(&ui, &prefs, location.as_deref(), &size, |prefs| {
+                        prefs.set_video_site_helper(
+                            tool.as_ref().and_then(|tool| tool.path().to_str()),
+                        )
+                    });
+                    if ui.get_preferences_error().is_empty() {
+                        ui.set_video_site_notice("Restart Foxide to apply this change".into());
+                    }
+                }
+                Err(error) => ui.set_preferences_error(error.into()),
+            }
+        }
+    });
+    let weak = ui.as_weak();
+    ui.on_choose_video_site_helper(move || {
+        let weak = weak.clone();
+        std::thread::spawn(move || {
+            let dialog = rfd::AsyncFileDialog::new().set_title("Choose trusted yt-dlp executable");
+            #[cfg(windows)]
+            let dialog = dialog.add_filter("Native executable", &["exe"]);
+            if let Some(file) = futures_lite::future::block_on(dialog.pick_file()) {
+                let path = file.path().to_path_buf();
+                let _ = weak.upgrade_in_event_loop(move |ui| {
+                    if let Some(path) = path.to_str() {
+                        ui.invoke_save_video_site_helper(path.into());
+                    } else {
+                        ui.set_preferences_error("Helper path must be Unicode".into());
+                    }
+                });
+            }
+        });
+    });
+    let (weak, prefs, location, size) = (
+        ui.as_weak(),
+        preferences.clone(),
+        path.clone(),
+        normal_size.clone(),
+    );
     ui.on_reset_preferences(move || {
         if let Some(ui) = weak.upgrade() {
             edit_preferences(&ui, &prefs, location.as_deref(), &size, |prefs| {
@@ -617,6 +668,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .renderer_name("femtovg".into())
         .select()?;
     let ui = PlayerWindow::new()?;
+    let selected_helper = args
+        .yt_dlp
+        .as_deref()
+        .or_else(|| preferences.video_site_helper().map(std::path::Path::new));
+    let helper = selected_helper
+        .map(player_services::VideoSiteTool::new)
+        .transpose();
+    let helper = match helper {
+        Ok(tool) => tool,
+        Err(error) => {
+            ui.set_preferences_error(format!("Video sites disabled: {error}").into());
+            ui.set_video_site_notice("Choose a valid helper under View → Preferences".into());
+            None
+        }
+    };
     install_preferences(&ui, Rc::new(RefCell::new(preferences)), config_path);
     if let Some(error) = config_error {
         ui.set_preferences_error(format!("Could not load preferences: {error}").into());
@@ -629,7 +695,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap_or_else(player_services::RadioDirectory::public);
     let _radio = network_ui::install_radio(&ui, Arc::new(network_ui::SystemHttp), radio_api);
     let state = Rc::new(RefCell::new(UiState::default()));
-    let engine = match Engine::new() {
+    let startup_engine = Engine::with_video_site_helper(helper.as_ref().map(|tool| tool.path()));
+    let startup_engine = match startup_engine {
+        Err(error) if helper.is_some() => {
+            ui.set_preferences_error(format!("Video sites unavailable: {error}").into());
+            ui.set_video_site_notice(
+                "Local playback remains available; choose a compatible engine and restart".into(),
+            );
+            Engine::new()
+        }
+        result => result,
+    };
+    let engine = match startup_engine {
         Ok(engine) => Some(Rc::new(engine)),
         Err(error) => {
             ui.set_status(error.clone().into());

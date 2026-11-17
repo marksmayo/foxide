@@ -80,6 +80,10 @@ export component PlayerWindow inherits Window {
     changed accent-color => { Appearance.accent = root.accent-color; }
     changed accent-text => { Appearance.on-accent = root.accent-text; }
     callback shortcut(string, bool, bool, bool, bool) -> bool;
+    in-out property <string> video-site-helper;
+    in-out property <string> video-site-notice;
+    callback save-video-site-helper(string);
+    callback choose-video-site-helper();
     callback save-binding(string, string);
     callback remove-binding(string);
     callback save-appearance(bool, string);
@@ -320,6 +324,14 @@ export component PlayerWindow inherits Window {
                             LineEdit { text <=> root.accent-hex; placeholder-text: "#ef955f"; accepted => { root.save-appearance(root.light-theme, root.accent-hex); } }
                             ToolButton { label: "Apply"; width: 65px; clicked => { root.save-appearance(root.light-theme, root.accent-hex); } }
                         }
+                        Text { text: "VIDEO SITES"; color: Appearance.muted; font-size: 11px; }
+                        Text { text: "Choose a trusted yt-dlp executable to play supported video-site URLs. Restart Foxide to apply changes."; color: Appearance.secondary; wrap: word-wrap; font-size: 12px; }
+                        Text { text: root.video-site-helper == "" ? "Disabled" : root.video-site-helper; color: Appearance.text; overflow: elide; }
+                        HorizontalLayout { spacing: 8px;
+                            ToolButton { label: "Choose yt-dlp…"; width: 150px; clicked => { root.choose-video-site-helper(); } }
+                            ToolButton { label: "Disable"; width: 85px; available: root.video-site-helper != ""; clicked => { root.save-video-site-helper(""); } }
+                        }
+                        Text { text: root.video-site-notice; color: Appearance.secondary; wrap: word-wrap; font-size: 12px; }
                         Text { text: "KEYBOARD BINDINGS"; color: Appearance.muted; font-size: 11px; }
                         Text { text: "Use Ctrl, Alt, Shift or Meta (Command on macOS). Escape always closes dialogs. Remove a binding before reassigning its key."; color: Appearance.secondary; wrap: word-wrap; font-size: 12px; }
                         HorizontalLayout { spacing: 8px;

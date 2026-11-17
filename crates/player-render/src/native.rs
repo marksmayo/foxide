@@ -24,13 +24,36 @@ struct End {
     reason: c_int,
     error: c_int,
 }
-#[cfg(test)]
+#[cfg(all(
+    test,
+    any(feature = "gpu-integration", feature = "video-site-integration")
+))]
 #[repr(C)]
 struct LogMessage {
     prefix: *const c_char,
     level: *const c_char,
     text: *const c_char,
     log_level: c_int,
+}
+
+// Minimal mpv_node ABI used only to set one script option without list parsing.
+#[repr(C)]
+union NodeValue {
+    string: *mut c_char,
+    int64: i64,
+    double: f64,
+    list: *mut NodeList,
+}
+#[repr(C)]
+struct Node {
+    value: NodeValue,
+    format: c_int,
+}
+#[repr(C)]
+struct NodeList {
+    num: c_int,
+    values: *mut Node,
+    keys: *mut *mut c_char,
 }
 
 pub(crate) struct Api {
@@ -86,7 +109,7 @@ unsafe fn load_library(path: &std::path::Path) -> Result<Library, String> {
 }
 
 impl Api {
-    fn load() -> Result<Arc<Self>, String> {
+    fn load(helper: Option<&player_services::VideoSiteTool>) -> Result<Arc<Self>, String> {
         let candidates: Vec<PathBuf> = if let Some(path) = std::env::var_os("FOXIDE_LIBMPV") {
             vec![path.into()]
         } else if cfg!(windows) {
@@ -114,7 +137,7 @@ impl Api {
                     continue;
                 }
             };
-            let loaded = unsafe { Self::from_library(library) };
+            let loaded = unsafe { Self::from_library(library, helper) };
             match loaded {
                 Ok(api) => return Ok(Arc::new(api)),
                 Err(error) => errors.push(error),
@@ -126,7 +149,10 @@ impl Api {
         ))
     }
 
-    unsafe fn from_library(library: Library) -> Result<Self, String> {
+    unsafe fn from_library(
+        library: Library,
+        helper: Option<&player_services::VideoSiteTool>,
+    ) -> Result<Self, String> {
         // SAFETY: caller supplies an owned libmpv library. All functions are loaded
         // before creating a client so missing symbols cannot leak the client.
         unsafe {
@@ -146,6 +172,10 @@ impl Api {
             let option = symbol!(
                 "mpv_set_option_string",
                 unsafe extern "C" fn(Handle, *const c_char, *const c_char) -> c_int
+            );
+            let node_option = symbol!(
+                "mpv_set_option",
+                unsafe extern "C" fn(Handle, *const c_char, c_int, *mut c_void) -> c_int
             );
             let mut api = Self {
                 handle: std::ptr::null_mut(),
@@ -201,11 +231,61 @@ impl Api {
                     return Err("libmpv rejected a required playback option".into());
                 }
             }
+            let enabled = if helper.is_some() { c"yes" } else { c"no" };
+            let helper_status = option(api.handle, c"ytdl".as_ptr(), enabled.as_ptr());
+            // A Lua-disabled build has no ytdl option (-5). With no selected
+            // helper, that already guarantees the hook cannot run.
+            if helper_status < 0 && (helper.is_some() || helper_status != -5) {
+                return Err(
+                    "This libmpv build cannot enable video sites; a Lua-enabled engine is required"
+                        .into(),
+                );
+            }
+            if let Some(helper) = helper {
+                let value = CString::new(
+                    helper
+                        .path()
+                        .to_str()
+                        .ok_or("Helper path must be Unicode")?,
+                )
+                .map_err(|_| "Invalid helper path")?;
+                let mut entries = [Node {
+                    value: NodeValue {
+                        string: value.as_ptr().cast_mut(),
+                    },
+                    format: 1,
+                }];
+                let mut keys = [c"ytdl_hook-ytdl_path".as_ptr().cast_mut()];
+                let mut list = NodeList {
+                    num: 1,
+                    values: entries.as_mut_ptr(),
+                    keys: keys.as_mut_ptr(),
+                };
+                let mut node = Node {
+                    value: NodeValue { list: &mut list },
+                    format: 8,
+                };
+                // SAFETY: MPV_FORMAT_NODE (6) points at a NODE_MAP (8) containing
+                // one STRING (1). mpv copies the value synchronously. All C strings,
+                // entries and arrays live through the call; no borrowed data escapes.
+                if node_option(
+                    api.handle,
+                    c"script-opts".as_ptr(),
+                    6,
+                    (&mut node as *mut Node).cast(),
+                ) < 0
+                {
+                    return Err("libmpv rejected the explicit video-site helper path".into());
+                }
+            }
             if initialize(api.handle) < 0 {
                 return Err("libmpv initialization failed".into());
             }
             api.initialized = true;
-            #[cfg(test)]
+            #[cfg(all(
+                test,
+                any(feature = "gpu-integration", feature = "video-site-integration")
+            ))]
             {
                 let logs = api
                     ._library
@@ -306,18 +386,25 @@ pub struct Engine {
     stop: Arc<AtomicBool>,
     sender: SyncSender<Vec<String>>,
     snapshot: Arc<Mutex<Snapshot>>,
-    #[cfg(test)]
+    #[cfg(all(test, feature = "gpu-integration"))]
     pub(crate) diagnostics: Arc<Mutex<Vec<String>>>,
 }
 impl Engine {
     pub fn new() -> Result<Self, String> {
-        let api = Api::load()?;
+        Self::with_video_site_helper(None)
+    }
+
+    pub fn with_video_site_helper(helper: Option<&std::path::Path>) -> Result<Self, String> {
+        let helper = helper
+            .map(player_services::VideoSiteTool::new)
+            .transpose()?;
+        let api = Api::load(helper.as_ref())?;
         let ready = Arc::new(AtomicBool::new(false));
         let stop = Arc::new(AtomicBool::new(false));
         let snapshot = Arc::new(Mutex::new(Snapshot::default()));
-        #[cfg(test)]
+        #[cfg(all(test, feature = "gpu-integration"))]
         let diagnostics = Arc::new(Mutex::new(Vec::<String>::new()));
-        #[cfg(test)]
+        #[cfg(all(test, feature = "gpu-integration"))]
         let diagnostic_output = diagnostics.clone();
         let (sender, receiver) = mpsc::sync_channel::<Vec<String>>(32);
         let (client, active, stopped, output) =
@@ -355,7 +442,7 @@ impl Engine {
                             if event.is_null() || (*event).kind == 0 {
                                 break;
                             }
-                            #[cfg(test)]
+                            #[cfg(all(test, feature = "gpu-integration"))]
                             if (*event).kind == 2 && !(*event).data.is_null() {
                                 let message = &*((*event).data.cast::<LogMessage>());
                                 if !message.prefix.is_null() && !message.text.is_null() {
@@ -441,7 +528,7 @@ impl Engine {
             stop,
             sender,
             snapshot,
-            #[cfg(test)]
+            #[cfg(all(test, feature = "gpu-integration"))]
             diagnostics,
         })
     }
@@ -484,3 +571,7 @@ mod snapshot_allocation_tests {
         );
     }
 }
+
+#[cfg(all(test, feature = "video-site-integration"))]
+#[path = "native_sites.rs"]
+mod video_site_tests;

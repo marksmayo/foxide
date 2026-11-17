@@ -60,3 +60,11 @@ The client uses the [Radio Browser API](https://docs.radio-browser.info/), disco
 Tests cover query encoding, station filtering, mirror failover/bounds/cache, malformed responses, real HTTP transport against a loopback fixture, helper argument preservation, output limits, timeout and cancellation. The desktop acceptance test drives search, selection, cancellation and provider failure through public callbacks and archives a radio panel preview. These fixtures do not prove live provider availability or stream decoding; the event retains its existing medal until acceptance completes.
 
 Two owner-provided Chromecasts and a Samsung TV are available for future receiver tests. TV protocol support remains unverified. No casting session has been started.
+
+## Video-site URLs (acceptance pending)
+
+Under **View → Preferences → Video sites**, choose an explicitly trusted native yt-dlp executable and restart Foxide. Paste a supported HTTP(S) page URL in **Media → Open URL**. Disable the helper in Preferences and restart to turn extraction off. `--yt-dlp ABSOLUTE_PATH` overrides the saved choice for that launch. Missing/invalid helpers report a preferences error while local playback remains available. A Lua-enabled libmpv build is required; a build without that hook remains usable for local media.
+
+Foxide uses [mpv’s built-in ytdl hook](https://mpv.io/manual/stable/#options-ytdl), which preserves separate audio/video formats and stream headers. It passes the single helper path through the [structured client option API](https://github.com/mpv-player/mpv/blob/v0.40.0/include/mpv/client.h), avoiding comma/path-list parsing. There is no automatic helper discovery from PATH, the working directory or parent folders. The helper is not bundled; choose an installation from the [yt-dlp project](https://github.com/yt-dlp/yt-dlp#installation).
+
+Tests cover optional preferences/backward compatibility, helper validation, persistent enable/disable and restart notices. The native acceptance test compiles a deterministic helper, returns a loopback audio URL, verifies HTTP header forwarding and checks the actual decoder. Hosted acceptance runs on all three platforms and contributes to the combined desktop/GPU coverage gate. This proves the integration seam; live-site compatibility is tracked separately. No feature medal is awarded from configuration tests alone.

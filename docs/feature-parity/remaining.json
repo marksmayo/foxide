@@ -62,8 +62,8 @@
       "id": "youtube_urls",
       "name": "Video-site URL playback",
       "group": "Network",
-      "stage": "queued",
-      "acceptance": "Needs explicit supported yt-dlp integration, dependency discovery and network acceptance."
+      "stage": "implemented-awaiting-hosted-acceptance",
+      "acceptance": "Explicit trusted yt-dlp helper selection/persistence and mpv native hook configuration implemented. Desktop callbacks pass locally. Native helper/HTTP-header/decoder acceptance is running on hosted Windows/macOS/Linux; local mpv subprocess initialization failed. Live-site acceptance remains pending; no gold awarded."
     },
     {
       "id": "extensions",

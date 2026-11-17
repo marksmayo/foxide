@@ -1,4 +1,4 @@
-//! Validated user preferences. No user-supplied text becomes an engine command.
+//! Validated user preferences. Helper paths are explicit; no shell command settings.
 use std::collections::BTreeMap;
 
 pub const SHORTCUT_ACTIONS: &[(&str, &str, f64)] = &[
@@ -26,6 +26,7 @@ pub struct Preferences {
     light: bool,
     accent: u32,
     compact: bool,
+    video_site_helper: Option<String>,
 }
 
 impl Default for Preferences {
@@ -62,6 +63,7 @@ impl Default for Preferences {
             light: false,
             accent: 0xef955f,
             compact: false,
+            video_site_helper: None,
         }
     }
 }
@@ -123,6 +125,24 @@ fn normalize_chord(chord: &str) -> Result<String, String> {
 }
 
 impl Preferences {
+    pub fn video_site_helper(&self) -> Option<&str> {
+        self.video_site_helper.as_deref()
+    }
+    pub fn set_video_site_helper(&mut self, path: Option<&str>) -> Result<(), String> {
+        if let Some(path) = path {
+            let separator = if cfg!(windows) { ';' } else { ':' };
+            if path.len() > 4096
+                || !std::path::Path::new(path).is_absolute()
+                || path.contains(separator)
+                || path.chars().any(char::is_control)
+            {
+                return Err("Choose an absolute helper path without control characters or path-list separators".into());
+            }
+        }
+        self.video_site_helper = path.map(str::to_owned);
+        Ok(())
+    }
+
     pub fn compact(&self) -> bool {
         self.compact
     }
@@ -263,7 +283,7 @@ impl Preferences {
     }
 
     pub fn to_json(&self) -> String {
-        serde_json::json!({"version": 1, "bindings": self.bindings, "compact": self.compact, "appearance": {"light": self.light, "accent": format!("#{:06x}", self.accent)}}).to_string()
+        serde_json::json!({"version": 1, "bindings": self.bindings, "compact": self.compact, "video_site_helper": self.video_site_helper, "appearance": {"light": self.light, "accent": format!("#{:06x}", self.accent)}}).to_string()
     }
 
     pub fn from_json(text: &str) -> Result<Self, String> {
@@ -299,6 +319,14 @@ impl Preferences {
         }
         if let Some(compact) = value.get("compact") {
             preferences.compact = compact.as_bool().ok_or("Compact view must be a boolean")?;
+        }
+        if let Some(helper) = value
+            .get("video_site_helper")
+            .filter(|helper| !helper.is_null())
+        {
+            preferences.set_video_site_helper(Some(
+                helper.as_str().ok_or("Helper path must be a string")?,
+            ))?;
         }
         Ok(preferences)
     }

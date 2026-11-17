@@ -185,6 +185,24 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
         player_settings::Preferences::default()
     );
     assert!(!ui.get_light_theme());
+    let chosen_helper = std::env::current_exe().unwrap();
+    ui.invoke_save_video_site_helper(chosen_helper.to_str().unwrap().into());
+    assert_eq!(
+        player_settings::Preferences::load(&settings_path)
+            .unwrap()
+            .video_site_helper(),
+        player_core::external_path(chosen_helper.canonicalize().unwrap()).to_str()
+    );
+    assert!(ui.get_video_site_notice().contains("Restart"));
+    ui.invoke_save_video_site_helper("yt-dlp".into());
+    assert!(ui.get_preferences_error().contains("absolute"));
+    ui.invoke_save_video_site_helper("".into());
+    assert_eq!(
+        player_settings::Preferences::load(&settings_path)
+            .unwrap()
+            .video_site_helper(),
+        None
+    );
     struct RadioFixture;
     impl player_services::HttpClient for RadioFixture {
         fn get(
