@@ -13,3 +13,5 @@ Work remains on PR #13. The video-site helper slice is preserved separately whil
 The older 88ba499 formatting/missing-member finding is superseded by the later verified radio checkpoint. The radio checkpoint passed desktop/code checks on all platforms. Subsequent audit changes are being verified separately.
 
 Local Python branch-inclusive coverage after these additions: publication 100%, medal_events 98%, session-manifest 91%, source_lines 96%, windows_metrics 94%. CI enforces at least 90% for each of the three newly covered maintenance modules. Hosted desktop/GPU coverage is still being measured.
+
+The first hosted coverage entry-point run rejected a redundant --no-clean/--no-report combination; the workflow now uses --no-report alone. CodSpeed exposed additional tiny-input summary overhead; the implementation now computes peak and steady statistics in one pass and uses an inline empty-percentile wrapper. Regression thresholds and benchmark cases remain unchanged; new hosted results are required before declaring the regressions resolved.

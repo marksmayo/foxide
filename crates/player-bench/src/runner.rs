@@ -533,6 +533,12 @@ mod tests {
         run.warmup_seconds = 0.1;
         run.samples = vec![
             Sample {
+                elapsed_ms: 4500.0,
+                rss_bytes: 9000,
+                cpu_percent_one_core: None,
+                process_count: 1,
+            },
+            Sample {
                 elapsed_ms: 4550.0,
                 rss_bytes: 100,
                 cpu_percent_one_core: Some(10.0),
@@ -546,6 +552,7 @@ mod tests {
             },
         ];
         summarize(&mut run);
+        assert_eq!(run.rss_peak_bytes, Some(9000));
         assert_eq!(run.rss_steady_mean_bytes, Some(200.0));
         assert_eq!(run.cpu_steady_mean_percent_one_core, Some(20.0));
         run.samples.clear();
