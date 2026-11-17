@@ -127,6 +127,36 @@ class MedalEventsTests(unittest.TestCase):
         self.assertEqual(feature_medals(claims), {'valid': 'gold'})
         self.assertEqual(feature_medals(claims[:1], valid_source=lambda url: url.endswith('/a')), {})
 
+    def test_scoreboard_omits_exactly_two_universal_supporters_and_rejects_bad_sources(self):
+        players = [dict(id=p, name=p, platforms=['windows']) for p in ('a', 'b')]
+        claims = [dict(player=p, feature='common', status='supported', sources=['https://example.org/docs']) for p in ('a', 'b')]
+        claims.append(dict(player='a', feature='invalid', status='supported', sources=['ftp://example.org/docs']))
+        catalog = dict(players=players, features=[dict(id='common'), dict(id='invalid')], claims=claims, research_date='fixture')
+        board = scoreboards(catalog, {'events': []}, [])['windows']
+        self.assertEqual([e['id'] for e in board['omitted_universal_features']], ['common'])
+        self.assertEqual([(e['id'], e['awards']) for e in board['features']], [('invalid', {})])
+        self.assertEqual([p['feature_gold'] for p in board['players']], [0, 0])
+
+    def test_scoreboard_inventory_without_cases_and_exact_verified_counts(self):
+        catalog = dict(players=[dict(id='a', name='A', platforms=['windows'])], features=[], claims=[], research_date='fixture')
+        session = dict(session=dict(system='windows'), inventory=[dict(player='a', status='adapter-needed', reason='Controlled reason'), dict(player='outside', status='ignored')], cases=[])
+        board = scoreboards(catalog, {'events': []}, [], [session])['windows']
+        self.assertEqual(board['runtime'], {'a': {'status': 'adapter-needed', 'details': 'Controlled reason'}})
+        rows = [dict(player='a', profile='p', trial=i, platform='windows', event='cpu', verified=i == 0) for i in range(3)]
+        board = scoreboards(catalog, {'events': []}, rows)['windows']
+        self.assertEqual(board['runtime']['a']['status'], 'Measured 3 cases; 1 verified')
+
+    def test_scoreboard_awards_performance_only_to_catalog_players_in_the_matching_cohort(self):
+        catalog = dict(players=[dict(id=p, name=p, platforms=['windows']) for p in ('a', 'b')], features=[], claims=[], research_date='fixture')
+        protocol = dict(events=[dict(id='cpu', name='CPU', direction='min')])
+        rows = [dict(player=p, value=value, trial=i, platform='windows', event='cpu', profile='p', verified=True, source='run.json')
+                for p, value in [('a', 1), ('b', 2), ('outside', 0)] for i in range(3)]
+        boards = scoreboards(catalog, protocol, rows)
+        ranks = boards['windows']['performance'][0]['rankings']
+        self.assertEqual([(r['player'], r['medal']) for r in ranks], [('a', 'gold'), ('b', 'silver')])
+        self.assertEqual([(p['performance_gold'], p['performance_silver'], p['performance_bronze']) for p in boards['windows']['players']], [(1, 0, 0), (0, 1, 0)])
+        self.assertEqual(boards['linux']['performance'], [])
+
 
 if __name__ == '__main__':
     unittest.main()

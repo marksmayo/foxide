@@ -28,6 +28,7 @@ class PublicationTests(unittest.TestCase):
     def test_public_source_urls_remain_clickable_and_unchanged(self):
         source = 'https://example.org/home/contributor/media'
         self.assertEqual(public_evidence(dict(source=source))['source'], source)
+        self.assertEqual(public_evidence(dict(documentation=source))['documentation'], source)
 
     def test_public_alias_is_stable_across_refreshes_and_preserves_hosted_identity(self):
         field = dict(session=dict(system='linux', host='machine-id', run_id='42'))

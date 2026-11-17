@@ -5,17 +5,17 @@
     "color": "000080"
   },
   "Rust": {
-    "lines": 6633,
-    "files": 37,
+    "lines": 8140,
+    "files": 47,
     "color": "dea584"
   },
   "TOML": {
-    "lines": 173,
-    "files": 7,
+    "lines": 187,
+    "files": 8,
     "color": "9c4221"
   },
   "Slint": {
-    "lines": 315,
+    "lines": 346,
     "files": 1,
     "color": "7c3aed"
   },
@@ -25,12 +25,12 @@
     "color": "5391fe"
   },
   "Python": {
-    "lines": 5263,
-    "files": 46,
+    "lines": 5726,
+    "files": 49,
     "color": "3776ab"
   },
   "YAML": {
-    "lines": 1013,
+    "lines": 1043,
     "files": 12,
     "color": "cb171e"
   }

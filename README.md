@@ -3,11 +3,11 @@
 <!-- source-lines:start -->
 ![Lua source lines](https://img.shields.io/badge/Lua%20source%20lines-105-000080)
 ![PowerShell source lines](https://img.shields.io/badge/PowerShell%20source%20lines-206-5391fe)
-![Python source lines](https://img.shields.io/badge/Python%20source%20lines-5263-3776ab)
-![Rust source lines](https://img.shields.io/badge/Rust%20source%20lines-6633-dea584)
-![Slint source lines](https://img.shields.io/badge/Slint%20source%20lines-315-7c3aed)
-![TOML source lines](https://img.shields.io/badge/TOML%20source%20lines-173-9c4221)
-![YAML source lines](https://img.shields.io/badge/YAML%20source%20lines-1013-cb171e)
+![Python source lines](https://img.shields.io/badge/Python%20source%20lines-5726-3776ab)
+![Rust source lines](https://img.shields.io/badge/Rust%20source%20lines-8140-dea584)
+![Slint source lines](https://img.shields.io/badge/Slint%20source%20lines-346-7c3aed)
+![TOML source lines](https://img.shields.io/badge/TOML%20source%20lines-187-9c4221)
+![YAML source lines](https://img.shields.io/badge/YAML%20source%20lines-1043-cb171e)
 
 Physical source lines include comments and blank lines in crates/, scripts/, tests/, .github/, packaging/ and the root Cargo manifest. Vendored code, lockfiles, generated reports and build output are excluded. Refresh with python scripts/source_lines.py.
 <!-- source-lines:end -->
