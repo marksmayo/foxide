@@ -24,6 +24,9 @@ pub struct Run {
     pub cache_evidence: Option<String>,
     pub pid: u32,
     pub started_unix_ms: u128,
+    /// Sampling begins this many milliseconds after process spawn (zero in legacy records).
+    #[serde(default)]
+    pub sampling_started_ms: f64,
     pub duration_seconds: f64,
     pub warmup_seconds: f64,
     pub sample_interval_ms: u64,
@@ -47,6 +50,9 @@ pub struct Run {
 }
 
 pub fn percentile(values: &[f64], quantile: f64) -> Option<f64> {
+    if values.is_empty() {
+        return None;
+    }
     let mut sorted: Vec<_> = values.iter().copied().filter(|x| x.is_finite()).collect();
     if sorted.is_empty() {
         return None;
@@ -57,13 +63,20 @@ pub fn percentile(values: &[f64], quantile: f64) -> Option<f64> {
 }
 
 pub fn summarize(run: &mut Run) {
+    run.rss_steady_mean_bytes = None;
+    run.cpu_steady_mean_percent_one_core = None;
+    if run.samples.is_empty() {
+        run.rss_peak_bytes = None;
+        return;
+    }
     run.rss_peak_bytes = run.samples.iter().map(|s| s.rss_bytes).max();
     let mut rss_sum = 0.0;
     let mut rss_count = 0;
     let mut cpu_sum = 0.0;
     let mut cpu_count = 0;
+    let warmup_end_ms = run.sampling_started_ms + run.warmup_seconds * 1000.0;
     for sample in &run.samples {
-        if sample.elapsed_ms >= run.warmup_seconds * 1000.0 {
+        if sample.elapsed_ms >= warmup_end_ms {
             rss_sum += sample.rss_bytes as f64;
             rss_count += 1;
             if let Some(cpu) = sample.cpu_percent_one_core {

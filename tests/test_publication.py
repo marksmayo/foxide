@@ -94,3 +94,12 @@ class PublicationTests(unittest.TestCase):
             text = path.read_text(encoding='utf-8').replace(r'\u003c', '<').replace(r'\u003e', '>')
             self.assertTrue(public_evidence(dict(text=text))['text'] == text,
                              f'Private path in {path.relative_to(root)}')
+
+    def test_hostname_alias_does_not_rewrite_unrelated_measurement_labels(self):
+        data = dict(session=dict(system='linux', host='a'),
+                    measurements=[dict(algorithm='a', fixture='a', unit='a')],
+                    notes=['Failure on a'], path='/mnt/a/movie.mp4')
+        result = public_evidence(data)
+        self.assertEqual(result['measurements'], data['measurements'])
+        self.assertEqual(result['notes'], ['Failure on linux-local'])
+        self.assertEqual(result['path'], '/mnt/linux-local/movie.mp4')

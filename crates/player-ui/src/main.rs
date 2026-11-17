@@ -512,86 +512,7 @@ fn install_preferences(
     });
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let args = Args::parse();
-    let startup = startup_commands(&args)?;
-    let config_path = args.config.clone().or_else(default_preferences_path);
-    let (preferences, config_error) = if args.preview_png.is_some() && args.config.is_none() {
-        (Preferences::default(), None)
-    } else {
-        match config_path.as_deref().map(Preferences::load).transpose() {
-            Ok(value) => (value.unwrap_or_default(), None),
-            Err(error) => (Preferences::default(), Some(error)),
-        }
-    };
-    if let Some(path) = args.preview_png {
-        return preview::render(&path, &preferences);
-    }
-    slint::BackendSelector::new()
-        .backend_name("winit".into())
-        .renderer_name("femtovg".into())
-        .select()?;
-    let ui = PlayerWindow::new()?;
-    install_preferences(&ui, Rc::new(RefCell::new(preferences)), config_path);
-    if let Some(error) = config_error {
-        ui.set_preferences_error(format!("Could not load preferences: {error}").into());
-    }
-    let radio_api = args
-        .radio_directory
-        .as_deref()
-        .map(player_services::RadioDirectory::new)
-        .transpose()?
-        .unwrap_or_else(player_services::RadioDirectory::public);
-    let _radio = network_ui::install_radio(&ui, Arc::new(network_ui::SystemHttp), radio_api);
-    let state = Rc::new(RefCell::new(UiState::default()));
-    let engine = match Engine::new() {
-        Ok(engine) => Some(Rc::new(engine)),
-        Err(error) => {
-            ui.set_status(error.clone().into());
-            ui.set_diagnostics(error.into());
-            None
-        }
-    };
-    if let Some(engine) = &engine {
-        let weak_size = ui.as_weak();
-        let weak_frame = ui.as_weak();
-        let weak_error = ui.as_weak();
-        let weak_wake = ui.as_weak();
-        player_render::attach(
-            ui.window(),
-            engine,
-            move || {
-                weak_size
-                    .upgrade()
-                    .map(|ui| {
-                        let scale = ui.window().scale_factor();
-                        (
-                            (ui.get_video_width() * scale).round() as u32,
-                            (ui.get_video_height() * scale).round() as u32,
-                        )
-                    })
-                    .unwrap_or((1, 1))
-            },
-            move |frame| {
-                if let Some(ui) = weak_frame.upgrade() {
-                    ui.set_video_frame(frame);
-                }
-            },
-            move |error| {
-                if let Some(ui) = weak_error.upgrade() {
-                    ui.set_status(error.into());
-                }
-            },
-            Arc::new(move || {
-                let weak = weak_wake.clone();
-                let _ = slint::invoke_from_event_loop(move || {
-                    if let Some(ui) = weak.upgrade() {
-                        ui.window().request_redraw();
-                    }
-                });
-            }),
-        )?;
-    }
+fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Option<Rc<Engine>>) {
     let filter_state = state.clone();
     let filter_window = ui.as_weak();
     ui.on_filter_queue(move |query| {
@@ -674,6 +595,89 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     });
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let args = Args::parse();
+    let startup = startup_commands(&args)?;
+    let config_path = args.config.clone().or_else(default_preferences_path);
+    let (preferences, config_error) = if args.preview_png.is_some() && args.config.is_none() {
+        (Preferences::default(), None)
+    } else {
+        match config_path.as_deref().map(Preferences::load).transpose() {
+            Ok(value) => (value.unwrap_or_default(), None),
+            Err(error) => (Preferences::default(), Some(error)),
+        }
+    };
+    if let Some(path) = args.preview_png {
+        return preview::render(&path, &preferences);
+    }
+    slint::BackendSelector::new()
+        .backend_name("winit".into())
+        .renderer_name("femtovg".into())
+        .select()?;
+    let ui = PlayerWindow::new()?;
+    install_preferences(&ui, Rc::new(RefCell::new(preferences)), config_path);
+    if let Some(error) = config_error {
+        ui.set_preferences_error(format!("Could not load preferences: {error}").into());
+    }
+    let radio_api = args
+        .radio_directory
+        .as_deref()
+        .map(player_services::RadioDirectory::new)
+        .transpose()?
+        .unwrap_or_else(player_services::RadioDirectory::public);
+    let _radio = network_ui::install_radio(&ui, Arc::new(network_ui::SystemHttp), radio_api);
+    let state = Rc::new(RefCell::new(UiState::default()));
+    let engine = match Engine::new() {
+        Ok(engine) => Some(Rc::new(engine)),
+        Err(error) => {
+            ui.set_status(error.clone().into());
+            ui.set_diagnostics(error.into());
+            None
+        }
+    };
+    if let Some(engine) = &engine {
+        let weak_size = ui.as_weak();
+        let weak_frame = ui.as_weak();
+        let weak_error = ui.as_weak();
+        let weak_wake = ui.as_weak();
+        player_render::attach(
+            ui.window(),
+            engine,
+            move || {
+                weak_size
+                    .upgrade()
+                    .map(|ui| {
+                        let scale = ui.window().scale_factor();
+                        (
+                            (ui.get_video_width() * scale).round() as u32,
+                            (ui.get_video_height() * scale).round() as u32,
+                        )
+                    })
+                    .unwrap_or((1, 1))
+            },
+            move |frame| {
+                if let Some(ui) = weak_frame.upgrade() {
+                    ui.set_video_frame(frame);
+                }
+            },
+            move |error| {
+                if let Some(ui) = weak_error.upgrade() {
+                    ui.set_status(error.into());
+                }
+            },
+            Arc::new(move || {
+                let weak = weak_wake.clone();
+                let _ = slint::invoke_from_event_loop(move || {
+                    if let Some(ui) = weak.upgrade() {
+                        ui.window().request_redraw();
+                    }
+                });
+            }),
+        )?;
+    }
+    install_controls(&ui, &state, &engine);
     if let Some(engine) = &engine {
         for command in startup {
             engine.command(command)?;

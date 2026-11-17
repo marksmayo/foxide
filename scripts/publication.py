@@ -14,6 +14,9 @@ def public_evidence(collection):
     identifying = {'host', 'hostname', 'computer_name'}
     opaque = {'system', 'platform', 'profile', 'sha256', 'hash', 'source_commit',
               'commit', 'event', 'id', 'run_id', 'source', 'source_ref'}
+    textual = {'path', 'executable', 'command', 'args', 'notes', 'stderr', 'stdout',
+               'error', 'message', 'text', 'description', 'reason', 'log', 'cwd',
+               'media', 'suite_manifest'}
     hosts = set()
 
     def gather(value):
@@ -43,7 +46,7 @@ def public_evidence(collection):
             value = USER_PATH.sub(lambda match: (match[1] or match[2]) + '<user>', value)
             # Only known identifying values are replaced, at complete token/path
             # boundaries. Platform/profile/hash fields and source URLs stay opaque.
-            if host_pattern:
+            if host_pattern and (key in textual or (key and key.endswith(('_path', '_log')))):
                 value = host_pattern.sub(alias, value)
         return value
 

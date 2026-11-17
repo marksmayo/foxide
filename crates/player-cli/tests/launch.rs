@@ -450,8 +450,10 @@ fn discovery_rejects_engine_copies_in_ancestor_tool_directories() {
         .unwrap();
     assert!(output.status.success());
     let command: Vec<String> = serde_json::from_slice(&output.stdout).unwrap();
+    let selected = PathBuf::from(&command[0]);
     assert_eq!(
-        PathBuf::from(&command[0]),
-        player_core::external_path(app.canonicalize().unwrap()).join(engine_name)
+        selected.parent().unwrap().canonicalize().unwrap(),
+        app.canonicalize().unwrap()
     );
+    assert_eq!(selected.file_name().unwrap(), engine_name);
 }

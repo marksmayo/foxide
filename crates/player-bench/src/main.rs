@@ -69,6 +69,9 @@ struct RunArgs {
     media: PathBuf,
     #[arg(long, default_value_t = 5)]
     repeat: u32,
+    /// mpv: deadline for the first internal playback-restart event before sampling.
+    #[arg(long, default_value_t = 30.0)]
+    startup_timeout: f64,
     #[arg(long, value_enum, default_value = "uncontrolled")]
     cache: Cache,
     #[arg(long)]
@@ -120,6 +123,12 @@ fn main() -> Result<()> {
         Commands::Doctor => runner::doctor(),
         Commands::Run(args) => {
             validate(&args.sampling)?;
+            ensure!(
+                args.startup_timeout.is_finite()
+                    && args.startup_timeout > 0.0
+                    && args.startup_timeout <= 300.0,
+                "startup-timeout must be finite and in (0, 300] seconds"
+            );
             ensure!(args.repeat > 0, "repeat must be positive");
             ensure!(
                 !args.tuned || matches!(args.player, Player::Mpv),

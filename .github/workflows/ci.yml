@@ -46,4 +46,6 @@ jobs:
         with:
           name: coverage-${{ runner.os }}
           path: results/local/coverage-*.json
+      - name: Verify offline report interaction contract
+        run: node scripts/check-report.mjs results/windows-comparison/report.html
       - run: cargo build --workspace --release --locked

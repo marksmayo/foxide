@@ -348,4 +348,71 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
         "Paused · 1.50×",
         "A newly loaded file replaces the opening status even when pause and speed are unchanged"
     );
+    let controls = Rc::new(RefCell::new(UiState::default()));
+    install_controls(&ui, &controls, &None);
+    ui.invoke_open_url("file:///not-an-online-stream".into());
+    assert!(ui.get_status().contains("HTTP"));
+    ui.invoke_open_url("https://example.org/movie.mp4".into());
+    assert_eq!(controls.borrow().playlist.len(), 1);
+    assert!(ui.get_status().contains("unavailable"));
+    ui.invoke_filter_queue("no-match".into());
+    assert_eq!(ui.get_queue().row_count(), 0);
+    ui.invoke_filter_queue("".into());
+    assert_eq!(ui.get_queue().row_count(), 1);
+    ui.invoke_files_picked(
+        slint::ModelRc::new(slint::VecModel::from(vec![
+            "one.mkv".into(),
+            "two.mkv".into(),
+        ])),
+        false,
+    );
+    assert_eq!(controls.borrow().playlist.len(), 2);
+    for (name, value) in [
+        ("pause", 0.0),
+        ("mute", 0.0),
+        ("seek-relative", 5.0),
+        ("seek", 50.0),
+        ("speed", 1.5),
+        ("volume", 75.0),
+        ("audio-track", 1.0),
+        ("subtitle-track", 1.0),
+        ("subtitle-track", 0.0),
+        ("frame-step", 0.0),
+    ] {
+        controls.borrow_mut().confirm_loaded(120.0);
+        ui.invoke_action(name.into(), value);
+        assert!(
+            ui.get_status().contains("unavailable"),
+            "{name} must report a missing engine"
+        );
+    }
+    ui.invoke_action("playlist".into(), 0.0);
+    assert!(ui.get_queue_visible());
+    ui.invoke_action("fullscreen".into(), 0.0);
+    assert!(controls.borrow().fullscreen);
+    ui.invoke_action("preferences".into(), 0.0);
+    assert_eq!(ui.get_panel(), "preferences");
+    ui.invoke_action("url".into(), 0.0);
+    assert_eq!(ui.get_panel(), "url");
+    ui.invoke_action("next".into(), 0.0);
+    assert_eq!(controls.borrow().selected, 1);
+    ui.invoke_action("previous".into(), 0.0);
+    assert_eq!(controls.borrow().selected, 0);
+    ui.invoke_action("select".into(), 1.0);
+    assert_eq!(controls.borrow().selected, 1);
+    ui.invoke_action("stop".into(), 0.0);
+    assert!(!controls.borrow().loaded);
+    let count = controls.borrow().playlist.len();
+    ui.invoke_files_picked(
+        slint::ModelRc::new(slint::VecModel::from(vec!["subtitle.srt".into()])),
+        true,
+    );
+    assert_eq!(
+        controls.borrow().playlist.len(),
+        count,
+        "Subtitle loading must not replace the playlist"
+    );
+    let before = ui.get_status();
+    ui.invoke_action("unknown-action".into(), 0.0);
+    assert_eq!(ui.get_status(), before);
 }

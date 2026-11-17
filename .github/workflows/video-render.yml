@@ -70,8 +70,28 @@ jobs:
         run: |
           set -o pipefail
           xvfb-run -a -s '-screen 0 1280x720x24' cargo llvm-cov --workspace --features player-ui/desktop,player-render/gpu-integration --locked --no-report -- --ignored --nocapture --test-threads=1 2>&1 | tee results/local/video-regression.log
+      - name: Exercise real desktop startup, shutdown and preview entry points under coverage
+        shell: bash
+        run: |
+          set -o pipefail
+          cargo llvm-cov run -p player-ui --features player-ui/desktop,player-render/gpu-integration --bin foxide-desktop --locked --no-clean --no-report -- --preview-png results/local/coverage-preview.png
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          Path('results/local/compact-config.json').write_text(json.dumps({'version': 1, 'bindings': {}, 'compact': True}), encoding='utf-8')
+          PY
+          cargo llvm-cov run -p player-ui --features player-ui/desktop,player-render/gpu-integration --bin foxide-desktop --locked --no-clean --no-report -- --config results/local/compact-config.json --preview-png results/local/coverage-compact.png
+          python3 - <<'PY'
+          import struct
+          from pathlib import Path
+          for name, expected in [('coverage-preview.png', (1180, 770)), ('coverage-compact.png', (560, 280))]:
+              data = Path('results/local', name).read_bytes()
+              assert data[:8] == b'\x89PNG\r\n\x1a\n'
+              assert struct.unpack('>II', data[16:24]) == expected
+          PY
+          xvfb-run -a -s '-screen 0 1280x720x24' cargo llvm-cov run -p player-ui --features player-ui/desktop,player-render/gpu-integration --bin foxide-desktop --locked --no-clean --no-report -- --config results/local/startup-config.json --quit-after 2 --speed 1.5 --paused "$FOXIDE_RENDER_FIXTURE"
       - name: Publish measured desktop and GPU coverage
-        run: cargo llvm-cov report --json --summary-only --output-path results/local/coverage-desktop-gpu.json
+        run: cargo llvm-cov report --fail-under-lines 90 --json --summary-only --output-path results/local/coverage-desktop-gpu.json
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
