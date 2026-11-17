@@ -1,6 +1,6 @@
 {
   "provenance": {
-    "generated_utc": "2026-11-17T10:23:27.630304+00:00",
+    "generated_utc": "2026-11-17T11:06:52.831940+00:00",
     "source_commit": null,
     "run_url": null,
     "fields": [
@@ -123,7 +123,7 @@
             "audio"
           ],
           "note": "Windowed fields use Foxide Desktop with libmpv; software-only fields use the Foxide CLI wrapper around external mpv. These are separate benchmark cohorts.",
-          "feature_gold": 38,
+          "feature_gold": 39,
           "performance_gold": 8,
           "performance_silver": 23,
           "performance_bronze": 11
@@ -4833,7 +4833,8 @@
           ],
           "research_batch": "desktop-2026-11-16",
           "awards": {
-            "mpv": "gold"
+            "mpv": "gold",
+            "foxide": "gold"
           },
           "claims": [
             {
@@ -4850,10 +4851,17 @@
             {
               "player": "foxide",
               "feature": "icc_profiles",
-              "status": "planned",
-              "sources": [],
-              "note": "No accepted Foxide desktop implementation for this event; no medal.",
-              "research_batch": "desktop-2026-11-16"
+              "status": "supported",
+              "sources": [
+                "https://github.com/marksmayo/foxide/actions/runs/44067941006/job/133986394019",
+                "https://github.com/marksmayo/foxide/actions/runs/44067941006/job/133986393918",
+                "https://github.com/marksmayo/foxide/actions/runs/44067941006/job/133986393473",
+                "https://github.com/marksmayo/foxide/actions/runs/44067940977/job/133986393405",
+                "https://github.com/marksmayo/foxide/blob/c82436888a6f61c356a1125161ed7bd4df46f1f3/crates/player-ui/ui/player.slint"
+              ],
+              "note": "Manual RGB display ICC profile selection/reset for the session. Bounded validation and desktop/native controls pass on all platforms; actual shared-texture pixels transform 128\u219255 and reset to 128 on the Linux compositor, matching Little CMS. Automatic per-monitor discovery/switching and physical calibration are not claimed.",
+              "research_batch": "foxide-icc-2026-11-17",
+              "checked_utc": "2026-11-17"
             }
           ],
           "applicable": [
@@ -7428,7 +7436,7 @@
             "audio"
           ],
           "note": "Windowed fields use Foxide Desktop with libmpv; software-only fields use the Foxide CLI wrapper around external mpv. These are separate benchmark cohorts.",
-          "feature_gold": 37,
+          "feature_gold": 38,
           "performance_gold": 2,
           "performance_silver": 8,
           "performance_bronze": 4
@@ -11436,7 +11444,8 @@
           ],
           "research_batch": "desktop-2026-11-16",
           "awards": {
-            "mpv": "gold"
+            "mpv": "gold",
+            "foxide": "gold"
           },
           "claims": [
             {
@@ -11453,10 +11462,17 @@
             {
               "player": "foxide",
               "feature": "icc_profiles",
-              "status": "planned",
-              "sources": [],
-              "note": "No accepted Foxide desktop implementation for this event; no medal.",
-              "research_batch": "desktop-2026-11-16"
+              "status": "supported",
+              "sources": [
+                "https://github.com/marksmayo/foxide/actions/runs/44067941006/job/133986394019",
+                "https://github.com/marksmayo/foxide/actions/runs/44067941006/job/133986393918",
+                "https://github.com/marksmayo/foxide/actions/runs/44067941006/job/133986393473",
+                "https://github.com/marksmayo/foxide/actions/runs/44067940977/job/133986393405",
+                "https://github.com/marksmayo/foxide/blob/c82436888a6f61c356a1125161ed7bd4df46f1f3/crates/player-ui/ui/player.slint"
+              ],
+              "note": "Manual RGB display ICC profile selection/reset for the session. Bounded validation and desktop/native controls pass on all platforms; actual shared-texture pixels transform 128\u219255 and reset to 128 on the Linux compositor, matching Little CMS. Automatic per-monitor discovery/switching and physical calibration are not claimed.",
+              "research_batch": "foxide-icc-2026-11-17",
+              "checked_utc": "2026-11-17"
             }
           ],
           "applicable": [
@@ -13111,7 +13127,7 @@
             "audio"
           ],
           "note": "Windowed fields use Foxide Desktop with libmpv; software-only fields use the Foxide CLI wrapper around external mpv. These are separate benchmark cohorts.",
-          "feature_gold": 36,
+          "feature_gold": 37,
           "performance_gold": 17,
           "performance_silver": 15,
           "performance_bronze": 6
@@ -16052,7 +16068,8 @@
           ],
           "research_batch": "desktop-2026-11-16",
           "awards": {
-            "mpv": "gold"
+            "mpv": "gold",
+            "foxide": "gold"
           },
           "claims": [
             {
@@ -16069,10 +16086,17 @@
             {
               "player": "foxide",
               "feature": "icc_profiles",
-              "status": "planned",
-              "sources": [],
-              "note": "No accepted Foxide desktop implementation for this event; no medal.",
-              "research_batch": "desktop-2026-11-16"
+              "status": "supported",
+              "sources": [
+                "https://github.com/marksmayo/foxide/actions/runs/44067941006/job/133986394019",
+                "https://github.com/marksmayo/foxide/actions/runs/44067941006/job/133986393918",
+                "https://github.com/marksmayo/foxide/actions/runs/44067941006/job/133986393473",
+                "https://github.com/marksmayo/foxide/actions/runs/44067940977/job/133986393405",
+                "https://github.com/marksmayo/foxide/blob/c82436888a6f61c356a1125161ed7bd4df46f1f3/crates/player-ui/ui/player.slint"
+              ],
+              "note": "Manual RGB display ICC profile selection/reset for the session. Bounded validation and desktop/native controls pass on all platforms; actual shared-texture pixels transform 128\u219255 and reset to 128 on the Linux compositor, matching Little CMS. Automatic per-monitor discovery/switching and physical calibration are not claimed.",
+              "research_batch": "foxide-icc-2026-11-17",
+              "checked_utc": "2026-11-17"
             }
           ],
           "applicable": [

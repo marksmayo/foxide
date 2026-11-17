@@ -258,8 +258,8 @@
       "id": "icc_profiles",
       "name": "ICC display color management",
       "group": "Picture",
-      "stage": "implemented-awaiting-hosted-acceptance",
-      "acceptance": "Explicit session RGB display-profile picker/reset, bounded ICC header/tag-table validation and nonfatal engine controls implemented. Native/property and public UI tests pass locally. A generated linear-profile fixture shifts neutral reference RGB 128 to 55 under Little CMS; actual shared-texture compositor transform/reset proof is pending. Automatic per-monitor discovery and physical calibration are not claimed."
+      "stage": "accepted",
+      "acceptance": "Manual session RGB display-profile selection/reset accepted at c82436888a6f61c356a1125161ed7bd4df46f1f3: malformed-file bounds tests, native/public desktop controls on all platforms and twelve actual composited transform/reset trials. RGB 128→55→128 agrees with an independent Little CMS reference. Automatic per-monitor discovery/switching and physical calibration are outside this implemented control and are not claimed."
     },
     {
       "id": "user_shaders",
@@ -347,8 +347,8 @@
     }
   ],
   "baseline_gap_count": 49,
-  "accepted_count": 7,
-  "remaining_count": 42,
+  "accepted_count": 8,
+  "remaining_count": 41,
   "implementation_commit": "f957f4da08af3a4a1171f3ac5f5475068ba6d887",
   "acceptance_jobs": {
     "linux": "https://github.com/marksmayo/foxide/actions/runs/43972156451/job/133666803073",

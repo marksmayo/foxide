@@ -1,6 +1,6 @@
 # Feature parity implementation
 
-Foxide starts this work at 49 feature events without gold. The complete [acceptance checklist](remaining.json) preserves every event. Seven events now have reviewed acceptance; 42 remain. The checklist distinguishes accepted, implemented and queued work. Full parity is not claimed.
+Foxide starts this work at 49 feature events without gold. The complete [acceptance checklist](remaining.json) preserves every event. Eight events now have reviewed acceptance; 41 remain. The checklist distinguishes accepted, implemented and queued work. Full parity is not claimed.
 
 [Measured verification and limitations](verification.md).
 
@@ -93,10 +93,12 @@ Per-platform JSON evidence records decoders and success/failure without local pa
 
 Four more events are accepted at 8e1abde4e2785bb62495774ce6abac2c1ece57df: internet-radio directory, video-site URLs with an explicit helper, embedded music artwork and user GPU shaders. Together with desktop customization, **7 of 49 gaps are accepted; 42 remain**. [Exact evidence and limits](acceptance.json) include three-platform public UI/native acceptance, actual live decoders and original-page identity, twelve compositor trials, shader failure/reset pixels and **90.85%** full desktop/GPU line coverage. Null-output probes do not certify displayed-frame latency, physical audio devices, GPU power or battery life.
 
-## Manual ICC display profiles (acceptance pending)
+## Manual ICC display profiles
 
 Use **Video → Color management → Load display ICC profile** to select the RGB display profile for your monitor. Clear the manual profile to restore the engine default. Selection applies to the session; automatic profile discovery and switching between monitors are not implemented by this control.
 
 Profile reads run away from the UI thread, with a 4 MiB limit and checks of the ICC signature, RGB display class, declared length and tag-table bounds. Little CMS in the native engine handles the color transform; bounds validation does not replace its semantic validation. Malformed selections leave playback and the current profile alone. Clearing invalidates pending selections. There is no startup scan or saved profile path.
 
-Tests cover malformed resources, native path application/reset and public desktop callbacks. The GPU acceptance fixture uses a neutral image and a generated linear RGB display profile, with an independent Little CMS reference of RGB 128 → 55, then checks final composited pixels and reset. [ICC specification](https://www.color.org/specifications/ICC.1-2022-05.pdf) and [mpv color-management options](https://mpv.io/manual/stable/#options-icc-profile) define the resource and engine interface. Physical monitor calibration remains separate. No gold is awarded until hosted acceptance passes.
+Tests cover malformed resources, native path application/reset and public desktop callbacks. The GPU acceptance fixture uses a neutral image and a generated linear RGB display profile, with an independent Little CMS reference of RGB 128 → 55, then checks final composited pixels and reset. [ICC specification](https://www.color.org/specifications/ICC.1-2022-05.pdf) and [mpv color-management options](https://mpv.io/manual/stable/#options-icc-profile) define the resource and engine interface. Physical monitor calibration remains separate. Manual selection/reset is accepted after three-platform controls and twelve hosted pixel trials matched the independent reference. Automatic monitor-profile switching remains outside this implemented control.
+
+The accepted manual ICC event brings the current total to **8 of 49 gaps closed; 41 remain**. Its [reviewed evidence](acceptance.json) records RGB **128 → 55 → 128** and **90.59%** full desktop/GPU line coverage (4,024/4,442 lines).

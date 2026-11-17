@@ -3896,10 +3896,17 @@
     {
       "player": "foxide",
       "feature": "icc_profiles",
-      "status": "planned",
-      "sources": [],
-      "note": "No accepted Foxide desktop implementation for this event; no medal.",
-      "research_batch": "desktop-2026-11-16"
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/actions/runs/44067941006/job/133986394019",
+        "https://github.com/marksmayo/foxide/actions/runs/44067941006/job/133986393918",
+        "https://github.com/marksmayo/foxide/actions/runs/44067941006/job/133986393473",
+        "https://github.com/marksmayo/foxide/actions/runs/44067940977/job/133986393405",
+        "https://github.com/marksmayo/foxide/blob/c82436888a6f61c356a1125161ed7bd4df46f1f3/crates/player-ui/ui/player.slint"
+      ],
+      "note": "Manual RGB display ICC profile selection/reset for the session. Bounded validation and desktop/native controls pass on all platforms; actual shared-texture pixels transform 128\u219255 and reset to 128 on the Linux compositor, matching Little CMS. Automatic per-monitor discovery/switching and physical calibration are not claimed.",
+      "research_batch": "foxide-icc-2026-11-17",
+      "checked_utc": "2026-11-17"
     },
     {
       "player": "mpv",

@@ -132,5 +132,50 @@
     "artwork": true,
     "shader_apply_error_clear": true,
     "audio_fixture_clock_verified": true
+  },
+  "icc_profiles": {
+    "source_commit": "c82436888a6f61c356a1125161ed7bd4df46f1f3",
+    "scope": "Manual session RGB display profile selection and reset; automatic per-monitor discovery/switching and physical calibration are not claimed.",
+    "jobs": {
+      "CodSpeed Performance Analysis": "https://github.com/marksmayo/foxide/runs/133989185798",
+      "draft-release": "https://github.com/marksmayo/foxide/actions/runs/44067941064/job/133988902135",
+      "rust-and-sampler (windows-latest)": "https://github.com/marksmayo/foxide/actions/runs/44067941057/job/133986394516",
+      "rust-and-sampler (ubuntu-latest)": "https://github.com/marksmayo/foxide/actions/runs/44067941057/job/133986394501",
+      "rust-and-sampler (macos-latest)": "https://github.com/marksmayo/foxide/actions/runs/44067941057/job/133986394294",
+      "desktop (windows-latest)": "https://github.com/marksmayo/foxide/actions/runs/44067941089/job/133986394213",
+      "desktop (ubuntu-latest)": "https://github.com/marksmayo/foxide/actions/runs/44067941089/job/133986394036",
+      "native-helper (windows-latest)": "https://github.com/marksmayo/foxide/actions/runs/44067941006/job/133986394019",
+      "Run benchmarks": "https://github.com/marksmayo/foxide/actions/runs/44067940975/job/133986394006",
+      "native-helper (macos-latest)": "https://github.com/marksmayo/foxide/actions/runs/44067941006/job/133986393918",
+      "desktop (macos-latest)": "https://github.com/marksmayo/foxide/actions/runs/44067941089/job/133986393853",
+      "native-controls": "https://github.com/marksmayo/foxide/actions/runs/44067941001/job/133986393798",
+      "package": "https://github.com/marksmayo/foxide/actions/runs/44067941064/job/133986393563",
+      "native-helper (ubuntu-latest)": "https://github.com/marksmayo/foxide/actions/runs/44067941006/job/133986393473",
+      "orientation-and-cadence": "https://github.com/marksmayo/foxide/actions/runs/44067940977/job/133986393405",
+      "GitGuardian Security Checks": "https://github.com/marksmayo/foxide/runs/133986367179"
+    },
+    "color_reference": {
+      "baseline": [
+        128,
+        128,
+        128
+      ],
+      "profiled": [
+        55,
+        55,
+        55
+      ],
+      "reset": [
+        128,
+        128,
+        128
+      ]
+    },
+    "compositor_trials": 12,
+    "coverage": {
+      "covered_lines": 4024,
+      "total_lines": 4442,
+      "line_percent": 90.58982440342189
+    }
   }
 }
