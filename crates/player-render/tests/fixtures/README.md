@@ -9,9 +9,11 @@ Generate the cover with a binary PPM header `P6\n2 2\n255\n`, followed by RGB by
 
 ```text
 ffmpeg -f lavfi -i color=c=red:s=16x16:r=10:d=1 -f lavfi -i sine=frequency=440:sample_rate=8000:duration=1 -map 0:v -map 1:a -c:v libx264 -preset ultrafast -crf 0 -pix_fmt yuv420p -c:a pcm_s16le -metadata title="Foxide track metadata fixture" tracks.mkv
-ffmpeg -f lavfi -i sine=frequency=440:sample_rate=8000:duration=1 -i cover.ppm -map 0:a -map 1:v -c:a flac -sample_fmt s16 -c:v png -frames:v 1 -disposition:v attached_pic -metadata title="Foxide artwork fixture" -metadata artist="Foxide synthetic fixtures" artwork.flac
+ffmpeg -f lavfi -i sine=frequency=440:sample_rate=8000:duration=1 -i cover.ppm -map 0:a -map 1:v -c:a flac -sample_fmt s16 -c:v png -disposition:v attached_pic -metadata title="Foxide artwork fixture" -metadata artist="Foxide synthetic fixtures" artwork.flac
 ```
 
 The two GLSL fixtures are original synthetic test code: one inverts RGB at the mpv MAIN hook; one deliberately contains invalid syntax to test recoverable compiler errors. The punctuation in the valid shader filename checks structured path-list handling.
 
 H.264 keeps this metadata fixture compatible with Ubuntu 24.04’s mpv 0.37 demuxer. The newer FFmpeg V_FFV1 Matroska tag is not recognized there; decoder/container-version compatibility is not the behavior under test in this fixture.
+
+Do not add a global video-frame limit to the FLAC generation command: it can finish encoding before any audio samples are written. Native acceptance requires a configured audio output and an advancing clock in addition to the embedded picture. GPU tests select null audio output explicitly; displayed pixels are still rendered through the actual shared GL texture.

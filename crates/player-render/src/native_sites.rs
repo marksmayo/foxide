@@ -442,3 +442,25 @@ fn native_string_list(api: &Api, name: &std::ffi::CStr) -> Vec<String> {
         result
     }
 }
+
+#[test]
+#[ignore = "Requires libmpv; embedded cover must accompany actual decoded music"]
+fn embedded_artwork_fixture_plays_real_audio_samples() {
+    let engine = null_output_engine();
+    load_fixture(&engine, "artwork.flac");
+    let deadline = Instant::now() + Duration::from_secs(5);
+    let mut rate = 0.0;
+    let mut position = 0.0;
+    while Instant::now() < deadline {
+        rate = engine.api.number(c"audio-out-params/samplerate");
+        position = engine.snapshot().unwrap().position;
+        if rate > 0.0 && position >= 0.1 {
+            break;
+        }
+        thread::sleep(Duration::from_millis(20));
+    }
+    assert!(
+        rate > 0.0 && position >= 0.1,
+        "Artwork fixture must contain playable audio, not only metadata and a picture (rate={rate}, position={position})"
+    );
+}

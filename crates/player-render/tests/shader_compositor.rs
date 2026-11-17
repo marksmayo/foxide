@@ -39,6 +39,9 @@ fn selected_shader_changes_pixels_reports_errors_and_can_be_cleared() {
         .unwrap();
     let ui = ArtworkProbe::new().unwrap();
     let engine = Rc::new(Engine::new().unwrap());
+    engine
+        .command(vec!["set".into(), "ao".into(), "null".into()])
+        .unwrap();
     let proof = Rc::new(RefCell::new(Proof::default()));
     let graphics = Rc::new(RefCell::new(None::<glow::Context>));
     let (weak_frame, weak_wake, weak_probe) = (ui.as_weak(), ui.as_weak(), ui.as_weak());

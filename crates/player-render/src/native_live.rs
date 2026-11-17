@@ -2,6 +2,36 @@
 use super::*;
 use std::{path::Path, time::Instant};
 
+fn decoder_ready(name: &str) -> bool {
+    !matches!(
+        name.trim().to_ascii_lowercase().as_str(),
+        "" | "null" | "unknown" | "no" | "unavailable" | "n/a"
+    )
+}
+
+#[test]
+fn unset_native_properties_cannot_be_reported_as_real_decoders() {
+    for unset in [
+        "",
+        "null",
+        "NULL",
+        " null ",
+        " ",
+        "unknown",
+        "no",
+        "unavailable",
+        "n/a",
+    ] {
+        assert!(
+            !decoder_ready(unset),
+            "{unset} must not establish decoder acceptance"
+        );
+    }
+    for codec in ["flac", "h264", "mpeg4", "mp3", "pcm_s16le"] {
+        assert!(decoder_ready(codec));
+    }
+}
+
 fn probe(url: &str, helper: Option<&Path>, video: bool) -> Result<serde_json::Value, String> {
     let selected = helper
         .map(player_services::VideoSiteTool::new)
@@ -43,8 +73,8 @@ fn probe(url: &str, helper: Option<&Path>, video: bool) -> Result<serde_json::Va
         let image = api.get(c"video-format");
         let video_width = api.number(c"video-out-params/w");
         if restarted
-            && !audio.is_empty()
-            && (!video || (!image.is_empty() && video_width > 0.0))
+            && decoder_ready(&audio)
+            && (!video || (decoder_ready(&image) && video_width > 0.0))
             && api.number(c"time-pos") >= 0.3
         {
             api.send(&["stop".into()])?;
@@ -53,7 +83,12 @@ fn probe(url: &str, helper: Option<&Path>, video: bool) -> Result<serde_json::Va
             );
         }
     }
-    Err("Provider did not decode and advance its playback clock within 60 seconds".into())
+    Err(format!(
+        "Provider did not establish real decoders and advance its clock within 60 seconds (audio={}, video={}, width={}, restarted={restarted})",
+        api.get(c"audio-codec-name"),
+        api.get(c"video-format"),
+        api.number(c"video-out-params/w")
+    ))
 }
 fn record(feature: &str, source: &str, outcome: Result<serde_json::Value, String>) {
     let report = match &outcome {

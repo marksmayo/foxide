@@ -5,5 +5,7 @@
   "source_page": "https://archive.org/details/BigBuckBunny_328",
   "radio_query": "Radio Paradise",
   "output": "null",
-  "credentials_required": false
+  "credentials_required": false,
+  "revision": 2,
+  "reason": "Reject unset native codec properties and repeat the actual decoder proof."
 }

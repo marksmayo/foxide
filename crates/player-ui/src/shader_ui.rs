@@ -64,7 +64,6 @@ impl Worker {
                 generation,
                 selection,
             });
-            worker.busy.store(false, Ordering::Release);
             let _ = weak.upgrade_in_event_loop(|ui| ui.invoke_shader_result_ready());
         });
     }
@@ -114,11 +113,14 @@ pub(super) fn install_with_apply(ui: &PlayerWindow, apply: ShaderApply) {
         }
     });
     let (weak, playback, generation) = (ui.as_weak(), apply.clone(), worker.generation.clone());
+    let busy = worker.busy.clone();
     ui.on_shader_result_ready(move || {
         let Some(ui) = weak.upgrade() else {
             return;
         };
         for result in receiver.try_iter() {
+            // Selection stays busy until its completion is acknowledged by the UI.
+            busy.store(false, Ordering::Release);
             if result.generation != generation.load(Ordering::Acquire) {
                 continue;
             }
