@@ -464,3 +464,26 @@ fn embedded_artwork_fixture_plays_real_audio_samples() {
         "Artwork fixture must contain playable audio, not only metadata and a picture (rate={rate}, position={position})"
     );
 }
+
+#[test]
+#[ignore = "Requires libmpv; explicit ICC selection must preserve playback and reset cleanly"]
+fn selected_display_profile_is_applied_as_one_path_and_can_be_reset() {
+    let engine = null_output_engine();
+    load_fixture(&engine, "tracks.mkv");
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/srgb.icc");
+    let profile = player_services::DisplayProfile::new(&path).unwrap();
+    let expected = profile.path().to_string_lossy().into_owned();
+    engine.set_display_profile(Some(profile)).unwrap();
+    let deadline = Instant::now() + Duration::from_secs(5);
+    while Instant::now() < deadline && engine.api.get(c"icc-profile") != expected {
+        thread::sleep(Duration::from_millis(20));
+    }
+    assert_eq!(engine.api.get(c"icc-profile"), expected);
+    engine.set_display_profile(None).unwrap();
+    let deadline = Instant::now() + Duration::from_secs(5);
+    while Instant::now() < deadline && !engine.api.get(c"icc-profile").is_empty() {
+        thread::sleep(Duration::from_millis(20));
+    }
+    assert!(engine.api.get(c"icc-profile").is_empty());
+    assert!(engine.snapshot().unwrap().loaded);
+}

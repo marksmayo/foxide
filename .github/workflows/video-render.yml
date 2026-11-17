@@ -12,6 +12,7 @@ jobs:
     timeout-minutes: 30
     env:
       LIBGL_ALWAYS_SOFTWARE: '1'
+      FOXIDE_ICC_PROOF: ${{ github.workspace }}/results/local/icc-proof.ppm
       FOXIDE_SHADER_PROOF: ${{ github.workspace }}/results/local/shader-proof.ppm
       FOXIDE_ARTWORK_PROOF: ${{ github.workspace }}/results/local/artwork-proof.ppm
       FOXIDE_RENDER_FIXTURE: ${{ github.workspace }}/results/local/orientation.mkv
@@ -28,7 +29,7 @@ jobs:
         with:
           tool: cargo-llvm-cov@0.9.1
       - name: Install software OpenGL and the native media engine
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg libmpv2 xvfb xauth libgl1-mesa-dri libegl1-mesa-dev libxkbcommon-dev libxkbcommon-x11-dev libfontconfig1-dev libwayland-dev meson ninja-build pkg-config libavcodec-dev libavfilter-dev libavformat-dev libavutil-dev libswresample-dev libswscale-dev libplacebo-dev libass-dev
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg libmpv2 xvfb xauth libgl1-mesa-dri libegl1-mesa-dev libxkbcommon-dev libxkbcommon-x11-dev libfontconfig1-dev libwayland-dev meson ninja-build pkg-config libavcodec-dev libavfilter-dev libavformat-dev libavutil-dev libswresample-dev libswscale-dev libplacebo-dev libass-dev liblcms2-dev
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: mpv-player/mpv
@@ -72,6 +73,7 @@ jobs:
         run: |
           ffmpeg -v error -y -i "$FOXIDE_ARTWORK_PROOF" results/local/artwork-proof.png
           ffmpeg -v error -y -i "$FOXIDE_SHADER_PROOF" results/local/shader-proof.png
+          ffmpeg -v error -y -i "$FOXIDE_ICC_PROOF" results/local/icc-proof.png
       - name: Verify reused texture invalidates cached layers without a native display
         run: cargo llvm-cov --workspace --features player-ui/desktop,player-render/gpu-integration --locked --no-report -- --test-threads=1
       - name: Verify actual composited orientation and changing video frames
@@ -112,3 +114,4 @@ jobs:
             results/local/coverage-desktop-gpu.json
             results/local/artwork-proof.png
             results/local/shader-proof.png
+            results/local/icc-proof.png

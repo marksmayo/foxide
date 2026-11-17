@@ -605,4 +605,76 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
         ui.get_loaded() && redirected.borrow().loaded,
         "An extracted stream must remain associated with the page the user opened"
     );
+    profile_ui::install(&ui, &None);
+    ui.invoke_clear_color_profile();
+    assert_eq!(ui.get_color_profile_notice(), "Playback engine unavailable");
+    let applied_profiles = Rc::new(RefCell::new(Vec::<Option<PathBuf>>::new()));
+    let recorded_profiles = applied_profiles.clone();
+    profile_ui::install_with_apply(
+        &ui,
+        Rc::new(move |profile| {
+            recorded_profiles
+                .borrow_mut()
+                .push(profile.map(|profile| profile.path().to_path_buf()));
+            Ok(())
+        }),
+    );
+    let pump_profile = || {
+        let deadline = std::time::Instant::now() + Duration::from_secs(5);
+        while (ui
+            .get_color_profile_notice()
+            .starts_with("Choose a display")
+            || ui.get_color_profile_notice().contains("already open"))
+            && std::time::Instant::now() < deadline
+        {
+            if let Ok(event) = event_receiver.recv_timeout(Duration::from_millis(20)) {
+                event();
+            }
+        }
+        assert!(
+            !ui.get_color_profile_notice()
+                .starts_with("Choose a display")
+                && !ui.get_color_profile_notice().contains("already open")
+        );
+    };
+    ui.invoke_load_color_profile("relative.icc".into());
+    ui.invoke_load_color_profile("relative.icc".into());
+    assert!(ui.get_color_profile_notice().contains("already open"));
+    pump_profile();
+    assert!(ui.get_color_profile_notice().contains("absolute"));
+    assert!(applied_profiles.borrow().is_empty() && ui.get_loaded());
+    let profile_path =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../player-render/tests/fixtures/srgb.icc");
+    ui.invoke_load_color_profile(profile_path.to_str().unwrap().into());
+    pump_profile();
+    assert_eq!(
+        applied_profiles.borrow()[0],
+        Some(profile_path.canonicalize().unwrap())
+    );
+    ui.set_panel("information".into());
+    ui.set_shader_notice("No custom shaders selected".into());
+    capture_customization(&ui, &rendered_window, "color-profile");
+    ui.invoke_clear_color_profile();
+    assert!(applied_profiles.borrow().last().unwrap().is_none());
+    for event in event_receiver.try_iter() {
+        event();
+    }
+    let count = applied_profiles.borrow().len();
+    ui.invoke_load_color_profile(profile_path.to_str().unwrap().into());
+    ui.invoke_clear_color_profile();
+    event_receiver.recv_timeout(Duration::from_secs(5)).unwrap()();
+    assert_eq!(
+        applied_profiles.borrow().len(),
+        count + 1,
+        "Clearing a profile must invalidate late selections"
+    );
+    profile_ui::install_with_apply(
+        &ui,
+        Rc::new(|_| Err("Profile command queue is full".into())),
+    );
+    ui.invoke_clear_color_profile();
+    assert_eq!(
+        ui.get_color_profile_notice(),
+        "Profile command queue is full"
+    );
 }

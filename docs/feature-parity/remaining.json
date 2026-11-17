@@ -258,8 +258,8 @@
       "id": "icc_profiles",
       "name": "ICC display color management",
       "group": "Picture",
-      "stage": "queued",
-      "acceptance": "Needs profile loading, display switching and color-accuracy fixtures on each renderer."
+      "stage": "implemented-awaiting-hosted-acceptance",
+      "acceptance": "Explicit session RGB display-profile picker/reset, bounded ICC header/tag-table validation and nonfatal engine controls implemented. Native/property and public UI tests pass locally. A generated linear-profile fixture shifts neutral reference RGB 128 to 55 under Little CMS; actual shared-texture compositor transform/reset proof is pending. Automatic per-monitor discovery and physical calibration are not claimed."
     },
     {
       "id": "user_shaders",

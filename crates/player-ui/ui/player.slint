@@ -101,6 +101,11 @@ export component PlayerWindow inherits Window {
     callback load-shader-files([string]);
     callback shader-result-ready();
     callback clear-shaders();
+    in-out property <string> color-profile-notice: "Manual ICC profile: choose the profile for your current monitor.";
+    callback choose-color-profile();
+    callback load-color-profile(string);
+    callback color-profile-result-ready();
+    callback clear-color-profile();
     in-out property <bool> paused: false;
     in-out property <bool> queue-visible: false;
     in-out property <bool> fullscreen-mode: false;
@@ -171,6 +176,10 @@ export component PlayerWindow inherits Window {
             for track in root.audio-tracks: MenuItem { title: track.label; checked: track.selected; enabled: root.loaded; activated => { root.action("audio-track", track.id); } }
         }
         Menu { title: "Video";
+            Menu { title: "Color management";
+                MenuItem { title: "Load display ICC profile…"; activated => { root.panel = "information"; root.choose-color-profile(); } }
+                MenuItem { title: "Clear manual profile"; activated => { root.panel = "information"; root.clear-color-profile(); } }
+            }
             Menu { title: "GPU shaders";
                 MenuItem { title: "Load trusted shaders…"; activated => { root.panel = "information"; root.choose-shaders(); } }
                 MenuItem { title: "Clear shader stack"; activated => { root.panel = "information"; root.clear-shaders(); } }
@@ -366,7 +375,7 @@ export component PlayerWindow inherits Window {
                     }
                 }
                 if (root.panel == "shortcuts"): ScrollView { vertical-stretch: 1; Text { text: root.shortcut-help + "\nEscape  —  Close dialog / leave fullscreen"; color: Appearance.secondary; wrap: word-wrap; } }
-                if (root.panel != "url" && root.panel != "preferences" && root.panel != "shortcuts" && root.panel != "radio"): Text { text: root.panel == "information" ? root.diagnostics + "\n\nGPU shaders\n" + root.shader-notice : root.panel == "shortcuts" ? root.shortcut-help : "A little less between you and your media.\n\nFoxide desktop preview\nBuilt with Rust, Slint, and libmpv.\n\nPlayback and GPU diagnostics are available\nunder View → Playback information."; color: Appearance.secondary; wrap: word-wrap; font-size: 14px; }
+                if (root.panel != "url" && root.panel != "preferences" && root.panel != "shortcuts" && root.panel != "radio"): Text { text: root.panel == "information" ? root.diagnostics + "\n\nGPU shaders\n" + root.shader-notice + "\n\nDisplay color profile\n" + root.color-profile-notice : root.panel == "shortcuts" ? root.shortcut-help : "A little less between you and your media.\n\nFoxide desktop preview\nBuilt with Rust, Slint, and libmpv.\n\nPlayback and GPU diagnostics are available\nunder View → Playback information."; color: Appearance.secondary; wrap: word-wrap; font-size: 14px; }
                 if (root.panel != "preferences" && root.panel != "shortcuts" && root.panel != "radio"): Rectangle { vertical-stretch: 1; background: transparent; }
             }
         }

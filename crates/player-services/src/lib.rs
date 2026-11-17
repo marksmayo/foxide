@@ -13,3 +13,6 @@ pub use video_sites::VideoSiteTool;
 
 mod shaders;
 pub use shaders::ShaderFile;
+
+mod color_profiles;
+pub use color_profiles::DisplayProfile;

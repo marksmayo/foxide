@@ -674,6 +674,16 @@ impl Engine {
             .try_send(Request::Shaders(shaders))
             .map_err(|e| format!("Player is busy: {e}"))
     }
+    pub fn set_display_profile(
+        &self,
+        profile: Option<player_services::DisplayProfile>,
+    ) -> Result<(), String> {
+        let path = profile
+            .as_ref()
+            .map(|profile| profile.path().to_string_lossy().into_owned())
+            .unwrap_or_default();
+        self.command(vec!["set".into(), "icc-profile".into(), path])
+    }
     pub fn snapshot(&self) -> Option<Snapshot> {
         self.snapshot.try_lock().ok().map(|s| s.clone())
     }

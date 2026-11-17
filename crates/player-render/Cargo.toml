@@ -28,3 +28,7 @@ required-features = ["gpu-integration"]
 [[test]]
 name = "shader_compositor"
 required-features = ["gpu-integration"]
+
+[[test]]
+name = "profile_compositor"
+required-features = ["gpu-integration"]
