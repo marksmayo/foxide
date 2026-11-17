@@ -45,3 +45,6 @@ pub use media_origin::{MediaOrigin, TransferStats};
 
 mod session;
 pub use session::{CastOptions, CastPlayback, CastState, CastStatus};
+
+mod controller;
+pub use controller::{CastController, CastEvent};

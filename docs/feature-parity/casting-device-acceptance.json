@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "source_commit": "b6cedda32d8bda8e3d99babe41009239126a38f7",
+  "date_utc": "2026-11-17",
+  "scope": "Owner-only physical local-file transport and playback controls; not desktop feature acceptance or a performance comparison",
+  "fixture": {
+    "video": "H.264, 640x360, 24 fps, 12 seconds",
+    "audio": false,
+    "bytes": 2460206
+  },
+  "receivers": [
+    {
+      "anonymous_receiver": 1,
+      "successful_runs": 2,
+      "selected_peer_connections_per_run": 1,
+      "valid_file_requests_per_run": 1,
+      "bytes_served_per_run": 2460206,
+      "load": true,
+      "playing": true,
+      "clock_advanced": true,
+      "pause": true,
+      "seek": true,
+      "resume": true,
+      "owned_stop": true,
+      "visual_confirmation": "pending",
+      "audio_acceptance": "not_tested"
+    },
+    {
+      "anonymous_receiver": 2,
+      "successful_runs": 2,
+      "selected_peer_connections_per_run": 1,
+      "valid_file_requests_per_run": 1,
+      "bytes_served_per_run": 2460206,
+      "load": true,
+      "playing": true,
+      "clock_advanced": true,
+      "pause": true,
+      "seek": true,
+      "resume": true,
+      "owned_stop": true,
+      "visual_confirmation": "pending",
+      "audio_acceptance": "not_tested"
+    }
+  ],
+  "repeat_probe_note": "Repeat flag permits only the default media receiver application; the second pass used the local worker/probe checkpoint, with the playback/transport/origin implementation unchanged from source_commit.",
+  "certificate_trust": "Changed pins refused; new pins saved only after explicit owner re-pair approval.",
+  "feature_medal_awarded": false
+}

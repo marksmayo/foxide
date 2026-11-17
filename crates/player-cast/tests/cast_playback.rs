@@ -663,3 +663,102 @@ fn refuses_transport_controls_when_playback_ended_during_the_ownership_check() {
     drop(playback);
     worker.join().unwrap().unwrap();
 }
+
+#[test]
+fn desktop_controller_delivers_status_and_stops_owned_media_off_the_caller_thread() {
+    use player_cast::{CastController, CastEvent};
+    let file = FileFixture::new();
+    let (address, pin, worker) = server(|tls| {
+        let url = begin(tls)?;
+        let mut current_state = "PLAYING";
+        let mut position = 0.0;
+        let mut controls = Vec::new();
+        loop {
+            let message = Message::read(tls)?;
+            assert_eq!(message.source(), "sender-0");
+            let Payload::Json(request) = message.payload() else {
+                panic!("expected JSON")
+            };
+            let kind = request["type"].as_str().unwrap();
+            if message.destination() == "receiver-0" {
+                assert_eq!(message.namespace(), RECEIVER);
+                assert_eq!(kind, "GET_STATUS");
+                reply(
+                    tls,
+                    "receiver-0",
+                    RECEIVER,
+                    request,
+                    "RECEIVER_STATUS",
+                    apps("owned-session"),
+                )?;
+                continue;
+            }
+            assert_eq!(message.destination(), "app-transport");
+            assert_eq!(message.namespace(), MEDIA);
+            match kind {
+                "GET_STATUS" => {}
+                "PAUSE" => {
+                    current_state = "PAUSED";
+                    controls.push(kind.to_owned());
+                }
+                "PLAY" => {
+                    current_state = "PLAYING";
+                    controls.push(kind.to_owned());
+                }
+                "SEEK" => {
+                    position = request["currentTime"].as_f64().unwrap();
+                    controls.push(kind.to_owned());
+                }
+                "STOP" => {
+                    current_state = "IDLE";
+                    controls.push(kind.to_owned());
+                }
+                _ => panic!("Unexpected media command"),
+            }
+            if kind != "GET_STATUS" {
+                assert_eq!(request["mediaSessionId"], 7);
+            }
+            reply(
+                tls,
+                "app-transport",
+                MEDIA,
+                request,
+                "MEDIA_STATUS",
+                media(&url, current_state, position),
+            )?;
+            if kind == "STOP" {
+                break;
+            }
+        }
+        assert_eq!(controls, ["PAUSE", "PLAY", "SEEK", "STOP"]);
+        Ok(())
+    });
+    let (tx, rx) = std::sync::mpsc::channel();
+    let caller = thread::current().id();
+    let control = CastController::start_file(
+        file.path.clone(),
+        address,
+        pin,
+        CastOptions::default(),
+        move |event| {
+            assert_ne!(caller, thread::current().id());
+            tx.send(event).unwrap();
+        },
+    )
+    .unwrap();
+    let next = || rx.recv_timeout(Duration::from_secs(10)).unwrap();
+    assert!(matches!(next(),CastEvent::Status(s) if s.state == CastState::Playing));
+    control.pause().unwrap();
+    assert!(matches!(next(),CastEvent::Status(s) if s.state == CastState::Paused));
+    control.play().unwrap();
+    assert!(matches!(next(),CastEvent::Status(s) if s.state == CastState::Playing));
+    control.seek(5.0).unwrap();
+    assert!(matches!(next(),CastEvent::Status(s) if s.position == 5.0));
+    control.stop();
+    assert!(matches!(next(), CastEvent::Stopped));
+    assert_eq!(
+        control.play().unwrap_err().kind(),
+        io::ErrorKind::NotConnected
+    );
+    worker.join().unwrap().unwrap();
+}

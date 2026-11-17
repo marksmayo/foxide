@@ -49,7 +49,18 @@ fn owner_receiver_load_pause_seek_resume_and_owned_stop() {
     let media = PathBuf::from(
         std::env::var("FOXIDE_CAST_MEDIA").expect("Set the absolute silent fixture path"),
     );
-    let mut playback = CastPlayback::start_file(&media, address, pin, CastOptions::default())
+    let mut options = CastOptions::default();
+    // Explicit opt-in for repeating this owner test after the default receiver stays open.
+    // Never replace another application, even when the repeat flag is set.
+    if std::env::var("FOXIDE_CAST_REPEAT_DEFAULT_APP").as_deref() == Ok("1") {
+        let current = player_cast::receiver_status(address, pin, Duration::from_secs(5))
+            .expect("Could not inspect the current receiver application");
+        options.allow_replacing_application =
+            current["applications"].as_array().is_some_and(|apps| {
+                !apps.is_empty() && apps.iter().all(|app| app["appId"] == "CC1AD845")
+            });
+    }
+    let mut playback = CastPlayback::start_file(&media, address, pin, options)
         .expect("Owner receiver rejected safe-start playback");
     println!(
         "[device] initial state={:?} position={} duration={:?}",

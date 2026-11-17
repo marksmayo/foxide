@@ -1,6 +1,6 @@
 # Chromecast implementation checkpoint
 
-Chromecast output remains **unaccepted** and receives no feature medal. The isolated player-cast crate now has pinned control transport, receiver-restricted file serving and owned playback operations. Desktop discovery/pairing, its session worker and physical acceptance remain.
+Chromecast output remains **unaccepted** and receives no feature medal. The isolated player-cast crate now has pinned control transport, receiver-restricted file serving and owned playback operations. A bounded session worker now keeps receiver I/O off the caller thread. Desktop discovery/pairing and physical display/audio acceptance remain.
 
 ## Transport and trust
 
@@ -20,7 +20,7 @@ An initial IDLE/LOADING acknowledgement does not count as ready playback. Startu
 
 Pause, play, seek and stop check the captured application session and media session. A provided content ID must still match the private source URL. Optional media-information updates preserve known duration/position; they do not falsely imply lost ownership. Seek inputs reject nonfinite, negative and out-of-duration values.
 
-Stop targets only owned media, not a receiver-wide application STOP. Dropping revokes file serving and closes control transport. The future desktop worker must maintain the connection and perform best-effort owned stop on shutdown; leaving an idle default receiver open is not a completed disconnect experience.
+Stop targets only owned media, not a receiver-wide application STOP. Dropping revokes file serving and closes control transport. CastController performs status/heartbeat work on one worker, with a bounded command queue and changed-status notifications. Pause, play and seek enqueue without waiting for network I/O. Invalid seeks are rejected without closing the session; ownership or transport failures terminate it. Stop and Drop request best-effort owned stop without joining on the caller thread. In-flight operations and cleanup retain their configured network deadlines; cancellation is not instantaneous. Leaving an idle default receiver open is not a completed disconnect experience.
 
 ## Restricted local-media origin
 
@@ -34,21 +34,21 @@ TransferStats reports accepted connections, selected-peer connections, valid fil
 
 ## Verification
 
-Forty-nine automatic cases span the envelope codec, real loopback TLS, file HTTP serving and owned playback. The playback fixture fetches actual selected-file bytes through the restricted origin before confirming its simulated player state.
+Fifty-seven automatic cases span the envelope codec, real loopback TLS, file HTTP serving and owned playback. The playback fixture fetches actual selected-file bytes through the restricted origin before confirming its simulated player state.
 
 Red/green cases include missing protocol/pinning APIs, interim load acknowledgement before readiness, transport heartbeat routing, optional media updates, invalid clocks and explicit receiver errors. Other cases cover changed certificates, inspection without application commands, unrelated/excessive responses, overall deadlines under trickled input, byte ranges, wrong peers/hosts/tokens, path replacement, concurrent seeks and shutdown during a slow transfer. Foreground takeover defaults and lost application/media ownership have negative tests.
 
 The earlier transport checkpoint de1a4c3052e87baa43bd7ceefcfc648082bb0663 passed the [combined desktop/GPU coverage gate](https://github.com/marksmayo/foxide/actions/runs/44080423510) at **91.05%** (4,427/4,862 lines). That measured checkpoint predates the owned-session additions; their current CI results must be reviewed separately. Casting also has an independent 90% floor for the crate and each source file, reusing the already collected profiles.
 
-## Physical receiver acceptance: pending
+## Physical receiver acceptance: transport and controls passed
 
-Read-only status succeeded against two privately configured owner receivers. Subsequent silent-video attempts received an intermediate load acknowledgement but did not reach confirmed playback. File-server counters recorded **zero incoming connections and zero media bytes served**. Windows has enabled TCP/UDP block rules for the exact test executable, and the test process is not elevated.
+Two owner receivers each fetched the selected silent H.264 test clip, reported PLAYING with an advancing clock, and acknowledged pause, seek, resume and owned stop. Each run served **2,460,206 bytes** to exactly one selected peer. Both tests passed again during an owner-requested viewing window. These are successful file-transfer/control checks, not TTFF, power or displayed-frame measurements. See [sanitized evidence](casting-device-acceptance.json).
 
-A local, ignored helper was prepared for a temporary receiver-only firewall exception. It keeps other source addresses blocked, changes only the prepared test executable's TCP access, restores its original blocks afterward, and runs no player/test process as administrator. Administrator action is pending. No firewall setting was changed by the agent.
+The saved receiver certificates had changed since earlier inspection. Controls refused both changed certificates; explicit owner approval preceded re-pairing. No automatic trust replacement was added. The cause of the certificate changes is not established.
 
-These failed runs are not a successful feature acceptance or a performance measurement. Device names, addresses, fingerprints, raw diagnostics and the helper stay in ignored local data. Display confirmation and audio acceptance remain separate.
+The owner adjusted local firewall access before the successful checks. The agent signalled the temporary helper to finish. Device names, addresses, fingerprints, raw diagnostics and helper files stay in ignored local data. Visual confirmation remains pending, and the silent fixture provides no audio acceptance.
 
-The opt-in device test requires the device-integration feature plus explicit FOXIDE_CAST_TARGET, FOXIDE_CAST_PIN and FOXIDE_CAST_MEDIA values. It stays ignored in ordinary/offline/hosted tests. Use a short silent fixture and an idle receiver; it never forces foreground takeover. Optional FOXIDE_CAST_TRACE output uses fixed protocol labels and routing-match flags, not device identifiers, URLs or tokens.
+The opt-in device test requires the device-integration feature plus explicit FOXIDE_CAST_TARGET, FOXIDE_CAST_PIN and FOXIDE_CAST_MEDIA values. It remains ignored in ordinary/offline/hosted tests. The default refuses foreground takeover. For an explicitly requested repeat, FOXIDE_CAST_REPEAT_DEFAULT_APP=1 permits replacing only the default Cast media receiver; other applications remain protected. Optional FOXIDE_CAST_TRACE output uses fixed protocol labels and routing-match flags, not identifiers, URLs or tokens.
 
 ## Engineering commands
 
@@ -62,6 +62,6 @@ Inspection does not grant trust. The read-only diagnostic does not launch applic
 
 ## Remaining work
 
-Desktop discovery, a visible trust decision, cancellable worker/session ownership, integration with playback controls, complete disconnect/failure cleanup, receiver codec compatibility and successful physical display/audio acceptance remain. The feature total stays at **8/49 accepted**, with **41 gaps remaining**.
+Desktop discovery, a visible trust decision, integration with playback controls, complete disconnect/failure cleanup, receiver codec compatibility and physical display/audio acceptance remain. The feature total stays at **8/49 accepted**, with **41 gaps remaining**.
 
 References: [Chromium envelope definition](https://chromium.googlesource.com/chromium/src.git/+/4d6bb36e3fcfb9742b6428e43a8e5df12681d0d0/components/cast_channel/proto/cast_channel.proto), [Rustls verifier contract](https://docs.rs/rustls/0.23.46/rustls/client/danger/trait.ServerCertVerifier.html), [Google media messages](https://developers.google.com/cast/docs/media/messages), and [Chromium transport-endpoint fix](https://chromium.googlesource.com/openscreen/+/8ef06d904f52e5595f0fbfd80ae93c123b3a35d5).
