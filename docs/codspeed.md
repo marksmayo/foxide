@@ -51,3 +51,5 @@ The [workflow](../.github/workflows/codspeed.yml) runs on PRs and pushes to main
 If a job fails before any steps execute, no benchmark ran and no new score exists. Inspect its Annotations message to distinguish runner provisioning, account/repository restrictions and workflow startup errors. Empty logs alone do not identify the cause.
 
 The harness also records a child that exits during final telemetry collection as incomplete, preserving its exit code. Regression tests cover already-exited children and harness-owned termination of a live child. Protocol fixtures allow three seconds for startup under instrumentation; this changes no performance target.
+
+CodSpeed uses Ubuntu 24.04 and Rust 1.100.0, matching the recorded comparison environment. The workflow archives codspeed-environment.json with OS-image, architecture, libc and toolchain versions; it does not record a hostname or arbitrary environment variables. Upgrade the benchmark environment deliberately with a new comparable baseline, since changing libc or toolchains can change unchanged-code results.
