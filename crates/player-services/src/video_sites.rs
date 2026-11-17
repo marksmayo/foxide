@@ -18,7 +18,7 @@ impl VideoSiteTool {
             Ok(())
         }
         validate(path)?;
-        let path = player_core::external_path(crate::process::trusted_executable(path)?);
+        let path = helper_path(crate::process::trusted_executable(path)?);
         validate(&path)?;
         Ok(Self { path })
     }
@@ -31,4 +31,19 @@ impl VideoSiteTool {
             self.path.to_str().expect("Validated Unicode path")
         )
     }
+}
+
+fn helper_path(path: PathBuf) -> PathBuf {
+    #[cfg(windows)]
+    if let Some(text) = path.to_str() {
+        if let Some(rest) = text.strip_prefix(r"\\?\UNC\") {
+            return format!(r"\\{rest}").into();
+        }
+        if let Some(rest) = text.strip_prefix(r"\\?\")
+            && rest.as_bytes().get(1) == Some(&b':')
+        {
+            return rest.into();
+        }
+    }
+    path
 }
