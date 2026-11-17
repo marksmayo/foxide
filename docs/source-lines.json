@@ -5,7 +5,7 @@
     "color": "000080"
   },
   "Rust": {
-    "lines": 9712,
+    "lines": 9741,
     "files": 56,
     "color": "dea584"
   },
@@ -30,7 +30,7 @@
     "color": "3776ab"
   },
   "YAML": {
-    "lines": 1135,
+    "lines": 1133,
     "files": 13,
     "color": "cb171e"
   }

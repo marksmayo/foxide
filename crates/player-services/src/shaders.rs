@@ -18,6 +18,9 @@ impl ShaderFile {
         if text.chars().any(char::is_control) {
             return Err("Shader path contains control characters".into());
         }
+        if !path.metadata().map_err(|e| e.to_string())?.is_file() {
+            return Err("Choose a regular shader file".into());
+        }
         let file = File::open(&path).map_err(|e| e.to_string())?;
         if !file.metadata().map_err(|e| e.to_string())?.is_file() {
             return Err("Choose a regular shader file".into());

@@ -21,6 +21,7 @@ slint::slint! {
 #[derive(Default)]
 struct Proof {
     phase: u8,
+    logged_phase: Option<u8>,
     loaded: bool,
     upright: bool,
     pixels: Vec<u8>,
@@ -84,7 +85,10 @@ fn selected_shader_changes_pixels_reports_errors_and_can_be_cleared() {
             let at = |y: u32| { let i = ((y * size.width + size.width / 2) * 4) as usize; &pixels[i..i+3] };
             let (top, bottom) = (at(size.height * 7 / 8), at(size.height / 8));
             let upright = top[0] > 150 && top[1] < 80 && top[2] < 80 && bottom[2] > 150 && bottom[0] < 80 && bottom[1] < 80;
-            println!("[artwork-proof] surface={}x{} texture=56x56 top={top:?} bottom={bottom:?} artwork=true", size.width, size.height);
+            { let mut progress = observed.borrow_mut(); if progress.logged_phase != Some(progress.phase) {
+                println!("[shader-proof] phase={} surface={}x{} top={top:?} bottom={bottom:?} warning={}", progress.phase, size.width, size.height, snapshot.command_error);
+                progress.logged_phase = Some(progress.phase);
+            } }
             let inverted = top[0] < 80 && top[1] > 150 && top[2] > 150 && bottom[0] > 150 && bottom[1] > 150 && bottom[2] < 80;
             let fixture = |name: &str| player_services::ShaderFile::new(&PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures").join(name)).unwrap();
             let mut proof = observed.borrow_mut();
@@ -128,7 +132,8 @@ fn selected_shader_changes_pixels_reports_errors_and_can_be_cleared() {
     assert!(proof.error.is_empty(), "{}", proof.error);
     assert!(
         proof.loaded && proof.upright && proof.phase == 4,
-        "Shader must invert real pixels, report its compile failure without stopping playback, then restore original pixels"
+        "Shader must invert real pixels, report its compile failure without stopping playback, then restore original pixels (phase {})",
+        proof.phase
     );
     if let Some(path) = std::env::var_os("FOXIDE_SHADER_PROOF") {
         let mut ppm = format!("P6\n{} {}\n255\n", proof.size.0, proof.size.1).into_bytes();

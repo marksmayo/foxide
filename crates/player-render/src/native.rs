@@ -403,6 +403,16 @@ impl Drop for Api {
     }
 }
 
+fn renderer_warning(prefix: &str, level: c_int, text: &str) -> Option<String> {
+    if level > 30 || !(prefix.starts_with("vo/") || prefix.starts_with("libmpv_render")) {
+        return None;
+    }
+    Some(format!(
+        "Renderer warning: {}",
+        text.trim().chars().take(2048).collect::<String>()
+    ))
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Track {
     pub id: u32,
@@ -530,17 +540,15 @@ impl Engine {
                             }
                             if (*event).kind == 2 && !(*event).data.is_null() {
                                 let message = &*((*event).data.cast::<LogMessage>());
-                                if message.log_level <= 30
-                                    && !message.prefix.is_null()
+                                if !message.prefix.is_null()
                                     && !message.text.is_null()
-                                    && CStr::from_ptr(message.prefix)
-                                        .to_string_lossy()
-                                        .starts_with("vo/")
+                                    && let Some(warning) = renderer_warning(
+                                        &CStr::from_ptr(message.prefix).to_string_lossy(),
+                                        message.log_level,
+                                        &CStr::from_ptr(message.text).to_string_lossy(),
+                                    )
                                 {
-                                    command_error = format!(
-                                        "Renderer warning: {}",
-                                        CStr::from_ptr(message.text).to_string_lossy().trim()
-                                    );
+                                    command_error = warning;
                                 }
                             }
                             if (*event).kind == 7 && !(*event).data.is_null() {
@@ -652,6 +660,19 @@ impl Drop for Engine {
 #[cfg(test)]
 mod snapshot_allocation_tests {
     use super::*;
+    #[test]
+    fn renderer_warnings_include_render_api_prefixes_and_are_bounded() {
+        assert_eq!(
+            renderer_warning("libmpv_render/opengl", 20, "compile failed\n"),
+            Some("Renderer warning: compile failed".into())
+        );
+        assert!(renderer_warning("vo/gpu", 30, "warning").is_some());
+        assert!(renderer_warning("demux", 20, "unrelated").is_none());
+        assert!(renderer_warning("libmpv_render", 40, "info").is_none());
+        let large = "🦊".repeat(3000);
+        let result = renderer_warning("libmpv_render", 20, &large).unwrap();
+        assert!(result.ends_with("🦊") && result.len() < 9000);
+    }
     #[test]
     fn cloning_snapshot_shares_immutable_track_metadata() {
         let snapshot = Snapshot {

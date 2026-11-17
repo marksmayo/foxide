@@ -48,27 +48,30 @@ jobs:
         run: |
           mkdir -p results/local
           ffmpeg -v error -f lavfi -i "testsrc2=size=320x180:rate=30:duration=10,drawbox=x=0:y=0:w=iw:h=ih/4:color=red:t=fill,drawbox=x=0:y=3*ih/4:w=iw:h=ih/4:color=blue:t=fill" -c:v ffv1 "$FOXIDE_RENDER_FIXTURE"
+      - name: Reset coverage profiles before combining test passes
+        run: cargo llvm-cov clean --workspace
+      - name: Verify video-site hook through the distribution Lua-enabled engine
+        env:
+          FOXIDE_LIBMPV: /usr/lib/x86_64-linux-gnu/libmpv.so.2
+        run: |
+          cargo llvm-cov --workspace --features player-ui/desktop,player-render/gpu-integration,player-render/video-site-integration --locked --no-report -- --ignored native:: --nocapture --test-threads=1
       - name: Verify compositor with the same features without instrumentation
         shell: bash
         run: |
           set -o pipefail
           set +e
-          baseline_status=0
           for trial in {1..12}; do
             xvfb-run -a -s '-screen 0 1280x720x24' cargo test --workspace --features player-ui/desktop,player-render/gpu-integration --locked -- --ignored --nocapture --test-threads=1 > "results/local/video-normal-$trial.log" 2>&1
             status=$?
             echo "Compositor trial $trial: exit $status"
             cat "results/local/video-normal-$trial.log"
-            if [ "$status" -ne 0 ]; then baseline_status=$status; fi
+            if [ "$status" -ne 0 ]; then exit "$status"; fi
           done
           set -e
-          test "$baseline_status" -eq 0
       - name: Archive the actual embedded-art compositor pixels
         run: |
           ffmpeg -v error -y -i "$FOXIDE_ARTWORK_PROOF" results/local/artwork-proof.png
           ffmpeg -v error -y -i "$FOXIDE_SHADER_PROOF" results/local/shader-proof.png
-      - name: Reset coverage profiles before combining test passes
-        run: cargo llvm-cov clean --workspace
       - name: Verify reused texture invalidates cached layers without a native display
         run: cargo llvm-cov --workspace --features player-ui/desktop,player-render/gpu-integration --locked --no-report -- --test-threads=1
       - name: Verify actual composited orientation and changing video frames
@@ -96,11 +99,6 @@ jobs:
               assert struct.unpack('>II', data[16:24]) == expected
           PY
           xvfb-run -a -s '-screen 0 1280x720x24' cargo llvm-cov run -p player-ui --features player-ui/desktop,player-render/gpu-integration --bin foxide-desktop --locked --no-report -- --config results/local/startup-config.json --quit-after 2 --speed 1.5 --paused "$FOXIDE_RENDER_FIXTURE"
-      - name: Verify video-site hook through the distribution Lua-enabled engine
-        env:
-          FOXIDE_LIBMPV: /usr/lib/x86_64-linux-gnu/libmpv.so.2
-        run: |
-          cargo llvm-cov --workspace --features player-ui/desktop,player-render/gpu-integration,player-render/video-site-integration --locked --no-report -- --ignored native:: --nocapture --test-threads=1
       - name: Publish measured desktop and GPU coverage
         run: cargo llvm-cov report --fail-under-lines 90 --json --summary-only --output-path results/local/coverage-desktop-gpu.json
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
