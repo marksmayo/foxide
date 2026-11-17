@@ -237,6 +237,17 @@ fn load_fixture(engine: &Engine, name: &str) -> Snapshot {
         }
         thread::sleep(Duration::from_millis(20));
     }
+    if !snapshot.error.is_empty() {
+        eprintln!(
+            "Native fixture failure: exists={} vo={} ao={} error={}",
+            media.is_file(),
+            engine.api.get(c"vo"),
+            engine.api.get(c"ao"),
+            snapshot.error
+        );
+        #[cfg(feature = "gpu-integration")]
+        eprintln!("{}", engine.diagnostics.lock().unwrap().join(""));
+    }
     assert!(snapshot.error.is_empty(), "{}", snapshot.error);
     assert!(
         snapshot.loaded && snapshot.path.ends_with(name),
@@ -286,4 +297,148 @@ fn embedded_artwork_is_separate_from_video_controls_and_clears_on_file_change() 
             .iter()
             .any(|track| track.kind == "video" && track.selected)
     );
+}
+
+#[test]
+#[ignore = "Requires libmpv; a rejected optional control must preserve playback"]
+fn rejected_control_does_not_turn_playing_media_into_a_fatal_error() {
+    let engine = null_output_engine();
+    let before = load_fixture(&engine, "tracks.mkv");
+    engine
+        .command(vec![
+            "set".into(),
+            "foxide-unknown-fixture-option".into(),
+            "yes".into(),
+        ])
+        .unwrap();
+    let deadline = Instant::now() + Duration::from_secs(5);
+    let mut after = Snapshot::default();
+    while Instant::now() < deadline {
+        after = engine.snapshot().unwrap();
+        if !after.command_error.is_empty() {
+            break;
+        }
+        thread::sleep(Duration::from_millis(20));
+    }
+    assert!(
+        after.loaded,
+        "An unsupported optional control must not make valid playback unavailable: {}",
+        after.error
+    );
+    assert_eq!(after.path, before.path);
+    assert!(after.error.is_empty());
+    assert!(after.command_error.contains("Playback command failed"));
+    engine
+        .command(vec!["set".into(), "pause".into(), "yes".into()])
+        .unwrap();
+    let deadline = Instant::now() + Duration::from_secs(5);
+    while Instant::now() < deadline {
+        after = engine.snapshot().unwrap();
+        if after.command_error.is_empty() && after.paused {
+            break;
+        }
+        thread::sleep(Duration::from_millis(20));
+    }
+    assert!(after.loaded && after.paused && after.command_error.is_empty());
+}
+
+#[test]
+#[ignore = "Requires libmpv; rejected media loads must still be fatal"]
+fn invalid_load_remains_a_playback_error() {
+    let engine = null_output_engine();
+    engine
+        .command(vec![
+            "loadfile".into(),
+            "invalid\0media".into(),
+            "replace".into(),
+        ])
+        .unwrap();
+    let deadline = Instant::now() + Duration::from_secs(5);
+    let mut snapshot = Snapshot::default();
+    while Instant::now() < deadline {
+        snapshot = engine.snapshot().unwrap();
+        if !snapshot.error.is_empty() {
+            break;
+        }
+        thread::sleep(Duration::from_millis(20));
+    }
+    assert!(!snapshot.loaded && !snapshot.error.is_empty());
+    assert!(snapshot.command_error.is_empty());
+}
+
+#[test]
+#[ignore = "Requires libmpv; verifies lossless structured shader-list configuration"]
+fn selected_shader_paths_are_not_split_and_can_be_cleared() {
+    let engine = null_output_engine();
+    load_fixture(&engine, "tracks.mkv");
+    let path =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/invert,colors;fixture.glsl");
+    let shader = player_services::ShaderFile::new(&path).unwrap();
+    let expected = shader.path().to_string_lossy().into_owned();
+    engine.set_shaders(vec![shader]).unwrap();
+    let deadline = Instant::now() + Duration::from_secs(5);
+    while Instant::now() < deadline && engine.snapshot().unwrap().shader_count != 1 {
+        thread::sleep(Duration::from_millis(20));
+    }
+    assert_eq!(engine.snapshot().unwrap().shader_count, 1);
+    assert_eq!(
+        native_string_list(&engine.api, c"glsl-shaders"),
+        vec![expected]
+    );
+    engine.set_shaders(vec![]).unwrap();
+    let deadline = Instant::now() + Duration::from_secs(5);
+    while Instant::now() < deadline && engine.snapshot().unwrap().shader_count != 0 {
+        thread::sleep(Duration::from_millis(20));
+    }
+    assert_eq!(engine.snapshot().unwrap().shader_count, 0);
+    assert!(native_string_list(&engine.api, c"glsl-shaders").is_empty());
+    assert!(engine.snapshot().unwrap().loaded);
+}
+
+fn native_string_list(api: &Api, name: &std::ffi::CStr) -> Vec<String> {
+    // SAFETY: this test copies the returned native array before releasing it with
+    // the same library's allocator; it never stores pointers outside this scope.
+    unsafe {
+        let get = api
+            ._library
+            .get::<unsafe extern "C" fn(Handle, *const c_char, c_int, *mut c_void) -> c_int>(
+                b"mpv_get_property\0",
+            )
+            .unwrap();
+        let free = api
+            ._library
+            .get::<unsafe extern "C" fn(*mut Node)>(b"mpv_free_node_contents\0")
+            .unwrap();
+        let mut node = Node {
+            value: NodeValue { int64: 0 },
+            format: 0,
+        };
+        assert_eq!(
+            get(
+                api.handle,
+                name.as_ptr(),
+                6,
+                (&mut node as *mut Node).cast()
+            ),
+            0
+        );
+        assert_eq!(node.format, 7);
+        let list = &*node.value.list;
+        let values = if list.num == 0 {
+            &[]
+        } else {
+            std::slice::from_raw_parts(list.values, list.num as usize)
+        };
+        let result = values
+            .iter()
+            .map(|entry| {
+                assert_eq!(entry.format, 1);
+                CStr::from_ptr(entry.value.string)
+                    .to_string_lossy()
+                    .into_owned()
+            })
+            .collect();
+        free(&mut node);
+        result
+    }
 }

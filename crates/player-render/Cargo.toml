@@ -23,3 +23,7 @@ unsafe_op_in_unsafe_fn = "deny"
 [[test]]
 name = "artwork_compositor"
 required-features = ["gpu-integration"]
+
+[[test]]
+name = "shader_compositor"
+required-features = ["gpu-integration"]

@@ -74,3 +74,11 @@ Tests cover optional preferences/backward compatibility, helper validation, pers
 Audio files with an embedded cover display it in the normal canvas and compact music view through the existing shared GPU texture. Album-art tracks are distinguished from motion video: frame stepping stays disabled for music, and loading an audio file without artwork hides the previous image. Selected motion-video tracks are now correctly reported; the prior track filter incorrectly omitted all video tracks.
 
 Synthetic FLAC/Matroska fixtures cover native metadata. Headless desktop tests render the compact cover and verify stale-art removal. The hosted OpenGL test decodes the embedded asymmetric PNG and checks upright red/blue pixels after actual Slint composition, archiving an image proof. CPU readback exists only in this test; playback retains the shared-texture path. The feature remains pending until hosted acceptance passes.
+
+## User GPU shaders (acceptance pending)
+
+Choose **Video → GPU shaders → Load trusted shaders** to replace the session shader stack, or **Clear shader stack** to restore the normal renderer. Selection order is pipeline order. The information panel reports selection errors; engine compilation warnings appear in playback status without disabling playback. Files are not auto-loaded or persisted across launches.
+
+Only explicitly selected regular UTF-8 mpv hook files are accepted (at most eight, 1 MiB each). File checks and the native picker run away from the UI thread; completion posts one UI event rather than polling. Clearing invalidates a pending selection so its late result cannot re-enable shaders. The structured native array API preserves punctuation and platform path separators. This follows [mpv’s user shader interface](https://mpv.io/manual/stable/#options-glsl-shaders).
+
+Red/green tests cover file validation, native path preservation/reset, UI selection/errors/stale completion and rejected-control recovery. A separate hosted compositor test checks actual inverted pixels, a deliberate compile failure that preserves playback, and restored pixels after clearing. Gold remains pending that proof.

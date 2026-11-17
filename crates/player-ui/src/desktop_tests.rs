@@ -313,6 +313,13 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
         !ui.get_has_video(),
         "Audio-only playback must not enable frame/video controls"
     );
+    snapshot.command_error = "Unsupported optional renderer control".into();
+    refresh(&ui, &state, &snapshot, &mut previous);
+    assert!(ui.get_loaded() && state.borrow().loaded);
+    assert_eq!(ui.get_status(), "Unsupported optional renderer control");
+    snapshot.command_error.clear();
+    refresh(&ui, &state, &snapshot, &mut previous);
+    assert_eq!(ui.get_status(), "Playing · 1.00×");
     snapshot.has_artwork = true;
     refresh(&ui, &state, &snapshot, &mut previous);
     assert!(ui.get_has_artwork());
@@ -501,4 +508,78 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
             "Audio artwork must not enable {name}"
         );
     }
+    shader_ui::install(&ui, &None);
+    ui.invoke_clear_shaders();
+    assert_eq!(ui.get_shader_notice(), "Playback engine unavailable");
+    let applied_shaders = Rc::new(RefCell::new(Vec::<Vec<PathBuf>>::new()));
+    let recorded_shaders = applied_shaders.clone();
+    shader_ui::install_with_apply(
+        &ui,
+        Rc::new(move |files| {
+            recorded_shaders
+                .borrow_mut()
+                .push(files.iter().map(|file| file.path().to_path_buf()).collect());
+            Ok(())
+        }),
+    );
+    let shader_paths =
+        |paths: Vec<slint::SharedString>| slint::ModelRc::new(slint::VecModel::from(paths));
+    let pump_shaders = || {
+        let deadline = std::time::Instant::now() + Duration::from_secs(5);
+        while (ui.get_shader_notice().starts_with("Choose trusted")
+            || ui.get_shader_notice().contains("already open"))
+            && std::time::Instant::now() < deadline
+        {
+            if let Ok(event) = event_receiver.recv_timeout(Duration::from_millis(20)) {
+                event();
+            }
+        }
+        assert!(
+            !ui.get_shader_notice().starts_with("Choose trusted")
+                && !ui.get_shader_notice().contains("already open"),
+            "Shader validation must finish"
+        );
+    };
+    ui.invoke_load_shader_files(shader_paths(vec!["relative.glsl".into()]));
+    ui.invoke_load_shader_files(shader_paths(vec!["relative.glsl".into()]));
+    assert!(ui.get_shader_notice().contains("already open"));
+    pump_shaders();
+    assert!(ui.get_shader_notice().contains("absolute"));
+    assert!(applied_shaders.borrow().is_empty());
+    assert!(
+        ui.get_loaded(),
+        "Shader validation errors must preserve playback"
+    );
+    ui.invoke_load_shader_files(shader_paths(vec!["relative.glsl".into(); 9]));
+    pump_shaders();
+    assert!(ui.get_shader_notice().contains("eight"));
+    let shader_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../player-render/tests/fixtures/invert,colors;fixture.glsl");
+    ui.invoke_load_shader_files(shader_paths(vec![shader_path.to_str().unwrap().into()]));
+    pump_shaders();
+    assert!(ui.get_shader_notice().contains("Applying 1 shader"));
+    assert_eq!(
+        applied_shaders.borrow()[0],
+        vec![shader_path.canonicalize().unwrap()]
+    );
+    ui.set_panel("information".into());
+    capture_customization(&ui, &rendered_window, "shaders");
+    ui.invoke_clear_shaders();
+    assert!(applied_shaders.borrow().last().unwrap().is_empty());
+    for event in event_receiver.try_iter() {
+        event();
+    }
+    let before = applied_shaders.borrow().len();
+    ui.invoke_load_shader_files(shader_paths(vec![shader_path.to_str().unwrap().into()]));
+    ui.invoke_clear_shaders();
+    event_receiver.recv_timeout(Duration::from_secs(5)).unwrap()();
+    assert_eq!(
+        applied_shaders.borrow().len(),
+        before + 1,
+        "Clear must invalidate a pending selection; its late result cannot re-enable shaders"
+    );
+    assert!(applied_shaders.borrow().last().unwrap().is_empty());
+    shader_ui::install_with_apply(&ui, Rc::new(|_| Err("Renderer queue is full".into())));
+    ui.invoke_clear_shaders();
+    assert_eq!(ui.get_shader_notice(), "Renderer queue is full");
 }

@@ -11,3 +11,5 @@ Generate the cover with a binary PPM header `P6\n2 2\n255\n`, followed by RGB by
 ffmpeg -f lavfi -i color=c=red:s=16x16:r=10:d=1 -f lavfi -i sine=frequency=440:sample_rate=8000:duration=1 -map 0:v -map 1:a -c:v ffv1 -c:a pcm_s16le -metadata title="Foxide track metadata fixture" tracks.mkv
 ffmpeg -f lavfi -i sine=frequency=440:sample_rate=8000:duration=1 -i cover.ppm -map 0:a -map 1:v -c:a flac -sample_fmt s16 -c:v png -frames:v 1 -disposition:v attached_pic -metadata title="Foxide artwork fixture" -metadata artist="Foxide synthetic fixtures" artwork.flac
 ```
+
+The two GLSL fixtures are original synthetic test code: one inverts RGB at the mpv MAIN hook; one deliberately contains invalid syntax to test recoverable compiler errors. The punctuation in the valid shader filename checks structured path-list handling.

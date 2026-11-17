@@ -24,10 +24,6 @@ struct End {
     reason: c_int,
     error: c_int,
 }
-#[cfg(all(
-    test,
-    any(feature = "gpu-integration", feature = "video-site-integration")
-))]
 #[repr(C)]
 struct LogMessage {
     prefix: *const c_char,
@@ -61,6 +57,7 @@ pub(crate) struct Api {
     _library: Library,
     command: unsafe extern "C" fn(Handle, *const *const c_char) -> c_int,
     property: unsafe extern "C" fn(Handle, *const c_char) -> *mut c_char,
+    set_property: unsafe extern "C" fn(Handle, *const c_char, c_int, *mut c_void) -> c_int,
     free: unsafe extern "C" fn(*mut c_void),
     wait_event: unsafe extern "C" fn(Handle, f64) -> *const Event,
     destroy: unsafe extern "C" fn(Handle),
@@ -187,6 +184,10 @@ impl Api {
                     "mpv_get_property_string",
                     unsafe extern "C" fn(Handle, *const c_char) -> *mut c_char
                 ),
+                set_property: symbol!(
+                    "mpv_set_property",
+                    unsafe extern "C" fn(Handle, *const c_char, c_int, *mut c_void) -> c_int
+                ),
                 free: symbol!("mpv_free", unsafe extern "C" fn(*mut c_void)),
                 wait_event: symbol!(
                     "mpv_wait_event",
@@ -282,10 +283,6 @@ impl Api {
                 return Err("libmpv initialization failed".into());
             }
             api.initialized = true;
-            #[cfg(all(
-                test,
-                any(feature = "gpu-integration", feature = "video-site-integration")
-            ))]
             {
                 let logs = api
                     ._library
@@ -293,12 +290,60 @@ impl Api {
                         b"mpv_request_log_messages\0",
                     )
                     .map_err(|error| error.to_string())?;
-                logs(api.handle, c"debug".as_ptr());
+                logs(
+                    api.handle,
+                    if cfg!(test) {
+                        c"debug".as_ptr()
+                    } else {
+                        c"warn".as_ptr()
+                    },
+                );
             }
             Ok(api)
         }
     }
 
+    fn set_shaders(&self, shaders: &[player_services::ShaderFile]) -> Result<(), String> {
+        let strings = shaders
+            .iter()
+            .map(|shader| CString::new(shader.path().to_string_lossy().as_bytes()))
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|_| "Invalid shader path")?;
+        let mut values: Vec<Node> = strings
+            .iter()
+            .map(|value| Node {
+                value: NodeValue {
+                    string: value.as_ptr().cast_mut(),
+                },
+                format: 1,
+            })
+            .collect();
+        let mut list = NodeList {
+            num: values.len() as c_int,
+            values: values.as_mut_ptr(),
+            keys: std::ptr::null_mut(),
+        };
+        let mut node = Node {
+            value: NodeValue { list: &mut list },
+            format: 7,
+        };
+        // SAFETY: the STRING nodes in this NODE_ARRAY and all C strings live through
+        // this synchronous copy. An empty list clears all shaders. Native path-list
+        // parsing is bypassed, preserving commas, semicolons and drive letters.
+        let code = unsafe {
+            (self.set_property)(
+                self.handle,
+                c"glsl-shaders".as_ptr(),
+                6,
+                (&mut node as *mut Node).cast(),
+            )
+        };
+        if code < 0 {
+            Err(format!("Shader configuration rejected ({code})"))
+        } else {
+            Ok(())
+        }
+    }
     fn get(&self, name: &CStr) -> String {
         // SAFETY: only the control worker retrieves properties. Returned strings
         // are copied before mpv_free, using the same library's allocator.
@@ -378,14 +423,22 @@ pub struct Snapshot {
     pub muted: bool,
     pub hwdec: String,
     pub has_artwork: bool,
+    pub shader_count: usize,
     pub tracks: Arc<[Track]>,
+    /// A rejected control; playback remains available. Cleared by the next successful command.
+    pub command_error: String,
     pub error: String,
 }
+enum Request {
+    Command(Vec<String>),
+    Shaders(Vec<player_services::ShaderFile>),
+}
+
 pub struct Engine {
     pub(crate) api: Arc<Api>,
     pub(crate) ready: Arc<AtomicBool>,
     stop: Arc<AtomicBool>,
-    sender: SyncSender<Vec<String>>,
+    sender: SyncSender<Request>,
     snapshot: Arc<Mutex<Snapshot>>,
     #[cfg(all(test, feature = "gpu-integration"))]
     pub(crate) diagnostics: Arc<Mutex<Vec<String>>>,
@@ -407,7 +460,7 @@ impl Engine {
         let diagnostics = Arc::new(Mutex::new(Vec::<String>::new()));
         #[cfg(all(test, feature = "gpu-integration"))]
         let diagnostic_output = diagnostics.clone();
-        let (sender, receiver) = mpsc::sync_channel::<Vec<String>>(32);
+        let (sender, receiver) = mpsc::sync_channel::<Request>(32);
         let (client, active, stopped, output) =
             (api.clone(), ready.clone(), stop.clone(), snapshot.clone());
         thread::Builder::new()
@@ -417,19 +470,34 @@ impl Engine {
                 let mut tracks: Arc<[Track]> = Arc::from([]);
                 let mut has_artwork = false;
                 let mut error = String::new();
+                let mut command_error = String::new();
+                let mut shader_count = 0;
                 while !stopped.load(Ordering::Acquire) {
                     if !active.load(Ordering::Acquire) {
                         thread::sleep(Duration::from_millis(20));
                         continue;
                     }
                     match receiver.recv_timeout(Duration::from_millis(200)) {
-                        Ok(args) => {
-                            if args.first().is_some_and(|s| s == "loadfile") {
+                        Ok(Request::Shaders(shaders)) => {
+                            command_error.clear();
+                            match client.set_shaders(&shaders) {
+                                Ok(()) => shader_count = shaders.len(),
+                                Err(e) => command_error = e,
+                            }
+                        }
+                        Ok(Request::Command(args)) => {
+                            let loading = args.first().is_some_and(|s| s == "loadfile");
+                            if loading {
                                 error.clear();
                                 last_path.clear();
                             }
+                            command_error.clear();
                             if let Err(e) = client.send(&args) {
-                                error = e;
+                                if loading {
+                                    error = e;
+                                } else {
+                                    command_error = e;
+                                }
                             }
                             tracks = Arc::from([]);
                         }
@@ -458,6 +526,21 @@ impl Engine {
                                     {
                                         logs.push(text);
                                     }
+                                }
+                            }
+                            if (*event).kind == 2 && !(*event).data.is_null() {
+                                let message = &*((*event).data.cast::<LogMessage>());
+                                if message.log_level <= 30
+                                    && !message.prefix.is_null()
+                                    && !message.text.is_null()
+                                    && CStr::from_ptr(message.prefix)
+                                        .to_string_lossy()
+                                        .starts_with("vo/")
+                                {
+                                    command_error = format!(
+                                        "Renderer warning: {}",
+                                        CStr::from_ptr(message.text).to_string_lossy().trim()
+                                    );
                                 }
                             }
                             if (*event).kind == 7 && !(*event).data.is_null() {
@@ -521,7 +604,9 @@ impl Engine {
                         muted: client.get(c"mute") == "yes",
                         hwdec: client.get(c"hwdec-current"),
                         has_artwork,
+                        shader_count,
                         tracks: tracks.clone(),
+                        command_error: command_error.clone(),
                         error: error.clone(),
                     };
                     if let Ok(mut current) = output.lock() {
@@ -542,7 +627,16 @@ impl Engine {
     }
     pub fn command(&self, args: Vec<String>) -> Result<(), String> {
         self.sender
-            .try_send(args)
+            .try_send(Request::Command(args))
+            .map_err(|e| format!("Player is busy: {e}"))
+    }
+    /// Replace the session shader stack; only explicitly validated files are accepted.
+    pub fn set_shaders(&self, shaders: Vec<player_services::ShaderFile>) -> Result<(), String> {
+        if shaders.len() > 8 {
+            return Err("Choose at most eight shaders".into());
+        }
+        self.sender
+            .try_send(Request::Shaders(shaders))
             .map_err(|e| format!("Player is busy: {e}"))
     }
     pub fn snapshot(&self) -> Option<Snapshot> {

@@ -1,3 +1,4 @@
+mod shader_ui;
 use clap::Parser;
 use player_render::{Engine, Snapshot};
 use player_settings::Preferences;
@@ -247,7 +248,11 @@ fn refresh(
         }
         ui.set_volume(snapshot.volume as f32);
         ui.set_muted(snapshot.muted);
-        if newly_loaded || snapshot.paused != previous.paused || snapshot.speed != previous.speed {
+        if newly_loaded
+            || snapshot.paused != previous.paused
+            || snapshot.speed != previous.speed
+            || (!previous.command_error.is_empty() && snapshot.command_error.is_empty())
+        {
             ui.set_status(
                 format!(
                     "{} · {:.2}×",
@@ -257,6 +262,9 @@ fn refresh(
                 .into(),
             );
         }
+    }
+    if !snapshot.command_error.is_empty() && snapshot.command_error != previous.command_error {
+        ui.set_status(snapshot.command_error.clone().into());
     }
     if !snapshot.error.is_empty() {
         ui.set_status(snapshot.error.clone().into());
@@ -772,6 +780,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         )?;
     }
     install_controls(&ui, &state, &engine);
+    shader_ui::install(&ui, &engine);
     if let Some(engine) = &engine {
         for command in startup {
             engine.command(command)?;

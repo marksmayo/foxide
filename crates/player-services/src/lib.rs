@@ -10,3 +10,6 @@ pub use url::Url;
 
 mod video_sites;
 pub use video_sites::VideoSiteTool;
+
+mod shaders;
+pub use shaders::ShaderFile;

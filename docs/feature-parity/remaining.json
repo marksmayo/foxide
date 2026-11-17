@@ -265,8 +265,8 @@
       "id": "user_shaders",
       "name": "User GPU shader pipeline",
       "group": "Picture",
-      "stage": "queued",
-      "acceptance": "Needs explicit file loading, shader error handling and GPU acceptance; arbitrary GPU code is not zero risk."
+      "stage": "implemented-awaiting-hosted-acceptance",
+      "acceptance": "Explicit session shader selection/clearing, bounded off-thread validation, lossless native list API, stale-selection invalidation and nonfatal renderer warnings implemented. Native punctuation-path and headless frontend tests pass locally. Actual GPU apply/error/reset pixel acceptance is pending; no gold awarded yet."
     },
     {
       "id": "upnp_browse",

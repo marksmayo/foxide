@@ -1,0 +1,3 @@
+//!HOOK MAIN
+//!BIND HOOKED
+vec4 hook() { return FOXIDE_SHADER_SYNTAX_ERROR( ; }
