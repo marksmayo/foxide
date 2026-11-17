@@ -1,6 +1,6 @@
 # Feature parity implementation
 
-Foxide starts this work at 49 feature events without gold. The complete [acceptance checklist](remaining.json) preserves every event. This first batch implements three desktop events; the other 46 remain queued. Full parity is not claimed.
+Foxide starts this work at 49 feature events without gold. The complete [acceptance checklist](remaining.json) preserves every event. This first batch implements three desktop events; 46 still need acceptance, with radio-directory browsing now implemented for hosted verification. Full parity is not claimed.
 
 [Measured verification and limitations](verification.md).
 
@@ -50,3 +50,13 @@ Every item remains in the checklist until its frontend interaction, error/cancel
 - Tests cover malformed/oversized files, rejected edits, conflicting keys, repeat saves, save failure, defaults and restoration of the normal window size.
 
 Sixteen customization CPU benchmark cases extend the existing suite without changing its existing cases or regression thresholds. They measure configured key lookup, preference decoding/encoding and edits; they do not claim menu-to-pixel latency or battery efficiency.
+
+## Internet radio (acceptance pending)
+
+Open **Media → Internet radio**, enter a station name, choose **Search**, then **Play** beside a result. Playback uses the existing queue and media engine. Searches run away from the UI thread; Cancel or closing the panel invalidates pending results. A directory error leaves active playback alone. Station selections send a best-effort click notification to Radio Browser.
+
+The client uses the [Radio Browser API](https://docs.radio-browser.info/), discovers current mirrors, remembers the last successful mirror for the session and fetches fresh results for each search. Requests have response/time limits and use a directly launched system curl executable without a shell or working-directory executable search. No provider request runs at startup. Windows requires its system curl; macOS/Linux use /usr/bin/curl or /bin/curl. Missing curl produces a panel error. `--radio-directory HTTPS_ORIGIN` selects a compatible endpoint for testing; HTTP is restricted to literal loopback/localhost origins.
+
+Tests cover query encoding, station filtering, mirror failover/bounds/cache, malformed responses, real HTTP transport against a loopback fixture, helper argument preservation, output limits, timeout and cancellation. The desktop acceptance test drives search, selection, cancellation and provider failure through public callbacks and archives a radio panel preview. These fixtures do not prove live provider availability or stream decoding; the event retains its existing medal until acceptance completes.
+
+Two owner-provided Chromecasts and a Samsung TV are available for future receiver tests. TV protocol support remains unverified. No casting session has been started.

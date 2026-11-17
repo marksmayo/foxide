@@ -35,14 +35,14 @@
       "name": "Chromecast video output",
       "group": "Casting",
       "stage": "queued",
-      "acceptance": "Needs device discovery, receiver sessions and a real cast destination for acceptance."
+      "acceptance": "Needs discovery, receiver sessions and physical acceptance. Owner has two local Chromecast devices available; no device session started."
     },
     {
       "id": "airplay_video_output",
       "name": "AirPlay video output",
       "group": "Casting",
       "stage": "queued",
-      "acceptance": "Needs a platform sender integration and physical receiver validation."
+      "acceptance": "Needs platform sender integration and receiver validation. Owner has a Samsung TV; supported receiver protocols and model remain unverified."
     },
     {
       "id": "airplay_audio_receiver",
@@ -251,8 +251,8 @@
       "id": "radio_directory",
       "name": "Built-in internet-radio directory",
       "group": "Network",
-      "stage": "queued",
-      "acceptance": "Needs a sourced provider/catalog, network failure handling and provider-term review."
+      "stage": "implemented-awaiting-hosted-acceptance",
+      "acceptance": "Desktop search/select/play, bounded HTTPS directory client, mirror discovery/cache, cancellation and malformed-provider tests implemented. Cross-platform CI and live provider/stream acceptance pending; no gold awarded yet."
     },
     {
       "id": "icc_profiles",

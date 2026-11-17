@@ -1,4 +1,5 @@
 import { Slider, ScrollView, LineEdit, Palette, ComboBox } from "std-widgets.slint";
+export struct RadioRow { id: string, name: string, url: string, detail: string }
 export struct BindingRow { key: string, action: string }
 export global Appearance {
     in-out property <bool> light: false;
@@ -54,6 +55,16 @@ component FoxMark inherits Rectangle {
 }
 export component PlayerWindow inherits Window {
     init => { Palette.color-scheme = root.light-theme ? ColorScheme.light : ColorScheme.dark; }
+    in-out property <bool> radio-busy: false;
+    in-out property <string> radio-query;
+    in-out property <string> radio-error;
+    in-out property <[RadioRow]> radio-stations;
+    in-out property <string> active-radio-name;
+    in-out property <string> active-radio-url;
+    callback radio-search(string);
+    callback radio-play(string, string);
+    callback cancel-services();
+    changed panel => { if (root.panel != "radio") { root.cancel-services(); } }
     in-out property <bool> light-theme: false;
     in-out property <color> accent-color: #ef955f;
     in-out property <color> accent-text: #171a20;
@@ -111,6 +122,7 @@ export component PlayerWindow inherits Window {
     MenuBar {
         Menu { title: "Media";
             MenuItem { title: "Open files…"; activated => { root.action("open", 0); } }
+            MenuItem { title: "Internet radio…"; activated => { root.panel = "radio"; } }
             MenuItem { title: "Open URL…"; activated => { root.panel = "url"; } }
             MenuSeparator {}
             MenuItem { title: "Quit"; activated => { root.action("quit", 0); } }
@@ -270,16 +282,35 @@ export component PlayerWindow inherits Window {
     }
     if (root.panel != ""): Rectangle { background: #050a13bb;
         TouchArea { clicked => { root.panel = ""; } }
-        Rectangle { width: min(parent.width - 60px, 550px); height: root.panel == "preferences" ? min(parent.height - 30px, 620px) : root.panel == "url" ? 230px : 330px; x: (parent.width - self.width) / 2; y: (parent.height - self.height) / 2;
+        Rectangle { width: min(parent.width - 60px, 550px); height: root.panel == "preferences" || root.panel == "radio" ? min(parent.height - 30px, 620px) : root.panel == "url" ? 230px : 330px; x: (parent.width - self.width) / 2; y: (parent.height - self.height) / 2;
             background: Appearance.dialog; border-radius: 14px; border-width: 1px; border-color: Appearance.border;
             VerticalLayout { padding: 24px; spacing: 18px;
                 HorizontalLayout {
-                    Text { text: root.panel == "preferences" ? "Preferences" : root.panel == "url" ? "Open a network stream" : root.panel == "information" ? "Playback information" : root.panel == "shortcuts" ? "Keyboard shortcuts" : "Foxide"; color: Appearance.text; font-size: 20px; font-weight: 600; vertical-alignment: center; }
+                    Text { text: root.panel == "radio" ? "Internet radio" : root.panel == "preferences" ? "Preferences" : root.panel == "url" ? "Open a network stream" : root.panel == "information" ? "Playback information" : root.panel == "shortcuts" ? "Keyboard shortcuts" : "Foxide"; color: Appearance.text; font-size: 20px; font-weight: 600; vertical-alignment: center; }
                     ToolButton { label: "×"; description: "Close dialog"; clicked => { root.panel = ""; } }
                 }
                 if (root.panel == "url"): VerticalLayout { spacing: 14px;
                     LineEdit { text <=> root.url; placeholder-text: "https://… or rtsp://…"; accepted => { root.open-url(root.url); root.panel = ""; } }
                     ToolButton { label: "Open stream"; width: 130px; primary: true; clicked => { root.open-url(root.url); root.panel = ""; } }
+                }
+                if (root.panel == "radio"): VerticalLayout { spacing: 12px; vertical-stretch: 1;
+                    HorizontalLayout { spacing: 8px;
+                        LineEdit { text <=> root.radio-query; placeholder-text: "Search stations by name…"; accepted => { if (!root.radio-busy) { root.radio-search(root.radio-query); } } }
+                        ToolButton { label: "Search"; width: 75px; available: !root.radio-busy; clicked => { root.radio-search(root.radio-query); } }
+                        ToolButton { label: "Cancel"; width: 70px; available: root.radio-busy; clicked => { root.cancel-services(); } }
+                    }
+                    Text { text: root.radio-busy ? "Searching Radio Browser…" : root.radio-error; color: Appearance.secondary; wrap: word-wrap; }
+                    ScrollView { vertical-stretch: 1;
+                        VerticalLayout { spacing: 8px;
+                            for station in root.radio-stations: Rectangle { height: 65px; background: Appearance.sidebar; border-radius: 8px;
+                                HorizontalLayout { padding: 10px; spacing: 8px;
+                                    VerticalLayout { Text { text: station.name; color: Appearance.text; overflow: elide; } Text { text: station.detail; color: Appearance.muted; font-size: 11px; overflow: elide; } }
+                                    ToolButton { label: "Play"; width: 60px; primary: true; available: !root.radio-busy; clicked => { root.radio-play(station.url, station.id); } }
+                                }
+                            }
+                        }
+                    }
+                    Text { text: "Directory: Radio Browser · Streams supplied by their broadcasters"; color: Appearance.muted; font-size: 11px; wrap: word-wrap; }
                 }
                 if (root.panel == "preferences"): ScrollView { vertical-stretch: 1;
                     VerticalLayout { spacing: 12px; padding-right: 12px;
@@ -306,8 +337,8 @@ export component PlayerWindow inherits Window {
                     }
                 }
                 if (root.panel == "shortcuts"): ScrollView { vertical-stretch: 1; Text { text: root.shortcut-help + "\nEscape  —  Close dialog / leave fullscreen"; color: Appearance.secondary; wrap: word-wrap; } }
-                if (root.panel != "url" && root.panel != "preferences" && root.panel != "shortcuts"): Text { text: root.panel == "information" ? root.diagnostics : root.panel == "shortcuts" ? root.shortcut-help : "A little less between you and your media.\n\nFoxide desktop preview\nBuilt with Rust, Slint, and libmpv.\n\nPlayback and GPU diagnostics are available\nunder View → Playback information."; color: Appearance.secondary; wrap: word-wrap; font-size: 14px; }
-                if (root.panel != "preferences" && root.panel != "shortcuts"): Rectangle { vertical-stretch: 1; background: transparent; }
+                if (root.panel != "url" && root.panel != "preferences" && root.panel != "shortcuts" && root.panel != "radio"): Text { text: root.panel == "information" ? root.diagnostics : root.panel == "shortcuts" ? root.shortcut-help : "A little less between you and your media.\n\nFoxide desktop preview\nBuilt with Rust, Slint, and libmpv.\n\nPlayback and GPU diagnostics are available\nunder View → Playback information."; color: Appearance.secondary; wrap: word-wrap; font-size: 14px; }
+                if (root.panel != "preferences" && root.panel != "shortcuts" && root.panel != "radio"): Rectangle { vertical-stretch: 1; background: transparent; }
             }
         }
     }
