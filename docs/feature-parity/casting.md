@@ -1,6 +1,6 @@
 # Chromecast implementation checkpoint
 
-Chromecast output remains **unaccepted** and receives no feature medal. The isolated player-cast crate now has pinned control transport, receiver-restricted file serving and owned playback operations. A bounded session worker now keeps receiver I/O off the caller thread. Desktop discovery/pairing and physical display/audio acceptance remain.
+Chromecast output remains **unaccepted** and receives no feature medal. The isolated player-cast crate now has pinned control transport, receiver-restricted file serving and owned playback operations. A bounded session worker now keeps receiver I/O off the caller thread. Desktop discovery/pairing and physical audio acceptance remain; the owner has confirmed moving silent video on two receivers.
 
 ## Transport and trust
 
@@ -40,15 +40,15 @@ Red/green cases include missing protocol/pinning APIs, interim load acknowledgem
 
 The earlier transport checkpoint de1a4c3052e87baa43bd7ceefcfc648082bb0663 passed the [combined desktop/GPU coverage gate](https://github.com/marksmayo/foxide/actions/runs/44080423510) at **91.05%** (4,427/4,862 lines). That measured checkpoint predates the owned-session additions; their current CI results must be reviewed separately. Casting also has an independent 90% floor for the crate and each source file, reusing the already collected profiles.
 
-## Physical receiver acceptance: transport and controls passed
+## Physical receiver acceptance: silent video confirmed on two receivers
 
-Two owner receivers each fetched the selected silent H.264 test clip, reported PLAYING with an advancing clock, and acknowledged pause, seek, resume and owned stop. Each run served **2,460,206 bytes** to exactly one selected peer. Both tests passed again during an owner-requested viewing window. These are successful file-transfer/control checks, not TTFF, power or displayed-frame measurements. See [sanitized evidence](casting-device-acceptance.json).
+Two owner receivers each fetched the selected silent H.264 test clip, reported PLAYING with an advancing clock, and acknowledged pause, seek, resume and owned stop. Each run served **2,460,206 bytes** to exactly one selected peer. The protocol assertions passed again during an owner-requested viewing window, but the owner reported that the TV switched to Chromecast and no video was visible. That short test failed physical playback acceptance. These counters establish file-transfer/control behavior only; they are not visible-playback, TTFF or power evidence. See [sanitized evidence](casting-device-acceptance.json).
 
 The saved receiver certificates had changed since earlier inspection. Controls refused both changed certificates; explicit owner approval preceded re-pairing. No automatic trust replacement was added. The cause of the certificate changes is not established.
 
-The owner adjusted local firewall access before the successful checks. The agent signalled the temporary helper to finish. Device names, addresses, fingerprints, raw diagnostics and helper files stay in ignored local data. Visual confirmation remains pending, and the silent fixture provides no audio acceptance.
+The owner adjusted local firewall access before the successful checks. The agent signalled the temporary helper to finish. Device names, addresses, fingerprints, raw diagnostics and helper files stay in ignored local data. The owner subsequently confirmed moving video on both TVs in the longer run. The silent fixture provides no audio acceptance. The short control probe stopped approximately three seconds after starting media. A subsequent run on each receiver used a 90-second silent clip, sustained PLAYING/clock progress for a 30-second viewing window, and then tested controls and stopped. Both receivers maintained clock progress past 30 seconds, and the owner explicitly reported moving video on both TVs. The three-second test had an inadequate observation window; the successful long-window test changed no production playback, transport or file-server code. This narrows the finding to the acceptance procedure; it does not establish the exact TV wake-up timing.
 
-The opt-in device test requires the device-integration feature plus explicit FOXIDE_CAST_TARGET, FOXIDE_CAST_PIN and FOXIDE_CAST_MEDIA values. It remains ignored in ordinary/offline/hosted tests. The default refuses foreground takeover. For an explicitly requested repeat, FOXIDE_CAST_REPEAT_DEFAULT_APP=1 permits replacing only the default Cast media receiver; other applications remain protected. Optional FOXIDE_CAST_TRACE output uses fixed protocol labels and routing-match flags, not identifiers, URLs or tokens.
+The opt-in device test requires the device-integration feature plus explicit FOXIDE_CAST_TARGET, FOXIDE_CAST_PIN and FOXIDE_CAST_MEDIA values. It remains ignored in ordinary/offline/hosted tests. The default refuses foreground takeover. For an explicitly requested repeat, FOXIDE_CAST_REPEAT_DEFAULT_APP=1 permits replacing only the default Cast media receiver; other applications remain protected. FOXIDE_CAST_VIEW_SECONDS selects a bounded (up to 120 seconds) viewing window, **30 seconds by default**. Clips with a known duration must last at least five seconds longer than the window. Setting zero explicitly runs only the quick protocol checks. During it the probe checks continuing PLAYING state and clock progress. Output explicitly labels protocol success separately from unverified physical playback. Optional FOXIDE_CAST_TRACE output uses fixed protocol labels and routing-match flags, not identifiers, URLs or tokens.
 
 ## Engineering commands
 
@@ -62,6 +62,6 @@ Inspection does not grant trust. The read-only diagnostic does not launch applic
 
 ## Remaining work
 
-Desktop discovery, a visible trust decision, integration with playback controls, complete disconnect/failure cleanup, receiver codec compatibility and physical display/audio acceptance remain. The feature total stays at **8/49 accepted**, with **41 gaps remaining**.
+Desktop discovery, a visible trust decision, integration with playback controls, complete disconnect/failure cleanup, receiver codec compatibility beyond the tested H.264 clip and physical audio acceptance remain. The feature total stays at **8/49 accepted**, with **41 gaps remaining**.
 
 References: [Chromium envelope definition](https://chromium.googlesource.com/chromium/src.git/+/4d6bb36e3fcfb9742b6428e43a8e5df12681d0d0/components/cast_channel/proto/cast_channel.proto), [Rustls verifier contract](https://docs.rs/rustls/0.23.46/rustls/client/danger/trait.ServerCertVerifier.html), [Google media messages](https://developers.google.com/cast/docs/media/messages), and [Chromium transport-endpoint fix](https://chromium.googlesource.com/openscreen/+/8ef06d904f52e5595f0fbfd80ae93c123b3a35d5).

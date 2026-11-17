@@ -11,38 +11,72 @@
   "receivers": [
     {
       "anonymous_receiver": 1,
-      "successful_runs": 2,
       "selected_peer_connections_per_run": 1,
       "valid_file_requests_per_run": 1,
       "bytes_served_per_run": 2460206,
       "load": true,
-      "playing": true,
       "clock_advanced": true,
       "pause": true,
       "seek": true,
       "resume": true,
       "owned_stop": true,
-      "visual_confirmation": "pending",
-      "audio_acceptance": "not_tested"
+      "visual_confirmation": "not_confirmed",
+      "audio_acceptance": "not_tested",
+      "protocol_control_runs": 2,
+      "receiver_reported_playing": true
     },
     {
       "anonymous_receiver": 2,
-      "successful_runs": 2,
       "selected_peer_connections_per_run": 1,
       "valid_file_requests_per_run": 1,
       "bytes_served_per_run": 2460206,
       "load": true,
-      "playing": true,
       "clock_advanced": true,
       "pause": true,
       "seek": true,
       "resume": true,
       "owned_stop": true,
-      "visual_confirmation": "pending",
-      "audio_acceptance": "not_tested"
+      "visual_confirmation": "not_confirmed",
+      "audio_acceptance": "not_tested",
+      "protocol_control_runs": 2,
+      "receiver_reported_playing": true
     }
   ],
   "repeat_probe_note": "Repeat flag permits only the default media receiver application; the second pass used the local worker/probe checkpoint, with the playback/transport/origin implementation unchanged from source_commit.",
   "certificate_trust": "Changed pins refused; new pins saved only after explicit owner re-pair approval.",
-  "feature_medal_awarded": false
+  "feature_medal_awarded": false,
+  "physical_playback_verdict": "owner_confirmed_visible_silent_video_on_both_receivers",
+  "visual_observation_scope": "The short test failed owner observation. After a 30-second window on each receiver, the owner explicitly confirmed moving video on both TVs.",
+  "longer_probe": {
+    "source_base_commit": "55f62312f09dcf8e4d868cee48675b8294659de5",
+    "probe_changes": "Local viewing-window extension; production playback/transport/origin unchanged.",
+    "video": "H.264 Constrained Baseline level 3.0, 640x360, yuv420p, 90 seconds",
+    "audio": false,
+    "viewing_seconds": 30,
+    "receivers": [
+      {
+        "anonymous_receiver": 1,
+        "protocol_checks": "passed",
+        "clock_reached_seconds": 30.891233,
+        "connections": 2,
+        "valid_file_requests": 2,
+        "bytes_served": 19650446,
+        "visual_confirmation": "owner_confirmed_moving_video",
+        "audio_acceptance": "not_tested_silent_fixture"
+      },
+      {
+        "anonymous_receiver": 2,
+        "protocol_checks": "passed",
+        "clock_reached_seconds": 30.883455,
+        "connections": 1,
+        "valid_file_requests": 1,
+        "bytes_served": 19584910,
+        "visual_confirmation": "owner_confirmed_moving_video",
+        "audio_acceptance": "not_tested_silent_fixture"
+      }
+    ],
+    "owner_observation": "Both TVs showed moving video"
+  },
+  "short_probe_owner_observation": "TV switched to Chromecast but no video was visible during the repeated short test.",
+  "limitation": "This accepts visible silent-video playback and protocol controls on the two tested receivers only. Desktop integration, audio, other codecs and performance/power acceptance remain untested."
 }
