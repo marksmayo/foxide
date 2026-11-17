@@ -35,3 +35,9 @@ The [hosted compositor run](https://github.com/marksmayo/foxide/actions/runs/440
 ![Actual hosted shared-texture artwork output](images/artwork-native.png)
 
 The later null-output metadata coverage pass exposed an unsupported new V_FFV1 tag in its fixture on the older distribution engine. The fixture now uses lossless H.264; this checkpoint is not a claim that the aggregate coverage job passed. Shader inversion also produced the expected cyan/yellow output before the deliberate compile-error test exposed a missing render-API warning prefix, corrected in 0d936a03. Both features remain unawarded until their current acceptance is green.
+
+## Accepted native/services checkpoint 8e1abde
+
+[All-platform live provider acceptance](https://github.com/marksmayo/foxide/actions/runs/44062762763), public desktop callbacks, native metadata/protocol tests, packaging, CodSpeed and the [actual compositor/coverage run](https://github.com/marksmayo/foxide/actions/runs/44062770533) pass. The latter measured **90.85%** (3,872/4,262 lines). Real music audio advances its clock, selected decoder properties identify actual decoders, and page identity survives extraction. Twelve trials verify shared-texture artwork, shader inversion, compile-error reporting and restored pixels.
+
+Internet-radio directory, video-site URL playback with an explicit helper, embedded artwork and user GPU shaders are now accepted: **7 of 49 original gaps closed; 42 remain**. Exact per-platform evidence is in acceptance.json. Null-output live checks and software-GL compositor proofs do not certify native GPU power, physical audio routes or displayed TTFF. Existing competitive performance measurements were preserved byte-for-byte during the feature-score refresh.

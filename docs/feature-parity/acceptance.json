@@ -1,0 +1,136 @@
+{
+  "source_commit": "8e1abde4e2785bb62495774ce6abac2c1ece57df",
+  "accepted_utc": "2026-11-17",
+  "scope": "Feature acceptance; not competitive performance or physical power/display certification.",
+  "jobs": {
+    "CodSpeed Performance Analysis": "https://github.com/marksmayo/foxide/runs/133971153717",
+    "draft-release": "https://github.com/marksmayo/foxide/actions/runs/44062770646/job/133970599793",
+    "GitGuardian Security Checks": "https://github.com/marksmayo/foxide/runs/133968673368",
+    "native-helper (windows-latest)": "https://github.com/marksmayo/foxide/actions/runs/44062770675/job/133968635223",
+    "native-helper (macos-latest)": "https://github.com/marksmayo/foxide/actions/runs/44062770675/job/133968635164",
+    "native-controls": "https://github.com/marksmayo/foxide/actions/runs/44062770731/job/133968634778",
+    "native-helper (ubuntu-latest)": "https://github.com/marksmayo/foxide/actions/runs/44062770675/job/133968634770",
+    "Run benchmarks": "https://github.com/marksmayo/foxide/actions/runs/44062770677/job/133968634470",
+    "rust-and-sampler (windows-latest)": "https://github.com/marksmayo/foxide/actions/runs/44062770543/job/133968634196",
+    "package": "https://github.com/marksmayo/foxide/actions/runs/44062770646/job/133968634182",
+    "rust-and-sampler (ubuntu-latest)": "https://github.com/marksmayo/foxide/actions/runs/44062770543/job/133968634178",
+    "desktop (windows-latest)": "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634166",
+    "desktop (ubuntu-latest)": "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634078",
+    "orientation-and-cadence": "https://github.com/marksmayo/foxide/actions/runs/44062770533/job/133968633957",
+    "rust-and-sampler (macos-latest)": "https://github.com/marksmayo/foxide/actions/runs/44062770543/job/133968633886",
+    "desktop (macos-latest)": "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968633735",
+    "live-providers (windows-latest)": "https://github.com/marksmayo/foxide/actions/runs/44062762763/job/133968605546",
+    "live-providers (macos-latest)": "https://github.com/marksmayo/foxide/actions/runs/44062762763/job/133968605502",
+    "live-providers (ubuntu-latest)": "https://github.com/marksmayo/foxide/actions/runs/44062762763/job/133968605061"
+  },
+  "coverage": {
+    "scope": "Full feature-gated desktop/GPU Rust",
+    "covered_lines": 3872,
+    "total_lines": 4262,
+    "line_percent": 90.84936649460347
+  },
+  "live": {
+    "macos": {
+      "radio_directory": {
+        "feature": "radio_directory",
+        "proof": {
+          "audio_decoder": "flac",
+          "clock_advanced": true,
+          "directory_results": 50,
+          "displayed_frame_measured": false,
+          "output": "null",
+          "source_identity_preserved": true,
+          "stream_host": "stream.radioparadise.com",
+          "video_decoder": "",
+          "video_output_width": 0
+        },
+        "source": "https://docs.radio-browser.info/",
+        "status": "accepted"
+      },
+      "youtube_urls": {
+        "feature": "youtube_urls",
+        "proof": {
+          "audio_decoder": "mp3float",
+          "clock_advanced": true,
+          "displayed_frame_measured": false,
+          "output": "null",
+          "source_identity_preserved": true,
+          "video_decoder": "mpeg4",
+          "video_output_width": 1280
+        },
+        "source": "https://archive.org/details/BigBuckBunny_328",
+        "status": "accepted"
+      }
+    },
+    "linux": {
+      "radio_directory": {
+        "feature": "radio_directory",
+        "proof": {
+          "audio_decoder": "flac",
+          "clock_advanced": true,
+          "directory_results": 50,
+          "displayed_frame_measured": false,
+          "output": "null",
+          "source_identity_preserved": true,
+          "stream_host": "stream.radioparadise.com",
+          "video_decoder": "",
+          "video_output_width": 0
+        },
+        "source": "https://docs.radio-browser.info/",
+        "status": "accepted"
+      },
+      "youtube_urls": {
+        "feature": "youtube_urls",
+        "proof": {
+          "audio_decoder": "mp3float",
+          "clock_advanced": true,
+          "displayed_frame_measured": false,
+          "output": "null",
+          "source_identity_preserved": true,
+          "video_decoder": "mpeg4",
+          "video_output_width": 1280
+        },
+        "source": "https://archive.org/details/BigBuckBunny_328",
+        "status": "accepted"
+      }
+    },
+    "windows": {
+      "radio_directory": {
+        "feature": "radio_directory",
+        "proof": {
+          "audio_decoder": "flac",
+          "clock_advanced": true,
+          "directory_results": 50,
+          "displayed_frame_measured": false,
+          "output": "null",
+          "source_identity_preserved": true,
+          "stream_host": "stream.radioparadise.com",
+          "video_decoder": "",
+          "video_output_width": 0
+        },
+        "source": "https://docs.radio-browser.info/",
+        "status": "accepted"
+      },
+      "youtube_urls": {
+        "feature": "youtube_urls",
+        "proof": {
+          "audio_decoder": "aac",
+          "clock_advanced": true,
+          "displayed_frame_measured": false,
+          "output": "null",
+          "source_identity_preserved": true,
+          "video_decoder": "h264",
+          "video_output_width": 1280
+        },
+        "source": "https://archive.org/details/BigBuckBunny_328",
+        "status": "accepted"
+      }
+    }
+  },
+  "compositor": {
+    "trials": 12,
+    "artwork": true,
+    "shader_apply_error_clear": true,
+    "audio_fixture_clock_verified": true
+  }
+}

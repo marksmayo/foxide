@@ -1,6 +1,6 @@
 {
   "provenance": {
-    "generated_utc": "2026-11-16T22:47:15.866398+00:00",
+    "generated_utc": "2026-11-17T10:23:27.630304+00:00",
     "source_commit": null,
     "run_url": null,
     "fields": [
@@ -123,7 +123,7 @@
             "audio"
           ],
           "note": "Windowed fields use Foxide Desktop with libmpv; software-only fields use the Foxide CLI wrapper around external mpv. These are separate benchmark cohorts.",
-          "feature_gold": 34,
+          "feature_gold": 38,
           "performance_gold": 8,
           "performance_silver": 23,
           "performance_bronze": 11
@@ -3140,7 +3140,8 @@
             "mpv": "gold",
             "mpc-hc": "gold",
             "smplayer": "gold",
-            "kmplayer": "gold"
+            "kmplayer": "gold",
+            "foxide": "gold"
           },
           "claims": [
             {
@@ -3190,10 +3191,17 @@
             {
               "player": "foxide",
               "feature": "youtube_urls",
-              "status": "planned",
-              "sources": [],
-              "note": "No accepted Foxide desktop implementation for this event; no medal.",
-              "research_batch": "desktop-2026-11-16"
+              "status": "supported",
+              "sources": [
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634166",
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968633735",
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634078",
+                "https://github.com/marksmayo/foxide/actions/runs/44062762763",
+                "https://github.com/marksmayo/foxide/blob/8e1abde4e2785bb62495774ce6abac2c1ece57df/crates/player-ui/ui/player.slint"
+              ],
+              "note": "Video-site URLs through an explicitly selected trusted yt-dlp helper. Native split-stream/header tests and a real Internet Archive page decoded audio/video on all three platforms; other sites remain dependent on the helper and provider availability.",
+              "research_batch": "foxide-native-services-2026-11-17",
+              "checked_utc": "2026-11-17"
             }
           ],
           "applicable": [
@@ -3654,7 +3662,8 @@
           ],
           "research_batch": "desktop-2026-11-16",
           "awards": {
-            "wmp-modern": "gold"
+            "wmp-modern": "gold",
+            "foxide": "gold"
           },
           "claims": [
             {
@@ -3671,10 +3680,17 @@
             {
               "player": "foxide",
               "feature": "music_artwork",
-              "status": "planned",
-              "sources": [],
-              "note": "No accepted Foxide desktop implementation for this event; no medal.",
-              "research_batch": "desktop-2026-11-16"
+              "status": "supported",
+              "sources": [
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634166",
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968633735",
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634078",
+                "https://github.com/marksmayo/foxide/actions/runs/44062770533/job/133968633957",
+                "https://github.com/marksmayo/foxide/blob/8e1abde4e2785bb62495774ce6abac2c1ece57df/crates/player-ui/ui/player.slint"
+              ],
+              "note": "Embedded music artwork in normal and compact desktop views, cleared on file changes. Real FLAC audio/clock and native metadata passed on all platforms; actual shared-texture compositor pixels verified on Linux.",
+              "research_batch": "foxide-native-services-2026-11-17",
+              "checked_utc": "2026-11-17"
             }
           ],
           "applicable": [
@@ -4692,7 +4708,8 @@
           ],
           "research_batch": "desktop-2026-11-16",
           "awards": {
-            "foobar2000": "gold"
+            "foobar2000": "gold",
+            "foxide": "gold"
           },
           "claims": [
             {
@@ -4709,10 +4726,17 @@
             {
               "player": "foxide",
               "feature": "radio_directory",
-              "status": "planned",
-              "sources": [],
-              "note": "No accepted Foxide desktop implementation for this event; no medal.",
-              "research_batch": "desktop-2026-11-16"
+              "status": "supported",
+              "sources": [
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634166",
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968633735",
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634078",
+                "https://github.com/marksmayo/foxide/actions/runs/44062762763",
+                "https://github.com/marksmayo/foxide/blob/8e1abde4e2785bb62495774ce6abac2c1ece57df/crates/player-ui/ui/player.slint"
+              ],
+              "note": "Desktop directory search, station selection/play and cancellation. Live search returned 50 stations and a returned FLAC stream decoded with an advancing clock on Windows/macOS/Linux.",
+              "research_batch": "foxide-native-services-2026-11-17",
+              "checked_utc": "2026-11-17"
             }
           ],
           "applicable": [
@@ -4859,7 +4883,8 @@
           ],
           "research_batch": "desktop-2026-11-16",
           "awards": {
-            "mpv": "gold"
+            "mpv": "gold",
+            "foxide": "gold"
           },
           "claims": [
             {
@@ -4876,10 +4901,17 @@
             {
               "player": "foxide",
               "feature": "user_shaders",
-              "status": "planned",
-              "sources": [],
-              "note": "No accepted Foxide desktop implementation for this event; no medal.",
-              "research_batch": "desktop-2026-11-16"
+              "status": "supported",
+              "sources": [
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634166",
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968633735",
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634078",
+                "https://github.com/marksmayo/foxide/actions/runs/44062770533/job/133968633957",
+                "https://github.com/marksmayo/foxide/blob/8e1abde4e2785bb62495774ce6abac2c1ece57df/crates/player-ui/ui/player.slint"
+              ],
+              "note": "Explicit session GPU shader selection/reset with bounded off-thread validation, lossless native paths, stale-result invalidation and nonfatal errors. Desktop callbacks/native configuration passed on all platforms; actual inversion, compile-error handling and restored pixels verified on Linux.",
+              "research_batch": "foxide-native-services-2026-11-17",
+              "checked_utc": "2026-11-17"
             }
           ],
           "applicable": [
@@ -7378,7 +7410,7 @@
           "details": "sampled-playback-unverified"
         }
       },
-      "research_date": "2026-11-16",
+      "research_date": "2026-11-17",
       "omitted_universal_features": []
     },
     "macos": {
@@ -7396,7 +7428,7 @@
             "audio"
           ],
           "note": "Windowed fields use Foxide Desktop with libmpv; software-only fields use the Foxide CLI wrapper around external mpv. These are separate benchmark cohorts.",
-          "feature_gold": 33,
+          "feature_gold": 37,
           "performance_gold": 2,
           "performance_silver": 8,
           "performance_bronze": 4
@@ -9883,7 +9915,8 @@
           "research_batch": "desktop-2026-11-16",
           "awards": {
             "mpv": "gold",
-            "smplayer": "gold"
+            "smplayer": "gold",
+            "foxide": "gold"
           },
           "claims": [
             {
@@ -9911,10 +9944,17 @@
             {
               "player": "foxide",
               "feature": "youtube_urls",
-              "status": "planned",
-              "sources": [],
-              "note": "No accepted Foxide desktop implementation for this event; no medal.",
-              "research_batch": "desktop-2026-11-16"
+              "status": "supported",
+              "sources": [
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634166",
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968633735",
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634078",
+                "https://github.com/marksmayo/foxide/actions/runs/44062762763",
+                "https://github.com/marksmayo/foxide/blob/8e1abde4e2785bb62495774ce6abac2c1ece57df/crates/player-ui/ui/player.slint"
+              ],
+              "note": "Video-site URLs through an explicitly selected trusted yt-dlp helper. Native split-stream/header tests and a real Internet Archive page decoded audio/video on all three platforms; other sites remain dependent on the helper and provider availability.",
+              "research_batch": "foxide-native-services-2026-11-17",
+              "checked_utc": "2026-11-17"
             }
           ],
           "applicable": [
@@ -10364,15 +10404,24 @@
             "video"
           ],
           "research_batch": "desktop-2026-11-16",
-          "awards": {},
+          "awards": {
+            "foxide": "gold"
+          },
           "claims": [
             {
               "player": "foxide",
               "feature": "music_artwork",
-              "status": "planned",
-              "sources": [],
-              "note": "No accepted Foxide desktop implementation for this event; no medal.",
-              "research_batch": "desktop-2026-11-16"
+              "status": "supported",
+              "sources": [
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634166",
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968633735",
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634078",
+                "https://github.com/marksmayo/foxide/actions/runs/44062770533/job/133968633957",
+                "https://github.com/marksmayo/foxide/blob/8e1abde4e2785bb62495774ce6abac2c1ece57df/crates/player-ui/ui/player.slint"
+              ],
+              "note": "Embedded music artwork in normal and compact desktop views, cleared on file changes. Real FLAC audio/clock and native metadata passed on all platforms; actual shared-texture compositor pixels verified on Linux.",
+              "research_batch": "foxide-native-services-2026-11-17",
+              "checked_utc": "2026-11-17"
             }
           ],
           "applicable": [
@@ -11267,7 +11316,8 @@
           ],
           "research_batch": "desktop-2026-11-16",
           "awards": {
-            "foobar2000": "gold"
+            "foobar2000": "gold",
+            "foxide": "gold"
           },
           "claims": [
             {
@@ -11284,10 +11334,17 @@
             {
               "player": "foxide",
               "feature": "radio_directory",
-              "status": "planned",
-              "sources": [],
-              "note": "No accepted Foxide desktop implementation for this event; no medal.",
-              "research_batch": "desktop-2026-11-16"
+              "status": "supported",
+              "sources": [
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634166",
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968633735",
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634078",
+                "https://github.com/marksmayo/foxide/actions/runs/44062762763",
+                "https://github.com/marksmayo/foxide/blob/8e1abde4e2785bb62495774ce6abac2c1ece57df/crates/player-ui/ui/player.slint"
+              ],
+              "note": "Desktop directory search, station selection/play and cancellation. Live search returned 50 stations and a returned FLAC stream decoded with an advancing clock on Windows/macOS/Linux.",
+              "research_batch": "foxide-native-services-2026-11-17",
+              "checked_utc": "2026-11-17"
             }
           ],
           "applicable": [
@@ -11425,7 +11482,8 @@
           ],
           "research_batch": "desktop-2026-11-16",
           "awards": {
-            "mpv": "gold"
+            "mpv": "gold",
+            "foxide": "gold"
           },
           "claims": [
             {
@@ -11442,10 +11500,17 @@
             {
               "player": "foxide",
               "feature": "user_shaders",
-              "status": "planned",
-              "sources": [],
-              "note": "No accepted Foxide desktop implementation for this event; no medal.",
-              "research_batch": "desktop-2026-11-16"
+              "status": "supported",
+              "sources": [
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634166",
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968633735",
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634078",
+                "https://github.com/marksmayo/foxide/actions/runs/44062770533/job/133968633957",
+                "https://github.com/marksmayo/foxide/blob/8e1abde4e2785bb62495774ce6abac2c1ece57df/crates/player-ui/ui/player.slint"
+              ],
+              "note": "Explicit session GPU shader selection/reset with bounded off-thread validation, lossless native paths, stale-result invalidation and nonfatal errors. Desktop callbacks/native configuration passed on all platforms; actual inversion, compile-error handling and restored pixels verified on Linux.",
+              "research_batch": "foxide-native-services-2026-11-17",
+              "checked_utc": "2026-11-17"
             }
           ],
           "applicable": [
@@ -12902,7 +12967,7 @@
           "details": "sampled-playback-unverified"
         }
       },
-      "research_date": "2026-11-16",
+      "research_date": "2026-11-17",
       "omitted_universal_features": [
         {
           "id": "subtitle_tracks",
@@ -13046,7 +13111,7 @@
             "audio"
           ],
           "note": "Windowed fields use Foxide Desktop with libmpv; software-only fields use the Foxide CLI wrapper around external mpv. These are separate benchmark cohorts.",
-          "feature_gold": 32,
+          "feature_gold": 36,
           "performance_gold": 17,
           "performance_silver": 15,
           "performance_bronze": 6
@@ -14791,7 +14856,8 @@
           "research_batch": "desktop-2026-11-16",
           "awards": {
             "mpv": "gold",
-            "smplayer": "gold"
+            "smplayer": "gold",
+            "foxide": "gold"
           },
           "claims": [
             {
@@ -14819,10 +14885,17 @@
             {
               "player": "foxide",
               "feature": "youtube_urls",
-              "status": "planned",
-              "sources": [],
-              "note": "No accepted Foxide desktop implementation for this event; no medal.",
-              "research_batch": "desktop-2026-11-16"
+              "status": "supported",
+              "sources": [
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634166",
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968633735",
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634078",
+                "https://github.com/marksmayo/foxide/actions/runs/44062762763",
+                "https://github.com/marksmayo/foxide/blob/8e1abde4e2785bb62495774ce6abac2c1ece57df/crates/player-ui/ui/player.slint"
+              ],
+              "note": "Video-site URLs through an explicitly selected trusted yt-dlp helper. Native split-stream/header tests and a real Internet Archive page decoded audio/video on all three platforms; other sites remain dependent on the helper and provider availability.",
+              "research_batch": "foxide-native-services-2026-11-17",
+              "checked_utc": "2026-11-17"
             }
           ],
           "applicable": [
@@ -15131,15 +15204,24 @@
             "video"
           ],
           "research_batch": "desktop-2026-11-16",
-          "awards": {},
+          "awards": {
+            "foxide": "gold"
+          },
           "claims": [
             {
               "player": "foxide",
               "feature": "music_artwork",
-              "status": "planned",
-              "sources": [],
-              "note": "No accepted Foxide desktop implementation for this event; no medal.",
-              "research_batch": "desktop-2026-11-16"
+              "status": "supported",
+              "sources": [
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634166",
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968633735",
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634078",
+                "https://github.com/marksmayo/foxide/actions/runs/44062770533/job/133968633957",
+                "https://github.com/marksmayo/foxide/blob/8e1abde4e2785bb62495774ce6abac2c1ece57df/crates/player-ui/ui/player.slint"
+              ],
+              "note": "Embedded music artwork in normal and compact desktop views, cleared on file changes. Real FLAC audio/clock and native metadata passed on all platforms; actual shared-texture compositor pixels verified on Linux.",
+              "research_batch": "foxide-native-services-2026-11-17",
+              "checked_utc": "2026-11-17"
             }
           ],
           "applicable": [
@@ -15883,15 +15965,24 @@
             "video"
           ],
           "research_batch": "desktop-2026-11-16",
-          "awards": {},
+          "awards": {
+            "foxide": "gold"
+          },
           "claims": [
             {
               "player": "foxide",
               "feature": "radio_directory",
-              "status": "planned",
-              "sources": [],
-              "note": "No accepted Foxide desktop implementation for this event; no medal.",
-              "research_batch": "desktop-2026-11-16"
+              "status": "supported",
+              "sources": [
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634166",
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968633735",
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634078",
+                "https://github.com/marksmayo/foxide/actions/runs/44062762763",
+                "https://github.com/marksmayo/foxide/blob/8e1abde4e2785bb62495774ce6abac2c1ece57df/crates/player-ui/ui/player.slint"
+              ],
+              "note": "Desktop directory search, station selection/play and cancellation. Live search returned 50 stations and a returned FLAC stream decoded with an advancing clock on Windows/macOS/Linux.",
+              "research_batch": "foxide-native-services-2026-11-17",
+              "checked_utc": "2026-11-17"
             }
           ],
           "applicable": [
@@ -16004,7 +16095,8 @@
           ],
           "research_batch": "desktop-2026-11-16",
           "awards": {
-            "mpv": "gold"
+            "mpv": "gold",
+            "foxide": "gold"
           },
           "claims": [
             {
@@ -16021,10 +16113,17 @@
             {
               "player": "foxide",
               "feature": "user_shaders",
-              "status": "planned",
-              "sources": [],
-              "note": "No accepted Foxide desktop implementation for this event; no medal.",
-              "research_batch": "desktop-2026-11-16"
+              "status": "supported",
+              "sources": [
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634166",
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968633735",
+                "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634078",
+                "https://github.com/marksmayo/foxide/actions/runs/44062770533/job/133968633957",
+                "https://github.com/marksmayo/foxide/blob/8e1abde4e2785bb62495774ce6abac2c1ece57df/crates/player-ui/ui/player.slint"
+              ],
+              "note": "Explicit session GPU shader selection/reset with bounded off-thread validation, lossless native paths, stale-result invalidation and nonfatal errors. Desktop callbacks/native configuration passed on all platforms; actual inversion, compile-error handling and restored pixels verified on Linux.",
+              "research_batch": "foxide-native-services-2026-11-17",
+              "checked_utc": "2026-11-17"
             }
           ],
           "applicable": [
@@ -18061,7 +18160,7 @@
           "details": "No native executable found; packaged-app/account/Store activation may need a dedicated adapter."
         }
       },
-      "research_date": "2026-11-16",
+      "research_date": "2026-11-17",
       "omitted_universal_features": [
         {
           "id": "audio_tracks",

@@ -62,8 +62,8 @@
       "id": "youtube_urls",
       "name": "Video-site URL playback",
       "group": "Network",
-      "stage": "implemented-awaiting-hosted-acceptance",
-      "acceptance": "Explicit trusted yt-dlp helper selection/persistence and mpv native hook configuration implemented. Native selected-helper/split-video-audio/header/decoder acceptance passed on Windows, macOS and Linux at 4c3dd798. Live-site acceptance remains pending; no gold awarded yet."
+      "stage": "accepted",
+      "acceptance": "Accepted at 8e1abde4e2785bb62495774ce6abac2c1ece57df: public desktop callbacks on all platforms, native metadata/protocol tests, live provider/decoder proof where applicable and actual compositor pixel proof. See acceptance.json for exact scope and jobs."
     },
     {
       "id": "extensions",
@@ -111,8 +111,8 @@
       "id": "music_artwork",
       "name": "Music playback artwork view",
       "group": "Library",
-      "stage": "implemented-awaiting-hosted-acceptance",
-      "acceptance": "Embedded FLAC artwork fixture, selected-video/album-art metadata separation, normal/compact artwork presentation and stale-art clearing implemented. Real native metadata and headless composition tests pass locally; shared-GPU texture compositor proof is pending on the hosted OpenGL runner. No gold awarded yet."
+      "stage": "accepted",
+      "acceptance": "Accepted at 8e1abde4e2785bb62495774ce6abac2c1ece57df: public desktop callbacks on all platforms, native metadata/protocol tests, live provider/decoder proof where applicable and actual compositor pixel proof. See acceptance.json for exact scope and jobs."
     },
     {
       "id": "library_metadata",
@@ -251,8 +251,8 @@
       "id": "radio_directory",
       "name": "Built-in internet-radio directory",
       "group": "Network",
-      "stage": "implemented-awaiting-hosted-acceptance",
-      "acceptance": "Desktop search/select/play, bounded HTTPS directory client, mirror discovery/cache, cancellation and malformed-provider tests implemented. Cross-platform CI and live provider/stream acceptance pending; no gold awarded yet."
+      "stage": "accepted",
+      "acceptance": "Accepted at 8e1abde4e2785bb62495774ce6abac2c1ece57df: public desktop callbacks on all platforms, native metadata/protocol tests, live provider/decoder proof where applicable and actual compositor pixel proof. See acceptance.json for exact scope and jobs."
     },
     {
       "id": "icc_profiles",
@@ -265,8 +265,8 @@
       "id": "user_shaders",
       "name": "User GPU shader pipeline",
       "group": "Picture",
-      "stage": "implemented-awaiting-hosted-acceptance",
-      "acceptance": "Explicit session shader selection/clearing, bounded off-thread validation, lossless native list API, stale-selection invalidation and nonfatal renderer warnings implemented. Native punctuation-path and headless frontend tests pass locally. Actual GPU apply/error/reset pixel acceptance is pending; no gold awarded yet."
+      "stage": "accepted",
+      "acceptance": "Accepted at 8e1abde4e2785bb62495774ce6abac2c1ece57df: public desktop callbacks on all platforms, native metadata/protocol tests, live provider/decoder proof where applicable and actual compositor pixel proof. See acceptance.json for exact scope and jobs."
     },
     {
       "id": "upnp_browse",
@@ -347,8 +347,8 @@
     }
   ],
   "baseline_gap_count": 49,
-  "accepted_count": 3,
-  "remaining_count": 46,
+  "accepted_count": 7,
+  "remaining_count": 42,
   "implementation_commit": "f957f4da08af3a4a1171f3ac5f5475068ba6d887",
   "acceptance_jobs": {
     "linux": "https://github.com/marksmayo/foxide/actions/runs/43972156451/job/133666803073",
