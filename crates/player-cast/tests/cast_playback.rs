@@ -465,13 +465,15 @@ fn waits_for_confirmed_playback_after_the_receivers_intermediate_loading_status(
             value["playerState"] = json!("IDLE");
             value["extendedStatus"] = json!({"playerState":"LOADING"});
         })?;
-        Message::json(
-            "app-transport",
-            "sender-0",
-            MEDIA,
-            json!({"type":"MEDIA_STATUS","requestId":0,"status":[media(&url,"PLAYING",0.3)]}),
-        )?
-        .write(tls)?;
+        for state in ["BUFFERING", "PLAYING"] {
+            Message::json(
+                "app-transport",
+                "sender-0",
+                MEDIA,
+                json!({"type":"MEDIA_STATUS","requestId":0,"status":[media(&url,state,0.3)]}),
+            )?
+            .write(tls)?;
+        }
         tls.flush()
     });
     let playback =
@@ -500,6 +502,164 @@ fn explicit_takeover_and_paused_start_require_the_requested_options() {
     };
     let playback = CastPlayback::start_file(&file.path, address, pin, options).unwrap();
     assert_eq!(playback.last_status().state, CastState::Paused);
+    drop(playback);
+    worker.join().unwrap().unwrap();
+}
+
+#[test]
+fn reports_clock_updates_and_stops_cleanly_after_media_has_ended() {
+    let file = FileFixture::new();
+    let (address, pin, worker) = server(|tls| {
+        let url = begin(tls)?;
+        ownership(tls, &url, "PLAYING", 1.5)?;
+        for _ in 0..2 {
+            let query = command(tls, "receiver-0", RECEIVER, "GET_STATUS")?;
+            reply(
+                tls,
+                "receiver-0",
+                RECEIVER,
+                &query,
+                "RECEIVER_STATUS",
+                apps("owned-session"),
+            )?;
+            let query = command(tls, "app-transport", MEDIA, "GET_STATUS")?;
+            Message::json(
+                "app-transport",
+                "sender-0",
+                MEDIA,
+                json!({"type":"MEDIA_STATUS","requestId":query["requestId"],"status":[]}),
+            )?
+            .write(tls)?;
+            tls.flush()?;
+        }
+        assert!(
+            Message::read(tls).is_err(),
+            "sent STOP after playback had already ended"
+        );
+        Ok(())
+    });
+    let mut playback =
+        CastPlayback::start_file(&file.path, address, pin, CastOptions::default()).unwrap();
+    let status = playback.status().unwrap();
+    assert_eq!(status.position, 1.5);
+    assert_eq!(status.duration, Some(20.0));
+    let ended = playback.status().unwrap();
+    assert_eq!(ended.state, CastState::Idle);
+    playback.stop().unwrap();
+    worker.join().unwrap().unwrap();
+}
+
+#[test]
+fn rejects_malformed_or_failed_load_telemetry_without_declaring_playback_ready() {
+    let corruptions: [fn(&mut Value); 7] = [
+        |v| v["playerState"] = json!("UNKNOWN"),
+        |v| {
+            v["playerState"] = json!("IDLE");
+            v["idleReason"] = json!("ERROR");
+        },
+        |v| v["currentTime"] = json!(-1),
+        |v| v["media"]["duration"] = json!("invalid"),
+        |v| v["media"]["duration"] = json!(-1),
+        |v| v["mediaSessionId"] = json!(0),
+        |v| {
+            v["playerState"] = json!("IDLE");
+            v["idleReason"] = json!("FINISHED");
+        },
+    ];
+    for corrupt in corruptions {
+        let file = FileFixture::new();
+        let (address, pin, worker) = server(move |tls| {
+            begin_with(tls, corrupt)?;
+            Ok(())
+        });
+        assert!(
+            CastPlayback::start_file(&file.path, address, pin, CastOptions::default()).is_err()
+        );
+        worker.join().unwrap().unwrap();
+    }
+}
+
+#[test]
+fn rejects_invalid_application_identities_before_connecting_or_sharing_media() {
+    for application in [
+        json!({"appId":"wrong-app","sessionId":"s","transportId":"app-transport"}),
+        json!({"appId":"CC1AD845","transportId":"app-transport"}),
+        json!({"appId":"CC1AD845","sessionId":"bad\nsession","transportId":"app-transport"}),
+        json!({"appId":"CC1AD845","sessionId":"s","transportId":""}),
+    ] {
+        let file = FileFixture::new();
+        let (address, pin, worker) = server(move |tls| {
+            command(tls, "receiver-0", CONNECTION, "CONNECT")?;
+            let query = command(tls, "receiver-0", RECEIVER, "GET_STATUS")?;
+            reply(
+                tls,
+                "receiver-0",
+                RECEIVER,
+                &query,
+                "RECEIVER_STATUS",
+                json!({}),
+            )?;
+            let launch = command(tls, "receiver-0", RECEIVER, "LAUNCH")?;
+            reply(
+                tls,
+                "receiver-0",
+                RECEIVER,
+                &launch,
+                "RECEIVER_STATUS",
+                json!({"applications":[application]}),
+            )?;
+            assert!(
+                Message::read(tls).is_err(),
+                "connected to an invalid application identity"
+            );
+            Ok(())
+        });
+        assert_eq!(
+            CastPlayback::start_file(&file.path, address, pin, CastOptions::default())
+                .err()
+                .unwrap()
+                .kind(),
+            io::ErrorKind::InvalidData
+        );
+        worker.join().unwrap().unwrap();
+    }
+}
+
+#[test]
+fn refuses_transport_controls_when_playback_ended_during_the_ownership_check() {
+    let file = FileFixture::new();
+    let (address, pin, worker) = server(|tls| {
+        begin(tls)?;
+        let query = command(tls, "receiver-0", RECEIVER, "GET_STATUS")?;
+        reply(
+            tls,
+            "receiver-0",
+            RECEIVER,
+            &query,
+            "RECEIVER_STATUS",
+            apps("owned-session"),
+        )?;
+        let query = command(tls, "app-transport", MEDIA, "GET_STATUS")?;
+        Message::json(
+            "app-transport",
+            "sender-0",
+            MEDIA,
+            json!({"type":"MEDIA_STATUS","requestId":query["requestId"],"status":[]}),
+        )?
+        .write(tls)?;
+        tls.flush()?;
+        assert!(
+            Message::read(tls).is_err(),
+            "sent PAUSE after playback had ended"
+        );
+        Ok(())
+    });
+    let mut playback =
+        CastPlayback::start_file(&file.path, address, pin, CastOptions::default()).unwrap();
+    assert_eq!(
+        playback.pause().unwrap_err().kind(),
+        io::ErrorKind::NotConnected
+    );
     drop(playback);
     worker.join().unwrap().unwrap();
 }

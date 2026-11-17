@@ -34,11 +34,11 @@ TransferStats reports accepted connections, selected-peer connections, valid fil
 
 ## Verification
 
-Forty-five automatic cases span the envelope codec, real loopback TLS, file HTTP serving and owned playback. The playback fixture fetches actual selected-file bytes through the restricted origin before confirming its simulated player state.
+Forty-nine automatic cases span the envelope codec, real loopback TLS, file HTTP serving and owned playback. The playback fixture fetches actual selected-file bytes through the restricted origin before confirming its simulated player state.
 
 Red/green cases include missing protocol/pinning APIs, interim load acknowledgement before readiness, transport heartbeat routing, optional media updates, invalid clocks and explicit receiver errors. Other cases cover changed certificates, inspection without application commands, unrelated/excessive responses, overall deadlines under trickled input, byte ranges, wrong peers/hosts/tokens, path replacement, concurrent seeks and shutdown during a slow transfer. Foreground takeover defaults and lost application/media ownership have negative tests.
 
-The earlier transport checkpoint de1a4c3052e87baa43bd7ceefcfc648082bb0663 passed the [combined desktop/GPU coverage gate](https://github.com/marksmayo/foxide/actions/runs/44080423510) at **91.05%** (4,427/4,862 lines). That measured checkpoint predates the owned-session additions; their current CI results must be reviewed separately.
+The earlier transport checkpoint de1a4c3052e87baa43bd7ceefcfc648082bb0663 passed the [combined desktop/GPU coverage gate](https://github.com/marksmayo/foxide/actions/runs/44080423510) at **91.05%** (4,427/4,862 lines). That measured checkpoint predates the owned-session additions; their current CI results must be reviewed separately. Casting also has an independent 90% floor for the crate and each source file, reusing the already collected profiles.
 
 ## Physical receiver acceptance: pending
 

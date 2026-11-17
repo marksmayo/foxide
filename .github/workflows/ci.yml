@@ -36,6 +36,8 @@ jobs:
           tool: cargo-llvm-cov@0.9.1
       - name: Enforce Rust workspace line coverage
         run: cargo llvm-cov --workspace --locked --fail-under-lines 90 --json --summary-only --output-path results/local/coverage-rust.json
+      - name: Enforce casting coverage independently for every source file
+        run: cargo llvm-cov report --package player-cast --fail-under-lines 90 --fail-under-file-lines 90 --json --summary-only --output-path results/local/coverage-cast.json
       - name: Enforce policy coverage and report coverage for every Python script
         shell: bash
         run: |
