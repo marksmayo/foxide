@@ -63,7 +63,7 @@
       "name": "Video-site URL playback",
       "group": "Network",
       "stage": "implemented-awaiting-hosted-acceptance",
-      "acceptance": "Explicit trusted yt-dlp helper selection/persistence and mpv native hook configuration implemented. Desktop callbacks pass locally. Native helper/HTTP-header/decoder acceptance is running on hosted Windows/macOS/Linux; local mpv subprocess initialization failed. Live-site acceptance remains pending; no gold awarded."
+      "acceptance": "Explicit trusted yt-dlp helper selection/persistence and mpv native hook configuration implemented. Native selected-helper/split-video-audio/header/decoder acceptance passed on Windows, macOS and Linux at 4c3dd798. Live-site acceptance remains pending; no gold awarded yet."
     },
     {
       "id": "extensions",

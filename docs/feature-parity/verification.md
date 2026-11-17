@@ -23,3 +23,7 @@ The README retains previously collected playback measurements and their original
 ## Audit checkpoint a31fb55
 
 [Hosted desktop/GPU coverage](https://github.com/marksmayo/foxide/actions/runs/44007076549) measured **90.605%** (3,115/3,438 lines), including real desktop startup/shutdown, normal/compact previews and compositor tests. The 90% aggregate gate passed without source exclusions. CodSpeed passed at this checkpoint after the single-pass statistics change. The later video-site implementation requires its own new verification; these numbers are not a claim for later commits. The Windows loopback HTTP fixture subsequently received an explicit blocking-mode/partial-read correction.
+
+## Video-site protocol checkpoint 4c3dd798
+
+[Native helper acceptance](https://github.com/marksmayo/foxide/actions/runs/44011195496) passed on Windows, macOS and Linux: an explicitly selected helper with spaces/commas in its filename returned separate video/audio streams; mpv forwarded the HTTP headers and initialized both decoders through an internal restart. This is deterministic protocol acceptance, not a claim of live-site availability. The compositor job hit an upstream FFmpeg-header incompatibility after ubuntu-latest advanced; the pinned mpv regression build now uses ubuntu-24.04, matching the independent control job.

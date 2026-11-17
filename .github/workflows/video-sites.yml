@@ -44,7 +44,7 @@ jobs:
           python scripts/install-libmpv.py
           if ($LASTEXITCODE -ne 0) { throw 'Verified libmpv installation failed' }
           "FOXIDE_LIBMPV=$((Resolve-Path tools/libmpv/libmpv-2.dll).Path)" >> $env:GITHUB_ENV
-      - name: Verify the selected helper, hook, HTTP headers and actual audio decode
+      - name: Verify the selected helper, hook, HTTP headers and actual video/audio decode
         shell: bash
         run: |
           set -o pipefail
