@@ -95,6 +95,7 @@ export component PlayerWindow inherits Window {
     in-out property <image> video-frame;
     in-out property <bool> loaded: false;
     in-out property <bool> has-video: false;
+    in-out property <bool> has-artwork: false;
     in-out property <bool> paused: false;
     in-out property <bool> queue-visible: false;
     in-out property <bool> fullscreen-mode: false;
@@ -116,8 +117,8 @@ export component PlayerWindow inherits Window {
     in-out property <[TrackRow]> subtitle-tracks;
     in-out property <string> panel;
     in-out property <string> url;
-    out property <float> video-width: root.compact-mode ? 1 : screen.width / 1px;
-    out property <float> video-height: root.compact-mode ? 1 : screen.height / 1px;
+    out property <float> video-width: root.compact-mode ? (root.loaded && root.has-artwork ? 56 : 1) : screen.width / 1px;
+    out property <float> video-height: root.compact-mode ? (root.loaded && root.has-artwork ? 56 : 1) : screen.height / 1px;
     callback action(string, float);
     callback open-url(string);
     callback files-picked([string], bool);
@@ -219,7 +220,10 @@ export component PlayerWindow inherits Window {
         }
         if (root.compact-mode): Rectangle { height: 104px; background: Appearance.background;
             HorizontalLayout { padding: 18px; spacing: 16px;
-                FoxMark { width: 56px; height: 56px; }
+                Rectangle { width: 56px; height: 56px; background: transparent;
+                    if (root.loaded && root.has-artwork): Image { source: root.video-frame; width: parent.width; height: parent.height; image-fit: contain; }
+                    if (!root.loaded || !root.has-artwork): FoxMark { width: 56px; height: 56px; }
+                }
                 VerticalLayout { alignment: center; spacing: 6px;
                     Text { text: root.media-title == "" ? "Foxide Music" : root.media-title; color: Appearance.text; font-size: 20px; font-weight: 600; overflow: elide; }
                     Text { text: root.loaded ? root.status : "Open music from the Media menu"; color: Appearance.muted; font-size: 12px; overflow: elide; }
@@ -246,7 +250,11 @@ export component PlayerWindow inherits Window {
             Rectangle { visible: !root.compact-mode; background: Appearance.canvas;
                 VerticalLayout { padding: root.fullscreen-mode ? 0px : 20px; spacing: 0px;
                     screen := Rectangle { background: root.loaded ? #080e17 : Appearance.screen; border-radius: 12px; clip: true; vertical-stretch: 1;
-                        Image { source: root.video-frame; image-fit: contain; visible: root.loaded; }
+                        Image { source: root.video-frame; width: parent.width; height: parent.height; image-fit: contain; visible: root.loaded && (root.has-video || root.has-artwork); }
+                        if (root.loaded && !root.has-video && !root.has-artwork): VerticalLayout { alignment: center; spacing: 16px;
+                            FoxMark { width: 72px; height: 72px; horizontal-stretch: 0; }
+                            Text { text: root.media-title == "" ? "Audio playback" : root.media-title; color: Appearance.text; font-size: 20px; horizontal-alignment: center; overflow: elide; }
+                        }
                         if (!root.loaded): VerticalLayout { alignment: center; spacing: 16px;
                             Image { source: @image-url("../assets/foxide.webp"); height: min(280px, screen.height * 0.5); image-fit: contain; }
                             Text { text: "Open something good."; color: Appearance.text; font-size: 29px; font-weight: 600; horizontal-alignment: center; }

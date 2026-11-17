@@ -263,8 +263,20 @@ fn refresh(
         ui.set_loaded(false);
         state.borrow_mut().loaded = false;
     }
+    ui.set_has_artwork(
+        ui.get_loaded()
+            && snapshot.loaded
+            && snapshot.has_artwork
+            && expected.as_deref() == Some(snapshot.path.as_str())
+            && snapshot.error.is_empty(),
+    );
     if snapshot.tracks != previous.tracks {
-        ui.set_has_video(snapshot.tracks.iter().any(|track| track.kind == "video"));
+        ui.set_has_video(
+            snapshot
+                .tracks
+                .iter()
+                .any(|track| track.kind == "video" && track.selected),
+        );
         let model = |kind| {
             ModelRc::new(VecModel::from(
                 snapshot
@@ -575,6 +587,11 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
     let (weak, controller, playback) = (ui.as_weak(), state.clone(), engine.clone());
     ui.on_action(move |name, value| {
         let Some(ui) = weak.upgrade() else { return };
+        if matches!(name.as_str(), "frame-step" | "frame-back-step")
+            && (!ui.get_loaded() || !ui.get_has_video())
+        {
+            return;
+        }
         let action = match name.as_str() {
             "url" | "preferences" => {
                 ui.set_panel(name);

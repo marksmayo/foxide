@@ -313,6 +313,61 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
         !ui.get_has_video(),
         "Audio-only playback must not enable frame/video controls"
     );
+    snapshot.has_artwork = true;
+    refresh(&ui, &state, &snapshot, &mut previous);
+    assert!(ui.get_has_artwork());
+    ui.invoke_toggle_compact();
+    assert_eq!(ui.get_video_width(), 56.0);
+    assert_eq!(ui.get_video_height(), 56.0);
+    let mut art = slint::SharedPixelBuffer::<slint::Rgb8Pixel>::new(8, 8);
+    art.make_mut_slice()
+        .fill(slint::Rgb8Pixel { r: 255, g: 0, b: 0 });
+    ui.set_video_frame(slint::Image::from_rgb8(art));
+    let size = ui.window().size();
+    let mut pixels = vec![slint::Rgb8Pixel::default(); (size.width * size.height) as usize];
+    ui.window().request_redraw();
+    rendered_window.draw_if_needed(|renderer| {
+        renderer.render(&mut pixels, size.width as usize);
+    });
+    capture_customization(&ui, &rendered_window, "artwork");
+    let red_pixels = pixels
+        .iter()
+        .filter(|p| p.r > 240 && p.g < 10 && p.b < 10)
+        .count();
+    assert!(
+        red_pixels > 2500,
+        "Compact mode must actually draw the artwork: {red_pixels} red pixels"
+    );
+    snapshot.has_artwork = false;
+    refresh(&ui, &state, &snapshot, &mut previous);
+    assert!(!ui.get_has_artwork());
+    assert_eq!(ui.get_video_width(), 1.0);
+    pixels.fill(slint::Rgb8Pixel::default());
+    ui.window().request_redraw();
+    rendered_window.draw_if_needed(|renderer| {
+        renderer.render(&mut pixels, size.width as usize);
+    });
+    assert!(
+        !pixels.iter().any(|p| p.r > 240 && p.g < 10 && p.b < 10),
+        "Artwork from the previous file must disappear"
+    );
+    ui.invoke_toggle_compact();
+    let mut tracks = snapshot.tracks.to_vec();
+    tracks.push(player_render::Track {
+        id: 2,
+        kind: "video".into(),
+        label: "Video".into(),
+        selected: false,
+    });
+    snapshot.tracks = tracks.into();
+    refresh(&ui, &state, &snapshot, &mut previous);
+    assert!(
+        !ui.get_has_video(),
+        "An unselected video track must not enable frame controls"
+    );
+    Arc::make_mut(&mut snapshot.tracks)[1].selected = true;
+    refresh(&ui, &state, &snapshot, &mut previous);
+    assert!(ui.get_has_video());
     update_queue(&ui, &state.borrow());
     assert_eq!(ui.get_queue().row_count(), 1);
     ui.set_queue_filter("missing".into());
@@ -433,4 +488,17 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
     let before = ui.get_status();
     ui.invoke_action("unknown-action".into(), 0.0);
     assert_eq!(ui.get_status(), before);
+    controls.borrow_mut().confirm_loaded(120.0);
+    ui.set_loaded(true);
+    ui.set_has_video(false);
+    ui.set_has_artwork(true);
+    ui.set_status("Playing audio".into());
+    for name in ["frame-step", "frame-back-step"] {
+        ui.invoke_action(name.into(), 0.0);
+        assert_eq!(
+            ui.get_status(),
+            "Playing audio",
+            "Audio artwork must not enable {name}"
+        );
+    }
 }

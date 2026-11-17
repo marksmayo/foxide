@@ -44,12 +44,12 @@ jobs:
           python scripts/install-libmpv.py
           if ($LASTEXITCODE -ne 0) { throw 'Verified libmpv installation failed' }
           "FOXIDE_LIBMPV=$((Resolve-Path tools/libmpv/libmpv-2.dll).Path)" >> $env:GITHUB_ENV
-      - name: Verify the selected helper, hook, HTTP headers and actual video/audio decode
+      - name: Verify native helper, video/audio decode and artwork metadata
         shell: bash
         run: |
           set -o pipefail
           mkdir -p results/local
-          cargo test -p player-render --features video-site-integration --lib --locked video_site_hook -- --ignored --nocapture 2>&1 | tee results/local/video-site-acceptance.log
+          cargo test -p player-render --features video-site-integration --lib --locked native:: -- --ignored --nocapture 2>&1 | tee results/local/video-site-acceptance.log
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:

@@ -377,6 +377,7 @@ pub struct Snapshot {
     pub volume: f64,
     pub muted: bool,
     pub hwdec: String,
+    pub has_artwork: bool,
     pub tracks: Arc<[Track]>,
     pub error: String,
 }
@@ -414,6 +415,7 @@ impl Engine {
             .spawn(move || {
                 let mut last_path = String::new();
                 let mut tracks: Arc<[Track]> = Arc::from([]);
+                let mut has_artwork = false;
                 let mut error = String::new();
                 while !stopped.load(Ordering::Acquire) {
                     if !active.load(Ordering::Acquire) {
@@ -472,10 +474,15 @@ impl Engine {
                     let path = client.get(c"path");
                     if path != last_path || tracks.is_empty() {
                         let mut next_tracks = Vec::new();
+                        has_artwork = false;
                         let count = client.number(c"track-list/count").clamp(0.0, 256.0) as u32;
                         for i in 0..count {
                             let kind = client.track_property(i, "type");
-                            if kind != "audio" && kind != "sub" {
+                            if !matches!(kind.as_str(), "audio" | "sub" | "video") {
+                                continue;
+                            }
+                            if kind == "video" && client.track_property(i, "albumart") == "yes" {
+                                has_artwork |= client.track_property(i, "selected") == "yes";
                                 continue;
                             }
                             let id = client
@@ -513,6 +520,7 @@ impl Engine {
                         volume: client.number(c"volume"),
                         muted: client.get(c"mute") == "yes",
                         hwdec: client.get(c"hwdec-current"),
+                        has_artwork,
                         tracks: tracks.clone(),
                         error: error.clone(),
                     };

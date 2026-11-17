@@ -111,8 +111,8 @@
       "id": "music_artwork",
       "name": "Music playback artwork view",
       "group": "Library",
-      "stage": "queued",
-      "acceptance": "May already be available through the engine, but requires an embedded-art audio fixture and composited-image proof."
+      "stage": "implemented-awaiting-hosted-acceptance",
+      "acceptance": "Embedded FLAC artwork fixture, selected-video/album-art metadata separation, normal/compact artwork presentation and stale-art clearing implemented. Real native metadata and headless composition tests pass locally; shared-GPU texture compositor proof is pending on the hosted OpenGL runner. No gold awarded yet."
     },
     {
       "id": "library_metadata",

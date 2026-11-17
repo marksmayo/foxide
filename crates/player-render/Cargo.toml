@@ -19,3 +19,7 @@ serde_json = { workspace = true, optional = true }
 
 [lints.rust]
 unsafe_op_in_unsafe_fn = "deny"
+
+[[test]]
+name = "artwork_compositor"
+required-features = ["gpu-integration"]

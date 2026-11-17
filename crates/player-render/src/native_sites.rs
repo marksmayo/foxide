@@ -201,3 +201,89 @@ fn video_site_hook_uses_only_the_selected_helper_and_preserves_stream_headers() 
         "HTTP headers were lost"
     );
 }
+
+fn null_output_engine() -> Engine {
+    let engine = Engine::new().unwrap();
+    engine
+        .command(vec!["set".into(), "vo".into(), "null".into()])
+        .unwrap();
+    engine
+        .command(vec!["set".into(), "ao".into(), "null".into()])
+        .unwrap();
+    engine.ready.store(true, Ordering::Release);
+    engine
+}
+fn load_fixture(engine: &Engine, name: &str) -> Snapshot {
+    let media = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures")
+        .join(name);
+    engine
+        .command(vec![
+            "loadfile".into(),
+            media.to_str().unwrap().into(),
+            "replace".into(),
+        ])
+        .unwrap();
+    let deadline = Instant::now() + Duration::from_secs(10);
+    let mut snapshot = Snapshot::default();
+    while Instant::now() < deadline {
+        snapshot = engine.snapshot().unwrap();
+        if !snapshot.error.is_empty()
+            || (snapshot.loaded
+                && snapshot.path.ends_with(name)
+                && snapshot.tracks.iter().any(|track| track.kind == "audio"))
+        {
+            break;
+        }
+        thread::sleep(Duration::from_millis(20));
+    }
+    assert!(snapshot.error.is_empty(), "{}", snapshot.error);
+    assert!(
+        snapshot.loaded && snapshot.path.ends_with(name),
+        "Requested fixture must load before metadata is accepted"
+    );
+    snapshot
+}
+
+#[test]
+#[ignore = "Requires libmpv; exercises real decoding with null output and no window"]
+fn selected_video_tracks_reach_the_frontend_metadata() {
+    let engine = null_output_engine();
+    let snapshot = load_fixture(&engine, "tracks.mkv");
+    assert!(
+        snapshot
+            .tracks
+            .iter()
+            .any(|track| track.kind == "video" && track.selected),
+        "A selected video track must enable video-only frontend controls"
+    );
+}
+
+#[test]
+#[ignore = "Requires libmpv; validates the selected embedded artwork track"]
+fn embedded_artwork_is_separate_from_video_controls_and_clears_on_file_change() {
+    let engine = null_output_engine();
+    let artwork = load_fixture(&engine, "artwork.flac");
+    assert!(
+        artwork.has_artwork,
+        "The selected embedded picture must be exposed for the music view"
+    );
+    assert!(
+        !artwork
+            .tracks
+            .iter()
+            .any(|track| track.kind == "video" && track.selected),
+        "Attached cover art must not enable video-only frame controls"
+    );
+    let video = load_fixture(&engine, "tracks.mkv");
+    assert!(
+        !video.has_artwork,
+        "Previous artwork must not survive a file change"
+    );
+    assert!(
+        video
+            .tracks
+            .iter()
+            .any(|track| track.kind == "video" && track.selected)
+    );
+}

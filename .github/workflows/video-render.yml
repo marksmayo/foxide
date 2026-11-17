@@ -12,6 +12,7 @@ jobs:
     timeout-minutes: 30
     env:
       LIBGL_ALWAYS_SOFTWARE: '1'
+      FOXIDE_ARTWORK_PROOF: ${{ github.workspace }}/results/local/artwork-proof.ppm
       FOXIDE_RENDER_FIXTURE: ${{ github.workspace }}/results/local/orientation.mkv
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -61,6 +62,8 @@ jobs:
           done
           set -e
           test "$baseline_status" -eq 0
+      - name: Archive the actual embedded-art compositor pixels
+        run: ffmpeg -v error -y -i "$FOXIDE_ARTWORK_PROOF" results/local/artwork-proof.png
       - name: Reset coverage profiles before combining test passes
         run: cargo llvm-cov clean --workspace
       - name: Verify reused texture invalidates cached layers without a native display
@@ -93,7 +96,7 @@ jobs:
       - name: Verify video-site hook through the distribution Lua-enabled engine
         env:
           FOXIDE_LIBMPV: /usr/lib/x86_64-linux-gnu/libmpv.so.2
-        run: cargo llvm-cov --workspace --features player-ui/desktop,player-render/gpu-integration,player-render/video-site-integration --locked --no-report -- --ignored video_site_hook --nocapture --test-threads=1
+        run: cargo llvm-cov --workspace --features player-ui/desktop,player-render/gpu-integration,player-render/video-site-integration --locked --no-report -- --ignored native:: --nocapture --test-threads=1
       - name: Publish measured desktop and GPU coverage
         run: cargo llvm-cov report --fail-under-lines 90 --json --summary-only --output-path results/local/coverage-desktop-gpu.json
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -105,3 +108,4 @@ jobs:
             results/local/video-uninstrumented.log
             results/local/video-*.log
             results/local/coverage-desktop-gpu.json
+            results/local/artwork-proof.png
