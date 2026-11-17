@@ -96,7 +96,8 @@ jobs:
       - name: Verify video-site hook through the distribution Lua-enabled engine
         env:
           FOXIDE_LIBMPV: /usr/lib/x86_64-linux-gnu/libmpv.so.2
-        run: cargo llvm-cov --workspace --features player-ui/desktop,player-render/gpu-integration,player-render/video-site-integration --locked --no-report -- --ignored native:: --nocapture --test-threads=1
+        run: |
+          cargo llvm-cov --workspace --features player-ui/desktop,player-render/gpu-integration,player-render/video-site-integration --locked --no-report -- --ignored native:: --nocapture --test-threads=1
       - name: Publish measured desktop and GPU coverage
         run: cargo llvm-cov report --fail-under-lines 90 --json --summary-only --output-path results/local/coverage-desktop-gpu.json
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
