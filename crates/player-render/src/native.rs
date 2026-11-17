@@ -698,3 +698,7 @@ mod snapshot_allocation_tests {
 #[cfg(all(test, feature = "video-site-integration"))]
 #[path = "native_sites.rs"]
 mod video_site_tests;
+
+#[cfg(all(test, feature = "live-service-integration"))]
+#[path = "native_live.rs"]
+mod live_services;

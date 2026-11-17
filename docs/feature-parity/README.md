@@ -82,3 +82,9 @@ Choose **Video → GPU shaders → Load trusted shaders** to replace the session
 Only explicitly selected regular UTF-8 mpv hook files are accepted (at most eight, 1 MiB each). File checks and the native picker run away from the UI thread; completion posts one UI event rather than polling. Clearing invalidates a pending selection so its late result cannot re-enable shaders. The structured native array API preserves punctuation and platform path separators. This follows [mpv’s user shader interface](https://mpv.io/manual/stable/#options-glsl-shaders).
 
 Red/green tests cover file validation, native path preservation/reset, UI selection/errors/stale completion and rejected-control recovery. A separate hosted compositor test checks actual inverted pixels, a deliberate compile failure that preserves playback, and restored pixels after clearing. Gold remains pending that proof.
+
+## Opt-in live-provider checks
+
+The live online-service workflow runs on Windows/macOS/Linux only when explicitly dispatched or when its workflow/request manifest changes. Ordinary tests remain offline. It uses a fixed [yt-dlp release](https://github.com/yt-dlp/yt-dlp/releases/tag/2026.10.26) with pinned platform SHA-256 hashes, extracts the [Big Buck Bunny page](https://archive.org/details/BigBuckBunny_328), and checks both actual decoders plus an advancing playback clock. Separately, Foxide searches Radio Browser and attempts at most three returned HTTPS stations. No login, cookies or credentials are supplied. Output is null; no stream is saved.
+
+Per-platform JSON evidence records decoders and success/failure without local paths or signed stream URLs. These probes verify live service integration and are sensitive to provider availability. They do not measure displayed frames, UI latency, battery use or power. Feature medals change only after the evidence is reviewed. To request another run, update docs/feature-parity/live-acceptance-request.json.

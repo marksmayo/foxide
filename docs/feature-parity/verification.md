@@ -27,3 +27,11 @@ The README retains previously collected playback measurements and their original
 ## Video-site protocol checkpoint 4c3dd798
 
 [Native helper acceptance](https://github.com/marksmayo/foxide/actions/runs/44011195496) passed on Windows, macOS and Linux: an explicitly selected helper with spaces/commas in its filename returned separate video/audio streams; mpv forwarded the HTTP headers and initialized both decoders through an internal restart. This is deterministic protocol acceptance, not a claim of live-site availability. The compositor job hit an upstream FFmpeg-header incompatibility after ubuntu-latest advanced; the pinned mpv regression build now uses ubuntu-24.04, matching the independent control job.
+
+## Artwork compositor checkpoint 5b9f90a
+
+The [hosted compositor run](https://github.com/marksmayo/foxide/actions/runs/44017373925) passed all twelve uninstrumented trials and the instrumented artwork/motion compositor checks. The actual decoded cover appears upright after Slint composition:
+
+![Actual hosted shared-texture artwork output](images/artwork-native.png)
+
+The later null-output metadata coverage pass exposed an unsupported new V_FFV1 tag in its fixture on the older distribution engine. The fixture now uses lossless H.264; this checkpoint is not a claim that the aggregate coverage job passed. Shader inversion also produced the expected cyan/yellow output before the deliberate compile-error test exposed a missing render-API warning prefix, corrected in 0d936a03. Both features remain unawarded until their current acceptance is green.

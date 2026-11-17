@@ -1,0 +1,9 @@
+{
+  "requested": "2026-11-17",
+  "purpose": "Live acceptance of existing radio directory and explicitly selected video-site helper; not a performance measurement.",
+  "helper_version": "2026.10.26",
+  "source_page": "https://archive.org/details/BigBuckBunny_328",
+  "radio_query": "Radio Paradise",
+  "output": "null",
+  "credentials_required": false
+}

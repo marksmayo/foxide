@@ -1,0 +1,82 @@
+name: Live online-service acceptance
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/live-services.yml
+      - docs/feature-parity/live-acceptance-request.json
+permissions:
+  contents: read
+concurrency:
+  group: live-services-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  live-providers:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
+        with:
+          key: native-video-sites
+      - name: Linux media engine
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libmpv2 libfontconfig1-dev libxkbcommon-dev libwayland-dev libegl1-mesa-dev
+      - name: macOS media engine
+        if: runner.os == 'macOS'
+        run: brew install mpv
+      - name: Windows media engine
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          python scripts/install-libmpv.py
+          if ($LASTEXITCODE -ne 0) { throw 'Verified libmpv installation failed' }
+          "FOXIDE_LIBMPV=$((Resolve-Path tools/libmpv/libmpv-2.dll).Path)" >> $env:GITHUB_ENV
+      - name: Install the pinned verified yt-dlp helper
+        env:
+          FOXIDE_HOST_OS: ${{ runner.os }}
+        shell: python
+        run: |
+          import hashlib, os, stat, urllib.request
+          from pathlib import Path
+          pinned = {
+              'Linux': ('yt-dlp_linux', '767ba9dce7052aa196f8b12652f433d76de128ba168966fa84b6394d5e6c6795'),
+              'macOS': ('yt-dlp_macos', '0f922c15ccc0b83eefa1c8bc9104e434318c4bf16e408e1ee93b7745a6efe0aa'),
+              'Windows': ('yt-dlp.exe', 'f5389d3698ecde4ef06f4e6b1ce0294fe9ac1396228c8990b8d3416d6d177a7d'),
+          }
+          asset, expected = pinned[os.environ['FOXIDE_HOST_OS']]
+          with urllib.request.urlopen('https://github.com/yt-dlp/yt-dlp/releases/download/2026.10.26/' + asset, timeout=60) as response:
+              data = response.read(64 * 1024 * 1024 + 1)
+          if len(data) > 64 * 1024 * 1024:
+              raise SystemExit('Helper exceeds download limit')
+          if hashlib.sha256(data).hexdigest() != expected:
+              raise SystemExit('Helper hash mismatch')
+          destination = Path('results/local/live-helper') / asset
+          destination.parent.mkdir(parents=True, exist_ok=True)
+          destination.write_bytes(data)
+          destination.chmod(destination.stat().st_mode | stat.S_IXUSR)
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as output:
+              output.write('FOXIDE_LIVE_YTDLP=' + str(destination.resolve()) + '\n')
+              output.write('FOXIDE_LIVE_ACCEPTANCE_DIR=' + str(Path('results/local/live-acceptance').resolve()) + '\n')
+      - name: Verify real provider search, extraction and decoding without audible output
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p results/local
+          "$FOXIDE_LIVE_YTDLP" --version
+          cargo test -p player-render --features live-service-integration --lib --locked native::live_services:: -- --ignored --nocapture --test-threads=1 2>&1 | tee results/local/live-acceptance.log
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: live-services-${{ runner.os }}
+          path: |
+            results/local/live-acceptance.log
+            results/local/live-acceptance/*.json
