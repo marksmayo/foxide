@@ -28,8 +28,18 @@ cargo run -p player-cast --example receiver-status -- status IP:PORT SHA256_PIN
 
 Use only an explicitly trusted receiver fingerprint for the second command. Status output omits application/receiver names, identifiers and URLs. This diagnostic is not a completed casting frontend.
 
+The transport checkpoint at de1a4c3052e87baa43bd7ceefcfc648082bb0663 passed the [full desktop/GPU coverage gate](https://github.com/marksmayo/foxide/actions/runs/44080423510) at **91.05%** (4,427/4,862 lines). This is suite coverage, not proof of feature parity.
+
+## Local-media origin in progress
+
+The isolated crate now also provides an opt-in, single-file HTTP origin. It selects the local interface for the receiver, binds an ephemeral port, creates a 256-bit random URL token and admits only that receiver IP. It retains the selected open file handle, so replacing a path cannot expose another file. There is no directory mapping or filename in the URL.
+
+GET, HEAD, preflight and single byte ranges support receiver fetching and seeking. Request headers have an 8 KiB cap and a three-second total deadline. At most four connection workers run; writes have timeouts and observe shutdown. The listener blocks until a connection arrives, with an explicit local shutdown wakeup instead of a polling timer. Dropping delegates connection/file cleanup to a worker; explicit shutdown waits for cleanup. If a cleanup thread cannot be created, a bounded local wakeup still releases the listener. This is LAN HTTP protected by a private URL and source-IP restriction, not encrypted media transport. It does not transcode containers or codecs.
+
+Tests cover ranges, suffixes/clamping, malformed/oversized requests, duplicate headers, wrong peers/hosts/tokens, concurrent seeks, path replacement, multiple chunks and cancellation of a slow transfer. The origin is not connected to a desktop cast command yet, and no receiver has fetched media.
+
 ## Still required
 
-Discovery, a pairing/trust decision in the desktop, cancellable session ownership, bounded local-media HTTP serving, receiver launch/load/pause/seek/stop controls, cleanup after disconnect and physical playback/pixel/audio acceptance remain. Session operations must not stop an application owned by another sender. Receiver-specific codec compatibility and any firewall requirements must be documented when playback is implemented.
+Discovery, a pairing/trust decision in the desktop, cancellable session ownership, integration of the bounded local-media HTTP origin, receiver launch/load/pause/seek/stop controls, cleanup after disconnect and physical playback/pixel/audio acceptance remain. Session operations must not stop an application owned by another sender. Receiver-specific codec compatibility and any firewall requirements must be documented when playback is implemented.
 
 The [Chromium Cast envelope definition](https://chromium.googlesource.com/chromium/src.git/+/4d6bb36e3fcfb9742b6428e43a8e5df12681d0d0/components/cast_channel/proto/cast_channel.proto) defines framing fields. [Rustls verifier documentation](https://docs.rs/rustls/0.23.46/rustls/client/danger/trait.ServerCertVerifier.html) defines the certificate and handshake-signature verification boundary.

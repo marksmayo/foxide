@@ -78,7 +78,7 @@ pub fn receiver_status(
     ))
 }
 
-fn deadline(address: SocketAddr, timeout: Duration) -> io::Result<Instant> {
+pub(crate) fn deadline(address: SocketAddr, timeout: Duration) -> io::Result<Instant> {
     let local = match address.ip() {
         std::net::IpAddr::V4(ip) => ip.is_private() || ip.is_loopback() || ip.is_link_local(),
         std::net::IpAddr::V6(ip) => {

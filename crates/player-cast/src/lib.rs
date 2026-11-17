@@ -39,3 +39,6 @@ impl FromStr for CertificatePin {
 
 mod transport;
 pub use transport::{inspect_receiver_certificate, receiver_status};
+
+mod media_origin;
+pub use media_origin::MediaOrigin;
