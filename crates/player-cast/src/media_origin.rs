@@ -19,7 +19,7 @@ pub struct MediaOrigin {
     media_type: &'static str,
     stop: Arc<AtomicBool>,
     worker: Option<JoinHandle<()>>,
-    wake_address: SocketAddr,
+    waker: Arc<mio::Waker>,
 }
 struct Resource {
     file: Mutex<File>,
@@ -74,8 +74,8 @@ impl MediaOrigin {
         })?;
         route_socket.connect(SocketAddr::new(receiver, 8009))?;
         let listener = TcpListener::bind(SocketAddr::new(route_socket.local_addr()?.ip(), 0))?;
-        let wake_address = listener.local_addr()?;
-        let authority = wake_address.to_string();
+        listener.set_nonblocking(true)?;
+        let authority = listener.local_addr()?.to_string();
         let mut token = [0; 32];
         getrandom::fill(&mut token)
             .map_err(|_| io::Error::other("Secure randomness unavailable"))?;
@@ -93,16 +93,43 @@ impl MediaOrigin {
             media_type,
             stop: stop.clone(),
         });
+        let mut poll = mio::Poll::new()?;
+        let mut listener = mio::net::TcpListener::from_std(listener);
+        poll.registry()
+            .register(&mut listener, mio::Token(0), mio::Interest::READABLE)?;
+        let waker = Arc::new(mio::Waker::new(poll.registry(), mio::Token(1))?);
+        let worker_waker = waker.clone();
         let worker = thread::Builder::new()
             .name("foxide-cast-origin".into())
             .spawn(move || {
+                let _waker = worker_waker;
+                let mut events = mio::Events::with_capacity(8);
                 let mut workers: Vec<JoinHandle<()>> = Vec::new();
-                while !resource.stop.load(Ordering::Acquire) {
-                    match listener.accept() {
-                        Ok((socket, peer)) => {
+                'listen: while !resource.stop.load(Ordering::Acquire) {
+                    match poll.poll(&mut events, None) {
+                        Ok(()) => {}
+                        Err(error) if error.kind() == io::ErrorKind::Interrupted => continue,
+                        Err(_) => break,
+                    }
+                    if resource.stop.load(Ordering::Acquire) {
+                        break;
+                    }
+                    for event in &events {
+                        if event.token() != mio::Token(0) {
+                            continue;
+                        }
+                        loop {
                             if resource.stop.load(Ordering::Acquire) {
-                                break;
+                                break 'listen;
                             }
+                            let (socket, peer) = match listener.accept() {
+                                Ok(connection) => connection,
+                                Err(error) if error.kind() == io::ErrorKind::WouldBlock => break,
+                                Err(error) if error.kind() == io::ErrorKind::Interrupted => {
+                                    continue;
+                                }
+                                Err(_) => break 'listen,
+                            };
                             let mut index = 0;
                             while index < workers.len() {
                                 if workers[index].is_finished() {
@@ -111,8 +138,11 @@ impl MediaOrigin {
                                     index += 1;
                                 }
                             }
-
                             if peer.ip() != receiver || workers.len() >= 4 {
+                                continue;
+                            }
+                            let socket: TcpStream = socket.into();
+                            if socket.set_nonblocking(false).is_err() {
                                 continue;
                             }
                             let resource = resource.clone();
@@ -125,7 +155,6 @@ impl MediaOrigin {
                                 workers.push(worker);
                             }
                         }
-                        Err(_) => break,
                     }
                 }
                 drop(listener);
@@ -138,7 +167,7 @@ impl MediaOrigin {
             media_type,
             stop,
             worker: Some(worker),
-            wake_address,
+            waker,
         })
     }
     /// Contains a private address and bearer token; do not publish or log this URL.
@@ -150,35 +179,16 @@ impl MediaOrigin {
     }
     pub fn shutdown(mut self) {
         self.stop.store(true, Ordering::Release);
-        wake(self.wake_address);
+        let _ = self.waker.wake();
         if let Some(worker) = self.worker.take() {
             let _ = worker.join();
         }
     }
 }
-// Wake a blocking accept without introducing a periodic listener/UI timer.
-fn wake(address: SocketAddr) {
-    let _ = TcpStream::connect_timeout(&address, Duration::from_millis(100));
-}
 impl Drop for MediaOrigin {
     fn drop(&mut self) {
         self.stop.store(true, Ordering::Release);
-        if let Some(worker) = self.worker.take() {
-            let address = self.wake_address;
-            // Waiting for active clients belongs to cleanup, never the UI thread.
-            if thread::Builder::new()
-                .name("foxide-cast-cleanup".into())
-                .spawn(move || {
-                    wake(address);
-                    let _ = worker.join();
-                })
-                .is_err()
-            {
-                // If a cleanup thread cannot be created, still wake the owner so
-                // it can close its listener/files. This fallback is bounded.
-                wake(self.wake_address);
-            }
-        }
+        let _ = self.waker.wake();
     }
 }
 

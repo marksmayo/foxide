@@ -57,7 +57,9 @@ fn fixture(
             .unwrap();
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let address = listener.local_addr().unwrap();
+    let (ready_tx, ready_rx) = std::sync::mpsc::sync_channel(0);
     let worker = thread::spawn(move || {
+        ready_tx.send(()).unwrap();
         let (socket, _) = listener.accept().map_err(|e| e.to_string())?;
         socket
             .set_read_timeout(Some(Duration::from_secs(5)))
@@ -81,6 +83,7 @@ fn fixture(
         );
         respond(&mut tls).map_err(|e| e.to_string())
     });
+    ready_rx.recv_timeout(Duration::from_secs(5)).unwrap();
     (address, pin, worker)
 }
 fn send(
@@ -312,7 +315,7 @@ fn absolute_deadline_stops_a_trickled_frame() {
         }
         Ok(())
     });
-    let failure = receiver_status(address, pin, Duration::from_millis(300)).unwrap_err();
+    let failure = receiver_status(address, pin, Duration::from_secs(2)).unwrap_err();
     assert!(
         matches!(
             failure.kind(),

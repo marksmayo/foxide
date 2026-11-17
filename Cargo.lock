@@ -2855,6 +2855,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "mio"
+version = "1.2.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "20521a903f02b0a573cd6840e9d0a5a0cc043d361fe924092cd70f8556cc9c4a"
+dependencies = [
+ "libc",
+ "log",
+ "wasi",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
 name = "moxcms"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3621,6 +3633,7 @@ name = "player-cast"
 version = "0.0.1"
 dependencies = [
  "getrandom 0.3.4",
+ "mio",
  "player-services",
  "rcgen",
  "rustls",
