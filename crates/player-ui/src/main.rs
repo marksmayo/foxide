@@ -794,20 +794,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if !args.media.is_empty() {
         dispatch(&ui, &state, &engine, Action::Open(args.media));
     }
-    let timer = slint::Timer::default();
     if let Some(playback) = engine.clone() {
         let weak = ui.as_weak();
         let controller = state.clone();
-        let mut previous = Snapshot::default();
-        timer.start(
-            slint::TimerMode::Repeated,
-            Duration::from_millis(200),
-            move || {
-                if let (Some(ui), Some(snapshot)) = (weak.upgrade(), playback.snapshot()) {
-                    refresh(&ui, &controller, &snapshot, &mut previous);
+        let previous = RefCell::new(Snapshot::default());
+        let status_source = playback.clone();
+        ui.on_native_snapshot_ready(move || {
+            if let Some(ui) = weak.upgrade() {
+                if let Some(snapshot) = status_source.snapshot() {
+                    refresh(&ui, &controller, &snapshot, &mut previous.borrow_mut());
+                } else {
+                    // A transient try-lock miss must not lose an idle update.
+                    let _ = ui
+                        .as_weak()
+                        .upgrade_in_event_loop(|ui| ui.invoke_native_snapshot_ready());
                 }
-            },
-        );
+            }
+        });
+        let weak = ui.as_weak();
+        playback.set_snapshot_notifier(Arc::new(move || {
+            let _ = weak.upgrade_in_event_loop(|ui| ui.invoke_native_snapshot_ready());
+        }));
     }
     let exit_timer = slint::Timer::default();
     if let Some(seconds) = args.quit_after {

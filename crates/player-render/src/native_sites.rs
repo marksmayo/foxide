@@ -487,3 +487,52 @@ fn selected_display_profile_is_applied_as_one_path_and_can_be_reset() {
     assert!(engine.api.get(c"icc-profile").is_empty());
     assert!(engine.snapshot().unwrap().loaded);
 }
+
+#[test]
+#[ignore = "Requires libmpv; verifies delta notifications and quiescence while paused"]
+fn snapshot_notifications_stop_when_paused_state_is_unchanged() {
+    use std::sync::atomic::AtomicUsize;
+    let engine = null_output_engine();
+    engine
+        .command(vec!["set".into(), "pause".into(), "yes".into()])
+        .unwrap();
+    let count = Arc::new(AtomicUsize::new(0));
+    let observed = count.clone();
+    engine.set_snapshot_notifier(Arc::new(move || {
+        observed.fetch_add(1, Ordering::Relaxed);
+    }));
+    load_fixture(&engine, "tracks.mkv");
+    let deadline = Instant::now() + Duration::from_secs(5);
+    while Instant::now() < deadline && !engine.snapshot().unwrap().paused {
+        thread::sleep(Duration::from_millis(20));
+    }
+    assert!(engine.snapshot().unwrap().paused);
+    thread::sleep(Duration::from_millis(300));
+    let baseline = engine.snapshot().unwrap();
+    let before = count.load(Ordering::Relaxed);
+    thread::sleep(Duration::from_millis(650));
+    assert_eq!(
+        engine.snapshot().unwrap(),
+        baseline,
+        "Paused fixture must remain stable"
+    );
+    assert_eq!(
+        count.load(Ordering::Relaxed),
+        before,
+        "Unchanged paused state must not enqueue UI updates"
+    );
+    engine
+        .command(vec!["set".into(), "volume".into(), "37".into()])
+        .unwrap();
+    let deadline = Instant::now() + Duration::from_secs(5);
+    while Instant::now() < deadline
+        && (engine.snapshot().unwrap().volume != 37.0 || count.load(Ordering::Relaxed) <= before)
+    {
+        thread::sleep(Duration::from_millis(20));
+    }
+    assert_eq!(engine.snapshot().unwrap().volume, 37.0);
+    assert!(
+        count.load(Ordering::Relaxed) > before,
+        "A changed control must wake its status observer"
+    );
+}

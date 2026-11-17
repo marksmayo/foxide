@@ -129,6 +129,7 @@ export component PlayerWindow inherits Window {
     in-out property <string> url;
     out property <float> video-width: root.compact-mode ? (root.loaded && root.has-artwork ? 56 : 1) : screen.width / 1px;
     out property <float> video-height: root.compact-mode ? (root.loaded && root.has-artwork ? 56 : 1) : screen.height / 1px;
+    callback native-snapshot-ready();
     callback action(string, float);
     callback open-url(string);
     callback files-picked([string], bool);

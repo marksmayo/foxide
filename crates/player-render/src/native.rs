@@ -420,7 +420,7 @@ fn renderer_warning(prefix: &str, level: c_int, text: &str) -> Option<String> {
     ))
 }
 
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Track {
     pub id: u32,
     pub label: String,
@@ -453,12 +453,15 @@ enum Request {
     Shaders(Vec<player_services::ShaderFile>),
 }
 
+type SnapshotNotifier = Arc<dyn Fn() + Send + Sync>;
+
 pub struct Engine {
     pub(crate) api: Arc<Api>,
     pub(crate) ready: Arc<AtomicBool>,
     stop: Arc<AtomicBool>,
     sender: SyncSender<Request>,
     snapshot: Arc<Mutex<Snapshot>>,
+    notifier: Arc<Mutex<Option<SnapshotNotifier>>>,
     #[cfg(all(test, feature = "gpu-integration"))]
     pub(crate) diagnostics: Arc<Mutex<Vec<String>>>,
 }
@@ -475,6 +478,8 @@ impl Engine {
         let ready = Arc::new(AtomicBool::new(false));
         let stop = Arc::new(AtomicBool::new(false));
         let snapshot = Arc::new(Mutex::new(Snapshot::default()));
+        let notifier = Arc::new(Mutex::new(None::<SnapshotNotifier>));
+        let notify_output = notifier.clone();
         #[cfg(all(test, feature = "gpu-integration"))]
         let diagnostics = Arc::new(Mutex::new(Vec::<String>::new()));
         #[cfg(all(test, feature = "gpu-integration"))]
@@ -644,8 +649,21 @@ impl Engine {
                         command_error: command_error.clone(),
                         error: error.clone(),
                     };
-                    if let Ok(mut current) = output.lock() {
-                        *current = next;
+                    let changed = if let Ok(mut current) = output.lock() {
+                        if *current == next {
+                            false
+                        } else {
+                            *current = next;
+                            true
+                        }
+                    } else {
+                        false
+                    };
+                    if changed {
+                        let callback = notify_output.lock().ok().and_then(|slot| slot.clone());
+                        if let Some(callback) = callback {
+                            callback();
+                        }
                     }
                 }
             })
@@ -656,6 +674,7 @@ impl Engine {
             stop,
             sender,
             snapshot,
+            notifier,
             #[cfg(all(test, feature = "gpu-integration"))]
             diagnostics,
         })
@@ -683,6 +702,14 @@ impl Engine {
             .map(|profile| profile.path().to_string_lossy().into_owned())
             .unwrap_or_default();
         self.command(vec!["set".into(), "icc-profile".into(), path])
+    }
+    /// Install one status observer. It runs outside snapshot locks and is called
+    /// immediately once so a late subscriber can read the current paused state.
+    pub fn set_snapshot_notifier(&self, notifier: Arc<dyn Fn() + Send + Sync>) {
+        if let Ok(mut slot) = self.notifier.lock() {
+            *slot = Some(notifier.clone());
+        }
+        notifier();
     }
     pub fn snapshot(&self) -> Option<Snapshot> {
         self.snapshot.try_lock().ok().map(|s| s.clone())
