@@ -75,19 +75,18 @@ fn mpv_path(explicit: Option<PathBuf>) -> PathBuf {
         return path;
     }
     let filename = if cfg!(windows) { "mpv.exe" } else { "mpv" };
-    let mut roots = Vec::with_capacity(3);
-    if let Ok(exe) = std::env::current_exe() {
-        roots.extend(exe.ancestors().skip(1).take(3).map(PathBuf::from));
-    }
-    let mut seen = std::collections::HashSet::new();
-    let suffix = PathBuf::from("tools/mpv").join(filename);
-    let bundled = roots
-        .into_iter()
-        .filter(|root| seen.insert(root.clone()))
-        .map(|root| root.join(&suffix))
-        .find(|path| path.is_file());
-    if let Some(path) = bundled {
-        return path;
+    if let Ok(executable) = std::env::current_exe() {
+        let bundled = [
+            executable.with_file_name(filename),
+            executable
+                .parent()
+                .expect("Executable has a parent")
+                .join("tools/mpv")
+                .join(filename),
+        ];
+        if let Some(path) = bundled.into_iter().find(|path| path.is_file()) {
+            return path;
+        }
     }
     // Resolve PATH explicitly: a bare Windows command also searches the working
     // directory, even when that directory is absent from PATH.

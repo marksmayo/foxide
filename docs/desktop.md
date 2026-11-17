@@ -19,3 +19,5 @@ For a reproducible layout image without launching a desktop or loading libmpv:
 ```
 
 That image exercises the real Slint layout with the software renderer, not video playback. The desktop build workflow produces this artifact per platform. [ADR](adr/0004-slint-desktop.md) and [UI benchmark protocol](ui-benchmarks.md) describe the remaining acceptance gates.
+
+Windows dependency lookup is confined to the executable directory: `libmpv-2.dll` beside Foxide, then `tools/libmpv/libmpv-2.dll` directly below that directory. The CLI similarly checks bundled mpv beside itself or in its own `tools/mpv` folder before explicit absolute PATH directories. Parent and grandparent tool folders are never searched. For development builds, set `FOXIDE_LIBMPV` or `FOXIDE_MPV` to the intended absolute dependency path.

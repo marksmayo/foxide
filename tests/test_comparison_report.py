@@ -2,8 +2,10 @@ import copy
 import importlib.util
 from pathlib import Path
 import unittest
+import sys
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / 'scripts'))
 SPEC = importlib.util.spec_from_file_location('report_builder', ROOT / 'scripts/build_comparison_report.py')
 report = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(report)

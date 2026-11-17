@@ -62,3 +62,35 @@ class PublicationTests(unittest.TestCase):
                                      ('linux', 'hosted' if run_id else 'local', 'native-ui'))
                     self.assertEqual(public_evidence(result), result)
                     self.assertEqual(data, original)
+
+    def test_hostnames_in_paths_and_diagnostics_are_redacted_without_changing_identifiers(self):
+        data = dict(session=dict(system='linux', host='private-pc'),
+                    path=r'\\private-pc\media\movie.mp4',
+                    notes=['Decoder failed on private-pc', '/mnt/private-pc/movie.mp4'],
+                    sha256='private-pc', profile='private-pc/profile', source='https://example.org/private-pc')
+        result = public_evidence(data)
+        self.assertEqual(result['path'], r'\\linux-local\media\movie.mp4')
+        self.assertEqual(result['notes'], ['Decoder failed on linux-local', '/mnt/linux-local/movie.mp4'])
+        for key in ('sha256', 'profile', 'source'):
+            self.assertEqual(result[key], data[key])
+        self.assertEqual(public_evidence(result), result)
+
+    def test_published_comparison_archive_and_inventory_have_no_private_home_paths(self):
+        import zipfile
+        root = Path(__file__).resolve().parents[1]
+        files = [root / 'docs/local-players.md']
+        for path in (root / 'results').rglob('*'):
+            if 'local' in path.relative_to(root / 'results').parts or not path.is_file():
+                continue
+            if path.suffix.lower() in ('.json', '.jsonl', '.log', '.html', '.md', '.svg'):
+                files.append(path)
+            elif path.suffix.lower() == '.zip':
+                with zipfile.ZipFile(path) as archive:
+                    for member in archive.infolist():
+                        text = archive.read(member).decode('utf-8', errors='replace')
+                        self.assertTrue(public_evidence(dict(text=text))['text'] == text,
+                                         f'Private path in {path.name}/{member.filename}')
+        for path in files:
+            text = path.read_text(encoding='utf-8').replace(r'\u003c', '<').replace(r'\u003e', '>')
+            self.assertTrue(public_evidence(dict(text=text))['text'] == text,
+                             f'Private path in {path.relative_to(root)}')

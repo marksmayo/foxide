@@ -419,3 +419,39 @@ fn path_lookup_skips_relative_directories_and_non_executable_files() {
             .contains("https://example.org/fixture.mp4")
     );
 }
+
+#[test]
+fn discovery_rejects_engine_copies_in_ancestor_tool_directories() {
+    let dir = scratch();
+    let app = dir.join("outer/application");
+    fs::create_dir_all(&app).unwrap();
+    let filename = if cfg!(windows) {
+        "foxide.exe"
+    } else {
+        "foxide"
+    };
+    let executable = app.join(filename);
+    #[cfg(target_os = "linux")]
+    fs::hard_link(env!("CARGO_BIN_EXE_foxide"), &executable).unwrap();
+    #[cfg(not(target_os = "linux"))]
+    fs::copy(env!("CARGO_BIN_EXE_foxide"), &executable).unwrap();
+    let engine_name = if cfg!(windows) { "mpv.exe" } else { "mpv" };
+    for ancestor in [dir.0.as_path(), app.parent().unwrap()] {
+        let tools = ancestor.join("tools/mpv");
+        fs::create_dir_all(&tools).unwrap();
+        let built = engine(&tools);
+        fs::rename(built, tools.join(engine_name)).unwrap();
+    }
+    let output = Command::new(&executable)
+        .env_remove("FOXIDE_MPV")
+        .env("PATH", "")
+        .args(["--print-command", "https://example.org/movie.mp4"])
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    let command: Vec<String> = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(
+        PathBuf::from(&command[0]),
+        player_core::external_path(app.canonicalize().unwrap()).join(engine_name)
+    );
+}

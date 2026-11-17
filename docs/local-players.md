@@ -4,21 +4,21 @@ Checked in this workspace. Eight new copies under `tools/` came from official re
 
 | Player | Local state | Executable |
 |---|---|---|
-| Foxide | Executable present | `C:/Users/markm/Github/foxide/target/release/foxide.exe` |
+| Foxide | Executable present | `target/release/foxide.exe` |
 | VLC | Executable present | `C:/Program Files/VideoLAN/VLC/vlc.exe` |
-| mpv | Executable present | `C:/Users/markm/Github/foxide/tools/mpv/mpv.exe` |
+| mpv | Executable present | `tools/mpv/mpv.exe` |
 | Windows Media Player | Store installation blocked by WinGet `0x8A150001` | — |
 | Windows Media Player Legacy | Executable present | `C:/Program Files/Windows Media Player/wmplayer.exe` |
-| MPC-HC | Executable present | `C:/Users/markm/Github/foxide/tools/mpc-hc/mpc-hc64.exe` |
-| MPC-BE | Executable present | `C:/Users/markm/Github/foxide/tools/mpc-be/mpc-be64.exe` |
-| PotPlayer | Executable present | `C:/Users/markm/Github/foxide/tools/potplayer/PotPlayerMini64.exe` |
-| SMPlayer | Executable present | `C:/Users/markm/Github/foxide/tools/smplayer/smplayer.exe` |
+| MPC-HC | Executable present | `tools/mpc-hc/mpc-hc64.exe` |
+| MPC-BE | Executable present | `tools/mpc-be/mpc-be64.exe` |
+| PotPlayer | Executable present | `tools/potplayer/PotPlayerMini64.exe` |
+| SMPlayer | Executable present | `tools/smplayer/smplayer.exe` |
 | KMPlayer 64X 2026.10.27.9 | Project-local signed payload; playback adapter needed | `tools/kmplayer/KMPlayer64.exe` |
-| GOM Player | Executable present | `C:/Users/markm/Github/foxide/tools/gom/GOM.exe` |
-| FFplay | Executable present | `C:/Users/markm/AppData/Local/Microsoft/WinGet/Packages/Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe/ffmpeg-9.0.2-full_build/bin/ffplay.exe` |
-| Kodi | Executable present | `C:/Users/markm/Github/foxide/tools/kodi/kodi.exe` |
-| Plex | Executable present | `C:/Users/markm/Github/foxide/tools/plex/Plex.exe` |
-| foobar2000 | Executable present | `C:/Users/markm/Github/foxide/tools/foobar2000/foobar2000.exe` |
+| GOM Player | Executable present | `tools/gom/GOM.exe` |
+| FFplay | Executable present | `%LOCALAPPDATA%/Microsoft/WinGet/Packages/Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe/ffmpeg-9.0.2-full_build/bin/ffplay.exe` |
+| Kodi | Executable present | `tools/kodi/kodi.exe` |
+| Plex | Executable present | `tools/plex/Plex.exe` |
+| foobar2000 | Executable present | `tools/foobar2000/foobar2000.exe` |
 | Infuse | Other platform | — |
 | IINA | Other platform | — |
 | QuickTime Player | Other platform | — |

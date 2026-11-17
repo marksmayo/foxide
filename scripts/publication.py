@@ -11,19 +11,40 @@ USER_PATH = re.compile(r"""(?i)([a-z]:[\\/]+(?:Users|Documents and Settings)[\\/
 def public_evidence(collection):
     info = collection.get('session', {})
     alias = str(info.get('system', 'unknown')) + ('-hosted' if info.get('run_id') else '-local')
+    identifying = {'host', 'hostname', 'computer_name'}
+    opaque = {'system', 'platform', 'profile', 'sha256', 'hash', 'source_commit',
+              'commit', 'event', 'id', 'run_id', 'source', 'source_ref'}
+    hosts = set()
 
-    # Hostnames are identifiers only in host fields. Substring replacement in
-    # arbitrary strings corrupts platform names, profiles and opaque hashes.
-    def clean(value):
+    def gather(value):
         if isinstance(value, dict):
-            return {key: alias if key == 'host' and isinstance(item, str) else clean(item)
-                    for key, item in value.items()}
+            for key, item in value.items():
+                if key in identifying and isinstance(item, str) and item:
+                    hosts.add(item)
+                else:
+                    gather(item)
+        elif isinstance(value, list):
+            for item in value:
+                gather(item)
+    gather(collection)
+    host_pattern = (re.compile(r'(?<![\w.-])(?:' + '|'.join(
+        re.escape(host) for host in sorted(hosts, key=len, reverse=True)) + r')(?![\w.-])', re.IGNORECASE)
+        if hosts else None)
+
+    def clean(value, key=None):
+        if isinstance(value, dict):
+            return {name: alias if name in identifying and isinstance(item, str)
+                    else clean(item, name) for name, item in value.items()}
         if isinstance(value, list):
-            return [clean(item) for item in value]
+            return [clean(item, key) for item in value]
         if isinstance(value, str):
-            if value.startswith(('https://', 'http://')):
+            if key in opaque or value.startswith(('https://', 'http://')):
                 return value
             value = USER_PATH.sub(lambda match: (match[1] or match[2]) + '<user>', value)
+            # Only known identifying values are replaced, at complete token/path
+            # boundaries. Platform/profile/hash fields and source URLs stay opaque.
+            if host_pattern:
+                value = host_pattern.sub(alias, value)
         return value
 
     return clean(collection)
