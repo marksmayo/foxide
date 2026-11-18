@@ -7,13 +7,17 @@ use std::{
     io::{self, Read, Write},
     net::{SocketAddr, TcpListener, TcpStream},
     path::PathBuf,
-    sync::Arc,
+    sync::{
+        Arc,
+        atomic::{AtomicU64, Ordering},
+    },
     thread,
     time::Duration,
 };
 const RECEIVER: &str = "urn:x-cast:com.google.cast.receiver";
 const MEDIA: &str = "urn:x-cast:com.google.cast.media";
 const CONNECTION: &str = "urn:x-cast:com.google.cast.tp.connection";
+static FIXTURE_ID: AtomicU64 = AtomicU64::new(0);
 type Tls = StreamOwned<ServerConnection, TcpStream>;
 struct FileFixture {
     dir: PathBuf,
@@ -22,18 +26,30 @@ struct FileFixture {
 impl FileFixture {
     fn new() -> Self {
         let dir = std::env::temp_dir().join(format!(
-            "foxide-cast-session-{}-{}",
+            "foxide-cast-session-{}-{}-{}",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
-                .as_nanos()
+                .as_nanos(),
+            FIXTURE_ID.fetch_add(1, Ordering::Relaxed)
         ));
         fs::create_dir(&dir).unwrap();
         let path = dir.join("test movie.mp4");
         fs::write(&path, b"owned media bytes").unwrap();
         Self { dir, path }
     }
+}
+
+#[test]
+fn concurrent_file_fixtures_use_distinct_directories() {
+    let fixtures: Vec<_> = (0..8)
+        .map(|_| thread::spawn(FileFixture::new))
+        .map(|worker| worker.join().unwrap())
+        .collect();
+    let directories: std::collections::HashSet<_> =
+        fixtures.iter().map(|fixture| &fixture.dir).collect();
+    assert_eq!(directories.len(), fixtures.len());
 }
 impl Drop for FileFixture {
     fn drop(&mut self) {
