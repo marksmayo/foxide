@@ -66,10 +66,12 @@ export component PlayerWindow inherits Window {
     callback cancel-services();
     in-out property <string> cast-endpoint;
     in-out property <string> cast-fingerprint;
-    in-out property <string> cast-status: "Enter a paired local receiver and its SHA-256 certificate fingerprint.";
+    in-out property <string> cast-status: "Enter a local receiver, inspect its certificate, then review the fingerprint before casting.";
+    in-out property <bool> cast-inspecting: false;
     in-out property <bool> cast-active: false;
     in-out property <bool> cast-paused: false;
     callback cast-connect(string, string);
+    callback cast-inspect(string);
     callback cast-control(string);
     changed panel => { if (root.panel != "radio") { root.cancel-services(); } }
     in-out property <bool> light-theme: false;
@@ -359,7 +361,7 @@ export component PlayerWindow inherits Window {
     }
     if (root.panel != ""): Rectangle { background: #050a13bb;
         TouchArea { clicked => { root.panel = ""; } }
-        Rectangle { width: min(parent.width - 60px, 550px); height: root.panel == "preferences" || root.panel == "radio" ? min(parent.height - 30px, 620px) : root.panel == "url" || root.panel == "cast" ? 300px : 330px; x: (parent.width - self.width) / 2; y: (parent.height - self.height) / 2;
+        Rectangle { width: min(parent.width - 60px, 550px); height: root.panel == "preferences" || root.panel == "radio" ? min(parent.height - 30px, 620px) : root.panel == "url" ? 300px : root.panel == "cast" ? 360px : 330px; x: (parent.width - self.width) / 2; y: (parent.height - self.height) / 2;
             background: Appearance.dialog; border-radius: 14px; border-width: 1px; border-color: Appearance.border;
             VerticalLayout { padding: 24px; spacing: 18px;
                 HorizontalLayout {
@@ -372,6 +374,7 @@ export component PlayerWindow inherits Window {
                 }
                 if (root.panel == "cast"): VerticalLayout { spacing: 12px;
                     LineEdit { text <=> root.cast-endpoint; placeholder-text: "192.168.x.x:8009"; }
+                    ToolButton { label: root.cast-inspecting ? "Inspecting receiver…" : "Inspect receiver certificate"; width: 210px; available: !root.cast-inspecting; clicked => { root.cast-inspect(root.cast-endpoint); } }
                     LineEdit { text <=> root.cast-fingerprint; placeholder-text: "SHA-256 certificate fingerprint"; }
                     Text { text: root.cast-status; color: Appearance.secondary; wrap: word-wrap; }
                     ToolButton { label: "Cast current file"; width: 150px; primary: true; available: root.loaded && root.has-video && !root.cast-active; clicked => { root.cast-connect(root.cast-endpoint, root.cast-fingerprint); } }

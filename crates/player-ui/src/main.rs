@@ -588,6 +588,47 @@ fn install_preferences(
     });
 }
 
+#[cfg(test)]
+mod cast_endpoint_tests {
+    use super::parse_cast_address;
+
+    #[test]
+    fn accepts_literal_local_receiver_addresses() {
+        assert_eq!(
+            parse_cast_address("192.168.1.20:8009").unwrap().to_string(),
+            "192.168.1.20:8009"
+        );
+    }
+
+    #[test]
+    fn rejects_nonlocal_or_nonliteral_receiver_addresses() {
+        for input in ["8.8.8.8:8009", "receiver.local:8009", "127.0.0.1:0"] {
+            assert!(parse_cast_address(input).is_err(), "accepted {input}");
+        }
+    }
+
+    #[test]
+    fn accepts_local_ipv6_receiver_addresses_and_rejects_global_ipv6() {
+        assert!(parse_cast_address("[fd00::20]:8009").is_ok());
+        assert!(parse_cast_address("[fe80::20]:8009").is_ok());
+        assert!(parse_cast_address("[2001:4860:4860::8888]:8009").is_err());
+    }
+}
+
+fn parse_cast_address(input: &str) -> Result<std::net::SocketAddr, ()> {
+    let address = input.parse::<std::net::SocketAddr>().map_err(|_| ())?;
+    let local = match address.ip() {
+        std::net::IpAddr::V4(ip) => ip.is_private() || ip.is_loopback() || ip.is_link_local(),
+        std::net::IpAddr::V6(ip) => {
+            ip.is_unique_local() || ip.is_loopback() || ip.is_unicast_link_local()
+        }
+    };
+    if !local || address.port() == 0 {
+        return Err(());
+    }
+    Ok(address)
+}
+
 fn install_cast(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>) {
     let active: Arc<std::sync::Mutex<Option<CastController>>> =
         Arc::new(std::sync::Mutex::new(None));
@@ -604,11 +645,12 @@ fn install_cast(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>) {
             ui.set_cast_status("A cast session is already active".into());
             return;
         }
-        let address = match endpoint.parse::<std::net::SocketAddr>() {
+        let address = match parse_cast_address(&endpoint) {
             Ok(address) => address,
             Err(_) => {
                 ui.set_cast_status(
-                    "Enter a literal local receiver address, such as 192.168.1.20:8009".into(),
+                    "Enter a literal local receiver address and port, such as 192.168.1.20:8009"
+                        .into(),
                 );
                 return;
             }
@@ -675,6 +717,36 @@ fn install_cast(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>) {
                 ui.set_cast_status(format!("Could not start Cast worker: {error}").into())
             }
         }
+    });
+    let weak = ui.as_weak();
+    ui.on_cast_inspect(move |endpoint| {
+        let Some(ui) = weak.upgrade() else { return };
+        let address = match parse_cast_address(&endpoint) {
+            Ok(address) => address,
+            Err(()) => {
+                ui.set_cast_status("Enter a literal local receiver address and port before inspecting.".into());
+                return;
+            }
+        };
+        ui.set_cast_inspecting(true);
+        ui.set_cast_status("Inspecting the receiver certificate; this sends no Cast command…".into());
+        let window = weak.clone();
+        std::thread::spawn(move || {
+            let result = player_cast::inspect_receiver_certificate(
+                address,
+                std::time::Duration::from_secs(8),
+            );
+            let _ = window.upgrade_in_event_loop(move |ui| {
+                ui.set_cast_inspecting(false);
+                match result {
+                    Ok(pin) => {
+                        ui.set_cast_fingerprint(pin.to_string().into());
+                        ui.set_cast_status("Certificate observed. Review the fingerprint, then explicitly start casting to trust this receiver for this session.".into());
+                    }
+                    Err(_) => ui.set_cast_status("Certificate inspection failed or timed out; no receiver was trusted.".into()),
+                }
+            });
+        });
     });
     let (weak, active_for_control) = (ui.as_weak(), active);
     ui.on_cast_control(move |command| {
