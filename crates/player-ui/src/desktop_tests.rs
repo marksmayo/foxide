@@ -99,6 +99,11 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
     ui.window().set_size(slint::PhysicalSize::new(1180, 770));
     ui.show().unwrap();
     install_cast(&ui, &Rc::new(RefCell::new(UiState::default())));
+    ui.invoke_cast_control("seek-back".into());
+    assert!(
+        ui.get_cast_status()
+            .contains("position is not available yet")
+    );
     ui.invoke_cast_connect("receiver.example:8009".into(), "invalid".into());
     assert!(
         ui.get_cast_status()

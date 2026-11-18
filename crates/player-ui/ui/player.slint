@@ -184,6 +184,8 @@ export component PlayerWindow inherits Window {
             MenuItem { title: "Cast to a receiver…"; activated => { root.panel = "cast"; } }
             MenuItem { title: "Pause casting"; enabled: root.cast-active && !root.cast-paused; activated => { root.cast-control("pause"); } }
             MenuItem { title: "Resume casting"; enabled: root.cast-active && root.cast-paused; activated => { root.cast-control("play"); } }
+            MenuItem { title: "Seek back 10 seconds"; enabled: root.cast-active; activated => { root.cast-control("seek-back"); } }
+            MenuItem { title: "Seek forward 10 seconds"; enabled: root.cast-active; activated => { root.cast-control("seek-forward"); } }
             MenuItem { title: "Stop casting"; enabled: root.cast-active; activated => { root.cast-control("stop"); } }
         }
         Menu { title: "Audio";
@@ -402,6 +404,10 @@ export component PlayerWindow inherits Window {
                     Text { text: root.cast-status; color: Appearance.secondary; wrap: word-wrap; }
                     ToolButton { label: "Cast current media"; width: 150px; primary: true; available: root.cast-available && !root.cast-active; clicked => { root.cast-connect(root.cast-endpoint, root.cast-fingerprint); } }
                     ToolButton { label: root.cast-paused ? "Resume casting" : "Pause casting"; width: 150px; available: root.cast-active; clicked => { root.cast-control(root.cast-paused ? "play" : "pause"); } }
+                    HorizontalLayout {
+                        ToolButton { label: "−10 s"; width: 90px; available: root.cast-active; clicked => { root.cast-control("seek-back"); } }
+                        ToolButton { label: "+10 s"; width: 90px; available: root.cast-active; clicked => { root.cast-control("seek-forward"); } }
+                    }
                     ToolButton { label: "Stop casting"; width: 120px; available: root.cast-active; clicked => { root.cast-control("stop"); } }
                     HorizontalLayout {
                         ToolButton { label: "Remember receiver"; width: 160px; available: root.cast-endpoint != ""; clicked => { root.cast-remember(root.cast-name, root.cast-endpoint, root.cast-fingerprint); } }

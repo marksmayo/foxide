@@ -608,8 +608,25 @@ fn install_preferences(
 
 #[cfg(test)]
 mod cast_endpoint_tests {
-    use super::{parse_cast_address, supported_cast_extension};
+    use super::{cast_seek_target, parse_cast_address, supported_cast_extension};
+    use player_cast::{CastState, CastStatus};
     use std::path::Path;
+
+    #[test]
+    fn cast_skip_targets_stay_inside_the_known_media_duration() {
+        let status = CastStatus {
+            state: CastState::Playing,
+            position: 4.0,
+            duration: Some(12.0),
+        };
+        assert_eq!(cast_seek_target(&status, -10.0), Some(0.0));
+        assert_eq!(cast_seek_target(&status, 10.0), Some(12.0));
+        let unknown_duration = CastStatus {
+            duration: None,
+            ..status
+        };
+        assert_eq!(cast_seek_target(&unknown_duration, 10.0), Some(14.0));
+    }
 
     #[test]
     fn accepts_literal_local_receiver_addresses() {
@@ -683,6 +700,17 @@ fn supported_cast_extension(path: &std::path::Path) -> bool {
                 "mp4" | "m4v" | "webm" | "mkv" | "mp3" | "ogg" | "opus" | "flac" | "wav"
             )
         })
+}
+
+fn cast_seek_target(status: &player_cast::CastStatus, offset: f64) -> Option<f64> {
+    if !status.position.is_finite() || !offset.is_finite() {
+        return None;
+    }
+    let duration = status
+        .duration
+        .filter(|duration| duration.is_finite() && *duration >= 0.0)
+        .unwrap_or(f64::MAX);
+    Some((status.position + offset).clamp(0.0, duration))
 }
 
 fn cast_receiver_rows(preferences: &Preferences) -> Vec<CastReceiverRow> {
@@ -777,7 +805,14 @@ fn install_cast_with_discovery(
     });
     let active: Arc<std::sync::Mutex<Option<CastController>>> =
         Arc::new(std::sync::Mutex::new(None));
-    let (weak, state, active_for_connect) = (ui.as_weak(), state.clone(), active.clone());
+    let last_status: Arc<std::sync::Mutex<Option<player_cast::CastStatus>>> =
+        Arc::new(std::sync::Mutex::new(None));
+    let (weak, state, active_for_connect, status_for_connect) = (
+        ui.as_weak(),
+        state.clone(),
+        active.clone(),
+        last_status.clone(),
+    );
     ui.on_cast_connect(move |endpoint, fingerprint| {
         let Some(ui) = weak.upgrade() else {
             return;
@@ -821,9 +856,21 @@ fn install_cast_with_discovery(
         ui.set_cast_status("Connecting to the explicitly pinned receiver…".into());
         let event_window = weak.clone();
         let active_for_events = active_for_connect.clone();
+        let status_for_events = status_for_connect.clone();
         let controller =
             CastController::start_file(path, address, pin, CastOptions::default(), move |event| {
                 let active_for_event = active_for_events.clone();
+                let status_for_event = status_for_events.clone();
+                match &event {
+                    CastEvent::Status(status) => {
+                        *status_for_event.lock().expect("Cast status lock poisoned") =
+                            Some(status.clone());
+                    }
+                    CastEvent::Stopped | CastEvent::Failed(_) => {
+                        *status_for_event.lock().expect("Cast status lock poisoned") = None;
+                    }
+                    CastEvent::Rejected(_) => {}
+                }
                 let _ = event_window.upgrade_in_event_loop(move |ui| match event {
                     CastEvent::Status(status) => {
                         ui.set_cast_active(true);
@@ -933,7 +980,7 @@ fn install_cast_with_discovery(
             });
         });
     });
-    let (weak, active_for_control) = (ui.as_weak(), active);
+    let (weak, active_for_control, status_for_control) = (ui.as_weak(), active, last_status);
     ui.on_cast_control(move |command| {
         let Some(ui) = weak.upgrade() else {
             return;
@@ -965,6 +1012,28 @@ fn install_cast_with_discovery(
                     .expect("Cast controller lock poisoned")
                     .as_ref()
                     && let Err(error) = controller.play()
+                {
+                    ui.set_cast_status(error.to_string().into());
+                }
+            }
+            "seek-back" | "seek-forward" => {
+                let status = status_for_control
+                    .lock()
+                    .expect("Cast status lock poisoned")
+                    .clone();
+                let offset = if command == "seek-back" { -10.0 } else { 10.0 };
+                let Some(target) = status
+                    .as_ref()
+                    .and_then(|status| cast_seek_target(status, offset))
+                else {
+                    ui.set_cast_status("Casting position is not available yet".into());
+                    return;
+                };
+                if let Some(controller) = active_for_control
+                    .lock()
+                    .expect("Cast controller lock poisoned")
+                    .as_ref()
+                    && let Err(error) = controller.seek(target)
                 {
                     ui.set_cast_status(error.to_string().into());
                 }
