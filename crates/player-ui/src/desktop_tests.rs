@@ -208,6 +208,22 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
             .cast_receivers()
             .is_empty()
     );
+    install_cast_with_discovery(
+        &ui,
+        &Rc::new(RefCell::new(UiState::default())),
+        preferences,
+        Some(settings_path.clone()),
+        |_| Err(std::io::Error::other("discovery failure")),
+    );
+    ui.invoke_cast_discover();
+    let discover_deadline = std::time::Instant::now() + Duration::from_secs(2);
+    while ui.get_cast_discovering() && std::time::Instant::now() < discover_deadline {
+        if let Ok(event) = event_receiver.recv_timeout(Duration::from_millis(20)) {
+            event();
+        }
+    }
+    assert!(!ui.get_cast_discovering());
+    assert!(ui.get_cast_status().contains("discovery is unavailable"));
     ui.set_panel("".into());
     capture_customization(&ui, &rendered_window, "dark");
     ui.invoke_save_binding("Ctrl+K".into(), "pause".into());
