@@ -300,6 +300,16 @@ mod tests {
     }
 
     #[test]
+    fn public_discovery_rejects_a_zero_timeout_before_starting_mdns() {
+        assert_eq!(
+            super::discover_receivers(Duration::ZERO)
+                .unwrap_err()
+                .kind(),
+            io::ErrorKind::InvalidInput
+        );
+    }
+
+    #[test]
     fn returns_unique_receivers_and_closes_the_browser() {
         let receiver = DiscoveredReceiver {
             name: "Receiver".into(),
