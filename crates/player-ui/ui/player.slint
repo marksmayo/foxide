@@ -377,7 +377,7 @@ export component PlayerWindow inherits Window {
                     ToolButton { label: root.cast-inspecting ? "Inspecting receiver…" : "Inspect receiver certificate"; width: 210px; available: !root.cast-inspecting; clicked => { root.cast-inspect(root.cast-endpoint); } }
                     LineEdit { text <=> root.cast-fingerprint; placeholder-text: "SHA-256 certificate fingerprint"; }
                     Text { text: root.cast-status; color: Appearance.secondary; wrap: word-wrap; }
-                    ToolButton { label: "Cast current file"; width: 150px; primary: true; available: root.loaded && root.has-video && !root.cast-active; clicked => { root.cast-connect(root.cast-endpoint, root.cast-fingerprint); } }
+                    ToolButton { label: "Cast current media"; width: 150px; primary: true; available: root.loaded && !root.cast-active; clicked => { root.cast-connect(root.cast-endpoint, root.cast-fingerprint); } }
                     ToolButton { label: root.cast-paused ? "Resume casting" : "Pause casting"; width: 150px; available: root.cast-active; clicked => { root.cast-control(root.cast-paused ? "play" : "pause"); } }
                     ToolButton { label: "Stop casting"; width: 120px; available: root.cast-active; clicked => { root.cast-control("stop"); } }
                 }

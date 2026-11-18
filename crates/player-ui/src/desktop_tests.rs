@@ -104,6 +104,12 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
         ui.get_cast_status()
             .contains("literal local receiver address")
     );
+    ui.invoke_cast_inspect("8.8.8.8:8009".into());
+    assert!(
+        ui.get_cast_status()
+            .contains("literal local receiver address")
+    );
+    assert!(!ui.get_cast_inspecting());
     ui.invoke_cast_connect("192.168.1.20:8009".into(), "invalid".into());
     assert!(ui.get_cast_status().contains("64 digit SHA-256"));
     let preferences = Rc::new(RefCell::new(player_settings::Preferences::default()));
