@@ -47,8 +47,8 @@ impl Browser for MdnsBrowser {
     fn next(&mut self, timeout: Duration) -> io::Result<Option<DiscoveredReceiver>> {
         match self.events.recv_timeout(timeout) {
             Ok(ServiceEvent::ServiceResolved(service)) if service.is_valid() => {
-                Ok(receiver_from_service(
-                    &mdns_sd::instance_name_unescaped(&service.fullname),
+                Ok(receiver_from_resolved(
+                    &service.fullname,
                     service.is_valid(),
                     service.port,
                     service.addresses.iter().map(ScopedIp::to_ip_addr),
@@ -116,6 +116,16 @@ fn receiver_from_service(
     receiver_from_records(name, port, addresses)
 }
 
+fn receiver_from_resolved(
+    fullname: &str,
+    is_valid: bool,
+    port: u16,
+    addresses: impl IntoIterator<Item = IpAddr>,
+) -> Option<DiscoveredReceiver> {
+    let name = mdns_sd::instance_name_unescaped(fullname);
+    receiver_from_service(&name, is_valid, port, addresses)
+}
+
 fn receiver_from_records(
     name: &str,
     port: u16,
@@ -149,7 +159,7 @@ fn receiver_from_records(
 mod tests {
     use super::{
         Browser, DiscoveredReceiver, MdnsBrowser, discover_with, receiver_from_records,
-        receiver_from_service,
+        receiver_from_resolved, receiver_from_service,
     };
     use std::{
         cell::Cell,
@@ -229,6 +239,39 @@ mod tests {
             )
             .is_some()
         );
+    }
+
+    #[test]
+    fn accepts_local_address_ranges_and_caps_receiver_names() {
+        let local_addresses = [
+            IpAddr::V4(Ipv4Addr::LOCALHOST),
+            IpAddr::V4(Ipv4Addr::new(169, 254, 10, 20)),
+            IpAddr::V6(Ipv6Addr::LOCALHOST),
+            IpAddr::V6("fd00::20".parse().unwrap()),
+        ];
+        for address in local_addresses {
+            assert!(receiver_from_records("Local receiver", 8009, [address]).is_some());
+        }
+
+        let receiver = receiver_from_records(
+            &"R".repeat(100),
+            8009,
+            [IpAddr::V4(Ipv4Addr::new(192, 168, 1, 20))],
+        )
+        .unwrap();
+        assert_eq!(receiver.name.len(), 80);
+    }
+
+    #[test]
+    fn resolves_service_instance_names_before_displaying_receivers() {
+        let receiver = receiver_from_resolved(
+            r"Living\.Room._googlecast._tcp.local.",
+            true,
+            8009,
+            [IpAddr::V4(Ipv4Addr::new(192, 168, 1, 20))],
+        )
+        .unwrap();
+        assert_eq!(receiver.name, "Living.Room");
     }
 
     #[test]
