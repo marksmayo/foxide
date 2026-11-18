@@ -371,7 +371,7 @@ export component PlayerWindow inherits Window {
     }
     if (root.panel != ""): Rectangle { background: #050a13bb;
         TouchArea { clicked => { root.panel = ""; } }
-        Rectangle { width: min(parent.width - 60px, 550px); height: root.panel == "preferences" || root.panel == "radio" ? min(parent.height - 30px, 620px) : root.panel == "url" ? 300px : root.panel == "cast" ? min(parent.height - 30px, 500px) : 330px; x: (parent.width - self.width) / 2; y: (parent.height - self.height) / 2;
+        Rectangle { width: min(parent.width - 60px, 550px); height: root.panel == "preferences" || root.panel == "radio" ? min(parent.height - 30px, 620px) : root.panel == "url" ? 300px : root.panel == "cast" ? min(parent.height - 30px, 680px) : 330px; x: (parent.width - self.width) / 2; y: (parent.height - self.height) / 2;
             background: Appearance.dialog; border-radius: 14px; border-width: 1px; border-color: Appearance.border;
             VerticalLayout { padding: 24px; spacing: 18px;
                 HorizontalLayout {
@@ -382,16 +382,16 @@ export component PlayerWindow inherits Window {
                     LineEdit { text <=> root.url; placeholder-text: "https://… or rtsp://…"; accepted => { root.open-url(root.url); root.panel = ""; } }
                     ToolButton { label: "Open stream"; width: 130px; primary: true; clicked => { root.open-url(root.url); root.panel = ""; } }
                 }
-                if (root.panel == "cast"): ScrollView { vertical-stretch: 1;
+                if (root.panel == "cast"): ScrollView { height: min(root.height - 110px, 560px);
                     VerticalLayout { spacing: 12px;
                     LineEdit { text <=> root.cast-endpoint; placeholder-text: "192.168.x.x:8009"; }
                     ToolButton { label: root.cast-discovering ? "Searching local network…" : "Find local receivers"; width: 190px; available: !root.cast-discovering; clicked => { root.cast-discover(); } }
-                    ScrollView { visible: root.cast-receivers.length > 0; height: 90px;
+                    ScrollView { visible: root.cast-receivers.length > 0; height: 48px;
                         VerticalLayout { spacing: 4px;
                             for receiver in root.cast-receivers: ToolButton { label: receiver.name + " · " + receiver.endpoint; description: "Select " + receiver.name; width: 460px; clicked => { root.cast-select(receiver.name, receiver.endpoint, receiver.fingerprint); } }
                         }
                     }
-                    ScrollView { visible: root.cast-paired-receivers.length > 0; height: 90px;
+                    ScrollView { visible: root.cast-paired-receivers.length > 0; height: 48px;
                         VerticalLayout { spacing: 4px;
                             for receiver in root.cast-paired-receivers: ToolButton { label: receiver.name + " · " + receiver.endpoint; description: "Use remembered receiver " + receiver.name; width: 460px; clicked => { root.cast-select(receiver.name, receiver.endpoint, receiver.fingerprint); } }
                         }

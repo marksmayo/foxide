@@ -193,6 +193,13 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
     );
     ui.set_panel("cast".into());
     capture_customization(&ui, &rendered_window, "cast");
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerScrolled {
+            position: slint::LogicalPosition::new(590.0, 400.0),
+            delta_x: 0.0,
+            delta_y: 500.0,
+        });
+    capture_customization(&ui, &rendered_window, "cast-scrolled");
     ui.invoke_cast_forget("127.0.0.1:8009".into());
     assert_eq!(ui.get_cast_paired_receivers().row_count(), 0);
     assert!(
