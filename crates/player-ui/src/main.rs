@@ -16,6 +16,7 @@ mod generated {
 use generated::*;
 mod network_ui;
 mod preview;
+mod updates_ui;
 
 #[derive(Parser)]
 #[command(about = "Foxide desktop player — Slint and embedded libmpv")]
@@ -1208,6 +1209,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .transpose()?
         .unwrap_or_else(player_services::RadioDirectory::public);
     let _radio = network_ui::install_radio(&ui, Arc::new(network_ui::SystemHttp), radio_api);
+    updates_ui::install(&ui);
     let state = Rc::new(RefCell::new(UiState::default()));
     install_cast_with_preferences(&ui, &state, preferences, config_path);
     let startup_engine = Engine::with_video_site_helper(helper.as_ref().map(|tool| tool.path()));

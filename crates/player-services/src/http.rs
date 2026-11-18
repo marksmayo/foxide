@@ -36,6 +36,91 @@ impl CurlClient {
             .find_map(|path| Self::new(&path).ok())
             .ok_or("System curl was not found; install curl to use online services".into())
     }
+
+    /// Download one HTTPS resource to a private temporary path, enforcing a byte cap.
+    pub fn download_file(
+        &self,
+        url: &Url,
+        destination: &Path,
+        max_bytes: u64,
+        cancel: &AtomicBool,
+    ) -> Result<(), String> {
+        if url.scheme() != "https" || max_bytes == 0 || max_bytes > 512 * 1024 * 1024 {
+            return Err("Update downloads require HTTPS and a valid size limit".into());
+        }
+        let parent = destination
+            .parent()
+            .ok_or("Download destination has no parent")?;
+        std::fs::create_dir_all(parent).map_err(|error| error.to_string())?;
+        let mut temporary = destination.as_os_str().to_os_string();
+        temporary.push(format!(".{}.part", std::process::id()));
+        let temporary = PathBuf::from(temporary);
+        let _ = std::fs::remove_file(&temporary);
+        let mut args: Vec<std::ffi::OsString> = [
+            "--disable",
+            "--silent",
+            "--show-error",
+            "--fail",
+            "--globoff",
+            "--location",
+            "--max-redirs",
+            "3",
+            "--proto",
+            "=https",
+            "--proto-redir",
+            "=https",
+            "--tlsv1.2",
+            "--connect-timeout",
+            "10",
+            "--max-time",
+            "900",
+            "--max-filesize",
+        ]
+        .into_iter()
+        .map(Into::into)
+        .collect();
+        args.push(max_bytes.to_string().into());
+        args.extend([
+            "--user-agent".into(),
+            "Foxide/0.0.1".into(),
+            "--output".into(),
+            temporary.as_os_str().to_owned(),
+            "--url".into(),
+            url.as_str().into(),
+        ]);
+        let result = run_bounded(
+            &self.executable,
+            &args,
+            RunLimits {
+                timeout: std::time::Duration::from_secs(900),
+                stdout: 1024,
+                stderr: 8192,
+            },
+            cancel,
+        );
+        if let Err(error) = result {
+            let _ = std::fs::remove_file(&temporary);
+            return Err(error);
+        }
+        let size = match std::fs::metadata(&temporary) {
+            Ok(metadata) => metadata.len(),
+            Err(error) => {
+                let _ = std::fs::remove_file(&temporary);
+                return Err(error.to_string());
+            }
+        };
+        if size == 0 || size > max_bytes {
+            let _ = std::fs::remove_file(&temporary);
+            return Err("Downloaded file size is invalid".into());
+        }
+        if destination.exists() {
+            std::fs::remove_file(destination).map_err(|error| error.to_string())?;
+        }
+        std::fs::rename(&temporary, destination).map_err(|error| {
+            let _ = std::fs::remove_file(&temporary);
+            error.to_string()
+        })
+    }
 }
 impl HttpClient for CurlClient {
     fn get(&self, url: &Url, cancel: &AtomicBool) -> Result<Vec<u8>, String> {

@@ -67,11 +67,14 @@ jobs:
               output.write(f'tag={tag}\nversion={version}\ncommit={commit}\n')
       - name: Test and build the Windows desktop
         shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
         run: |
           python -m unittest discover -s tests -p test_package_windows.py
           if ($LASTEXITCODE -ne 0) { throw 'Packaging tests failed' }
           cargo test --workspace --locked
           if ($LASTEXITCODE -ne 0) { throw 'Workspace tests failed' }
+          $env:FOXIDE_RELEASE_VERSION = $env:RELEASE_VERSION
           cargo build -p player-ui --features desktop --bin foxide-desktop --release --locked
           if ($LASTEXITCODE -ne 0) { throw 'Desktop build failed' }
           cargo metadata --locked --format-version 1 --filter-platform x86_64-pc-windows-msvc --features player-ui/desktop > cargo-release-metadata.json

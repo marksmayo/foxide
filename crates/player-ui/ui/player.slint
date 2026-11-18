@@ -101,6 +101,10 @@ export component PlayerWindow inherits Window {
     callback shortcut(string, bool, bool, bool, bool) -> bool;
     in-out property <string> video-site-helper;
     in-out property <string> video-site-notice;
+    in-out property <string> update-status: "Updates are checked automatically.";
+    in-out property <string> staged-update-version;
+    callback check-updates();
+    callback install-update();
     callback save-video-site-helper(string);
     callback choose-video-site-helper();
     callback save-binding(string, string);
@@ -243,6 +247,7 @@ export component PlayerWindow inherits Window {
         }
         Menu { title: "Help";
             MenuItem { title: "Keyboard shortcuts"; activated => { root.panel = "shortcuts"; } }
+            MenuItem { title: "Software updates…"; activated => { root.panel = "updates"; root.check-updates(); } }
             MenuItem { title: "About Foxide"; activated => { root.panel = "about"; } }
         }
     }
@@ -274,6 +279,12 @@ export component PlayerWindow inherits Window {
                     Text { text: root.media-title == "" ? "Foxide Music" : root.media-title; color: Appearance.text; font-size: 20px; font-weight: 600; overflow: elide; }
                     Text { text: root.loaded ? root.status : "Open music from the Media menu"; color: Appearance.muted; font-size: 12px; overflow: elide; }
                 }
+            }
+        }
+        if (root.staged-update-version != "" && !root.fullscreen-mode): Rectangle { height: 42px; background: Appearance.selected;
+            HorizontalLayout { padding-left: 20px; padding-right: 18px; spacing: 12px;
+                Text { text: "Foxide " + root.staged-update-version + " is ready to install"; color: Appearance.text; horizontal-stretch: 1; vertical-alignment: center; }
+                ToolButton { label: "Review update"; width: 120px; primary: true; clicked => { root.panel = "updates"; } }
             }
         }
         HorizontalLayout { spacing: 0px; min-height: 0px; max-height: root.compact-mode ? 0px : 100000px; vertical-stretch: root.compact-mode ? 0 : 1;
@@ -384,6 +395,12 @@ export component PlayerWindow inherits Window {
                     LineEdit { text <=> root.url; placeholder-text: "https://… or rtsp://…"; accepted => { root.open-url(root.url); root.panel = ""; } }
                     ToolButton { label: "Open stream"; width: 130px; primary: true; clicked => { root.open-url(root.url); root.panel = ""; } }
                 }
+                if (root.panel == "updates"): VerticalLayout { spacing: 14px;
+                    Text { text: root.staged-update-version == "" ? root.update-status : "Version " + root.staged-update-version + " is downloaded and checksum-checked. Restart Foxide to install it."; color: Appearance.secondary; wrap: word-wrap; }
+                    ToolButton { label: "Check now"; width: 110px; available: root.staged-update-version == ""; clicked => { root.check-updates(); } }
+                    ToolButton { visible: root.staged-update-version != ""; label: "Install and restart"; width: 170px; primary: true; clicked => { root.install-update(); } }
+                    Text { text: "Updates download in the background. Foxide asks before installing and restarting."; color: Appearance.muted; wrap: word-wrap; font-size: 12px; }
+                }
                 if (root.panel == "cast"): ScrollView { height: min(root.height - 110px, 560px);
                     VerticalLayout { spacing: 12px;
                     LineEdit { text <=> root.cast-endpoint; placeholder-text: "192.168.x.x:8009"; }
@@ -467,7 +484,7 @@ export component PlayerWindow inherits Window {
                     }
                 }
                 if (root.panel == "shortcuts"): ScrollView { vertical-stretch: 1; Text { text: root.shortcut-help + "\nEscape  —  Close dialog / leave fullscreen"; color: Appearance.secondary; wrap: word-wrap; } }
-                if (root.panel != "url" && root.panel != "preferences" && root.panel != "shortcuts" && root.panel != "radio" && root.panel != "cast"): Text { text: root.panel == "information" ? root.diagnostics + "\n\nGPU shaders\n" + root.shader-notice + "\n\nDisplay color profile\n" + root.color-profile-notice : root.panel == "shortcuts" ? root.shortcut-help : "A little less between you and your media.\n\nFoxide desktop preview\nBuilt with Rust, Slint, and libmpv.\n\nPlayback and GPU diagnostics are available\nunder View → Playback information."; color: Appearance.secondary; wrap: word-wrap; font-size: 14px; }
+                if (root.panel != "url" && root.panel != "preferences" && root.panel != "shortcuts" && root.panel != "radio" && root.panel != "cast" && root.panel != "updates"): Text { text: root.panel == "information" ? root.diagnostics + "\n\nGPU shaders\n" + root.shader-notice + "\n\nDisplay color profile\n" + root.color-profile-notice : root.panel == "shortcuts" ? root.shortcut-help : "A little less between you and your media.\n\nFoxide desktop preview\nBuilt with Rust, Slint, and libmpv.\n\nPlayback and GPU diagnostics are available\nunder View → Playback information."; color: Appearance.secondary; wrap: word-wrap; font-size: 14px; }
                 if (root.panel != "preferences" && root.panel != "shortcuts" && root.panel != "radio"): Rectangle { vertical-stretch: 1; background: transparent; }
             }
         }

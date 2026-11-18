@@ -32,4 +32,12 @@ The native runtime is not bundled in this first package. Its existing developmen
 
 Pull requests exercise packaging and upload test artifacts; they never create a release. Current packaging targets Windows x64 and the main renderer, with no experimental ANGLE binaries or installer/file-association changes.
 
+## Update roadmap
+
+- **Windows:** check published releases in the background, automatically download the Windows x64 package, verify its published SHA-256 entry and package size, then stage it under the user's local application data. Show the version and ask before restarting to install it. Draft releases are never offered. The client must stay on its current stable or preview channel.
+- **macOS:** add a release package workflow with the signing and notarization policy defined before publishing. Add architecture-aware update metadata, verified automatic downloads, staging, and an explicit install/restart prompt. Decide universal versus separate Apple Silicon and Intel packages as part of that workflow.
+- **Linux:** define supported distributions and package formats before publishing. Add per-format release metadata, verified automatic downloads, staging, and an explicit install/restart prompt that respects the package manager's ownership and permissions.
+
+Cross-platform release channels require their own provenance and verification tests. Update checks must never execute a downloaded installer automatically; staged updates are applied only after an explicit user action. The current Windows channel checks that the archive matches the size and SHA-256 published alongside it; this detects corruption and mismatched assets, but the checksum is not an independent publisher signature. Signed release provenance remains part of release hardening.
+
 [GitHub release management](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository)

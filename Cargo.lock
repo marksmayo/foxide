@@ -3707,7 +3707,9 @@ dependencies = [
 name = "player-services"
 version = "0.0.1"
 dependencies = [
+ "semver",
  "serde_json",
+ "sha2",
  "url",
 ]
 
