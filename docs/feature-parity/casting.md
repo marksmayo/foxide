@@ -1,6 +1,6 @@
 # Chromecast implementation checkpoint
 
-Chromecast output remains **unaccepted** and receives no feature medal. The isolated player-cast crate now has pinned control transport, receiver-restricted file serving and owned playback operations. A bounded session worker now keeps receiver I/O off the caller thread. Desktop discovery/pairing and physical audio acceptance remain; the owner has confirmed moving silent video on two receivers.
+Chromecast output remains **unaccepted** and receives no feature medal. The player-cast crate provides pinned control transport, receiver-restricted file serving and owned playback operations. Its bounded session worker keeps receiver I/O off the caller thread. The Slint desktop has a Cast menu and panel for an explicitly entered local receiver address and previously inspected SHA-256 certificate pin, with worker-backed cast, pause, resume and stop controls (042bf90). The UI path has not been exercised against a physical receiver. Discovery and an in-app pairing flow are not implemented; silent video has been confirmed on two receivers using the device probe, while audio and other codecs remain untested.
 
 ## Transport and trust
 
@@ -10,7 +10,7 @@ Certificate inspection returns a presented leaf-certificate SHA-256, then aborts
 
 Literal local-network addresses avoid an unbounded DNS lookup. Network operations have a total deadline, including fragmented TLS/frame reads. Request IDs start at a random nonzero value and increase within JavaScript's exact integer range. Root/application responses are correlated; unrelated frames have a bounded skip count. Transport-level heartbeats are handled before application routing, including the transport-0 endpoint.
 
-No discovery, network request or new dependency loading is added to desktop startup. The desktop does not depend on this crate yet.
+No discovery or receiver network request is added to desktop startup. The desktop feature depends on player-cast, but opens a receiver connection only after the user enters its literal local address and certificate pin and starts casting.
 
 ## Owned media operations
 
@@ -46,7 +46,7 @@ Two owner receivers each fetched the selected silent H.264 test clip, reported P
 
 The saved receiver certificates had changed since earlier inspection. Controls refused both changed certificates; explicit owner approval preceded re-pairing. No automatic trust replacement was added. The cause of the certificate changes is not established.
 
-The owner adjusted local firewall access before the successful checks. The agent signalled the temporary helper to finish. Device names, addresses, fingerprints, raw diagnostics and helper files stay in ignored local data. The owner subsequently confirmed moving video on both TVs in the longer run. The silent fixture provides no audio acceptance. The short control probe stopped approximately three seconds after starting media. A subsequent run on each receiver used a 90-second silent clip, sustained PLAYING/clock progress for a 30-second viewing window, and then tested controls and stopped. Both receivers maintained clock progress past 30 seconds, and the owner explicitly reported moving video on both TVs. The three-second test had an inadequate observation window; the successful long-window test changed no production playback, transport or file-server code. This narrows the finding to the acceptance procedure; it does not establish the exact TV wake-up timing.
+The owner adjusted local firewall access before the successful checks. The agent signalled the temporary helper to finish. Device names, addresses, fingerprints, raw diagnostics and helper files stay in ignored local data. The owner confirmed moving video on both TVs in the longer run. The silent fixture provides no audio acceptance. The short control probe stopped approximately three seconds after starting media. A subsequent run on each receiver used a 90-second silent clip, sustained PLAYING/clock progress for a 30-second viewing window, and then tested controls and stopped. Both receivers maintained clock progress past 30 seconds, and the owner explicitly reported moving video on both TVs. The three-second test had an inadequate observation window; the successful long-window test changed no production playback, transport or file-server code. This narrows the finding to the acceptance procedure; it does not establish the exact TV wake-up timing.
 
 The opt-in device test requires the device-integration feature plus explicit FOXIDE_CAST_TARGET, FOXIDE_CAST_PIN and FOXIDE_CAST_MEDIA values. It remains ignored in ordinary/offline/hosted tests. The default refuses foreground takeover. For an explicitly requested repeat, FOXIDE_CAST_REPEAT_DEFAULT_APP=1 permits replacing only the default Cast media receiver; other applications remain protected. FOXIDE_CAST_VIEW_SECONDS selects a bounded (up to 120 seconds) viewing window, **30 seconds by default**. Clips with a known duration must last at least five seconds longer than the window. Setting zero explicitly runs only the quick protocol checks. During it the probe checks continuing PLAYING state and clock progress. Output explicitly labels protocol success separately from unverified physical playback. Optional FOXIDE_CAST_TRACE output uses fixed protocol labels and routing-match flags, not identifiers, URLs or tokens.
 
@@ -62,6 +62,6 @@ Inspection does not grant trust. The read-only diagnostic does not launch applic
 
 ## Remaining work
 
-Desktop discovery, a visible trust decision, integration with playback controls, complete disconnect/failure cleanup, receiver codec compatibility beyond the tested H.264 clip and physical audio acceptance remain. The feature total stays at **8/49 accepted**, with **41 gaps remaining**.
+The desktop currently requires manual entry of the local address and a previously inspected certificate fingerprint; it has no discovery or in-app pairing flow. Exercise the desktop panel against a physical receiver and verify its cast/pause/resume/stop lifecycle there. Receiver codec compatibility beyond the tested H.264 clip and physical audio acceptance also remain. The feature total stays at **8/49 accepted**, with **41 gaps remaining**.
 
 References: [Chromium envelope definition](https://chromium.googlesource.com/chromium/src.git/+/4d6bb36e3fcfb9742b6428e43a8e5df12681d0d0/components/cast_channel/proto/cast_channel.proto), [Rustls verifier contract](https://docs.rs/rustls/0.23.46/rustls/client/danger/trait.ServerCertVerifier.html), [Google media messages](https://developers.google.com/cast/docs/media/messages), and [Chromium transport-endpoint fix](https://chromium.googlesource.com/openscreen/+/8ef06d904f52e5595f0fbfd80ae93c123b3a35d5).

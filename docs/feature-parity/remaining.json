@@ -35,7 +35,7 @@
       "name": "Chromecast video output",
       "group": "Casting",
       "stage": "queued",
-      "acceptance": "Pinned transport, restricted file serving and owned playback APIs pass real TLS/HTTP fixtures. Physical media acceptance is blocked by local Windows firewall rules; desktop discovery/pairing/session controls and display/audio acceptance remain. No casting gold is claimed."
+      "acceptance": "Pinned transport, restricted file serving and owned playback APIs pass real TLS/HTTP fixtures. Owner-confirmed silent H.264 playback and pause/seek/resume/stop passed on two receivers during a 30-second window. A desktop Cast menu, explicit local-address/SHA-256-pin panel and worker controls are implemented at 042bf90; the UI has not yet been exercised against a physical receiver. Discovery/in-app pairing, audio and other codecs remain unverified. No casting gold is claimed."
     },
     {
       "id": "airplay_video_output",
