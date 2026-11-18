@@ -381,7 +381,8 @@ export component PlayerWindow inherits Window {
                     LineEdit { text <=> root.url; placeholder-text: "https://… or rtsp://…"; accepted => { root.open-url(root.url); root.panel = ""; } }
                     ToolButton { label: "Open stream"; width: 130px; primary: true; clicked => { root.open-url(root.url); root.panel = ""; } }
                 }
-                if (root.panel == "cast"): VerticalLayout { spacing: 12px;
+                if (root.panel == "cast"): ScrollView { vertical-stretch: 1;
+                    VerticalLayout { spacing: 12px;
                     LineEdit { text <=> root.cast-endpoint; placeholder-text: "192.168.x.x:8009"; }
                     ToolButton { label: root.cast-discovering ? "Searching local network…" : "Find local receivers"; width: 190px; available: !root.cast-discovering; clicked => { root.cast-discover(); } }
                     ScrollView { visible: root.cast-receivers.length > 0; height: 90px;
@@ -405,6 +406,7 @@ export component PlayerWindow inherits Window {
                         ToolButton { label: "Remember receiver"; width: 160px; available: root.cast-endpoint != ""; clicked => { root.cast-remember(root.cast-name, root.cast-endpoint, root.cast-fingerprint); } }
                         ToolButton { label: "Forget selected"; width: 150px; available: root.cast-endpoint != ""; clicked => { root.cast-forget(root.cast-endpoint); } }
                     }
+                }
                 }
                 if (root.panel == "radio"): VerticalLayout { spacing: 12px; vertical-stretch: 1;
                     HorizontalLayout { spacing: 8px;
