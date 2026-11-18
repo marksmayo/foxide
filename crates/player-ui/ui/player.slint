@@ -80,6 +80,7 @@ export component PlayerWindow inherits Window {
     callback cast-inspect(string);
     callback cast-discover();
     callback cast-control(string);
+    callback cast-select(string, string, string);
     callback cast-remember(string, string, string);
     callback cast-forget(string);
     changed panel => { if (root.panel != "radio") { root.cancel-services(); } }
@@ -387,12 +388,12 @@ export component PlayerWindow inherits Window {
                     ToolButton { label: root.cast-discovering ? "Searching local network…" : "Find local receivers"; width: 190px; available: !root.cast-discovering; clicked => { root.cast-discover(); } }
                     ScrollView { visible: root.cast-receivers.length > 0; height: 90px;
                         VerticalLayout { spacing: 4px;
-                            for receiver in root.cast-receivers: ToolButton { label: receiver.name + " · " + receiver.endpoint; description: "Select " + receiver.name; width: 460px; clicked => { root.cast-endpoint = receiver.endpoint; root.cast-name = receiver.name; root.cast-fingerprint = receiver.fingerprint; } }
+                            for receiver in root.cast-receivers: ToolButton { label: receiver.name + " · " + receiver.endpoint; description: "Select " + receiver.name; width: 460px; clicked => { root.cast-select(receiver.name, receiver.endpoint, receiver.fingerprint); } }
                         }
                     }
                     ScrollView { visible: root.cast-paired-receivers.length > 0; height: 90px;
                         VerticalLayout { spacing: 4px;
-                            for receiver in root.cast-paired-receivers: ToolButton { label: receiver.name + " · " + receiver.endpoint; description: "Use remembered receiver " + receiver.name; width: 460px; clicked => { root.cast-endpoint = receiver.endpoint; root.cast-name = receiver.name; root.cast-fingerprint = receiver.fingerprint; } }
+                            for receiver in root.cast-paired-receivers: ToolButton { label: receiver.name + " · " + receiver.endpoint; description: "Use remembered receiver " + receiver.name; width: 460px; clicked => { root.cast-select(receiver.name, receiver.endpoint, receiver.fingerprint); } }
                         }
                     }
                     LineEdit { text <=> root.cast-name; placeholder-text: "Optional receiver name"; }

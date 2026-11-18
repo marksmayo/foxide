@@ -135,12 +135,34 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
     }
     let _cleanup = RemoveSettings(settings_path.clone());
     install_preferences(&ui, preferences.clone(), Some(settings_path.clone()));
-    install_cast_with_preferences(
+    install_cast_with_discovery(
         &ui,
         &Rc::new(RefCell::new(UiState::default())),
         preferences.clone(),
         Some(settings_path.clone()),
+        |_| {
+            Ok(vec![player_cast::CastReceiver {
+                name: "Test receiver".into(),
+                address: std::net::SocketAddr::from(([127, 0, 0, 1], 8009)),
+            }])
+        },
     );
+    ui.invoke_cast_discover();
+    let discover_deadline = std::time::Instant::now() + Duration::from_secs(2);
+    while ui.get_cast_discovering() && std::time::Instant::now() < discover_deadline {
+        if let Ok(event) = event_receiver.recv_timeout(Duration::from_millis(20)) {
+            event();
+        }
+    }
+    assert!(!ui.get_cast_discovering());
+    assert_eq!(ui.get_cast_receivers().row_count(), 1);
+    let discovered = ui.get_cast_receivers().row_data(0).unwrap();
+    assert_eq!(discovered.name, "Test receiver");
+    assert_eq!(discovered.fingerprint, "");
+    ui.set_cast_fingerprint("stale pin".into());
+    ui.invoke_cast_select(discovered.name, discovered.endpoint, discovered.fingerprint);
+    assert_eq!(ui.get_cast_name(), "Test receiver");
+    assert_eq!(ui.get_cast_fingerprint(), "");
     ui.invoke_cast_remember(
         "Living Room".into(),
         "127.0.0.1:8009".into(),
@@ -159,6 +181,9 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
         "ab".repeat(32).into(),
     );
     assert_eq!(ui.get_cast_paired_receivers().row_count(), 1);
+    let paired = ui.get_cast_paired_receivers().row_data(0).unwrap();
+    ui.invoke_cast_select(paired.name, paired.endpoint, paired.fingerprint.clone());
+    assert_eq!(ui.get_cast_fingerprint(), "ab".repeat(32));
     assert_eq!(
         player_settings::Preferences::load(&settings_path)
             .unwrap()

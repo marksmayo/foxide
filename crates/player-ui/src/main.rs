@@ -738,9 +738,43 @@ fn install_cast_with_preferences(
     preferences: Rc<RefCell<Preferences>>,
     preferences_path: Option<PathBuf>,
 ) {
+    install_cast_with_discovery(
+        ui,
+        state,
+        preferences,
+        preferences_path,
+        player_cast::discover_receivers,
+    );
+}
+
+fn install_cast_with_discovery(
+    ui: &PlayerWindow,
+    state: &Rc<RefCell<UiState>>,
+    preferences: Rc<RefCell<Preferences>>,
+    preferences_path: Option<PathBuf>,
+    discover: impl Fn(std::time::Duration) -> std::io::Result<Vec<player_cast::CastReceiver>>
+    + Send
+    + Sync
+    + 'static,
+) {
     ui.set_cast_paired_receivers(ModelRc::new(VecModel::from(cast_receiver_rows(
         &preferences.borrow(),
     ))));
+    let weak = ui.as_weak();
+    ui.on_cast_select(move |name, endpoint, fingerprint| {
+        if let Some(ui) = weak.upgrade() {
+            ui.set_cast_name(name);
+            ui.set_cast_endpoint(endpoint);
+            ui.set_cast_fingerprint(fingerprint.clone());
+            ui.set_cast_status(
+                if fingerprint.is_empty() {
+                    "Receiver selected. Inspect its certificate and review the fingerprint before casting.".into()
+                } else {
+                    "Remembered receiver selected. Its saved fingerprint is required for casting; inspect again if you need to re-pair.".into()
+                },
+            );
+        }
+    });
     let active: Arc<std::sync::Mutex<Option<CastController>>> =
         Arc::new(std::sync::Mutex::new(None));
     let (weak, state, active_for_connect) = (ui.as_weak(), state.clone(), active.clone());
@@ -860,7 +894,7 @@ fn install_cast_with_preferences(
             });
         });
     });
-    let weak = ui.as_weak();
+    let (weak, discover) = (ui.as_weak(), Arc::new(discover));
     ui.on_cast_discover(move || {
         let Some(ui) = weak.upgrade() else { return };
         if ui.get_cast_discovering() {
@@ -869,9 +903,9 @@ fn install_cast_with_preferences(
         ui.set_cast_discovering(true);
         ui.set_cast_receivers(ModelRc::new(VecModel::from(Vec::<CastReceiverRow>::new())));
         ui.set_cast_status("Searching the local network for Cast receivers for up to five seconds…".into());
-        let window = weak.clone();
+        let (window, discover) = (weak.clone(), discover.clone());
         std::thread::spawn(move || {
-            let result = player_cast::discover_receivers(std::time::Duration::from_secs(5));
+            let result = discover(std::time::Duration::from_secs(5));
             let _ = window.upgrade_in_event_loop(move |ui| {
                 ui.set_cast_discovering(false);
                 match result {
