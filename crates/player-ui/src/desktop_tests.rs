@@ -128,6 +128,60 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
     let actions = Rc::new(RefCell::new(Vec::new()));
     let recorded = actions.clone();
     ui.on_action(move |name, value| recorded.borrow_mut().push((name.to_string(), value)));
+    ui.set_loaded(true);
+    ui.set_volume(80.0);
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerScrolled {
+            position: slint::LogicalPosition::new(700.0, 350.0),
+            delta_x: 100.0,
+            delta_y: 0.0,
+        });
+    assert_eq!(
+        actions.borrow().last(),
+        Some(&("seek-relative".into(), 5.0))
+    );
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerScrolled {
+            position: slint::LogicalPosition::new(700.0, 350.0),
+            delta_x: 0.0,
+            delta_y: -24.0,
+        });
+    assert_eq!(actions.borrow().last(), Some(&("volume".into(), 83.0)));
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerScrolled {
+            position: slint::LogicalPosition::new(700.0, 350.0),
+            delta_x: -1000.0,
+            delta_y: 0.0,
+        });
+    assert_eq!(
+        actions.borrow().last(),
+        Some(&("seek-relative".into(), -15.0))
+    );
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerScrolled {
+            position: slint::LogicalPosition::new(700.0, 350.0),
+            delta_x: 0.0,
+            delta_y: -2000.0,
+        });
+    assert_eq!(actions.borrow().last(), Some(&("volume".into(), 100.0)));
+    let action_count = actions.borrow().len();
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerScrolled {
+            position: slint::LogicalPosition::new(700.0, 350.0),
+            delta_x: 0.0,
+            delta_y: 0.0,
+        });
+    assert_eq!(actions.borrow().len(), action_count);
+    ui.set_loaded(false);
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerScrolled {
+            position: slint::LogicalPosition::new(700.0, 350.0),
+            delta_x: 100.0,
+            delta_y: 0.0,
+        });
+    assert_eq!(actions.borrow().len(), action_count);
+    ui.set_loaded(true);
+    actions.borrow_mut().clear();
     assert!(ui.invoke_shortcut("k".into(), true, false, false, false));
     assert_eq!(&*actions.borrow(), &[("pause".into(), 0.0)]);
     ui.invoke_save_binding("F2".into(), "next".into());

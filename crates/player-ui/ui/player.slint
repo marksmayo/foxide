@@ -297,6 +297,20 @@ export component PlayerWindow inherits Window {
                             }
                             Text { text: "Open from the Media menu  ·  Edit keys under View → Preferences"; color: Appearance.muted; font-size: 11px; horizontal-alignment: center; }
                         }
+                        TouchArea {
+                            enabled: root.loaded && root.panel == "";
+                            scroll-event(event) => {
+                                if (abs(event.delta-x) >= abs(event.delta-y) && abs(event.delta-x) > 0px) {
+                                    root.action("seek-relative", min(15, max(-15, (event.delta-x / 1px) / 20)));
+                                    EventResult.accept
+                                } else if (abs(event.delta-y) > 0px) {
+                                    root.action("volume", min(100, max(0, root.volume - (event.delta-y / 1px) / 8)));
+                                    EventResult.accept
+                                } else {
+                                    EventResult.reject
+                                }
+                            }
+                        }
                     }
                 }
             }
