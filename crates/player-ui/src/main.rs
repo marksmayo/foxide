@@ -685,7 +685,62 @@ fn supported_cast_extension(path: &std::path::Path) -> bool {
         })
 }
 
+fn cast_receiver_rows(preferences: &Preferences) -> Vec<CastReceiverRow> {
+    preferences
+        .cast_receivers()
+        .iter()
+        .map(|receiver| CastReceiverRow {
+            name: receiver.name().into(),
+            endpoint: receiver.endpoint().into(),
+            fingerprint: receiver.fingerprint().into(),
+        })
+        .collect()
+}
+
+fn save_cast_preference(
+    ui: &PlayerWindow,
+    preferences: &Rc<RefCell<Preferences>>,
+    path: Option<&std::path::Path>,
+    edit: impl FnOnce(&mut Preferences) -> Result<(), String>,
+) {
+    let Some(path) = path else {
+        ui.set_cast_status("Receiver preferences cannot be saved because no local configuration path is available.".into());
+        return;
+    };
+    let mut candidate = preferences.borrow().clone();
+    match edit(&mut candidate).and_then(|()| candidate.save(path)) {
+        Ok(()) => {
+            ui.set_cast_paired_receivers(ModelRc::new(VecModel::from(cast_receiver_rows(
+                &candidate,
+            ))));
+            *preferences.borrow_mut() = candidate;
+            ui.set_cast_status("Remembered receivers were saved in local preferences. Certificate changes still require explicit review.".into());
+        }
+        Err(_) => ui.set_cast_status(
+            "Could not save receiver preferences. No receiver settings were changed.".into(),
+        ),
+    }
+}
+
+#[cfg(test)]
 fn install_cast(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>) {
+    install_cast_with_preferences(
+        ui,
+        state,
+        Rc::new(RefCell::new(Preferences::default())),
+        None,
+    );
+}
+
+fn install_cast_with_preferences(
+    ui: &PlayerWindow,
+    state: &Rc<RefCell<UiState>>,
+    preferences: Rc<RefCell<Preferences>>,
+    preferences_path: Option<PathBuf>,
+) {
+    ui.set_cast_paired_receivers(ModelRc::new(VecModel::from(cast_receiver_rows(
+        &preferences.borrow(),
+    ))));
     let active: Arc<std::sync::Mutex<Option<CastController>>> =
         Arc::new(std::sync::Mutex::new(None));
     let (weak, state, active_for_connect) = (ui.as_weak(), state.clone(), active.clone());
@@ -826,6 +881,7 @@ fn install_cast(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>) {
                             .map(|receiver| CastReceiverRow {
                                 name: receiver.name.clone().into(),
                                 endpoint: receiver.address.to_string().into(),
+                                fingerprint: "".into(),
                             })
                             .collect::<Vec<_>>();
                         ui.set_cast_receivers(ModelRc::new(VecModel::from(rows)));
@@ -864,10 +920,9 @@ fn install_cast(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>) {
                     .lock()
                     .expect("Cast controller lock poisoned")
                     .as_ref()
+                    && let Err(error) = controller.pause()
                 {
-                    if let Err(error) = controller.pause() {
-                        ui.set_cast_status(error.to_string().into());
-                    }
+                    ui.set_cast_status(error.to_string().into());
                 }
             }
             "play" => {
@@ -875,13 +930,40 @@ fn install_cast(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>) {
                     .lock()
                     .expect("Cast controller lock poisoned")
                     .as_ref()
+                    && let Err(error) = controller.play()
                 {
-                    if let Err(error) = controller.play() {
-                        ui.set_cast_status(error.to_string().into());
-                    }
+                    ui.set_cast_status(error.to_string().into());
                 }
             }
             _ => {}
+        }
+    });
+
+    let (weak, remember_preferences, path) =
+        (ui.as_weak(), preferences.clone(), preferences_path.clone());
+    ui.on_cast_remember(move |name, endpoint, fingerprint| {
+        if let Some(ui) = weak.upgrade() {
+            let name = if name.trim().is_empty() {
+                endpoint.to_string()
+            } else {
+                name.to_string()
+            };
+            save_cast_preference(&ui, &remember_preferences, path.as_deref(), |preferences| {
+                preferences.remember_cast_receiver(&name, endpoint.as_str(), fingerprint.as_str())
+            });
+        }
+    });
+
+    let (weak, preferences, path) = (ui.as_weak(), preferences, preferences_path);
+    ui.on_cast_forget(move |endpoint| {
+        if let Some(ui) = weak.upgrade() {
+            save_cast_preference(&ui, &preferences, path.as_deref(), |preferences| {
+                if preferences.forget_cast_receiver(endpoint.as_str()) {
+                    Ok(())
+                } else {
+                    Err("No remembered receiver matched the selected address".into())
+                }
+            });
         }
     });
 }
@@ -1011,7 +1093,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             None
         }
     };
-    install_preferences(&ui, Rc::new(RefCell::new(preferences)), config_path);
+    let preferences = Rc::new(RefCell::new(preferences));
+    install_preferences(&ui, preferences.clone(), config_path.clone());
     if let Some(error) = config_error {
         ui.set_preferences_error(format!("Could not load preferences: {error}").into());
     }
@@ -1023,7 +1106,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap_or_else(player_services::RadioDirectory::public);
     let _radio = network_ui::install_radio(&ui, Arc::new(network_ui::SystemHttp), radio_api);
     let state = Rc::new(RefCell::new(UiState::default()));
-    install_cast(&ui, &state);
+    install_cast_with_preferences(&ui, &state, preferences, config_path);
     let startup_engine = Engine::with_video_site_helper(helper.as_ref().map(|tool| tool.path()));
     let startup_engine = match startup_engine {
         Err(error) if helper.is_some() => {

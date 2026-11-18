@@ -35,7 +35,7 @@
       "name": "Chromecast video output",
       "group": "Casting",
       "stage": "queued",
-      "acceptance": "Pinned transport, restricted file serving and owned playback APIs pass real TLS/HTTP fixtures. Owner-confirmed silent H.264 playback and pause/seek/resume/stop passed on two receivers during a 30-second window. The desktop Cast menu supports manual local-address entry, bounded in-app certificate inspection, explicit pin review, opt-in bounded mDNS discovery, worker controls and loaded local media with supported audio containers. Physical desktop UI/discovery use and audio playback remain unverified. Persisted receiver management and codecs beyond tested H.264 remain unverified. No casting gold is claimed."
+      "acceptance": "Pinned transport, restricted file serving and owned playback APIs pass real TLS/HTTP fixtures. Owner-confirmed silent H.264 playback and pause/seek/resume/stop passed on two receivers during a 30-second window. The desktop Cast menu supports manual local-address entry, bounded in-app certificate inspection, explicit pin review, opt-in bounded mDNS discovery, worker controls and loaded local media with supported audio containers. Remember/forget for up to 32 explicitly reviewed local receiver pins is implemented in local user preferences. Physical desktop UI/discovery use and audio playback remain unverified; codecs beyond tested H.264 remain unverified. No casting gold is claimed."
     },
     {
       "id": "airplay_video_output",

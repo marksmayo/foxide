@@ -156,3 +156,65 @@ fn unicode_character_bindings_remain_single_keys_after_save_and_reload() {
         Some(("pause", 0.0))
     );
 }
+
+#[test]
+fn cast_receivers_are_saved_only_after_explicit_remember_and_can_be_forgotten() {
+    let mut preferences = Preferences::default();
+    let pin = "a".repeat(64);
+    preferences
+        .remember_cast_receiver("Living Room", "127.0.0.1:8009", &pin)
+        .unwrap();
+
+    let restored = Preferences::from_json(&preferences.to_json()).unwrap();
+    let receiver = &restored.cast_receivers()[0];
+    assert_eq!(receiver.name(), "Living Room");
+    assert_eq!(receiver.endpoint(), "127.0.0.1:8009");
+    assert_eq!(receiver.fingerprint(), pin);
+
+    let mut restored = restored;
+    let replacement_pin = "B".repeat(64);
+    restored
+        .remember_cast_receiver("Renamed", "127.0.0.1:8009", &replacement_pin)
+        .unwrap();
+    assert_eq!(restored.cast_receivers().len(), 1);
+    assert_eq!(restored.cast_receivers()[0].name(), "Renamed");
+    assert_eq!(
+        restored.cast_receivers()[0].fingerprint(),
+        replacement_pin.to_ascii_lowercase()
+    );
+
+    for (name, endpoint, fingerprint) in [
+        ("", "127.0.0.1:8009", &"a".repeat(64)),
+        ("Bad\nname", "127.0.0.1:8009", &"a".repeat(64)),
+        ("Public", "receiver.invalid:8009", &"a".repeat(64)),
+        ("Wrong port", "127.0.0.1:1", &"a".repeat(64)),
+        ("Bad pin", "127.0.0.1:8009", &"short".to_owned()),
+    ] {
+        assert!(
+            restored
+                .remember_cast_receiver(name, endpoint, fingerprint)
+                .is_err()
+        );
+    }
+    assert_eq!(restored.cast_receivers().len(), 1);
+    assert!(restored.forget_cast_receiver("127.0.0.1:8009"));
+    assert!(restored.cast_receivers().is_empty());
+
+    let mut full = Preferences::default();
+    for index in 1..=32 {
+        full.remember_cast_receiver(
+            &format!("Receiver {index}"),
+            &format!("127.0.0.{index}:8009"),
+            &format!("{index:064x}"),
+        )
+        .unwrap();
+    }
+    assert_eq!(full.cast_receivers().len(), 32);
+    full.remember_cast_receiver("Zulu", "127.0.0.1:8009", &"f".repeat(64))
+        .unwrap();
+    assert_eq!(full.cast_receivers().last().unwrap().name(), "Zulu");
+    assert!(
+        full.remember_cast_receiver("Overflow", "127.0.1.1:8009", &"f".repeat(64))
+            .is_err()
+    );
+}

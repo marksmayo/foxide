@@ -27,6 +27,29 @@ pub struct Preferences {
     accent: u32,
     compact: bool,
     video_site_helper: Option<String>,
+    cast_receivers: Vec<PairedCastReceiver>,
+}
+
+/// A receiver the user explicitly chose to remember in local preferences.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct PairedCastReceiver {
+    name: String,
+    endpoint: String,
+    fingerprint: String,
+}
+
+impl PairedCastReceiver {
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn endpoint(&self) -> &str {
+        &self.endpoint
+    }
+
+    pub fn fingerprint(&self) -> &str {
+        &self.fingerprint
+    }
 }
 
 impl Default for Preferences {
@@ -64,6 +87,7 @@ impl Default for Preferences {
             accent: 0xef955f,
             compact: false,
             video_site_helper: None,
+            cast_receivers: Vec::new(),
         }
     }
 }
@@ -125,6 +149,77 @@ fn normalize_chord(chord: &str) -> Result<String, String> {
 }
 
 impl Preferences {
+    pub fn cast_receivers(&self) -> &[PairedCastReceiver] {
+        &self.cast_receivers
+    }
+
+    /// Persist a receiver only after the user has reviewed its certificate fingerprint.
+    pub fn remember_cast_receiver(
+        &mut self,
+        name: &str,
+        endpoint: &str,
+        fingerprint: &str,
+    ) -> Result<(), String> {
+        if name.trim().is_empty() || name.chars().count() > 80 || name.chars().any(char::is_control)
+        {
+            return Err("Receiver name must be 1–80 printable characters".into());
+        }
+        let address: std::net::SocketAddr = endpoint
+            .parse()
+            .map_err(|_| "Receiver address must be a literal local IP and port".to_owned())?;
+        let local = match address.ip() {
+            std::net::IpAddr::V4(ip) => ip.is_private() || ip.is_loopback() || ip.is_link_local(),
+            std::net::IpAddr::V6(ip) => ip.is_unique_local() || ip.is_loopback(),
+        };
+        if !local || address.port() != 8009 {
+            return Err("Receiver must be a local Cast endpoint on port 8009".into());
+        }
+        if fingerprint.len() != 64 || !fingerprint.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+            return Err("Expected a 64-digit SHA-256 certificate fingerprint".into());
+        }
+        let fingerprint = fingerprint.to_ascii_lowercase();
+        let endpoint = address.to_string();
+        if let Some(receiver) = self
+            .cast_receivers
+            .iter_mut()
+            .find(|receiver| receiver.endpoint == endpoint)
+        {
+            receiver.name = name.to_owned();
+            receiver.fingerprint = fingerprint;
+            self.cast_receivers.sort_by(|left, right| {
+                left.name
+                    .cmp(&right.name)
+                    .then(left.endpoint.cmp(&right.endpoint))
+            });
+            return Ok(());
+        }
+        if self.cast_receivers.len() >= 32 {
+            return Err("At most 32 Cast receivers can be remembered".into());
+        }
+        self.cast_receivers.push(PairedCastReceiver {
+            name: name.to_owned(),
+            endpoint,
+            fingerprint,
+        });
+        self.cast_receivers.sort_by(|left, right| {
+            left.name
+                .cmp(&right.name)
+                .then(left.endpoint.cmp(&right.endpoint))
+        });
+        Ok(())
+    }
+
+    pub fn forget_cast_receiver(&mut self, endpoint: &str) -> bool {
+        let Ok(address) = endpoint.parse::<std::net::SocketAddr>() else {
+            return false;
+        };
+        let endpoint = address.to_string();
+        let previous_len = self.cast_receivers.len();
+        self.cast_receivers
+            .retain(|receiver| receiver.endpoint != endpoint);
+        self.cast_receivers.len() != previous_len
+    }
+
     pub fn video_site_helper(&self) -> Option<&str> {
         self.video_site_helper.as_deref()
     }
@@ -283,7 +378,7 @@ impl Preferences {
     }
 
     pub fn to_json(&self) -> String {
-        serde_json::json!({"version": 1, "bindings": self.bindings, "compact": self.compact, "video_site_helper": self.video_site_helper, "appearance": {"light": self.light, "accent": format!("#{:06x}", self.accent)}}).to_string()
+        serde_json::json!({"version": 1, "bindings": self.bindings, "compact": self.compact, "video_site_helper": self.video_site_helper, "cast_receivers": self.cast_receivers.iter().map(|receiver| serde_json::json!({"name": receiver.name, "endpoint": receiver.endpoint, "fingerprint": receiver.fingerprint})).collect::<Vec<_>>(), "appearance": {"light": self.light, "accent": format!("#{:06x}", self.accent)}}).to_string()
     }
 
     pub fn from_json(text: &str) -> Result<Self, String> {
@@ -327,6 +422,27 @@ impl Preferences {
             preferences.set_video_site_helper(Some(
                 helper.as_str().ok_or("Helper path must be a string")?,
             ))?;
+        }
+        if let Some(receivers) = value.get("cast_receivers") {
+            let receivers = receivers
+                .as_array()
+                .ok_or("Remembered Cast receivers must be an array")?;
+            if receivers.len() > 32 {
+                return Err("At most 32 Cast receivers can be remembered".into());
+            }
+            for receiver in receivers {
+                preferences.remember_cast_receiver(
+                    receiver["name"]
+                        .as_str()
+                        .ok_or("Receiver name must be a string")?,
+                    receiver["endpoint"]
+                        .as_str()
+                        .ok_or("Receiver endpoint must be a string")?,
+                    receiver["fingerprint"]
+                        .as_str()
+                        .ok_or("Receiver fingerprint must be a string")?,
+                )?;
+            }
         }
         Ok(preferences)
     }

@@ -112,6 +112,12 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
     assert!(!ui.get_cast_inspecting());
     ui.invoke_cast_connect("192.168.1.20:8009".into(), "invalid".into());
     assert!(ui.get_cast_status().contains("64 digit SHA-256"));
+    ui.invoke_cast_remember(
+        "Receiver".into(),
+        "127.0.0.1:8009".into(),
+        "ab".repeat(32).into(),
+    );
+    assert!(ui.get_cast_status().contains("no local configuration path"));
     let preferences = Rc::new(RefCell::new(player_settings::Preferences::default()));
     let settings_path = std::env::temp_dir().join(format!(
         "foxide-desktop-prefs-{}-{}.json",
@@ -129,6 +135,48 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
     }
     let _cleanup = RemoveSettings(settings_path.clone());
     install_preferences(&ui, preferences.clone(), Some(settings_path.clone()));
+    install_cast_with_preferences(
+        &ui,
+        &Rc::new(RefCell::new(UiState::default())),
+        preferences.clone(),
+        Some(settings_path.clone()),
+    );
+    ui.invoke_cast_remember(
+        "Living Room".into(),
+        "127.0.0.1:8009".into(),
+        "invalid".into(),
+    );
+    assert!(
+        ui.get_cast_status()
+            .contains("Could not save receiver preferences")
+    );
+    ui.set_cast_name("Living Room".into());
+    ui.set_cast_endpoint("127.0.0.1:8009".into());
+    ui.set_cast_fingerprint("ab".repeat(32).into());
+    ui.invoke_cast_remember(
+        "Living Room".into(),
+        "127.0.0.1:8009".into(),
+        "ab".repeat(32).into(),
+    );
+    assert_eq!(ui.get_cast_paired_receivers().row_count(), 1);
+    assert_eq!(
+        player_settings::Preferences::load(&settings_path)
+            .unwrap()
+            .cast_receivers()[0]
+            .name(),
+        "Living Room"
+    );
+    ui.set_panel("cast".into());
+    capture_customization(&ui, &rendered_window, "cast");
+    ui.invoke_cast_forget("127.0.0.1:8009".into());
+    assert_eq!(ui.get_cast_paired_receivers().row_count(), 0);
+    assert!(
+        player_settings::Preferences::load(&settings_path)
+            .unwrap()
+            .cast_receivers()
+            .is_empty()
+    );
+    ui.set_panel("".into());
     capture_customization(&ui, &rendered_window, "dark");
     ui.invoke_save_binding("Ctrl+K".into(), "pause".into());
     let actions = Rc::new(RefCell::new(Vec::new()));

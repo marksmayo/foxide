@@ -1,6 +1,6 @@
 import { Slider, ScrollView, LineEdit, Palette, ComboBox } from "std-widgets.slint";
 export struct RadioRow { id: string, name: string, url: string, detail: string }
-export struct CastReceiverRow { name: string, endpoint: string }
+export struct CastReceiverRow { name: string, endpoint: string, fingerprint: string }
 export struct BindingRow { key: string, action: string }
 export global Appearance {
     in-out property <bool> light: false;
@@ -71,6 +71,8 @@ export component PlayerWindow inherits Window {
     in-out property <bool> cast-inspecting: false;
     in-out property <bool> cast-discovering: false;
     in-out property <[CastReceiverRow]> cast-receivers;
+    in-out property <[CastReceiverRow]> cast-paired-receivers;
+    in-out property <string> cast-name;
     in-out property <bool> cast-active: false;
     in-out property <bool> cast-available: false;
     in-out property <bool> cast-paused: false;
@@ -78,6 +80,8 @@ export component PlayerWindow inherits Window {
     callback cast-inspect(string);
     callback cast-discover();
     callback cast-control(string);
+    callback cast-remember(string, string, string);
+    callback cast-forget(string);
     changed panel => { if (root.panel != "radio") { root.cancel-services(); } }
     in-out property <bool> light-theme: false;
     in-out property <color> accent-color: #ef955f;
@@ -176,7 +180,7 @@ export component PlayerWindow inherits Window {
             MenuItem { title: "Next item"; enabled: root.queue-count > 0; activated => { root.action("next", 0); } }
         }
         Menu { title: "Cast";
-            MenuItem { title: "Connect to paired receiver…"; activated => { root.panel = "cast"; } }
+            MenuItem { title: "Cast to a receiver…"; activated => { root.panel = "cast"; } }
             MenuItem { title: "Pause casting"; enabled: root.cast-active && !root.cast-paused; activated => { root.cast-control("pause"); } }
             MenuItem { title: "Resume casting"; enabled: root.cast-active && root.cast-paused; activated => { root.cast-control("play"); } }
             MenuItem { title: "Stop casting"; enabled: root.cast-active; activated => { root.cast-control("stop"); } }
@@ -382,15 +386,25 @@ export component PlayerWindow inherits Window {
                     ToolButton { label: root.cast-discovering ? "Searching local network…" : "Find local receivers"; width: 190px; available: !root.cast-discovering; clicked => { root.cast-discover(); } }
                     ScrollView { visible: root.cast-receivers.length > 0; height: 90px;
                         VerticalLayout { spacing: 4px;
-                            for receiver in root.cast-receivers: ToolButton { label: receiver.name + " · " + receiver.endpoint; description: "Select " + receiver.name; width: 460px; clicked => { root.cast-endpoint = receiver.endpoint; } }
+                            for receiver in root.cast-receivers: ToolButton { label: receiver.name + " · " + receiver.endpoint; description: "Select " + receiver.name; width: 460px; clicked => { root.cast-endpoint = receiver.endpoint; root.cast-name = receiver.name; root.cast-fingerprint = receiver.fingerprint; } }
                         }
                     }
+                    ScrollView { visible: root.cast-paired-receivers.length > 0; height: 90px;
+                        VerticalLayout { spacing: 4px;
+                            for receiver in root.cast-paired-receivers: ToolButton { label: receiver.name + " · " + receiver.endpoint; description: "Use remembered receiver " + receiver.name; width: 460px; clicked => { root.cast-endpoint = receiver.endpoint; root.cast-name = receiver.name; root.cast-fingerprint = receiver.fingerprint; } }
+                        }
+                    }
+                    LineEdit { text <=> root.cast-name; placeholder-text: "Optional receiver name"; }
                     ToolButton { label: root.cast-inspecting ? "Inspecting receiver…" : "Inspect receiver certificate"; width: 210px; available: !root.cast-inspecting; clicked => { root.cast-inspect(root.cast-endpoint); } }
                     LineEdit { text <=> root.cast-fingerprint; placeholder-text: "SHA-256 certificate fingerprint"; }
                     Text { text: root.cast-status; color: Appearance.secondary; wrap: word-wrap; }
                     ToolButton { label: "Cast current media"; width: 150px; primary: true; available: root.cast-available && !root.cast-active; clicked => { root.cast-connect(root.cast-endpoint, root.cast-fingerprint); } }
                     ToolButton { label: root.cast-paused ? "Resume casting" : "Pause casting"; width: 150px; available: root.cast-active; clicked => { root.cast-control(root.cast-paused ? "play" : "pause"); } }
                     ToolButton { label: "Stop casting"; width: 120px; available: root.cast-active; clicked => { root.cast-control("stop"); } }
+                    HorizontalLayout {
+                        ToolButton { label: "Remember receiver"; width: 160px; available: root.cast-endpoint != ""; clicked => { root.cast-remember(root.cast-name, root.cast-endpoint, root.cast-fingerprint); } }
+                        ToolButton { label: "Forget selected"; width: 150px; available: root.cast-endpoint != ""; clicked => { root.cast-forget(root.cast-endpoint); } }
+                    }
                 }
                 if (root.panel == "radio"): VerticalLayout { spacing: 12px; vertical-stretch: 1;
                     HorizontalLayout { spacing: 8px;
