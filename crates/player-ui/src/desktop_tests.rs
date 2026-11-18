@@ -112,6 +112,11 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
     assert!(!ui.get_cast_inspecting());
     ui.invoke_cast_connect("192.168.1.20:8009".into(), "invalid".into());
     assert!(ui.get_cast_status().contains("64 digit SHA-256"));
+    ui.invoke_cast_connect("127.0.0.1:8009".into(), "ab".repeat(32).into());
+    assert!(
+        ui.get_cast_status()
+            .contains("Choose a supported local media file")
+    );
     ui.invoke_cast_remember(
         "Receiver".into(),
         "127.0.0.1:8009".into(),
