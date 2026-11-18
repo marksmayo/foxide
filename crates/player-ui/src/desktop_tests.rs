@@ -884,4 +884,59 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
         ui.get_color_profile_notice(),
         "Profile command queue is full"
     );
+
+    let installed_archive = Arc::new(std::sync::Mutex::new(None::<PathBuf>));
+    let capture_archive = installed_archive.clone();
+    updates_ui::install_with(
+        &ui,
+        Arc::new(|| Ok(Some(("1.4.0".into(), PathBuf::from("staged-update.zip"))))),
+        Arc::new(move |archive| {
+            *capture_archive.lock().unwrap() = Some(archive.to_path_buf());
+            Ok(())
+        }),
+    );
+    ui.invoke_check_updates();
+    let deadline = std::time::Instant::now() + Duration::from_secs(2);
+    while ui.get_staged_update_version().is_empty() && std::time::Instant::now() < deadline {
+        if let Ok(event) = event_receiver.recv_timeout(Duration::from_millis(20)) {
+            event();
+        }
+    }
+    assert_eq!(ui.get_staged_update_version(), "1.4.0");
+    assert!(ui.get_update_status().contains("checksum-checked"));
+    ui.invoke_install_update();
+    assert_eq!(
+        installed_archive.lock().unwrap().as_deref(),
+        Some(std::path::Path::new("staged-update.zip"))
+    );
+
+    updates_ui::install_with(&ui, Arc::new(|| Ok(None)), Arc::new(|_| Ok(())));
+    let deadline = std::time::Instant::now() + Duration::from_secs(2);
+    while ui.get_update_status() != "Foxide is up to date." && std::time::Instant::now() < deadline
+    {
+        if let Ok(event) = event_receiver.recv_timeout(Duration::from_millis(20)) {
+            event();
+        }
+    }
+    assert_eq!(ui.get_update_status(), "Foxide is up to date.");
+
+    updates_ui::install_with(
+        &ui,
+        Arc::new(|| Err("offline".into())),
+        Arc::new(|_| Ok(())),
+    );
+    let deadline = std::time::Instant::now() + Duration::from_secs(2);
+    while !ui.get_update_status().starts_with("Update check failed:")
+        && std::time::Instant::now() < deadline
+    {
+        if let Ok(event) = event_receiver.recv_timeout(Duration::from_millis(20)) {
+            event();
+        }
+    }
+    assert_eq!(ui.get_update_status(), "Update check failed: offline");
+    ui.invoke_install_update();
+    assert!(
+        ui.get_update_status()
+            .contains("No verified update is staged")
+    );
 }

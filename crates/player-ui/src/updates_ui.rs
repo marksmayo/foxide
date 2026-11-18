@@ -11,13 +11,24 @@ use std::{
 #[cfg(windows)]
 const RELEASES_API: &str = "https://api.github.com/repos/marksmayo/foxide/releases?per_page=20";
 
+pub(super) type UpdateResult = Result<Option<(String, PathBuf)>, String>;
+pub(super) type UpdateCheck = Arc<dyn Fn() -> UpdateResult + Send + Sync>;
+pub(super) type UpdateInstaller = Arc<dyn Fn(&std::path::Path) -> Result<(), String> + Send + Sync>;
+
 pub fn install(ui: &PlayerWindow) {
+    install_with(ui, Arc::new(check_for_updates), Arc::new(launch_installer));
+}
+
+pub(super) fn install_with(ui: &PlayerWindow, check: UpdateCheck, installer: UpdateInstaller) {
+    ui.set_staged_update_version("".into());
+    ui.set_update_status("Checking for updates…".into());
     let staged: Arc<Mutex<Option<(String, PathBuf)>>> = Arc::default();
     let busy = Arc::new(AtomicBool::new(false));
     let weak = ui.as_weak();
     let begin_check = {
         let staged = staged.clone();
         let busy = busy.clone();
+        let check = check.clone();
         move || {
             if busy.swap(true, Ordering::AcqRel) {
                 return;
@@ -25,42 +36,9 @@ pub fn install(ui: &PlayerWindow) {
             let staged = staged.clone();
             let busy = busy.clone();
             let weak = weak.clone();
-            #[cfg(windows)]
-            let updates_directory = std::env::var_os("LOCALAPPDATA")
-                .map(PathBuf::from)
-                .filter(|path| path.is_absolute())
-                .map(|path| path.join("Foxide/Updates"));
+            let check = check.clone();
             std::thread::spawn(move || {
-                #[cfg(not(windows))]
-                let result: Result<Option<(String, PathBuf)>, String> = Err(
-                    "Automatic updates are currently available for Windows releases only.".into(),
-                );
-                #[cfg(windows)]
-                let result: Result<Option<(String, PathBuf)>, String> = (|| {
-                    let client = player_services::CurlClient::system()?;
-                    let cancel = AtomicBool::new(false);
-                    let url =
-                        player_services::Url::parse(RELEASES_API).map_err(|e| e.to_string())?;
-                    let bytes = player_services::HttpClient::get(&client, &url, &cancel)?;
-                    if bytes.len() > 2 * 1024 * 1024 {
-                        return Err("Release list is too large".into());
-                    }
-                    let release_version =
-                        option_env!("FOXIDE_RELEASE_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"));
-                    let Some(update) = player_services::latest_windows_update(
-                        std::str::from_utf8(&bytes).map_err(|_| "Release list is not UTF-8")?,
-                        release_version,
-                    )?
-                    else {
-                        return Ok(None);
-                    };
-                    let directory =
-                        updates_directory.ok_or("Update staging path is unavailable")?;
-                    let path = player_services::download_and_stage_windows_update(
-                        &client, &update, &directory, &cancel,
-                    )?;
-                    Ok(Some((update.version, path)))
-                })();
+                let result = check();
                 busy.store(false, Ordering::Release);
                 match result {
                     Ok(Some((version, path))) => {
@@ -105,6 +83,7 @@ pub fn install(ui: &PlayerWindow) {
         check();
     });
     let install_staged = staged;
+    let installer = installer.clone();
     let weak = ui.as_weak();
     ui.on_install_update(move || {
         let result = install_staged
@@ -115,7 +94,7 @@ pub fn install(ui: &PlayerWindow) {
                     .clone()
                     .ok_or_else(|| "No verified update is staged".to_owned())
             })
-            .and_then(|(_, archive)| launch_installer(&archive));
+            .and_then(|(_, archive)| installer(&archive));
         match result {
             Ok(()) => {
                 let _ = slint::quit_event_loop();
@@ -127,8 +106,42 @@ pub fn install(ui: &PlayerWindow) {
             }
         }
     });
-    ui.set_update_status("Checking for updates…".into());
     begin_check();
+}
+
+fn check_for_updates() -> UpdateResult {
+    #[cfg(not(windows))]
+    {
+        Err("Automatic updates are currently available for Windows releases only.".into())
+    }
+    #[cfg(windows)]
+    {
+        let client = player_services::CurlClient::system()?;
+        let cancel = AtomicBool::new(false);
+        let url = player_services::Url::parse(RELEASES_API).map_err(|error| error.to_string())?;
+        let bytes = player_services::HttpClient::get(&client, &url, &cancel)?;
+        if bytes.len() > 2 * 1024 * 1024 {
+            return Err("Release list is too large".into());
+        }
+        let release_version =
+            option_env!("FOXIDE_RELEASE_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"));
+        let Some(update) = player_services::latest_windows_update(
+            std::str::from_utf8(&bytes).map_err(|_| "Release list is not UTF-8")?,
+            release_version,
+        )?
+        else {
+            return Ok(None);
+        };
+        let directory = std::env::var_os("LOCALAPPDATA")
+            .map(PathBuf::from)
+            .filter(|path| path.is_absolute())
+            .map(|path| path.join("Foxide/Updates"))
+            .ok_or("Update staging path is unavailable")?;
+        let path = player_services::download_and_stage_windows_update(
+            &client, &update, &directory, &cancel,
+        )?;
+        Ok(Some((update.version, path)))
+    }
 }
 
 #[cfg(windows)]

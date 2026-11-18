@@ -45,7 +45,18 @@ impl CurlClient {
         max_bytes: u64,
         cancel: &AtomicBool,
     ) -> Result<(), String> {
-        if url.scheme() != "https" || max_bytes == 0 || max_bytes > 512 * 1024 * 1024 {
+        let loopback = match url.host() {
+            Some(url::Host::Domain("localhost")) => true,
+            Some(url::Host::Ipv4(ip)) => ip.is_loopback(),
+            Some(url::Host::Ipv6(ip)) => ip.is_loopback(),
+            _ => false,
+        };
+        if (url.scheme() != "https" && !(url.scheme() == "http" && loopback))
+            || !url.username().is_empty()
+            || url.password().is_some()
+            || max_bytes == 0
+            || max_bytes > 512 * 1024 * 1024
+        {
             return Err("Update downloads require HTTPS and a valid size limit".into());
         }
         let parent = destination
@@ -66,7 +77,7 @@ impl CurlClient {
             "--max-redirs",
             "3",
             "--proto",
-            "=https",
+            if loopback { "=http,https" } else { "=https" },
             "--proto-redir",
             "=https",
             "--tlsv1.2",
@@ -80,6 +91,9 @@ impl CurlClient {
         .map(Into::into)
         .collect();
         args.push(max_bytes.to_string().into());
+        if loopback {
+            args.extend(["--noproxy".into(), "*".into()]);
+        }
         args.extend([
             "--user-agent".into(),
             "Foxide/0.0.1".into(),

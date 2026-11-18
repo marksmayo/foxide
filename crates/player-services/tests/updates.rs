@@ -1,5 +1,18 @@
-use player_services::{latest_windows_update, parse_sha256sum, verify_windows_package};
+use player_services::{
+    CurlClient, WindowsUpdate, download_and_stage_windows_update, latest_windows_update,
+    parse_sha256sum, verify_windows_package,
+};
 use serde_json::json;
+use sha2::Digest;
+use std::{
+    io::{Read, Write},
+    net::TcpListener,
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
+    time::{Duration, Instant},
+};
 
 fn release(version: &str, prerelease: bool, draft: bool) -> serde_json::Value {
     let tag = format!("v{version}");
@@ -122,4 +135,97 @@ fn package_verification_accepts_the_exact_published_size_and_hash() {
     let hash = format!("{:x}", sha2::Sha256::digest(&package));
     let checksum = format!("{hash}  Foxide-1.4.0-windows-x64.zip\n");
     assert!(verify_windows_package(&update, &package, &checksum).is_ok());
+}
+
+#[test]
+fn staging_publishes_only_downloads_matching_release_metadata_and_checksum() {
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    listener.set_nonblocking(true).unwrap();
+    let address = listener.local_addr().unwrap();
+    let package = vec![0x42; 1024];
+    let checksum = format!(
+        "{:x}  Foxide-1.4.0-windows-x64.zip\n",
+        sha2::Sha256::digest(&package)
+    );
+    let stop = Arc::new(AtomicBool::new(false));
+    let done = stop.clone();
+    let expected_package = package.clone();
+    let expected_checksum = checksum.clone();
+    let worker = std::thread::spawn(move || {
+        let deadline = Instant::now() + Duration::from_secs(20);
+        let mut served = 0;
+        while !done.load(Ordering::Acquire) && Instant::now() < deadline && served < 4 {
+            if let Ok((mut stream, _)) = listener.accept() {
+                stream.set_nonblocking(false).unwrap();
+                stream
+                    .set_write_timeout(Some(Duration::from_secs(5)))
+                    .unwrap();
+                stream
+                    .set_read_timeout(Some(Duration::from_secs(5)))
+                    .unwrap();
+                let mut request = Vec::new();
+                let mut chunk = [0; 512];
+                while !request.ends_with(b"\r\n\r\n") && request.len() < 4096 {
+                    let count = stream.read(&mut chunk).unwrap();
+                    assert!(count > 0, "Client closed before sending request headers");
+                    request.extend_from_slice(&chunk[..count]);
+                }
+                let request = String::from_utf8_lossy(&request);
+                let body = if request.starts_with("GET /checksum-bad ") {
+                    b"0000000000000000000000000000000000000000000000000000000000000000  Foxide-1.4.0-windows-x64.zip\n".to_vec()
+                } else if request.starts_with("GET /checksum ") {
+                    expected_checksum.as_bytes().to_vec()
+                } else {
+                    expected_package.clone()
+                };
+                write!(
+                    stream,
+                    "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+                    body.len()
+                )
+                .unwrap();
+                let _ = stream.write_all(&body);
+                served += 1;
+            }
+            std::thread::sleep(Duration::from_millis(5));
+        }
+        served
+    });
+    let client = CurlClient::system().unwrap();
+    let base = format!("http://{address}");
+    let make_update = |checksum_path: &str| WindowsUpdate {
+        version: "1.4.0".into(),
+        tag: "v1.4.0".into(),
+        package_url: player_services::Url::parse(&format!("{base}/package")).unwrap(),
+        package_size: package.len() as u64,
+        checksums_url: player_services::Url::parse(&format!("{base}/{checksum_path}")).unwrap(),
+    };
+    let directory = std::env::temp_dir().join(format!(
+        "foxide-stage-test-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let cancel = AtomicBool::new(false);
+    let staged =
+        download_and_stage_windows_update(&client, &make_update("checksum"), &directory, &cancel);
+    let rejected = download_and_stage_windows_update(
+        &client,
+        &make_update("checksum-bad"),
+        &directory,
+        &cancel,
+    );
+    stop.store(true, Ordering::Release);
+    assert_eq!(worker.join().unwrap(), 4);
+    let staged = staged.unwrap();
+    assert_eq!(std::fs::read(&staged).unwrap(), package);
+    assert!(rejected.is_err());
+    assert!(
+        !directory
+            .join("Foxide-1.4.0-windows-x64.zip.download")
+            .exists()
+    );
+    std::fs::remove_dir_all(directory).unwrap();
 }
