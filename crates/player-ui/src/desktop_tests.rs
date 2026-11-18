@@ -98,6 +98,14 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
     let ui = PlayerWindow::new().unwrap();
     ui.window().set_size(slint::PhysicalSize::new(1180, 770));
     ui.show().unwrap();
+    install_cast(&ui, &Rc::new(RefCell::new(UiState::default())));
+    ui.invoke_cast_connect("receiver.example:8009".into(), "invalid".into());
+    assert!(
+        ui.get_cast_status()
+            .contains("literal local receiver address")
+    );
+    ui.invoke_cast_connect("192.168.1.20:8009".into(), "invalid".into());
+    assert!(ui.get_cast_status().contains("64 digit SHA-256"));
     let preferences = Rc::new(RefCell::new(player_settings::Preferences::default()));
     let settings_path = std::env::temp_dir().join(format!(
         "foxide-desktop-prefs-{}-{}.json",

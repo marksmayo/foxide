@@ -1,6 +1,7 @@
 mod profile_ui;
 mod shader_ui;
 use clap::Parser;
+use player_cast::{CastController, CastEvent, CastOptions, CertificatePin};
 use player_render::{Engine, Snapshot};
 use player_settings::Preferences;
 use player_ui::{Action, Effect, UiState};
@@ -587,6 +588,137 @@ fn install_preferences(
     });
 }
 
+fn install_cast(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>) {
+    let active: Arc<std::sync::Mutex<Option<CastController>>> =
+        Arc::new(std::sync::Mutex::new(None));
+    let (weak, state, active_for_connect) = (ui.as_weak(), state.clone(), active.clone());
+    ui.on_cast_connect(move |endpoint, fingerprint| {
+        let Some(ui) = weak.upgrade() else {
+            return;
+        };
+        if active_for_connect
+            .lock()
+            .expect("Cast controller lock poisoned")
+            .is_some()
+        {
+            ui.set_cast_status("A cast session is already active".into());
+            return;
+        }
+        let address = match endpoint.parse::<std::net::SocketAddr>() {
+            Ok(address) => address,
+            Err(_) => {
+                ui.set_cast_status(
+                    "Enter a literal local receiver address, such as 192.168.1.20:8009".into(),
+                );
+                return;
+            }
+        };
+        let pin = match fingerprint.parse::<CertificatePin>() {
+            Ok(pin) => pin,
+            Err(_) => {
+                ui.set_cast_status(
+                    "Enter a previously inspected 64 digit SHA-256 certificate fingerprint".into(),
+                );
+                return;
+            }
+        };
+        let selected = {
+            let state = state.borrow();
+            state.playlist.get(state.selected).cloned()
+        };
+        let Some(path) = selected.filter(|path| path.is_file()) else {
+            ui.set_cast_status("Choose a local video file before casting".into());
+            return;
+        };
+        ui.set_cast_status("Connecting to the explicitly pinned receiver…".into());
+        let event_window = weak.clone();
+        let active_for_events = active_for_connect.clone();
+        let controller =
+            CastController::start_file(path, address, pin, CastOptions::default(), move |event| {
+                let active_for_event = active_for_events.clone();
+                let _ = event_window.upgrade_in_event_loop(move |ui| match event {
+                    CastEvent::Status(status) => {
+                        ui.set_cast_active(true);
+                        ui.set_cast_paused(status.state == player_cast::CastState::Paused);
+                        ui.set_cast_status(
+                            format!("{:?} · {:.1} seconds", status.state, status.position).into(),
+                        );
+                    }
+                    CastEvent::Stopped => {
+                        ui.set_cast_active(false);
+                        ui.set_cast_paused(false);
+                        *active_for_event
+                            .lock()
+                            .expect("Cast controller lock poisoned") = None;
+                        ui.set_cast_status("Casting stopped".into());
+                    }
+                    CastEvent::Rejected(message) => {
+                        ui.set_cast_status(format!("Cast command rejected: {message}").into())
+                    }
+                    CastEvent::Failed(message) => {
+                        ui.set_cast_active(false);
+                        ui.set_cast_paused(false);
+                        *active_for_event
+                            .lock()
+                            .expect("Cast controller lock poisoned") = None;
+                        ui.set_cast_status(format!("Cast failed: {message}").into());
+                    }
+                });
+            });
+        match controller {
+            Ok(controller) => {
+                *active_for_connect
+                    .lock()
+                    .expect("Cast controller lock poisoned") = Some(controller)
+            }
+            Err(error) => {
+                ui.set_cast_status(format!("Could not start Cast worker: {error}").into())
+            }
+        }
+    });
+    let (weak, active_for_control) = (ui.as_weak(), active);
+    ui.on_cast_control(move |command| {
+        let Some(ui) = weak.upgrade() else {
+            return;
+        };
+        match command.as_str() {
+            "stop" => {
+                if let Some(controller) = active_for_control
+                    .lock()
+                    .expect("Cast controller lock poisoned")
+                    .as_ref()
+                {
+                    controller.stop();
+                    ui.set_cast_status("Stopping cast session…".into());
+                }
+            }
+            "pause" => {
+                if let Some(controller) = active_for_control
+                    .lock()
+                    .expect("Cast controller lock poisoned")
+                    .as_ref()
+                {
+                    if let Err(error) = controller.pause() {
+                        ui.set_cast_status(error.to_string().into());
+                    }
+                }
+            }
+            "play" => {
+                if let Some(controller) = active_for_control
+                    .lock()
+                    .expect("Cast controller lock poisoned")
+                    .as_ref()
+                {
+                    if let Err(error) = controller.play() {
+                        ui.set_cast_status(error.to_string().into());
+                    }
+                }
+            }
+            _ => {}
+        }
+    });
+}
+
 fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Option<Rc<Engine>>) {
     let filter_state = state.clone();
     let filter_window = ui.as_weak();
@@ -724,6 +856,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap_or_else(player_services::RadioDirectory::public);
     let _radio = network_ui::install_radio(&ui, Arc::new(network_ui::SystemHttp), radio_api);
     let state = Rc::new(RefCell::new(UiState::default()));
+    install_cast(&ui, &state);
     let startup_engine = Engine::with_video_site_helper(helper.as_ref().map(|tool| tool.path()));
     let startup_engine = match startup_engine {
         Err(error) if helper.is_some() => {

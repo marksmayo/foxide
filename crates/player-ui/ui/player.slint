@@ -64,6 +64,13 @@ export component PlayerWindow inherits Window {
     callback radio-search(string);
     callback radio-play(string, string);
     callback cancel-services();
+    in-out property <string> cast-endpoint;
+    in-out property <string> cast-fingerprint;
+    in-out property <string> cast-status: "Enter a paired local receiver and its SHA-256 certificate fingerprint.";
+    in-out property <bool> cast-active: false;
+    in-out property <bool> cast-paused: false;
+    callback cast-connect(string, string);
+    callback cast-control(string);
     changed panel => { if (root.panel != "radio") { root.cancel-services(); } }
     in-out property <bool> light-theme: false;
     in-out property <color> accent-color: #ef955f;
@@ -160,6 +167,12 @@ export component PlayerWindow inherits Window {
             MenuSeparator {}
             MenuItem { title: "Previous item"; enabled: root.queue-count > 0; activated => { root.action("previous", 0); } }
             MenuItem { title: "Next item"; enabled: root.queue-count > 0; activated => { root.action("next", 0); } }
+        }
+        Menu { title: "Cast";
+            MenuItem { title: "Connect to paired receiver…"; activated => { root.panel = "cast"; } }
+            MenuItem { title: "Pause casting"; enabled: root.cast-active && !root.cast-paused; activated => { root.cast-control("pause"); } }
+            MenuItem { title: "Resume casting"; enabled: root.cast-active && root.cast-paused; activated => { root.cast-control("play"); } }
+            MenuItem { title: "Stop casting"; enabled: root.cast-active; activated => { root.cast-control("stop"); } }
         }
         Menu { title: "Audio";
             Menu { title: "ReplayGain";
@@ -313,16 +326,24 @@ export component PlayerWindow inherits Window {
     }
     if (root.panel != ""): Rectangle { background: #050a13bb;
         TouchArea { clicked => { root.panel = ""; } }
-        Rectangle { width: min(parent.width - 60px, 550px); height: root.panel == "preferences" || root.panel == "radio" ? min(parent.height - 30px, 620px) : root.panel == "url" ? 230px : 330px; x: (parent.width - self.width) / 2; y: (parent.height - self.height) / 2;
+        Rectangle { width: min(parent.width - 60px, 550px); height: root.panel == "preferences" || root.panel == "radio" ? min(parent.height - 30px, 620px) : root.panel == "url" || root.panel == "cast" ? 300px : 330px; x: (parent.width - self.width) / 2; y: (parent.height - self.height) / 2;
             background: Appearance.dialog; border-radius: 14px; border-width: 1px; border-color: Appearance.border;
             VerticalLayout { padding: 24px; spacing: 18px;
                 HorizontalLayout {
-                    Text { text: root.panel == "radio" ? "Internet radio" : root.panel == "preferences" ? "Preferences" : root.panel == "url" ? "Open a network stream" : root.panel == "information" ? "Playback information" : root.panel == "shortcuts" ? "Keyboard shortcuts" : "Foxide"; color: Appearance.text; font-size: 20px; font-weight: 600; vertical-alignment: center; }
+                    Text { text: root.panel == "radio" ? "Internet radio" : root.panel == "preferences" ? "Preferences" : root.panel == "url" ? "Open a network stream" : root.panel == "information" ? "Playback information" : root.panel == "shortcuts" ? "Keyboard shortcuts" : root.panel == "cast" ? "Cast to a receiver" : "Foxide"; color: Appearance.text; font-size: 20px; font-weight: 600; vertical-alignment: center; }
                     ToolButton { label: "×"; description: "Close dialog"; clicked => { root.panel = ""; } }
                 }
                 if (root.panel == "url"): VerticalLayout { spacing: 14px;
                     LineEdit { text <=> root.url; placeholder-text: "https://… or rtsp://…"; accepted => { root.open-url(root.url); root.panel = ""; } }
                     ToolButton { label: "Open stream"; width: 130px; primary: true; clicked => { root.open-url(root.url); root.panel = ""; } }
+                }
+                if (root.panel == "cast"): VerticalLayout { spacing: 12px;
+                    LineEdit { text <=> root.cast-endpoint; placeholder-text: "192.168.x.x:8009"; }
+                    LineEdit { text <=> root.cast-fingerprint; placeholder-text: "SHA-256 certificate fingerprint"; }
+                    Text { text: root.cast-status; color: Appearance.secondary; wrap: word-wrap; }
+                    ToolButton { label: "Cast current file"; width: 150px; primary: true; available: root.loaded && root.has-video && !root.cast-active; clicked => { root.cast-connect(root.cast-endpoint, root.cast-fingerprint); } }
+                    ToolButton { label: root.cast-paused ? "Resume casting" : "Pause casting"; width: 150px; available: root.cast-active; clicked => { root.cast-control(root.cast-paused ? "play" : "pause"); } }
+                    ToolButton { label: "Stop casting"; width: 120px; available: root.cast-active; clicked => { root.cast-control("stop"); } }
                 }
                 if (root.panel == "radio"): VerticalLayout { spacing: 12px; vertical-stretch: 1;
                     HorizontalLayout { spacing: 8px;
@@ -376,7 +397,7 @@ export component PlayerWindow inherits Window {
                     }
                 }
                 if (root.panel == "shortcuts"): ScrollView { vertical-stretch: 1; Text { text: root.shortcut-help + "\nEscape  —  Close dialog / leave fullscreen"; color: Appearance.secondary; wrap: word-wrap; } }
-                if (root.panel != "url" && root.panel != "preferences" && root.panel != "shortcuts" && root.panel != "radio"): Text { text: root.panel == "information" ? root.diagnostics + "\n\nGPU shaders\n" + root.shader-notice + "\n\nDisplay color profile\n" + root.color-profile-notice : root.panel == "shortcuts" ? root.shortcut-help : "A little less between you and your media.\n\nFoxide desktop preview\nBuilt with Rust, Slint, and libmpv.\n\nPlayback and GPU diagnostics are available\nunder View → Playback information."; color: Appearance.secondary; wrap: word-wrap; font-size: 14px; }
+                if (root.panel != "url" && root.panel != "preferences" && root.panel != "shortcuts" && root.panel != "radio" && root.panel != "cast"): Text { text: root.panel == "information" ? root.diagnostics + "\n\nGPU shaders\n" + root.shader-notice + "\n\nDisplay color profile\n" + root.color-profile-notice : root.panel == "shortcuts" ? root.shortcut-help : "A little less between you and your media.\n\nFoxide desktop preview\nBuilt with Rust, Slint, and libmpv.\n\nPlayback and GPU diagnostics are available\nunder View → Playback information."; color: Appearance.secondary; wrap: word-wrap; font-size: 14px; }
                 if (root.panel != "preferences" && root.panel != "shortcuts" && root.panel != "radio"): Rectangle { vertical-stretch: 1; background: transparent; }
             }
         }
