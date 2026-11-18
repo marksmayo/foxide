@@ -1,0 +1,320 @@
+//! User-triggered, bounded discovery of local Google Cast receivers.
+use mdns_sd::{ScopedIp, ServiceDaemon, ServiceEvent};
+use std::{
+    collections::BTreeSet,
+    io,
+    net::{IpAddr, SocketAddr},
+    time::{Duration, Instant},
+};
+
+const CAST_SERVICE: &str = "_googlecast._tcp.local.";
+const CAST_PORT: u16 = 8009;
+const MAX_RECEIVERS: usize = 32;
+
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+pub struct DiscoveredReceiver {
+    pub name: String,
+    pub address: SocketAddr,
+}
+
+/// Browse the local network for Cast receivers for at most 15 seconds.
+/// This never inspects a certificate or creates a trusted connection.
+pub fn discover_receivers(timeout: Duration) -> io::Result<Vec<DiscoveredReceiver>> {
+    discover_with(timeout, MdnsBrowser::new)
+}
+
+trait Browser {
+    fn next(&mut self, timeout: Duration) -> io::Result<Option<DiscoveredReceiver>>;
+    fn close(&mut self);
+}
+
+struct MdnsBrowser {
+    daemon: ServiceDaemon,
+    events: mdns_sd::Receiver<ServiceEvent>,
+}
+
+impl MdnsBrowser {
+    fn new() -> io::Result<Self> {
+        let daemon = ServiceDaemon::new().map_err(|_| io::Error::other("mDNS is unavailable"))?;
+        let events = daemon
+            .browse(CAST_SERVICE)
+            .map_err(|_| io::Error::other("Could not start Cast receiver discovery"))?;
+        Ok(Self { daemon, events })
+    }
+}
+
+impl Browser for MdnsBrowser {
+    fn next(&mut self, timeout: Duration) -> io::Result<Option<DiscoveredReceiver>> {
+        match self.events.recv_timeout(timeout) {
+            Ok(ServiceEvent::ServiceResolved(service)) if service.is_valid() => {
+                Ok(receiver_from_service(
+                    &mdns_sd::instance_name_unescaped(&service.fullname),
+                    service.is_valid(),
+                    service.port,
+                    service.addresses.iter().map(ScopedIp::to_ip_addr),
+                ))
+            }
+            Ok(_) | Err(mdns_sd::RecvTimeoutError::Timeout) => Ok(None),
+            Err(mdns_sd::RecvTimeoutError::Disconnected) => {
+                Err(io::Error::other("Cast receiver discovery stopped"))
+            }
+        }
+    }
+
+    fn close(&mut self) {
+        let _ = self.daemon.stop_browse(CAST_SERVICE);
+        let _ = self.daemon.shutdown();
+    }
+}
+
+fn discover_with<B: Browser>(
+    timeout: Duration,
+    create: impl FnOnce() -> io::Result<B>,
+) -> io::Result<Vec<DiscoveredReceiver>> {
+    if timeout.is_zero() || timeout > Duration::from_secs(15) {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "Discovery timeout must be between zero and 15 seconds",
+        ));
+    }
+    let mut browser = create()?;
+    let result = collect_receivers(&mut browser, timeout);
+    browser.close();
+    result
+}
+
+fn collect_receivers(
+    browser: &mut impl Browser,
+    timeout: Duration,
+) -> io::Result<Vec<DiscoveredReceiver>> {
+    let deadline = Instant::now() + timeout;
+    let mut results = BTreeSet::new();
+    while results.len() < MAX_RECEIVERS {
+        let remaining = deadline.saturating_duration_since(Instant::now());
+        if remaining.is_zero() {
+            break;
+        }
+        match browser.next(remaining)? {
+            Some(receiver) => {
+                results.insert(receiver);
+            }
+            None => break,
+        }
+    }
+    Ok(results.into_iter().collect())
+}
+
+fn receiver_from_service(
+    name: &str,
+    is_valid: bool,
+    port: u16,
+    addresses: impl IntoIterator<Item = IpAddr>,
+) -> Option<DiscoveredReceiver> {
+    if !is_valid {
+        return None;
+    }
+    receiver_from_records(name, port, addresses)
+}
+
+fn receiver_from_records(
+    name: &str,
+    port: u16,
+    addresses: impl IntoIterator<Item = IpAddr>,
+) -> Option<DiscoveredReceiver> {
+    if port != CAST_PORT {
+        return None;
+    }
+    let address = addresses
+        .into_iter()
+        .filter(|ip| match ip {
+            IpAddr::V4(ip) => ip.is_private() || ip.is_loopback() || ip.is_link_local(),
+            IpAddr::V6(ip) => ip.is_unique_local() || ip.is_loopback(),
+        })
+        .min()?;
+    let name = name
+        .chars()
+        .filter(|ch| !ch.is_control())
+        .take(80)
+        .collect::<String>();
+    if name.trim().is_empty() {
+        return None;
+    }
+    Some(DiscoveredReceiver {
+        name,
+        address: SocketAddr::new(address, port),
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        Browser, DiscoveredReceiver, MdnsBrowser, discover_with, receiver_from_records,
+        receiver_from_service,
+    };
+    use std::{
+        cell::Cell,
+        collections::VecDeque,
+        io,
+        net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr},
+        rc::Rc,
+        time::Duration,
+    };
+
+    struct FakeBrowser {
+        events: VecDeque<io::Result<Option<DiscoveredReceiver>>>,
+        closed: Rc<Cell<bool>>,
+    }
+
+    impl Browser for FakeBrowser {
+        fn next(&mut self, _: Duration) -> io::Result<Option<DiscoveredReceiver>> {
+            self.events.pop_front().unwrap_or(Ok(None))
+        }
+
+        fn close(&mut self) {
+            self.closed.set(true);
+        }
+    }
+
+    fn fake(
+        events: impl IntoIterator<Item = io::Result<Option<DiscoveredReceiver>>>,
+        closed: Rc<Cell<bool>>,
+    ) -> FakeBrowser {
+        FakeBrowser {
+            events: events.into_iter().collect(),
+            closed,
+        }
+    }
+
+    #[test]
+    fn accepts_only_local_cast_receivers_and_sanitizes_names() {
+        let receiver = receiver_from_records(
+            " Living\n Room ",
+            8009,
+            [
+                IpAddr::V4(Ipv4Addr::new(192, 168, 1, 20)),
+                IpAddr::V4(Ipv4Addr::new(8, 8, 8, 8)),
+            ],
+        )
+        .unwrap();
+        assert_eq!(receiver.name, " Living Room ");
+        assert_eq!(receiver.address.to_string(), "192.168.1.20:8009");
+        assert!(receiver_from_records("wrong", 1234, [receiver.address.ip()]).is_none());
+        assert!(receiver_from_records("empty", 8009, []).is_none());
+        assert!(receiver_from_records("\n", 8009, [IpAddr::V4(Ipv4Addr::LOCALHOST)]).is_none());
+        assert!(
+            receiver_from_records(
+                "public",
+                8009,
+                [IpAddr::V6(
+                    "2001:4860:4860::8888".parse::<Ipv6Addr>().unwrap()
+                )]
+            )
+            .is_none()
+        );
+        assert!(
+            receiver_from_service(
+                "unresolved",
+                false,
+                8009,
+                [IpAddr::V4(Ipv4Addr::new(192, 168, 1, 20))],
+            )
+            .is_none()
+        );
+        assert!(
+            receiver_from_service(
+                "resolved",
+                true,
+                8009,
+                [IpAddr::V4(Ipv4Addr::new(192, 168, 1, 20))],
+            )
+            .is_some()
+        );
+    }
+
+    #[test]
+    fn timeout_bounds_and_factory_failures_are_reported() {
+        let mut created = false;
+        assert!(
+            discover_with(Duration::ZERO, || {
+                created = true;
+                Ok(fake([], Rc::new(Cell::new(false))))
+            })
+            .is_err()
+        );
+        assert!(
+            discover_with(Duration::from_secs(16), || {
+                Ok(fake([], Rc::new(Cell::new(false))))
+            })
+            .is_err()
+        );
+        assert!(!created);
+        assert!(
+            discover_with::<FakeBrowser>(Duration::from_secs(1), || {
+                Err(io::Error::other("create failed"))
+            })
+            .is_err()
+        );
+    }
+
+    #[test]
+    fn returns_unique_receivers_and_closes_the_browser() {
+        let receiver = DiscoveredReceiver {
+            name: "Receiver".into(),
+            address: SocketAddr::from(([192, 168, 1, 20], 8009)),
+        };
+        let closed = Rc::new(Cell::new(false));
+        let in_factory = closed.clone();
+        let result = discover_with(Duration::from_millis(100), || {
+            Ok(fake(
+                [
+                    Ok(Some(receiver.clone())),
+                    Ok(Some(receiver.clone())),
+                    Ok(None),
+                ],
+                in_factory,
+            ))
+        })
+        .unwrap();
+        assert_eq!(result, [receiver]);
+        assert!(closed.get());
+    }
+
+    #[test]
+    fn closes_browser_when_receiving_fails() {
+        let closed = Rc::new(Cell::new(false));
+        let in_factory = closed.clone();
+        assert!(
+            discover_with(Duration::from_secs(1), || {
+                Ok(fake([Err(io::Error::other("receive failed"))], in_factory))
+            })
+            .is_err()
+        );
+        assert!(closed.get());
+    }
+
+    #[test]
+    fn stops_at_the_receiver_limit() {
+        let events = (1..=40).map(|last| {
+            Ok(Some(DiscoveredReceiver {
+                name: format!("Receiver {last}"),
+                address: SocketAddr::from(([10, 0, 0, last], 8009)),
+            }))
+        });
+        let mut browser = fake(events, Rc::new(Cell::new(false)));
+        assert_eq!(
+            super::collect_receivers(&mut browser, Duration::from_secs(1))
+                .unwrap()
+                .len(),
+            32
+        );
+        assert!(!browser.events.is_empty());
+    }
+
+    #[test]
+    fn mdns_adapter_starts_and_shuts_down_when_the_host_allows_discovery() {
+        if let Ok(mut browser) = MdnsBrowser::new() {
+            assert!(browser.next(Duration::from_millis(50)).is_ok());
+            browser.close();
+        }
+    }
+}

@@ -47,4 +47,6 @@ mod session;
 pub use session::{CastOptions, CastPlayback, CastState, CastStatus};
 
 mod controller;
+mod discovery;
 pub use controller::{CastController, CastEvent};
+pub use discovery::{DiscoveredReceiver as CastReceiver, discover_receivers};

@@ -1,6 +1,6 @@
 # Chromecast implementation checkpoint
 
-Chromecast output remains **unaccepted** and receives no feature medal. The player-cast crate provides pinned control transport, receiver-restricted file serving and owned playback operations. Its bounded session worker keeps receiver I/O off the caller thread. The Slint desktop has a Cast menu and panel for an explicitly entered local receiver address, an in-app bounded certificate-inspection action, and worker-backed cast, pause, resume and stop controls (042bf90, 721b1e2). The observed fingerprint is displayed for review and is used only when the user explicitly starts casting; inspection sends no application command and saves no trust. The Cast action is available for loaded local media, including supported audio containers. The UI path has not been exercised against a physical receiver. Network discovery and persisted receiver management are not implemented; silent video has been confirmed on two receivers using the device probe, while audio and other codecs remain untested.
+Chromecast output remains **unaccepted** and receives no feature medal. The player-cast crate provides pinned control transport, receiver-restricted file serving and owned playback operations. Its bounded session worker keeps receiver I/O off the caller thread. The Slint desktop has a Cast menu and panel for manual local addresses or explicitly requested bounded mDNS discovery, an in-app bounded certificate-inspection action, and worker-backed cast, pause, resume and stop controls (042bf90, 721b1e2, current change). The observed fingerprint is displayed for review and is used only when the user explicitly starts casting; inspection sends no application command and saves no trust. The Cast action is available only for confirmed loaded local media, including supported audio containers. The UI path and mDNS discovery have not yet been exercised against a physical receiver. Persisted receiver management is not implemented; silent video has been confirmed on two receivers using the device probe, while audio and other codecs remain untested.
 
 ## Transport and trust
 
@@ -10,7 +10,7 @@ Certificate inspection returns a presented leaf-certificate SHA-256, then aborts
 
 Literal local-network addresses avoid an unbounded DNS lookup. Network operations have a total deadline, including fragmented TLS/frame reads. Request IDs start at a random nonzero value and increase within JavaScript's exact integer range. Root/application responses are correlated; unrelated frames have a bounded skip count. Transport-level heartbeats are handled before application routing, including the transport-0 endpoint.
 
-No discovery or receiver network request is added to desktop startup. The desktop feature depends on player-cast, but opens a receiver connection only after the user enters a literal local address, inspects its certificate, reviews the displayed fingerprint and starts casting. Inspection is bounded and sends no application command.
+No discovery or receiver network request is added to desktop startup. mDNS discovery starts only after the user presses Find local receivers and is bounded to five seconds in the desktop. The desktop opens a receiver control connection only after the user selects or enters a literal local address, inspects its certificate, reviews the displayed fingerprint and starts casting. Inspection is bounded and sends no application command.
 
 ## Owned media operations
 
@@ -62,6 +62,6 @@ Inspection does not grant trust. The read-only diagnostic does not launch applic
 
 ## Remaining work
 
-The desktop currently requires manual entry of the local address; it has no network discovery or persisted receiver management. Exercise the desktop panel against a physical receiver and verify its cast/pause/resume/stop lifecycle there. Receiver codec compatibility beyond the tested H.264 clip and physical audio acceptance also remain. The feature total stays at **8/49 accepted**, with **41 gaps remaining**.
+The desktop supports manual entry and bounded mDNS discovery of local receivers, but has no persisted receiver management. Exercise discovery and the desktop panel against a physical receiver; verify its cast/pause/resume/stop lifecycle there. Receiver codec compatibility beyond the tested H.264 clip and physical audio acceptance also remain. The feature total stays at **8/49 accepted**, with **41 gaps remaining**.
 
 References: [Chromium envelope definition](https://chromium.googlesource.com/chromium/src.git/+/4d6bb36e3fcfb9742b6428e43a8e5df12681d0d0/components/cast_channel/proto/cast_channel.proto), [Rustls verifier contract](https://docs.rs/rustls/0.23.46/rustls/client/danger/trait.ServerCertVerifier.html), [Google media messages](https://developers.google.com/cast/docs/media/messages), and [Chromium transport-endpoint fix](https://chromium.googlesource.com/openscreen/+/8ef06d904f52e5595f0fbfd80ae93c123b3a35d5).

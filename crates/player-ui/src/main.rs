@@ -121,6 +121,13 @@ fn dispatch(
     ui.set_queue_visible(state.playlist_visible);
     ui.set_fullscreen_mode(state.fullscreen);
     ui.set_loaded(state.loaded);
+    ui.set_cast_available(
+        state.loaded
+            && state
+                .playlist
+                .get(state.selected)
+                .is_some_and(|path| path.is_file() && supported_cast_extension(path)),
+    );
     for effect in effects {
         let args: Vec<String> = match effect {
             Effect::Engine(command) => command,
@@ -276,6 +283,17 @@ fn refresh(
         ui.set_loaded(false);
         state.borrow_mut().loaded = false;
     }
+    let state_snapshot = state.borrow();
+    ui.set_cast_available(
+        snapshot.loaded
+            && matches_selection
+            && state_snapshot.loaded
+            && state_snapshot
+                .playlist
+                .get(state_snapshot.selected)
+                .is_some_and(|path| path.is_file() && supported_cast_extension(path)),
+    );
+    drop(state_snapshot);
     ui.set_has_artwork(
         ui.get_loaded()
             && snapshot.loaded
@@ -590,7 +608,8 @@ fn install_preferences(
 
 #[cfg(test)]
 mod cast_endpoint_tests {
-    use super::parse_cast_address;
+    use super::{parse_cast_address, supported_cast_extension};
+    use std::path::Path;
 
     #[test]
     fn accepts_literal_local_receiver_addresses() {
@@ -610,8 +629,31 @@ mod cast_endpoint_tests {
     #[test]
     fn accepts_local_ipv6_receiver_addresses_and_rejects_global_ipv6() {
         assert!(parse_cast_address("[fd00::20]:8009").is_ok());
-        assert!(parse_cast_address("[fe80::20]:8009").is_ok());
+        assert!(parse_cast_address("[fe80::20]:8009").is_err());
         assert!(parse_cast_address("[2001:4860:4860::8888]:8009").is_err());
+    }
+
+    #[test]
+    fn supports_only_the_containers_served_by_the_cast_origin() {
+        for path in [
+            "movie.mp4",
+            "clip.M4V",
+            "video.webm",
+            "movie.mkv",
+            "song.mp3",
+            "song.ogg",
+            "song.opus",
+            "song.flac",
+            "song.wav",
+        ] {
+            assert!(supported_cast_extension(Path::new(path)), "rejected {path}");
+        }
+        for path in ["stream.m3u8", "movie.avi", "movie.mp4.txt", "unknown"] {
+            assert!(
+                !supported_cast_extension(Path::new(path)),
+                "accepted {path}"
+            );
+        }
     }
 }
 
@@ -620,13 +662,27 @@ fn parse_cast_address(input: &str) -> Result<std::net::SocketAddr, ()> {
     let local = match address.ip() {
         std::net::IpAddr::V4(ip) => ip.is_private() || ip.is_loopback() || ip.is_link_local(),
         std::net::IpAddr::V6(ip) => {
-            ip.is_unique_local() || ip.is_loopback() || ip.is_unicast_link_local()
+            ip.is_unique_local()
+                || ip.is_loopback()
+                || (ip.is_unicast_link_local()
+                    && matches!(address, std::net::SocketAddr::V6(v6) if v6.scope_id() != 0))
         }
     };
     if !local || address.port() == 0 {
         return Err(());
     }
     Ok(address)
+}
+
+fn supported_cast_extension(path: &std::path::Path) -> bool {
+    path.extension()
+        .and_then(|extension| extension.to_str())
+        .is_some_and(|extension| {
+            matches!(
+                extension.to_ascii_lowercase().as_str(),
+                "mp4" | "m4v" | "webm" | "mkv" | "mp3" | "ogg" | "opus" | "flac" | "wav"
+            )
+        })
 }
 
 fn install_cast(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>) {
@@ -668,8 +724,9 @@ fn install_cast(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>) {
             let state = state.borrow();
             state.playlist.get(state.selected).cloned()
         };
-        let Some(path) = selected.filter(|path| path.is_file()) else {
-            ui.set_cast_status("Choose a local video file before casting".into());
+        let Some(path) = selected.filter(|path| path.is_file() && supported_cast_extension(path))
+        else {
+            ui.set_cast_status("Choose a supported local media file before casting".into());
             return;
         };
         ui.set_cast_status("Connecting to the explicitly pinned receiver…".into());
@@ -744,6 +801,44 @@ fn install_cast(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>) {
                         ui.set_cast_status("Certificate observed. Review the fingerprint, then explicitly start casting to trust this receiver for this session.".into());
                     }
                     Err(_) => ui.set_cast_status("Certificate inspection failed or timed out; no receiver was trusted.".into()),
+                }
+            });
+        });
+    });
+    let weak = ui.as_weak();
+    ui.on_cast_discover(move || {
+        let Some(ui) = weak.upgrade() else { return };
+        if ui.get_cast_discovering() {
+            return;
+        }
+        ui.set_cast_discovering(true);
+        ui.set_cast_receivers(ModelRc::new(VecModel::from(Vec::<CastReceiverRow>::new())));
+        ui.set_cast_status("Searching the local network for Cast receivers for up to five seconds…".into());
+        let window = weak.clone();
+        std::thread::spawn(move || {
+            let result = player_cast::discover_receivers(std::time::Duration::from_secs(5));
+            let _ = window.upgrade_in_event_loop(move |ui| {
+                ui.set_cast_discovering(false);
+                match result {
+                    Ok(receivers) => {
+                        let rows = receivers
+                            .iter()
+                            .map(|receiver| CastReceiverRow {
+                                name: receiver.name.clone().into(),
+                                endpoint: receiver.address.to_string().into(),
+                            })
+                            .collect::<Vec<_>>();
+                        ui.set_cast_receivers(ModelRc::new(VecModel::from(rows)));
+                        let count = receivers.len();
+                        ui.set_cast_status(
+                            if count == 0 {
+                                "No local Cast receivers found. You can enter an address manually.".into()
+                            } else {
+                                format!("Found {count} local receiver(s). Select one, inspect its certificate, then review the fingerprint before casting.").into()
+                            },
+                        );
+                    }
+                    Err(_) => ui.set_cast_status("Receiver discovery is unavailable on this network. You can enter a local address manually.".into()),
                 }
             });
         });
