@@ -91,7 +91,7 @@
       "name": "Touch or trackpad playback gestures",
       "group": "Interface",
       "stage": "queued",
-      "acceptance": "The desktop video surface maps horizontal trackpad scrolling to relative seek (bounded to 15 seconds per event) and vertical scrolling to volume, with loaded-state and clamp tests. Physical trackpad validation remains before acceptance; no touch-swipe behavior or feature medal is claimed."
+      "acceptance": "The desktop video surface maps horizontal trackpad scrolling and horizontal touch drags to bounded relative seeks, and vertical scrolling/drags to volume, with loaded-state, threshold and clamp tests. Physical trackpad/touchscreen validation remains before acceptance; no feature medal is claimed."
     },
     {
       "id": "system_media_controls",

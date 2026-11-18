@@ -131,6 +131,39 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
     ui.set_loaded(true);
     ui.set_volume(80.0);
     ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerPressed {
+            position: slint::LogicalPosition::new(700.0, 350.0),
+            button: slint::platform::PointerEventButton::Left,
+        });
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerMoved {
+            position: slint::LogicalPosition::new(760.0, 350.0),
+        });
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerReleased {
+            position: slint::LogicalPosition::new(760.0, 350.0),
+            button: slint::platform::PointerEventButton::Left,
+        });
+    assert_eq!(
+        actions.borrow().last(),
+        Some(&("seek-relative".into(), 3.0))
+    );
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerPressed {
+            position: slint::LogicalPosition::new(700.0, 350.0),
+            button: slint::platform::PointerEventButton::Left,
+        });
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerMoved {
+            position: slint::LogicalPosition::new(700.0, 400.0),
+        });
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerReleased {
+            position: slint::LogicalPosition::new(700.0, 400.0),
+            button: slint::platform::PointerEventButton::Left,
+        });
+    assert_eq!(actions.borrow().last(), Some(&("volume".into(), 73.75)));
+    ui.window()
         .dispatch_event(slint::platform::WindowEvent::PointerScrolled {
             position: slint::LogicalPosition::new(700.0, 350.0),
             delta_x: 100.0,

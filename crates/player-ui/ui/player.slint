@@ -299,6 +299,25 @@ export component PlayerWindow inherits Window {
                         }
                         TouchArea {
                             enabled: root.loaded && root.panel == "";
+                            property <length> gesture-start-x: 0px;
+                            property <length> gesture-start-y: 0px;
+                            pointer-event(event) => {
+                                if (event.button == PointerEventButton.left && event.kind == PointerEventKind.down) {
+                                    self.gesture-start-x = self.mouse-x;
+                                    self.gesture-start-y = self.mouse-y;
+                                } else if (event.button == PointerEventButton.left && event.kind == PointerEventKind.up) {
+                                    if (abs(self.mouse-x - self.gesture-start-x) >= 32px && abs(self.mouse-x - self.gesture-start-x) >= abs(self.mouse-y - self.gesture-start-y)) {
+                                        root.action("seek-relative", min(15, max(-15, ((self.mouse-x - self.gesture-start-x) / 1px) / 20)));
+                                    } else if (abs(self.mouse-y - self.gesture-start-y) >= 32px) {
+                                        root.action("volume", min(100, max(0, root.volume - ((self.mouse-y - self.gesture-start-y) / 1px) / 8)));
+                                    }
+                                    self.gesture-start-x = 0px;
+                                    self.gesture-start-y = 0px;
+                                } else if (event.kind == PointerEventKind.cancel) {
+                                    self.gesture-start-x = 0px;
+                                    self.gesture-start-y = 0px;
+                                }
+                            }
                             scroll-event(event) => {
                                 if (abs(event.delta-x) >= abs(event.delta-y) && abs(event.delta-x) > 0px) {
                                     root.action("seek-relative", min(15, max(-15, (event.delta-x / 1px) / 20)));
