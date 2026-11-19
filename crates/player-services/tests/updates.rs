@@ -79,6 +79,56 @@ fn refuses_untrusted_asset_hosts_and_incomplete_releases() {
 }
 
 #[test]
+fn release_selection_rejects_malformed_version_and_asset_metadata() {
+    assert!(latest_windows_update("not json", "1.3.0").is_err());
+    assert!(latest_windows_update("[]", "not a version").is_err());
+
+    let malformed_releases = json!([
+        {"draft": false, "tag_name": "release-1.4.0", "prerelease": false},
+        {"draft": false, "tag_name": "vnot-semver", "prerelease": false},
+        release("1.4.0-preview.1", false, false),
+        release("1.3.0", false, false),
+    ]);
+    assert!(
+        latest_windows_update(&malformed_releases.to_string(), "1.3.0")
+            .unwrap()
+            .is_none()
+    );
+
+    let mut invalid = release("1.4.0", false, false);
+    invalid["assets"] = json!("not an asset list");
+    assert!(latest_windows_update(&json!([invalid]).to_string(), "1.3.0").is_err());
+
+    let mut invalid = release("1.4.0", false, false);
+    invalid["assets"] = json!([invalid["assets"][1].clone()]);
+    assert!(latest_windows_update(&json!([invalid]).to_string(), "1.3.0").is_err());
+
+    for invalid_size in [0, 512 * 1024 * 1024 + 1] {
+        let mut invalid = release("1.4.0", false, false);
+        invalid["assets"][0]["size"] = invalid_size.into();
+        assert!(latest_windows_update(&json!([invalid]).to_string(), "1.3.0").is_err());
+    }
+
+    let mut invalid = release("1.4.0", false, false);
+    invalid["assets"][0]["browser_download_url"] = format!(
+        "{}?unexpected=1",
+        invalid["assets"][0]["browser_download_url"]
+            .as_str()
+            .unwrap()
+    )
+    .into();
+    assert!(latest_windows_update(&json!([invalid]).to_string(), "1.3.0").is_err());
+
+    let mut invalid = release("1.4.0", false, false);
+    invalid["assets"][1]["size"] = 0.into();
+    assert!(latest_windows_update(&json!([invalid]).to_string(), "1.3.0").is_err());
+
+    let mut invalid = release("1.4.0", false, false);
+    invalid["assets"][1]["browser_download_url"] = "https://example.org/SHA256SUMS.txt".into();
+    assert!(latest_windows_update(&json!([invalid]).to_string(), "1.3.0").is_err());
+}
+
+#[test]
 fn checksum_parser_requires_one_exact_sha256_entry() {
     let hash = "ab".repeat(32);
     assert_eq!(
@@ -154,7 +204,7 @@ fn staging_publishes_only_downloads_matching_release_metadata_and_checksum() {
     let worker = std::thread::spawn(move || {
         let deadline = Instant::now() + Duration::from_secs(20);
         let mut served = 0;
-        while !done.load(Ordering::Acquire) && Instant::now() < deadline && served < 4 {
+        while !done.load(Ordering::Acquire) && Instant::now() < deadline && served < 8 {
             if let Ok((mut stream, _)) = listener.accept() {
                 stream.set_nonblocking(false).unwrap();
                 stream
@@ -173,6 +223,13 @@ fn staging_publishes_only_downloads_matching_release_metadata_and_checksum() {
                 let request = String::from_utf8_lossy(&request);
                 let body = if request.starts_with("GET /checksum-bad ") {
                     b"0000000000000000000000000000000000000000000000000000000000000000  Foxide-1.4.0-windows-x64.zip\n".to_vec()
+                } else if request.starts_with("GET /checksum-large ") {
+                    vec![b'0'; 64 * 1024 + 1]
+                } else if request.starts_with("GET /checksum-invalid ") {
+                    vec![0xff]
+                } else if request.starts_with("GET /checksum-missing ") {
+                    b"0000000000000000000000000000000000000000000000000000000000000000  other.zip\n"
+                        .to_vec()
                 } else if request.starts_with("GET /checksum ") {
                     expected_checksum.as_bytes().to_vec()
                 } else {
@@ -217,11 +274,32 @@ fn staging_publishes_only_downloads_matching_release_metadata_and_checksum() {
         &directory,
         &cancel,
     );
+    let oversized_checksum = download_and_stage_windows_update(
+        &client,
+        &make_update("checksum-large"),
+        &directory,
+        &cancel,
+    );
+    let invalid_checksum = download_and_stage_windows_update(
+        &client,
+        &make_update("checksum-invalid"),
+        &directory,
+        &cancel,
+    );
+    let missing_entry = download_and_stage_windows_update(
+        &client,
+        &make_update("checksum-missing"),
+        &directory,
+        &cancel,
+    );
     stop.store(true, Ordering::Release);
-    assert_eq!(worker.join().unwrap(), 4);
+    assert_eq!(worker.join().unwrap(), 8);
     let staged = staged.unwrap();
     assert_eq!(std::fs::read(&staged).unwrap(), package);
     assert!(rejected.is_err());
+    assert!(oversized_checksum.is_err());
+    assert!(invalid_checksum.is_err());
+    assert!(missing_entry.is_err());
     assert!(
         !directory
             .join("Foxide-1.4.0-windows-x64.zip.download")
