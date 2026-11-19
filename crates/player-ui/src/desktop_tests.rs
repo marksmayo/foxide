@@ -939,4 +939,51 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
         ui.get_update_status()
             .contains("No verified update is staged")
     );
+
+    updates_ui::install_with(
+        &ui,
+        Arc::new(|| Ok(Some(("1.5.0".into(), PathBuf::from("staged-update.zip"))))),
+        Arc::new(|_| Err("launcher unavailable".into())),
+    );
+    let deadline = std::time::Instant::now() + Duration::from_secs(2);
+    while ui.get_staged_update_version() != "1.5.0" && std::time::Instant::now() < deadline {
+        if let Ok(event) = event_receiver.recv_timeout(Duration::from_millis(20)) {
+            event();
+        }
+    }
+    assert_eq!(ui.get_staged_update_version(), "1.5.0");
+    ui.invoke_install_update();
+    assert_eq!(
+        ui.get_update_status(),
+        "Could not start update: launcher unavailable"
+    );
+
+    let entered = Arc::new(std::sync::Barrier::new(2));
+    let release = Arc::new(std::sync::Barrier::new(2));
+    let calls = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    let worker_entered = entered.clone();
+    let worker_release = release.clone();
+    let worker_calls = calls.clone();
+    updates_ui::install_with(
+        &ui,
+        Arc::new(move || {
+            worker_calls.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            worker_entered.wait();
+            worker_release.wait();
+            Ok(None)
+        }),
+        Arc::new(|_| Ok(())),
+    );
+    entered.wait();
+    ui.invoke_check_updates();
+    assert_eq!(calls.load(std::sync::atomic::Ordering::SeqCst), 1);
+    release.wait();
+    let deadline = std::time::Instant::now() + Duration::from_secs(2);
+    while ui.get_update_status() != "Foxide is up to date." && std::time::Instant::now() < deadline
+    {
+        if let Ok(event) = event_receiver.recv_timeout(Duration::from_millis(20)) {
+            event();
+        }
+    }
+    assert_eq!(ui.get_update_status(), "Foxide is up to date.");
 }
