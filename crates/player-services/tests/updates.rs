@@ -153,6 +153,7 @@ fn checksum_parser_requires_one_exact_sha256_entry() {
     );
     assert!(parse_sha256sum("not-a-hash  Foxide.zip\n", "Foxide.zip").is_err());
     assert!(parse_sha256sum(&format!("{}  Foxide.zip\n", "zz".repeat(32)), "Foxide.zip").is_err());
+    assert!(parse_sha256sum(&format!("\n{hash}\n"), "Foxide.zip").is_err());
 }
 
 #[test]
