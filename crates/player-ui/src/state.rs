@@ -193,12 +193,8 @@ impl UiState {
                     .into_iter()
                     .collect()
             }
-            Action::TogglePause if self.loaded => {
-                self.paused = !self.paused;
-                vec![Effect::Pause(self.paused)]
-            }
+            Action::TogglePause if self.loaded => vec![Effect::Pause(!self.paused)],
             Action::SetPaused(paused) if self.loaded => {
-                self.paused = paused;
                 vec![Effect::Pause(paused)]
             }
             Action::ToggleMute => vec![Effect::Mute(!self.muted)],
@@ -254,7 +250,7 @@ mod tests {
     use super::{Action, Effect, UiState};
 
     #[test]
-    fn system_media_play_and_pause_set_the_requested_state() {
+    fn system_media_play_and_pause_wait_for_engine_confirmation() {
         let mut state = UiState::default();
         state.confirm_loaded(42.0);
         state.paused = true;
@@ -263,14 +259,14 @@ mod tests {
             state.dispatch(Action::SetPaused(false)),
             vec![Effect::Pause(false)]
         );
-        assert!(!state.paused);
+        assert!(state.paused);
 
         state.paused = false;
         assert_eq!(
             state.dispatch(Action::SetPaused(true)),
             vec![Effect::Pause(true)]
         );
-        assert!(state.paused);
+        assert!(!state.paused);
 
         state.loaded = false;
         assert!(state.dispatch(Action::SetPaused(false)).is_empty());
