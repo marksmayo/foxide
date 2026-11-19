@@ -82,14 +82,16 @@ unsafe impl Sync for Api {}
 unsafe fn load_library(path: &std::path::Path) -> Result<Library, String> {
     #[cfg(windows)]
     {
-        use libloading::os::windows::{LOAD_LIBRARY_SEARCH_DEFAULT_DIRS, Library as WindowsLibrary};
+        use libloading::os::windows::{
+            LOAD_LIBRARY_SEARCH_DEFAULT_DIRS, Library as WindowsLibrary,
+        };
         let path = path.canonicalize().map_err(|error| error.to_string())?;
         // SAFETY: caller retains the library; the absolute path is selected by
         // executable-relative discovery or an explicit FOXIDE_LIBMPV override.
         unsafe {
             WindowsLibrary::load_with_flags(path, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS)
-            .map(Into::into)
-            .map_err(|error| error.to_string())
+                .map(Into::into)
+                .map_err(|error| error.to_string())
         }
     }
     #[cfg(not(windows))]
