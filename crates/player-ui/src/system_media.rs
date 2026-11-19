@@ -6,7 +6,42 @@ use player_ui::{
 };
 use playwire::{Capabilities, MediaControls, PlaybackState, PlayerConfig, Track};
 use slint::ComponentHandle;
-use std::{cell::RefCell, rc::Rc, sync::mpsc, sync::mpsc::Receiver, time::Duration};
+use std::{
+    cell::RefCell,
+    rc::Rc,
+    sync::mpsc,
+    sync::mpsc::Receiver,
+    time::{Duration, Instant},
+};
+
+const ATTACH_RETRY_INTERVAL: Duration = Duration::from_secs(1);
+
+pub(super) enum AttachOutcome {
+    Attached(SystemMediaSession),
+    RetryableNotReady,
+}
+
+pub(super) struct AttachRetry {
+    next_attempt: Instant,
+}
+
+impl Default for AttachRetry {
+    fn default() -> Self {
+        Self {
+            next_attempt: Instant::now(),
+        }
+    }
+}
+
+impl AttachRetry {
+    pub(super) fn due(&mut self, now: Instant) -> bool {
+        if now < self.next_attempt {
+            return false;
+        }
+        self.next_attempt = now + ATTACH_RETRY_INTERVAL;
+        true
+    }
+}
 
 fn drain_commands(receiver: &Receiver<MediaCommand>, mut apply: impl FnMut(Action)) {
     while let Ok(command) = receiver.try_recv() {
@@ -59,9 +94,9 @@ pub(super) fn attach(
     ui: &PlayerWindow,
     state: &Rc<RefCell<UiState>>,
     engine: &Option<Rc<player_render::Engine>>,
-) -> Result<Option<SystemMediaSession>, String> {
+) -> Result<AttachOutcome, String> {
     let Some(config) = platform_config(ui)? else {
-        return Ok(None);
+        return Ok(AttachOutcome::RetryableNotReady);
     };
     let (sender, receiver) = mpsc::channel();
     let controls = MediaControls::new(config, move |event| {
@@ -86,7 +121,7 @@ pub(super) fn attach(
             });
         },
     );
-    Ok(Some(SystemMediaSession {
+    Ok(AttachOutcome::Attached(SystemMediaSession {
         controls,
         identity: TrackIdentity::default(),
         last_error: None,
@@ -182,10 +217,26 @@ fn platform_config(ui: &PlayerWindow) -> Result<Option<PlayerConfig>, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{MediaCommand, TrackIdentity, command_for_event, drain_commands, playback_state};
+    use super::{
+        AttachRetry, MediaCommand, TrackIdentity, command_for_event, drain_commands, playback_state,
+    };
     use player_render::Snapshot;
     use player_ui::{Action, UiState};
-    use std::{path::PathBuf, time::Duration};
+    use std::{
+        path::PathBuf,
+        time::{Duration, Instant},
+    };
+
+    #[test]
+    fn retryable_window_not_ready_state_is_rate_limited() {
+        let mut retry = AttachRetry::default();
+        let start = Instant::now();
+
+        assert!(retry.due(start));
+        assert!(!retry.due(start + Duration::from_millis(50)));
+        assert!(!retry.due(start + Duration::from_millis(999)));
+        assert!(retry.due(start + Duration::from_secs(1)));
+    }
 
     #[test]
     fn publishes_current_track_metadata_and_transport_capabilities() {
