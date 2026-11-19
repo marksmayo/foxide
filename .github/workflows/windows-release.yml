@@ -105,7 +105,7 @@ jobs:
           & (Join-Path $exe[0].DirectoryName 'Install-PlaybackRuntime.ps1')
           if ($LASTEXITCODE -ne 0) { throw 'Packaged runtime setup failed' }
           $env:FOXIDE_RELEASE_TEST_DLL = Join-Path $exe[0].DirectoryName 'tools/libmpv/libmpv-2.dll'
-          python -c "import ctypes,os; dll=ctypes.WinDLL(os.environ['FOXIDE_RELEASE_TEST_DLL'], winmode=0x1100); version=dll.mpv_client_api_version; version.restype=ctypes.c_ulong; assert version() >> 16 == 2, 'Expected libmpv client ABI2'"
+          python -c "import ctypes,os; dll=ctypes.WinDLL(os.environ['FOXIDE_RELEASE_TEST_DLL'], winmode=0x1000); version=dll.mpv_client_api_version; version.restype=ctypes.c_ulong; assert version() >> 16 == 2, 'Expected libmpv client ABI2'"
           if ($LASTEXITCODE -ne 0) { throw 'Installed playback runtime did not load with ABI2' }
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
