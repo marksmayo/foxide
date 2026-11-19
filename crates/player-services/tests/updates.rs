@@ -86,6 +86,7 @@ fn release_selection_rejects_malformed_version_and_asset_metadata() {
     let malformed_releases = json!([
         {"draft": false, "tag_name": "release-1.4.0", "prerelease": false},
         {"draft": false, "tag_name": "vnot-semver", "prerelease": false},
+        release("1.4.0", true, false),
         release("1.4.0-preview.1", false, false),
         release("1.3.0", false, false),
     ]);

@@ -196,12 +196,43 @@ pub fn download_and_stage_windows_update(
         let _ = std::fs::remove_file(&temporary);
         return Err(error);
     }
-    if target.exists() {
-        std::fs::remove_file(&target).map_err(|error| error.to_string())?;
-    }
-    std::fs::rename(&temporary, &target).map_err(|error| {
-        let _ = std::fs::remove_file(&temporary);
-        error.to_string()
-    })?;
+    publish_staged_archive(&temporary, &target)?;
     Ok(target)
+}
+
+fn publish_staged_archive(temporary: &Path, target: &Path) -> Result<(), String> {
+    if target.exists() {
+        std::fs::remove_file(target).map_err(|error| error.to_string())?;
+    }
+    std::fs::rename(temporary, target).map_err(|error| {
+        let _ = std::fs::remove_file(temporary);
+        error.to_string()
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::publish_staged_archive;
+    use std::{fs, time::SystemTime};
+
+    #[test]
+    fn failed_archive_publish_removes_the_temporary_download() {
+        let directory = std::env::temp_dir().join(format!(
+            "foxide-update-publish-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir_all(&directory).unwrap();
+        let temporary = directory.join(".update.download");
+        fs::write(&temporary, b"verified archive").unwrap();
+        let target = directory.join("missing-parent/update.zip");
+
+        assert!(publish_staged_archive(&temporary, &target).is_err());
+        assert!(!temporary.exists());
+
+        fs::remove_dir_all(directory).unwrap();
+    }
 }
