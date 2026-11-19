@@ -8,6 +8,7 @@ publish.workspace = true
 [features]
 live-service-integration = ["video-site-integration"]
 video-site-integration = ["desktop"]
+system-media-integration = ["desktop"]
 gpu-integration = ["desktop", "slint/backend-winit", "slint/renderer-femtovg", "slint/renderer-software"]
 desktop = ["dep:player-services", "dep:slint", "dep:glow", "dep:libloading", "dep:serde_json"]
 

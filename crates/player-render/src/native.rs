@@ -764,6 +764,7 @@ mod snapshot_allocation_tests {
 
     #[test]
     #[ignore = "Native libmpv metadata acceptance; requires generated tagged fixture and libmpv"]
+    #[cfg(feature = "system-media-integration")]
     fn native_snapshot_exposes_embedded_track_metadata() {
         use std::time::Instant;
 

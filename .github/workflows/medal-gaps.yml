@@ -41,7 +41,6 @@ jobs:
       - name: Verify immutable snapshot sharing
         run: cargo test -p player-render --features desktop --lib --locked cloning_snapshot
       - name: Verify native metadata reaches player snapshots
-        run: cargo test -p player-render --features desktop --lib --locked native_snapshot_exposes_embedded_track_metadata -- --ignored --nocapture
+        run: cargo test -p player-render --features system-media-integration --lib --locked native_snapshot_exposes_embedded_track_metadata -- --ignored --nocapture
       - name: Verify desktop menu commands on the native engine
         run: cargo test -p player-ui --features native-controls --lib --locked desktop_menu_commands -- --ignored --nocapture
-
