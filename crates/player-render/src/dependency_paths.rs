@@ -7,7 +7,9 @@ pub(crate) fn windows_libraries(executable: &Path) -> Vec<PathBuf> {
         executable.with_file_name("libmpv-2.dll"),
         application_dir.join("tools/libmpv/libmpv-2.dll"),
     ];
-    if application_dir.file_name().is_some_and(|name| name == "debug")
+    if application_dir
+        .file_name()
+        .is_some_and(|name| name == "debug")
         && application_dir
             .parent()
             .and_then(Path::file_name)
