@@ -14,10 +14,9 @@ pub(crate) fn windows_libraries(executable: &Path) -> Vec<PathBuf> {
             .parent()
             .and_then(Path::file_name)
             .is_some_and(|name| name == "target")
+        && let Some(repository_root) = application_dir.parent().and_then(Path::parent)
     {
-        if let Some(repository_root) = application_dir.parent().and_then(Path::parent) {
-            paths.push(repository_root.join("tools/libmpv/libmpv-2.dll"));
-        }
+        paths.push(repository_root.join("tools/libmpv/libmpv-2.dll"));
     }
     paths
 }
