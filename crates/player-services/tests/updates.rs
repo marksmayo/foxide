@@ -120,11 +120,19 @@ fn release_selection_rejects_malformed_version_and_asset_metadata() {
     assert!(latest_windows_update(&json!([invalid]).to_string(), "1.3.0").is_err());
 
     let mut invalid = release("1.4.0", false, false);
+    invalid["assets"][0]["browser_download_url"] = serde_json::Value::Null;
+    assert!(latest_windows_update(&json!([invalid]).to_string(), "1.3.0").is_err());
+
+    let mut invalid = release("1.4.0", false, false);
     invalid["assets"][1]["size"] = 0.into();
     assert!(latest_windows_update(&json!([invalid]).to_string(), "1.3.0").is_err());
 
     let mut invalid = release("1.4.0", false, false);
     invalid["assets"][1]["browser_download_url"] = "https://example.org/SHA256SUMS.txt".into();
+    assert!(latest_windows_update(&json!([invalid]).to_string(), "1.3.0").is_err());
+
+    let mut invalid = release("1.4.0", false, false);
+    invalid["assets"][1]["browser_download_url"] = serde_json::Value::Null;
     assert!(latest_windows_update(&json!([invalid]).to_string(), "1.3.0").is_err());
 }
 
@@ -144,6 +152,7 @@ fn checksum_parser_requires_one_exact_sha256_entry() {
         .is_err()
     );
     assert!(parse_sha256sum("not-a-hash  Foxide.zip\n", "Foxide.zip").is_err());
+    assert!(parse_sha256sum(&format!("{}  Foxide.zip\n", "zz".repeat(32)), "Foxide.zip").is_err());
 }
 
 #[test]
@@ -204,7 +213,7 @@ fn staging_publishes_only_downloads_matching_release_metadata_and_checksum() {
     let worker = std::thread::spawn(move || {
         let deadline = Instant::now() + Duration::from_secs(20);
         let mut served = 0;
-        while !done.load(Ordering::Acquire) && Instant::now() < deadline && served < 8 {
+        while !done.load(Ordering::Acquire) && Instant::now() < deadline && served < 10 {
             if let Ok((mut stream, _)) = listener.accept() {
                 stream.set_nonblocking(false).unwrap();
                 stream
@@ -292,14 +301,28 @@ fn staging_publishes_only_downloads_matching_release_metadata_and_checksum() {
         &directory,
         &cancel,
     );
+    let target = directory.join("Foxide-1.4.0-windows-x64.zip");
+    std::fs::write(&target, b"stale staged archive").unwrap();
+    let replaced =
+        download_and_stage_windows_update(&client, &make_update("checksum"), &directory, &cancel);
+    let blocked_directory = directory.join("not-a-directory");
+    std::fs::write(&blocked_directory, b"file").unwrap();
+    let unavailable_directory = download_and_stage_windows_update(
+        &client,
+        &make_update("checksum"),
+        &blocked_directory,
+        &cancel,
+    );
     stop.store(true, Ordering::Release);
-    assert_eq!(worker.join().unwrap(), 8);
+    assert_eq!(worker.join().unwrap(), 10);
     let staged = staged.unwrap();
     assert_eq!(std::fs::read(&staged).unwrap(), package);
     assert!(rejected.is_err());
     assert!(oversized_checksum.is_err());
     assert!(invalid_checksum.is_err());
     assert!(missing_entry.is_err());
+    assert_eq!(std::fs::read(replaced.unwrap()).unwrap(), package);
+    assert!(unavailable_directory.is_err());
     assert!(
         !directory
             .join("Foxide-1.4.0-windows-x64.zip.download")
