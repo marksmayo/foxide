@@ -73,4 +73,3 @@ mod tests {
         assert_eq!(action_for_command(MediaCommand::SeekBy(f64::NAN)), None);
     }
 }
-
