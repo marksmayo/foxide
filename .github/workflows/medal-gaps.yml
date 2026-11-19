@@ -32,7 +32,7 @@ jobs:
         with:
           key: desktop-ui
       - name: Install native playback dependencies
-        run: sudo apt-get update && sudo apt-get install -y mpv ffmpeg libfontconfig1-dev libxkbcommon-dev libwayland-dev libegl1-mesa-dev
+        run: sudo apt-get update && sudo apt-get install -y mpv libmpv2 ffmpeg libfontconfig1-dev libxkbcommon-dev libwayland-dev libegl1-mesa-dev
       - name: Generate deterministic video with audio
         run: |
           mkdir -p results/local
