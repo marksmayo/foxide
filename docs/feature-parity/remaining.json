@@ -97,8 +97,8 @@
       "id": "system_media_controls",
       "name": "System media-control integration",
       "group": "Interface",
-      "stage": "queued",
-      "acceptance": "Needs separate Windows/macOS/Linux session integrations and ownership handling."
+        "stage": "in_progress",
+        "acceptance": "Implemented with the shared playwire adapter for Windows SMTC, macOS Now Playing, and Linux MPRIS. Play/pause, previous/next, seek, title/artist/album, playback state, and transport capabilities are wired through the player action path. Unit tests cover event routing, metadata publication, track identity, and seek behavior; CI verifies embedded metadata through libmpv. Platform session interaction and user-visible behavior still require CI/device evidence before acceptance."
     },
     {
       "id": "compact_music_view",
@@ -356,3 +356,4 @@
     "windows": "https://github.com/marksmayo/foxide/actions/runs/43972156451/job/133666802683"
   }
 }
+

@@ -62,3 +62,8 @@ For the remaining owner-device check, use a local test file and report each item
 | Start local audio and verify it is audible; then stop it | Pending |
 
 Report behavior only. Do not include receiver names, addresses, certificate fingerprints, or private media paths in the PR or repository. Update this checklist and `remaining.json` only after the results are reported; a failure should be recorded as a concrete follow-up rather than treated as acceptance.
+
+## System media controls implementation checkpoint
+
+The desktop adapter now connects playwire to the existing player action/state path for Windows SMTC, macOS Now Playing, and Linux MPRIS. It publishes title, artist, album, playback state, seek position and supported transport capabilities; OS callbacks are queued back to the Slint event loop. Local file paths and artwork URLs are withheld from system metadata. Unit tests cover command routing, idempotent play/pause state, metadata, stop clearing, seek limits and per-track identity. A native libmpv acceptance test and tagged fixture are wired into the Linux native-controls workflow. Local Windows desktop/UI and renderer tests plus strict UI clippy pass; hosted all-platform session and coverage evidence is pending. This remains in progress until hosted OS checks and user-facing interaction are verified.
+

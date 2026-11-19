@@ -2,6 +2,7 @@
 #![forbid(unsafe_code)]
 use player_core::Command;
 mod state;
+pub mod system_media_controls;
 pub use state::{Action, Effect, PlaybackControl, UiState};
 
 /// Initial mpv-compatible shortcut subset. Modifiers and text editing are handled by the UI.
@@ -23,3 +24,4 @@ pub fn shortcut(key: &str) -> Option<Command> {
 
 #[cfg(all(test, feature = "native-controls"))]
 mod native_control_tests;
+

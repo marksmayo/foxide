@@ -433,6 +433,8 @@ pub struct Snapshot {
     /// Original user selection, retained across helper redirects without per-tick allocation.
     pub requested_path: Arc<str>,
     pub title: String,
+    pub artist: String,
+    pub album: String,
     pub loaded: bool,
     pub paused: bool,
     pub position: f64,
@@ -636,6 +638,8 @@ impl Engine {
                         path,
                         requested_path: requested_path.clone(),
                         title: client.get(c"media-title"),
+                        artist: client.get(c"metadata/by-key/artist"),
+                        album: client.get(c"metadata/by-key/album"),
                         paused: client.get(c"pause") == "yes",
                         position: client.number(c"time-pos"),
                         duration: client.number(c"duration"),
@@ -757,6 +761,42 @@ mod snapshot_allocation_tests {
             "A position update must not allocate and clone immutable track strings"
         );
     }
+
+    #[test]
+    #[ignore = "Native libmpv metadata acceptance; requires generated tagged fixture and libmpv"]
+    fn native_snapshot_exposes_embedded_track_metadata() {
+        use std::time::Instant;
+
+        let fixture = std::env::var("FOXIDE_SYSTEM_MEDIA_FIXTURE")
+            .expect("workflow must provide the tagged metadata fixture");
+        let engine = Engine::new().expect("libmpv must be available");
+        for (name, value) in [("vo", "null"), ("ao", "null"), ("pause", "no")] {
+            engine
+                .command(vec!["set".into(), name.into(), value.into()])
+                .unwrap();
+        }
+        engine.ready.store(true, Ordering::Release);
+        engine
+            .command(vec!["loadfile".into(), fixture, "replace".into()])
+            .unwrap();
+
+        let deadline = Instant::now() + Duration::from_secs(15);
+        while Instant::now() < deadline {
+            let snapshot = engine.snapshot().unwrap_or_default();
+            if !snapshot.error.is_empty() {
+                panic!("libmpv failed to load metadata fixture: {}", snapshot.error);
+            }
+            if snapshot.loaded && !snapshot.artist.is_empty() && !snapshot.album.is_empty() {
+                assert_eq!(snapshot.title, "Foxide system media fixture");
+                assert_eq!(snapshot.artist, "Foxide CI");
+                assert_eq!(snapshot.album, "System media controls");
+                engine.command(vec!["stop".into()]).unwrap();
+                return;
+            }
+            thread::sleep(Duration::from_millis(50));
+        }
+        panic!("libmpv snapshot did not expose embedded title, artist, and album metadata");
+    }
 }
 
 #[cfg(all(test, feature = "video-site-integration"))]
@@ -766,3 +806,4 @@ mod video_site_tests;
 #[cfg(all(test, feature = "live-service-integration"))]
 #[path = "native_live.rs"]
 mod live_services;
+

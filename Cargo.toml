@@ -15,6 +15,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 semver = "=1.0.28"
 sha2 = "=0.10.9"
+playwire = "=2.1.0"
 player-core = { path = "crates/player-core" }
 
 [profile.release]
@@ -27,3 +28,4 @@ unsafe_code = "forbid"
 
 [workspace.lints.clippy]
 all = "warn"
+
