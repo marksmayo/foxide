@@ -23,23 +23,29 @@ pub(super) enum AttachOutcome {
 
 pub(super) struct AttachRetry {
     next_attempt: Instant,
+    finished: bool,
 }
 
 impl Default for AttachRetry {
     fn default() -> Self {
         Self {
             next_attempt: Instant::now(),
+            finished: false,
         }
     }
 }
 
 impl AttachRetry {
     pub(super) fn due(&mut self, now: Instant) -> bool {
-        if now < self.next_attempt {
+        if self.finished || now < self.next_attempt {
             return false;
         }
         self.next_attempt = now + ATTACH_RETRY_INTERVAL;
         true
+    }
+
+    pub(super) fn finish(&mut self) {
+        self.finished = true;
     }
 }
 
@@ -236,6 +242,17 @@ mod tests {
         assert!(!retry.due(start + Duration::from_millis(50)));
         assert!(!retry.due(start + Duration::from_millis(999)));
         assert!(retry.due(start + Duration::from_secs(1)));
+    }
+
+    #[test]
+    fn idle_session_can_attach_and_success_disables_future_retries() {
+        let mut retry = AttachRetry::default();
+        let start = Instant::now();
+
+        // Session readiness is independent of whether a media track has loaded.
+        assert!(retry.due(start));
+        retry.finish();
+        assert!(!retry.due(start + Duration::from_secs(60)));
     }
 
     #[test]
