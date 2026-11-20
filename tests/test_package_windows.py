@@ -54,6 +54,28 @@ class WindowsPackagingTests(unittest.TestCase):
         with self.assertRaises(FileExistsError):
             self.build()
 
+    def test_installer_uses_the_existing_foxide_logo_as_its_setup_icon(self):
+        script = (ROOT / 'packaging/Foxide.iss').read_text(encoding='utf-8')
+        self.assertIn('SetupIconFile=', script)
+        self.assertIn('UninstallDisplayIcon={app}\\Foxide.ico', script)
+        self.assertIn('Source: "Foxide.ico"; DestDir: "{app}"', script)
+        self.assertIn('IconFilename: "{app}\\Foxide.ico"', script)
+        icon_line = next(line for line in script.splitlines() if line.startswith('SetupIconFile='))
+        relative_icon = icon_line.partition('=')[2].strip().strip('"')
+        icon = (ROOT / 'packaging' / relative_icon).resolve()
+        self.assertTrue(icon.is_relative_to((ROOT / 'packaging').resolve()))
+        self.assertTrue(icon.is_file())
+        data = icon.read_bytes()
+        self.assertGreaterEqual(len(data), 22)
+        self.assertEqual(data[:4], b'\x00\x00\x01\x00')
+        self.assertEqual(int.from_bytes(data[4:6], 'little'), 1)
+        payload_size = int.from_bytes(data[14:18], 'little')
+        payload_offset = int.from_bytes(data[18:22], 'little')
+        png = data[payload_offset:payload_offset + payload_size]
+        self.assertEqual(png[:8], b'\x89PNG\r\n\x1a\n')
+        self.assertEqual(int.from_bytes(png[16:20], 'big'), 256)
+        self.assertEqual(int.from_bytes(png[20:24], 'big'), 256)
+
     def test_invalid_version_commit_and_non_windows_file_fail_before_packaging(self):
         for version, commit in [('../escape', 'a'*40), ('0.0.1', 'bad')]:
             with self.subTest(version=version), self.assertRaises(ValueError):
