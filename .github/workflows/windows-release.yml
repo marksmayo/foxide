@@ -67,11 +67,14 @@ jobs:
               output.write(f'tag={tag}\nversion={version}\ncommit={commit}\n')
       - name: Test and build the Windows desktop
         shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
         run: |
           python -m unittest discover -s tests -p test_package_windows.py
           if ($LASTEXITCODE -ne 0) { throw 'Packaging tests failed' }
           cargo test --workspace --locked
           if ($LASTEXITCODE -ne 0) { throw 'Workspace tests failed' }
+          $env:FOXIDE_RELEASE_VERSION = $env:RELEASE_VERSION
           cargo build -p player-ui --features desktop --bin foxide-desktop --release --locked
           if ($LASTEXITCODE -ne 0) { throw 'Desktop build failed' }
           cargo metadata --locked --format-version 1 --filter-platform x86_64-pc-windows-msvc --features player-ui/desktop > cargo-release-metadata.json
@@ -88,6 +91,55 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Source archive failed' }
           $hash = (Get-FileHash dist/Foxide-source.zip -Algorithm SHA256).Hash.ToLower()
           "$hash  Foxide-source.zip" | Add-Content dist/SHA256SUMS.txt
+      - name: Build and smoke-test the Windows installer
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          $zip = @(Get-ChildItem dist/Foxide-*-windows-x64.zip)
+          if ($zip.Count -ne 1) { throw 'Expected exactly one Windows ZIP package' }
+          $payloadRoot = Join-Path $PWD 'results/local/installer-payload'
+          Expand-Archive -LiteralPath $zip[0].FullName -DestinationPath $payloadRoot
+          $payload = @(Get-ChildItem -LiteralPath $payloadRoot -Directory)
+          if ($payload.Count -ne 1) { throw 'Expected one extracted installer payload' }
+          $iscc = Join-Path ([Environment]::GetFolderPath('ProgramFilesX86')) 'Inno Setup 6/ISCC.exe'
+          if (-not (Test-Path -LiteralPath $iscc)) { throw 'Inno Setup 6 compiler is missing from the Windows runner' }
+          & $iscc "/DAppVersion=$env:RELEASE_VERSION" "/DPayloadDir=$($payload[0].FullName)" packaging/Foxide.iss
+          if ($LASTEXITCODE -ne 0) { throw 'Windows installer compilation failed' }
+          $installer = @(Get-ChildItem dist/Foxide-*-windows-x64-setup.exe)
+          if ($installer.Count -ne 1) { throw 'Expected one Windows setup installer' }
+          $installerHash = (Get-FileHash -LiteralPath $installer[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$installerHash  $($installer[0].Name)" | Add-Content dist/SHA256SUMS.txt
+          $resultsDirectory = (Resolve-Path results/local).Path
+          $installDir = Join-Path $resultsDirectory 'installer-smoke'
+          $installerLog = Join-Path $resultsDirectory 'installer-smoke.log'
+          $installProcess = Start-Process -FilePath $installer[0].FullName -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/NOICONS', "/DIR=$installDir", "/LOG=$installerLog") -Wait -PassThru
+          if ($installProcess.ExitCode -ne 0) { throw "Windows installer smoke install failed with exit code $($installProcess.ExitCode)" }
+          if (-not (Test-Path -LiteralPath $installerLog)) { throw 'Windows installer did not create its requested log' }
+          foreach ($file in @('Foxide.exe', 'Install-PlaybackRuntime.ps1', 'BUILD-INFO.json')) {
+            if (-not (Test-Path -LiteralPath (Join-Path $installDir $file))) {
+              Write-Host "Installer expected destination: $installDir"
+              if (Test-Path -LiteralPath $installDir) {
+                Get-ChildItem -LiteralPath $installDir -Force -Recurse | Select-Object -First 80 -ExpandProperty FullName
+              } else {
+                Write-Host 'Expected install directory was not created.'
+              }
+              $installedExecutables = @(Get-ChildItem -LiteralPath $resultsDirectory -Filter 'Foxide.exe' -File -Recurse -ErrorAction SilentlyContinue)
+              if ($installedExecutables.Count -gt 0) {
+                Write-Host 'Found the executable elsewhere under results/local:'
+                $installedExecutables | Select-Object -ExpandProperty FullName
+              }
+              if (Test-Path -LiteralPath $installerLog) {
+                Get-Content -LiteralPath $installerLog -Tail 100
+              }
+              throw "Installed payload missing $file"
+            }
+          }
+          $uninstaller = Join-Path $installDir 'unins000.exe'
+          if (-not (Test-Path -LiteralPath $uninstaller)) { throw 'Installed uninstaller is missing' }
+          $uninstallProcess = Start-Process -FilePath $uninstaller -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART') -Wait -PassThru
+          if ($uninstallProcess.ExitCode -ne 0) { throw "Windows installer smoke uninstall failed with exit code $($uninstallProcess.ExitCode)" }
+          if (Test-Path -LiteralPath (Join-Path $installDir 'Foxide.exe')) { throw 'Installer uninstall left Foxide.exe behind' }
       - name: Verify the extracted package layout
         shell: pwsh
         run: |
@@ -102,7 +154,7 @@ jobs:
           & (Join-Path $exe[0].DirectoryName 'Install-PlaybackRuntime.ps1')
           if ($LASTEXITCODE -ne 0) { throw 'Packaged runtime setup failed' }
           $env:FOXIDE_RELEASE_TEST_DLL = Join-Path $exe[0].DirectoryName 'tools/libmpv/libmpv-2.dll'
-          python -c "import ctypes,os; dll=ctypes.WinDLL(os.environ['FOXIDE_RELEASE_TEST_DLL'], winmode=0x1100); version=dll.mpv_client_api_version; version.restype=ctypes.c_ulong; assert version() >> 16 == 2, 'Expected libmpv client ABI2'"
+          python -c "import ctypes,os; dll=ctypes.WinDLL(os.environ['FOXIDE_RELEASE_TEST_DLL'], winmode=0x1000); version=dll.mpv_client_api_version; version.restype=ctypes.c_ulong; assert version() >> 16 == 2, 'Expected libmpv client ABI2'"
           if ($LASTEXITCODE -ne 0) { throw 'Installed playback runtime did not load with ABI2' }
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -141,4 +193,4 @@ jobs:
             if [[ "$RELEASE_TAG" == *-* ]]; then flags+=(--prerelease); fi
             gh release create "$RELEASE_TAG" "${flags[@]}" --title "Foxide $RELEASE_TAG" --notes-file RELEASE_NOTES.md
           fi
-          gh release upload "$RELEASE_TAG" ./*.zip SHA256SUMS.txt BUILD-INFO.json --clobber
+          gh release upload "$RELEASE_TAG" ./*.zip ./*.exe SHA256SUMS.txt BUILD-INFO.json --clobber

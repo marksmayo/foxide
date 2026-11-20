@@ -63,8 +63,8 @@ def package(binary, metadata, output, version, commit):
     (output / 'BUILD-INFO.json').write_text(json.dumps(provenance, indent=2)+'\n', encoding='utf-8')
     (output / 'RELEASE_NOTES.md').write_text(
         '# Foxide ' + version + ' — Windows x64 preview\n\n'
-        'Extract the ZIP, then run Install-PlaybackRuntime.ps1 once from PowerShell to install the verified playback runtime. Python3.11+ and7-Zip are required for that setup step. Launch Foxide.exe afterward.\n\n'
-        'The ZIP includes Foxide, runtime setup scripts, source provenance and dependency notices. The playback DLL is downloaded separately; its redistribution audit remains open. This draft is unsigned and must be reviewed before publication.\n\n'
+        'Choose the Windows setup installer or ZIP download. The setup installs for the current user and adds Start Menu shortcuts; either download needs the separate playback-runtime setup before media playback. Python 3.11+ and 7-Zip are required for that setup.\n\n'
+        'Both downloads include Foxide, runtime setup scripts, source provenance and dependency notices. The playback DLL is downloaded separately because its redistribution audit remains open. The installer and ZIP are unsigned and must be reviewed before publication.\n\n'
         'Source commit: ' + commit + '\n', encoding='utf-8')
     return archive
 

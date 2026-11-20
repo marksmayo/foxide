@@ -3,11 +3,11 @@
 <!-- source-lines:start -->
 ![Lua source lines](https://img.shields.io/badge/Lua%20source%20lines-105-000080)
 ![PowerShell source lines](https://img.shields.io/badge/PowerShell%20source%20lines-206-5391fe)
-![Python source lines](https://img.shields.io/badge/Python%20source%20lines-5237-3776ab)
-![Rust source lines](https://img.shields.io/badge/Rust%20source%20lines-5643-dea584)
-![Slint source lines](https://img.shields.io/badge/Slint%20source%20lines-246-7c3aed)
-![TOML source lines](https://img.shields.io/badge/TOML%20source%20lines-153-9c4221)
-![YAML source lines](https://img.shields.io/badge/YAML%20source%20lines-1010-cb171e)
+![Python source lines](https://img.shields.io/badge/Python%20source%20lines-5726-3776ab)
+![Rust source lines](https://img.shields.io/badge/Rust%20source%20lines-14279-dea584)
+![Slint source lines](https://img.shields.io/badge/Slint%20source%20lines-385-7c3aed)
+![TOML source lines](https://img.shields.io/badge/TOML%20source%20lines-225-9c4221)
+![YAML source lines](https://img.shields.io/badge/YAML%20source%20lines-1264-cb171e)
 
 Physical source lines include comments and blank lines in crates/, scripts/, tests/, .github/, packaging/ and the root Cargo manifest. Vendored code, lockfiles, generated reports and build output are excluded. Refresh with python scripts/source_lines.py.
 <!-- source-lines:end -->
@@ -36,6 +36,8 @@ cargo build -p player-ui --features desktop --bin foxide-desktop --release --loc
 .\target\release\foxide-desktop.exe "C:\media\movie.mkv"
 ```
 
+**Desktop customization:** View → Preferences offers editable keys, light/dark skins and a custom accent. View → Compact music view preserves playback in a smaller dedicated layout. [Settings and the complete feature-parity checklist](docs/feature-parity/README.md).
+
 The desktop needs a libmpv ABI 2 library: Windows `tools/libmpv/libmpv-2.dll` or `FOXIDE_LIBMPV`, macOS `brew install mpv`, Linux your distribution's `libmpv2`. [Desktop setup and current limits](docs/desktop.md) · [UI action benchmarks](docs/ui-benchmarks.md). The UI includes menus, a playlist, file/URL opening, playback/speed/track controls, external subtitles, volume and fullscreen. Native playback, GPU interop and power acceptance remain in progress. Software-OpenGL CI uses a [pinned libmpv scaler-padding fix](third_party/mpv/README.md); downloaded/system libraries require separate runtime acceptance.
 
 ```powershell
@@ -44,7 +46,7 @@ The desktop needs a libmpv ABI 2 library: Windows `tools/libmpv/libmpv-2.dll` or
 .\target\release\foxide.exe --autoqueue --resume-dir ".\results\local\resume" "C:\series\episode2.mkv"
 ```
 
-Build with `cargo build --release --locked`. On Windows, `python scripts/install-mpv.py` installs a verified engine under `tools/mpv`. Playback controls include Space/pause, arrows/seek, Shift+arrows/exact seek, F/fullscreen, J/subtitles, #/audio track, S/screenshot, and Q/quit. Run `foxide --help` for tracks, offsets, tone mapping, picture controls, chapters, URLs, playlists, and window options.
+Build with `cargo build --release --locked`. On Windows, `python scripts/install-mpv.py` installs a verified engine under `tools/mpv`; development CLI builds need an explicit `--mpv tools/mpv/mpv.exe` or `FOXIDE_MPV` override. Desktop builds use the separate libmpv setup in [desktop instructions](docs/desktop.md). Playback controls include Space/pause, arrows/seek, Shift+arrows/exact seek, F/fullscreen, J/subtitles, #/audio track, S/screenshot, and Q/quit. Run `foxide --help` for tracks, offsets, tone mapping, picture controls, chapters, URLs, playlists, and window options.
 
 [Performance implementation ledger](docs/performance-review/IMPLEMENTATION.md) · [Capabilities and remaining work](docs/features.md) · [Local players](docs/local-players.md) · [Benchmark protocol](docs/player-games.md) · [Architecture](docs/architecture.md) · [Actions](https://github.com/marksmayo/foxide/actions)
 
@@ -52,7 +54,7 @@ The **Player Games** workflow installs/attempts each platform's native field, re
 
 Development follows red → green tests. CI enforces **90% Rust workspace line coverage** for default features and **90% coverage for medal/report policies and installers**, in separate gates. Feature-gated desktop/native rendering has a separate instrumented GPU CI report; the default-feature threshold does not cover it. [Measured coverage and security follow-up](docs/security-and-testing.md). A separate three-platform desktop workflow builds the GUI and renders a layout preview. Native PiP, thumbnails, drag-and-drop, persistent GUI resume, complete GUI coverage and physical GPU acceptance remain open.
 
-CodSpeed tracks **233 CPU benchmark cases** across playback policy, UI actions, playlists and telemetry processing. [Suite and run commands](docs/codspeed.md) · [Case inventory](benchmarks/codspeed-inventory.json).
+CodSpeed tracks **279 CPU benchmark cases** across playback policy, UI actions, playlists and telemetry processing. [Suite and run commands](docs/codspeed.md) · [Case inventory](benchmarks/codspeed-inventory.json).
 
 [Windows preview release packaging](docs/windows-releases.md) — automated tag builds, checksums and draft releases.
 
@@ -70,8 +72,8 @@ Overall feature gold counts each feature once across applicable platforms; perfo
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
 | mpv | 72 | 27 | 8 | 107 |
+| Foxide | 66 | 46 | 21 | 133 |
 | VLC | 61 | 13 | 22 | 96 |
-| Foxide | 58 | 46 | 21 | 125 |
 | IINA | 33 | 0 | 0 | 33 |
 | Infuse | 21 | 0 | 0 | 21 |
 | Kodi | 20 | 0 | 0 | 20 |
@@ -115,9 +117,9 @@ Overall feature gold counts each feature once across applicable platforms; perfo
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
+| Foxide | 39 | 0 | 0 | 39 |
 | mpv | 37 | 0 | 0 | 37 |
 | IINA | 33 | 0 | 0 | 33 |
-| Foxide | 31 | 0 | 0 | 31 |
 | VLC | 25 | 0 | 0 | 25 |
 | Infuse | 21 | 0 | 0 | 21 |
 | Kodi | 20 | 0 | 0 | 20 |
@@ -143,7 +145,7 @@ Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CL
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
 | mpv | 58 | 16 | 5 | 79 |
-| Foxide | 39 | 23 | 11 | 73 |
+| Foxide | 47 | 23 | 11 | 81 |
 | VLC | 39 | 2 | 13 | 54 |
 | Kodi | 20 | 0 | 0 | 20 |
 | MPC-BE | 19 | 0 | 0 | 19 |
@@ -221,15 +223,15 @@ Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CL
 | AirPlay video output | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | N/A |
 | AirPlay audio receiver | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? | ? |
 | Search and download subtitles | ? | ? | ? | ? | ? | 🥇 | ? | ? | 🥇 | ? | ? | ? | ? | ? | N/A |
-| Video-site URL playback | ? | ? | 🥇 | ? | ? | 🥇 | ? | ? | 🥇 | 🥇 | ? | ? | ? | ? | N/A |
+| Video-site URL playback | 🥇 | ? | 🥇 | ? | ? | 🥇 | ? | ? | 🥇 | 🥇 | ? | ? | ? | ? | N/A |
 | User extension or scripting system | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? | 🥇 |
-| Editable keyboard bindings | ? | ? | 🥇 | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 |
-| Customizable UI layout or skins | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? | 🥇 |
+| Editable keyboard bindings | 🥇 | ? | 🥇 | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 |
+| Customizable UI layout or skins | 🥇 | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? | 🥇 |
 | Touch or trackpad playback gestures | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? |
 | System media-control integration | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? |
-| Compact dedicated music view | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? |
+| Compact dedicated music view | 🥇 | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? |
 | Dark interface theme | 🥇 | ? | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? |
-| Music playback artwork view | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? |
+| Music playback artwork view | 🥇 | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? |
 | Automatic movie and TV library metadata | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? | N/A |
 | Browse SMB network media | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? | ? |
 | Direct cloud-storage playback | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | N/A |
@@ -249,10 +251,10 @@ Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CL
 | Audio CD ripping | ? | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 |
 | Audio or data CD burning | ? | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? |
 | Edit media tags | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 |
-| Built-in internet-radio directory | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 |
+| Built-in internet-radio directory | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 |
 | Video rotation and flip controls | 🥇 | ? | 🥇 | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | N/A |
-| ICC display color management | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | N/A |
-| User GPU shader pipeline | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | N/A |
+| ICC display color management | 🥇 | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | N/A |
+| User GPU shader pipeline | 🥇 | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | N/A |
 | Debanding control | 🥇 | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | N/A |
 | Single-frame advance | 🥇 | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? | ? | N/A |
 | Playlist search and filtering | 🥇 | ? | ? | ? | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? | ? | ? |
@@ -278,8 +280,8 @@ Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CL
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
 | mpv | 44 | 5 | 1 | 50 |
+| Foxide | 40 | 8 | 4 | 52 |
 | IINA | 33 | 0 | 0 | 33 |
-| Foxide | 32 | 8 | 4 | 44 |
 | VLC | 28 | 1 | 4 | 33 |
 | Infuse | 21 | 0 | 0 | 21 |
 | Kodi | 19 | 0 | 0 | 19 |
@@ -335,15 +337,15 @@ Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CL
 | AirPlay video output | ? | ? | ? | ? | ? | ? | ? | N/A | ? | ? | 🥇 |
 | AirPlay audio receiver | ? | ? | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? |
 | Search and download subtitles | ? | ? | ? | 🥇 | ? | ? | ? | N/A | ? | 🥇 | ? |
-| Video-site URL playback | ? | ? | 🥇 | 🥇 | ? | ? | ? | N/A | ? | ? | ? |
+| Video-site URL playback | 🥇 | ? | 🥇 | 🥇 | ? | ? | ? | N/A | ? | ? | ? |
 | User extension or scripting system | ? | ? | 🥇 | ? | ? | 🥇 | ? | 🥇 | ? | 🥇 | ? |
-| Editable keyboard bindings | ? | ? | 🥇 | ? | ? | ? | ? | 🥇 | ? | ? | ? |
-| Customizable UI layout or skins | ? | ? | ? | 🥇 | ? | ? | ? | 🥇 | ? | 🥇 | ? |
+| Editable keyboard bindings | 🥇 | ? | 🥇 | ? | ? | ? | ? | 🥇 | ? | ? | ? |
+| Customizable UI layout or skins | 🥇 | ? | ? | 🥇 | ? | ? | ? | 🥇 | ? | 🥇 | ? |
 | Touch or trackpad playback gestures | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? |
 | System media-control integration | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? |
-| Compact dedicated music view | ? | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? |
+| Compact dedicated music view | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? |
 | Dark interface theme | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? |
-| Music playback artwork view | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? |
+| Music playback artwork view | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? |
 | Automatic movie and TV library metadata | ? | ? | ? | ? | ? | 🥇 | ? | N/A | 🥇 | ? | ? |
 | Browse SMB network media | ? | ? | ? | ? | ? | 🥇 | ? | ? | ? | ? | ? |
 | Direct cloud-storage playback | ? | ? | ? | ? | ? | ? | ? | N/A | 🥇 | ? | ? |
@@ -363,10 +365,10 @@ Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CL
 | Audio CD ripping | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? |
 | Audio or data CD burning | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? |
 | Edit media tags | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? | ? | ? |
-| Built-in internet-radio directory | ? | ? | ? | ? | ? | ? | ? | 🥇 | ? | ? | ? |
+| Built-in internet-radio directory | 🥇 | ? | ? | ? | ? | ? | ? | 🥇 | ? | ? | ? |
 | Video rotation and flip controls | 🥇 | ? | 🥇 | ? | ? | ? | ? | N/A | ? | ? | 🥇 |
-| ICC display color management | ? | ? | 🥇 | ? | ? | ? | ? | N/A | ? | ? | ? |
-| User GPU shader pipeline | ? | ? | 🥇 | ? | ? | ? | ? | N/A | ? | ? | ? |
+| ICC display color management | 🥇 | ? | 🥇 | ? | ? | ? | ? | N/A | ? | ? | ? |
+| User GPU shader pipeline | 🥇 | ? | 🥇 | ? | ? | ? | ? | N/A | ? | ? | ? |
 | Debanding control | 🥇 | ? | 🥇 | ? | ? | ? | ? | N/A | ? | ? | ? |
 | Single-frame advance | 🥇 | ? | 🥇 | ? | 🥇 | ? | ? | N/A | ? | ? | ? |
 | Playlist search and filtering | 🥇 | ? | ? | ? | ? | ? | ? | ? | ? | ? | ? |
@@ -391,7 +393,7 @@ Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CL
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
-| Foxide | 46 | 15 | 6 | 67 |
+| Foxide | 54 | 15 | 6 | 75 |
 | VLC | 41 | 10 | 5 | 56 |
 | mpv | 41 | 6 | 2 | 49 |
 | Kodi | 18 | 0 | 0 | 18 |
@@ -453,15 +455,15 @@ Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CL
 | AirPlay video output | ? | ? | ? | ? | ? | ? | ? |
 | AirPlay audio receiver | ? | ? | ? | ? | ? | 🥇 | ? |
 | Search and download subtitles | ? | ? | ? | 🥇 | ? | ? | ? |
-| Video-site URL playback | ? | ? | 🥇 | 🥇 | ? | ? | ? |
+| Video-site URL playback | 🥇 | ? | 🥇 | 🥇 | ? | ? | ? |
 | User extension or scripting system | ? | ? | 🥇 | ? | ? | 🥇 | ? |
-| Editable keyboard bindings | ? | ? | 🥇 | ? | ? | ? | ? |
-| Customizable UI layout or skins | ? | ? | ? | 🥇 | ? | ? | ? |
+| Editable keyboard bindings | 🥇 | ? | 🥇 | ? | ? | ? | ? |
+| Customizable UI layout or skins | 🥇 | ? | ? | 🥇 | ? | ? | ? |
 | Touch or trackpad playback gestures | ? | ? | ? | ? | ? | ? | ? |
 | System media-control integration | ? | ? | ? | ? | ? | ? | ? |
-| Compact dedicated music view | ? | ? | ? | ? | ? | ? | ? |
+| Compact dedicated music view | 🥇 | ? | ? | ? | ? | ? | ? |
 | Dark interface theme | 🥇 | ? | ? | ? | ? | ? | ? |
-| Music playback artwork view | ? | ? | ? | ? | ? | ? | ? |
+| Music playback artwork view | 🥇 | ? | ? | ? | ? | ? | ? |
 | Automatic movie and TV library metadata | ? | ? | ? | ? | ? | 🥇 | ? |
 | Browse SMB network media | ? | ? | ? | ? | ? | 🥇 | ? |
 | Direct cloud-storage playback | ? | ? | ? | ? | ? | ? | ? |
@@ -481,10 +483,10 @@ Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CL
 | Audio CD ripping | ? | ? | ? | ? | ? | ? | ? |
 | Audio or data CD burning | ? | ? | ? | ? | ? | ? | ? |
 | Edit media tags | ? | ? | ? | ? | ? | ? | ? |
-| Built-in internet-radio directory | ? | ? | ? | ? | ? | ? | ? |
+| Built-in internet-radio directory | 🥇 | ? | ? | ? | ? | ? | ? |
 | Video rotation and flip controls | 🥇 | ? | 🥇 | ? | ? | ? | ? |
-| ICC display color management | ? | ? | 🥇 | ? | ? | ? | ? |
-| User GPU shader pipeline | ? | ? | 🥇 | ? | ? | ? | ? |
+| ICC display color management | 🥇 | ? | 🥇 | ? | ? | ? | ? |
+| User GPU shader pipeline | 🥇 | ? | 🥇 | ? | ? | ? | ? |
 | Debanding control | 🥇 | ? | 🥇 | ? | ? | ? | ? |
 | Single-frame advance | 🥇 | ? | 🥇 | ? | 🥇 | ? | ? |
 | Playlist search and filtering | 🥇 | ? | ? | ? | ? | ? | ? |

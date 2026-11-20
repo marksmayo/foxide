@@ -236,3 +236,26 @@ fn playlist_search_preserves_original_selection_indices_and_ignores_folder_names
     );
     assert_eq!(state.selected, 2);
 }
+
+#[test]
+fn loading_unusable_durations_cannot_expose_an_invalid_seek_range() {
+    for (duration, bound, seek) in [
+        (f64::NEG_INFINITY, 0.0, 0.0),
+        (-120.0, 0.0, 0.0),
+        (-0.0, 0.0, 0.0),
+        (0.0, 0.0, 0.0),
+        (1.0, 1.0, 1.0),
+        (120.0, 120.0, 5.0),
+        (f64::INFINITY, 0.0, 0.0),
+        (f64::NAN, 0.0, 0.0),
+    ] {
+        let mut state = UiState::default();
+        state.confirm_loaded(duration);
+        assert!(state.loaded);
+        assert_eq!(state.duration, bound);
+        assert_eq!(
+            state.dispatch(Action::SeekAbsolute(5.0)),
+            [Effect::SeekAbsolute(seek)]
+        );
+    }
+}

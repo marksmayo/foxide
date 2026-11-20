@@ -353,7 +353,8 @@ pub fn attach(
     attach_observed(window, engine, size, image, error, wakeup, |_, _| {})
 }
 
-fn attach_observed(
+/// Opt-in rendering observer for compositor diagnostics; called with the render context current.
+pub fn attach_observed(
     window: &slint::Window,
     engine: &Engine,
     size: impl Fn() -> (u32, u32) + 'static,

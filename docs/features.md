@@ -28,9 +28,15 @@ The `foxide` CLI launches external mpv. The optional `foxide-desktop` preview no
 
 `--print-command` outputs a JSON argument vector without starting playback. Media/subtitle paths and values are passed directly without shell evaluation.
 
+## Desktop customization and controls
+
+The desktop exposes frame stepping, secondary subtitles, rotation/flips, ReplayGain, debanding, equalizer presets and playlist filtering; see [accepted controls](medal-features.md).
+
+View → Preferences adds editable keyboard bindings, persisted light/dark skins and an editable RGB accent. View → Compact music view provides transport, seeking and volume in a dedicated layout and restores the original window size when closed. These three events have passing desktop acceptance on Windows, macOS and Linux. See the [settings guide and full parity checklist](feature-parity/README.md) for configuration paths, evidence and limitations.
+
 ## Implementation backlog
 
-The [30-event feature catalog](../benchmarks/features.json) also tracks seekbar thumbnails, native PiP, an audio equalizer/DSP interface, ReplayGain controls, gapless-output acceptance, optical-disc workflows, and casting. These earn no Foxide gold until exposed and documented to the same event definition.
+The [80-event feature catalog](../benchmarks/features.json) includes seekbar thumbnails, native PiP, gapless-output acceptance, optical-disc workflows, casting, server clients and authoring tools. The [parity checklist](feature-parity/remaining.json) records 49 gaps at the start of this work, of which three are accepted and 46 remain queued. Pending events earn no Foxide gold until exposed and documented to the same definition.
 
 The original brief additionally requires a custom GPU OSD, editable drag/drop playlists, cancellable thumbnails, reconnect/buffering controls, a SQLite/redb library, accessibility, and native OS window behavior. Delegated mpv controls are an intermediate release, not completion of the native Rust architecture.
 

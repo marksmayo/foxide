@@ -86,3 +86,11 @@ class ComparisonTests(unittest.TestCase):
     def test_unvalidated_frontends_cannot_silently_receive_an_adapter(self):
         with self.assertRaisesRegex(ValueError, 'No validated adapter'):
             comparison.command_for(dict(id='unvalidated', executable='player'), 'media.mp4', {}, self.root)
+
+    def test_raw_comparison_outputs_are_restricted_to_ignored_local_storage(self):
+        with patch.object(comparison, 'ROOT', self.root):
+            accepted = self.root / 'results/local/comparison'
+            self.assertEqual(comparison.private_output(accepted), accepted.resolve())
+            for path in (self.root / 'results/windows-comparison', self.root.parent / 'public-results'):
+                with self.assertRaisesRegex(ValueError, 'results/local'):
+                    comparison.private_output(path)

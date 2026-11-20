@@ -88,7 +88,7 @@ fn base_run(player: String, media: &Path, s: &Sampling) -> Run {
         os: std::env::consts::OS.into(), arch: std::env::consts::ARCH.into(),
         host: std::env::var("COMPUTERNAME").or_else(|_| std::env::var("HOSTNAME")).unwrap_or_else(|_| "unknown".into()),
         cache: "uncontrolled".into(), cache_evidence: None, pid: 0,
-        started_unix_ms: 0, duration_seconds: s.duration, warmup_seconds: s.warmup,
+        started_unix_ms: 0, sampling_started_ms: 0.0, duration_seconds: s.duration, warmup_seconds: s.warmup,
         sample_interval_ms: s.sample_ms, exit_status: None, terminated_by_harness: false,
         status: "process-sampled-playback-unverified".into(),
         notes: vec!["RSS is sampled, not an allocation high-water mark; tree sum may double-count shared pages.".into(),
@@ -180,6 +180,51 @@ fn finish_player(run: &mut Run, player: &mut Child) -> Result<()> {
     Ok(())
 }
 
+/// Internal readiness only: never a claim of display presentation.
+fn wait_for_startup(
+    run: &mut Run,
+    player: &mut Child,
+    event_path: &Path,
+    started: Instant,
+    timeout: f64,
+) -> Result<bool> {
+    let deadline = started + Duration::from_secs_f64(timeout);
+    let mut reader = None;
+    let mut pending = String::new();
+    loop {
+        if reader.is_none() && event_path.exists() {
+            reader = Some(BufReader::new(File::open(event_path)?));
+        }
+        if let Some(reader) = reader.as_mut() {
+            loop {
+                let count = reader.read_line(&mut pending)?;
+                if count == 0 || !pending.ends_with('\n') {
+                    break;
+                }
+                if let Ok(event) = serde_json::from_str::<serde_json::Value>(&pending)
+                    && event["kind"] == "first-playback-restart-proxy"
+                {
+                    run.startup_restart_observed_ms =
+                        Some(started.elapsed().as_secs_f64() * 1000.0);
+                    run.status = "internal-restart-observed".into();
+                    return Ok(true);
+                }
+                pending.clear();
+            }
+        }
+        if let Some(status) = player.try_wait()? {
+            run.exit_status = Some(status.to_string());
+            run.status = "incomplete-player-exited".into();
+            return Ok(false);
+        }
+        if Instant::now() >= deadline {
+            run.status = "incomplete-startup-timeout".into();
+            return Ok(false);
+        }
+        thread::sleep(Duration::from_millis(5));
+    }
+}
+
 fn one(args: &RunArgs, prime: bool, index: u32) -> Result<bool> {
     let media = args
         .media
@@ -257,6 +302,9 @@ fn one(args: &RunArgs, prime: bool, index: u32) -> Result<bool> {
     if args.seeks && !prime {
         run.profile.push_str("-seeks");
     }
+    if matches!(args.player, Player::Mpv) {
+        run.profile.push_str("-post-restart-sampling");
+    }
     run.args = options.clone();
     run.cache = match args.cache {
         Cache::Warm => "warm-primed",
@@ -284,7 +332,23 @@ fn one(args: &RunArgs, prime: bool, index: u32) -> Result<bool> {
             .with_context(|| format!("Launching {}", exe.display()))?,
     );
     run.pid = player.0.id();
-    let sample_offset_ms = started.elapsed().as_secs_f64() * 1000.0;
+    if matches!(args.player, Player::Mpv)
+        && !wait_for_startup(
+            &mut run,
+            &mut player.0,
+            &dir.join("events.jsonl"),
+            started,
+            args.startup_timeout,
+        )?
+    {
+        finish_player(&mut run, &mut player.0)?;
+        save(&run, &dir, prime)?;
+        return Ok(false);
+    }
+    let measurement_started = Instant::now();
+    run.sampling_started_ms = started.elapsed().as_secs_f64() * 1000.0;
+    let sample_offset_ms = run.sampling_started_ms;
+    run.notes.push("Sampling duration and warmup begin at sampling_started_ms; sample elapsed times remain relative to process spawn. mpv readiness is an internal restart proxy, not displayed TTFF.".into());
     writeln!(
         telemetry
             .0
@@ -300,47 +364,14 @@ fn one(args: &RunArgs, prime: bool, index: u32) -> Result<bool> {
         settings.duration,
         if prime { " (warm-cache priming)" } else { "" }
     );
-    let mut event_reader: Option<BufReader<File>> = None;
-    let mut pending_line = String::with_capacity(256);
-    let event_path = dir.join("events.jsonl");
-    let deadline = started + Duration::from_secs_f64(settings.duration);
+    let deadline = measurement_started + Duration::from_secs_f64(settings.duration);
     while Instant::now() < deadline {
-        if event_reader.is_none() && event_path.exists() {
-            event_reader = Some(BufReader::new(File::open(&event_path)?));
-        }
-        if run.startup_restart_observed_ms.is_none()
-            && let Some(reader) = event_reader.as_mut()
-        {
-            loop {
-                let count = reader.read_line(&mut pending_line)?;
-                if count == 0 {
-                    break;
-                }
-                if !pending_line.ends_with('\n') {
-                    break;
-                }
-                if let Ok(value) = serde_json::from_str::<serde_json::Value>(&pending_line)
-                    && value["kind"] == "first-playback-restart-proxy"
-                {
-                    run.startup_restart_observed_ms =
-                        Some(started.elapsed().as_secs_f64() * 1000.0);
-                    run.status = "internal-restart-observed".into();
-                }
-                pending_line.clear();
-            }
-        }
         if let Some(status) = player.0.try_wait()? {
             run.exit_status = Some(status.to_string());
             run.status = "incomplete-player-exited".into();
             break;
         }
-        thread::sleep(Duration::from_millis(
-            if run.startup_restart_observed_ms.is_none() {
-                5
-            } else {
-                25
-            },
-        ));
+        thread::sleep(Duration::from_millis(25));
     }
     // Wait for the last sample BEFORE terminating the player, avoiding false 'root exited'.
     let samples_result = finish_samples(&mut run, &mut telemetry, &dir, sample_offset_ms);
@@ -493,6 +524,42 @@ mod tests {
                 output: PathBuf::new(),
             },
         )
+    }
+
+    #[test]
+    fn summaries_reset_missing_values_and_respect_the_sampling_origin() {
+        let mut run = fixture_run();
+        run.sampling_started_ms = 4500.0;
+        run.warmup_seconds = 0.1;
+        run.samples = vec![
+            Sample {
+                elapsed_ms: 4500.0,
+                rss_bytes: 9000,
+                cpu_percent_one_core: None,
+                process_count: 1,
+            },
+            Sample {
+                elapsed_ms: 4550.0,
+                rss_bytes: 100,
+                cpu_percent_one_core: Some(10.0),
+                process_count: 1,
+            },
+            Sample {
+                elapsed_ms: 4650.0,
+                rss_bytes: 200,
+                cpu_percent_one_core: Some(20.0),
+                process_count: 1,
+            },
+        ];
+        summarize(&mut run);
+        assert_eq!(run.rss_peak_bytes, Some(9000));
+        assert_eq!(run.rss_steady_mean_bytes, Some(200.0));
+        assert_eq!(run.cpu_steady_mean_percent_one_core, Some(20.0));
+        run.samples.clear();
+        summarize(&mut run);
+        assert_eq!(run.rss_peak_bytes, None);
+        assert_eq!(run.rss_steady_mean_bytes, None);
+        assert_eq!(run.cpu_steady_mean_percent_one_core, None);
     }
 
     #[test]

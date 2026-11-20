@@ -334,9 +334,17 @@ def terminate_owned(pid, identity):
         kernel.CloseHandle(handle)
 
 
+def private_output(output):
+    """Raw process logs and paths must never be written to tracked publication folders."""
+    output = output.resolve()
+    if not output.is_relative_to((ROOT / 'results/local').resolve()):
+        raise ValueError('Raw comparison output must stay under results/local; publish a redacted export separately')
+    return output
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--output', type=Path, default=ROOT / 'results/windows-comparison')
+    p.add_argument('--output', type=Path, default=ROOT / 'results/local/windows-comparison')
     p.add_argument('--duration', type=float, default=20)
     p.add_argument('--warmup', type=float, default=5)
     p.add_argument('--repeat', type=int, default=5)
@@ -348,7 +356,10 @@ def main():
         p.error('This comparison collector targets Windows')
     if not math.isfinite(args.duration) or not 1 <= args.duration <= 65 or not 0 <= args.warmup < args.duration or not 1 <= args.repeat <= 30:
         p.error('duration 1–65s, 0 <= warmup < duration, repeat 1–30 required')
-    output = args.output.resolve()
+    try:
+        output = private_output(args.output)
+    except ValueError as error:
+        p.error(str(error))
     output.mkdir(parents=True, exist_ok=True)
     if (output / 'comparison.json').exists():
         p.error('Comparison output already exists; choose a fresh output directory')

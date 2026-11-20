@@ -1,8 +1,19 @@
+mod profile_ui;
+mod shader_ui;
+mod system_media;
 use clap::Parser;
+use player_cast::{CastController, CastEvent, CastOptions, CertificatePin};
 use player_render::{Engine, Snapshot};
+use player_settings::Preferences;
 use player_ui::{Action, Effect, UiState};
 use slint::{ComponentHandle, ModelRc, VecModel};
-use std::{cell::RefCell, path::PathBuf, rc::Rc, sync::Arc, time::Duration};
+use std::{
+    cell::{Cell, RefCell},
+    path::PathBuf,
+    rc::Rc,
+    sync::Arc,
+    time::Duration,
+};
 // Only pinned Slint compiler output may use its generated vtable unsafe code.
 // Hand-written UI glue remains under deny(unsafe_code); FFI lives in player-render.
 #[allow(unsafe_code)]
@@ -10,13 +21,24 @@ mod generated {
     slint::include_modules!();
 }
 use generated::*;
+mod network_ui;
 mod preview;
+mod updates_ui;
 
 #[derive(Parser)]
 #[command(about = "Foxide desktop player — Slint and embedded libmpv")]
 struct Args {
     /// Local media files or a stream URL.
     media: Vec<PathBuf>,
+    /// Override the Radio Browser-compatible directory origin.
+    #[arg(long)]
+    radio_directory: Option<String>,
+    /// Explicit trusted yt-dlp executable (overrides the saved helper for this launch).
+    #[arg(long)]
+    yt_dlp: Option<PathBuf>,
+    /// Read and save appearance and keyboard preferences at this path.
+    #[arg(long)]
+    config: Option<PathBuf>,
     /// Automatically close the window after this many seconds (UI diagnostics).
     #[arg(long, hide = true)]
     quit_after: Option<u64>,
@@ -68,6 +90,12 @@ fn update_queue(ui: &PlayerWindow, state: &UiState) {
         .into_iter()
         .map(|index| {
             let path = &state.playlist[index];
+            if path.to_string_lossy() == ui.get_active_radio_url().as_str() {
+                return QueueRow {
+                    source_index: index as i32,
+                    label: ui.get_active_radio_name(),
+                };
+            }
             QueueRow {
                 source_index: index as i32,
                 label: path
@@ -101,6 +129,13 @@ fn dispatch(
     ui.set_queue_visible(state.playlist_visible);
     ui.set_fullscreen_mode(state.fullscreen);
     ui.set_loaded(state.loaded);
+    ui.set_cast_available(
+        state.loaded
+            && state
+                .playlist
+                .get(state.selected)
+                .is_some_and(|path| path.is_file() && supported_cast_extension(path)),
+    );
     for effect in effects {
         let args: Vec<String> = match effect {
             Effect::Engine(command) => command,
@@ -205,7 +240,10 @@ fn refresh(
                 .to_string_lossy()
                 .into_owned()
         });
-    if snapshot.loaded && expected.as_deref() == Some(snapshot.path.as_str()) {
+    let matches_selection = expected
+        .as_deref()
+        .is_some_and(|path| path == snapshot.path || path == snapshot.requested_path.as_ref());
+    if snapshot.loaded && matches_selection {
         let mut state = state.borrow_mut();
         let newly_loaded = !state.loaded;
         state.confirm_loaded(snapshot.duration);
@@ -230,7 +268,11 @@ fn refresh(
         }
         ui.set_volume(snapshot.volume as f32);
         ui.set_muted(snapshot.muted);
-        if newly_loaded || snapshot.paused != previous.paused || snapshot.speed != previous.speed {
+        if newly_loaded
+            || snapshot.paused != previous.paused
+            || snapshot.speed != previous.speed
+            || (!previous.command_error.is_empty() && snapshot.command_error.is_empty())
+        {
             ui.set_status(
                 format!(
                     "{} · {:.2}×",
@@ -241,13 +283,39 @@ fn refresh(
             );
         }
     }
+    if !snapshot.command_error.is_empty() && snapshot.command_error != previous.command_error {
+        ui.set_status(snapshot.command_error.clone().into());
+    }
     if !snapshot.error.is_empty() {
         ui.set_status(snapshot.error.clone().into());
         ui.set_loaded(false);
         state.borrow_mut().loaded = false;
     }
+    let state_snapshot = state.borrow();
+    ui.set_cast_available(
+        snapshot.loaded
+            && matches_selection
+            && state_snapshot.loaded
+            && state_snapshot
+                .playlist
+                .get(state_snapshot.selected)
+                .is_some_and(|path| path.is_file() && supported_cast_extension(path)),
+    );
+    drop(state_snapshot);
+    ui.set_has_artwork(
+        ui.get_loaded()
+            && snapshot.loaded
+            && snapshot.has_artwork
+            && matches_selection
+            && snapshot.error.is_empty(),
+    );
     if snapshot.tracks != previous.tracks {
-        ui.set_has_video(snapshot.tracks.iter().any(|track| track.kind == "video"));
+        ui.set_has_video(
+            snapshot
+                .tracks
+                .iter()
+                .any(|track| track.kind == "video" && track.selected),
+        );
         let model = |kind| {
             ModelRc::new(VecModel::from(
                 snapshot
@@ -274,66 +342,744 @@ fn refresh(
     *previous = snapshot.clone();
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let args = Args::parse();
-    let startup = startup_commands(&args)?;
-    if let Some(path) = args.preview_png {
-        return preview::render(&path);
-    }
-    slint::BackendSelector::new()
-        .backend_name("winit".into())
-        .renderer_name("femtovg".into())
-        .select()?;
-    let ui = PlayerWindow::new()?;
-    let state = Rc::new(RefCell::new(UiState::default()));
-    let engine = match Engine::new() {
-        Ok(engine) => Some(Rc::new(engine)),
-        Err(error) => {
-            ui.set_status(error.clone().into());
-            ui.set_diagnostics(error.into());
-            None
+fn default_preferences_path() -> Option<PathBuf> {
+    #[cfg(windows)]
+    let base = std::env::var_os("APPDATA").map(PathBuf::from);
+    #[cfg(target_os = "macos")]
+    let base = std::env::var_os("HOME")
+        .map(|home| PathBuf::from(home).join("Library/Application Support"));
+    #[cfg(all(unix, not(target_os = "macos")))]
+    let base = std::env::var_os("XDG_CONFIG_HOME")
+        .map(PathBuf::from)
+        .filter(|path| path.is_absolute())
+        .or_else(|| std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".config")));
+    base.filter(|path| path.is_absolute())
+        .map(|base| base.join("Foxide/preferences.json"))
+}
+
+fn apply_preferences(
+    ui: &PlayerWindow,
+    preferences: &Preferences,
+    normal_size: &std::cell::Cell<slint::PhysicalSize>,
+) {
+    ui.set_video_site_helper(preferences.video_site_helper().unwrap_or("").into());
+    ui.set_light_theme(preferences.light_theme());
+    let rgb = preferences.accent_rgb();
+    let (r, g, b) = ((rgb >> 16) as u8, (rgb >> 8) as u8, rgb as u8);
+    ui.set_accent_color(slint::Color::from_rgb_u8(r, g, b));
+    ui.set_accent_text(
+        if u32::from(r) * 299 + u32::from(g) * 587 + u32::from(b) * 114 >= 128_000 {
+            slint::Color::from_rgb_u8(0x17, 0x1a, 0x20)
+        } else {
+            slint::Color::from_rgb_u8(255, 255, 255)
+        },
+    );
+    ui.set_accent_hex(format!("#{rgb:06x}").into());
+    let rows: Vec<_> = preferences
+        .bindings()
+        .map(|(key, action)| BindingRow {
+            key: key.into(),
+            action: action.into(),
+        })
+        .collect();
+    ui.set_key_bindings(ModelRc::new(VecModel::from(rows)));
+    ui.set_shortcut_actions(ModelRc::new(VecModel::from(
+        player_settings::SHORTCUT_ACTIONS
+            .iter()
+            .map(|entry| slint::SharedString::from(entry.0))
+            .collect::<Vec<_>>(),
+    )));
+    ui.set_shortcut_help(
+        preferences
+            .bindings()
+            .map(|(key, action)| format!("{key}  —  {action}"))
+            .collect::<Vec<_>>()
+            .join("\n")
+            .into(),
+    );
+    if ui.get_compact_mode() != preferences.compact() {
+        if preferences.compact() {
+            let current = ui.window().size();
+            if current.width > 0 && current.height > 0 {
+                normal_size.set(current);
+            }
         }
-    };
-    if let Some(engine) = &engine {
-        let weak_size = ui.as_weak();
-        let weak_frame = ui.as_weak();
-        let weak_error = ui.as_weak();
-        let weak_wake = ui.as_weak();
-        player_render::attach(
-            ui.window(),
-            engine,
-            move || {
-                weak_size
-                    .upgrade()
-                    .map(|ui| {
-                        let scale = ui.window().scale_factor();
-                        (
-                            (ui.get_video_width() * scale).round() as u32,
-                            (ui.get_video_height() * scale).round() as u32,
+        ui.set_compact_mode(preferences.compact());
+        if preferences.compact() {
+            ui.window().set_size(slint::LogicalSize::new(560.0, 280.0));
+        } else {
+            ui.window().set_size(normal_size.get());
+        }
+    }
+}
+
+fn edit_preferences(
+    ui: &PlayerWindow,
+    preferences: &Rc<RefCell<Preferences>>,
+    path: Option<&std::path::Path>,
+    normal_size: &std::cell::Cell<slint::PhysicalSize>,
+    edit: impl FnOnce(&mut Preferences) -> Result<(), String>,
+) {
+    let mut candidate = preferences.borrow().clone();
+    let result =
+        edit(&mut candidate).and_then(|()| path.map_or(Ok(()), |path| candidate.save(path)));
+    match result {
+        Ok(()) => {
+            apply_preferences(ui, &candidate, normal_size);
+            *preferences.borrow_mut() = candidate;
+            ui.set_preferences_error(
+                if path.is_some() {
+                    ""
+                } else {
+                    "Changes apply to this session; no configuration directory is available."
+                }
+                .into(),
+            );
+        }
+        Err(error) => ui.set_preferences_error(error.into()),
+    }
+}
+
+fn desktop_key_name(text: &str) -> &str {
+    use slint::platform::Key;
+    for (key, name) in [
+        (Key::LeftArrow, "ArrowLeft"),
+        (Key::RightArrow, "ArrowRight"),
+        (Key::UpArrow, "ArrowUp"),
+        (Key::DownArrow, "ArrowDown"),
+        (Key::Return, "Enter"),
+        (Key::Tab, "Tab"),
+        (Key::F1, "F1"),
+        (Key::F2, "F2"),
+        (Key::F3, "F3"),
+        (Key::F4, "F4"),
+        (Key::F5, "F5"),
+        (Key::F6, "F6"),
+        (Key::F7, "F7"),
+        (Key::F8, "F8"),
+        (Key::F9, "F9"),
+        (Key::F10, "F10"),
+        (Key::F11, "F11"),
+        (Key::F12, "F12"),
+        (Key::F13, "F13"),
+        (Key::F14, "F14"),
+        (Key::F15, "F15"),
+        (Key::F16, "F16"),
+        (Key::F17, "F17"),
+        (Key::F18, "F18"),
+        (Key::F19, "F19"),
+        (Key::F20, "F20"),
+        (Key::F21, "F21"),
+        (Key::F22, "F22"),
+        (Key::F23, "F23"),
+        (Key::F24, "F24"),
+    ] {
+        let encoded: slint::SharedString = key.into();
+        if encoded.as_str() == text {
+            return name;
+        }
+    }
+    text
+}
+
+fn install_preferences(
+    ui: &PlayerWindow,
+    preferences: Rc<RefCell<Preferences>>,
+    path: Option<PathBuf>,
+) {
+    let normal_size = Rc::new(std::cell::Cell::new(slint::PhysicalSize::new(1180, 770)));
+    apply_preferences(ui, &preferences.borrow(), &normal_size);
+    let (weak, prefs) = (ui.as_weak(), preferences.clone());
+    ui.on_shortcut(move |key, ctrl, alt, shift, meta| {
+        let command =
+            prefs
+                .borrow()
+                .resolve_key(desktop_key_name(key.as_str()), ctrl, alt, shift, meta);
+        if let (Some(ui), Some((name, value))) = (weak.upgrade(), command) {
+            ui.invoke_action(name.into(), value as f32);
+            true
+        } else {
+            false
+        }
+    });
+    let (weak, prefs, location, size) = (
+        ui.as_weak(),
+        preferences.clone(),
+        path.clone(),
+        normal_size.clone(),
+    );
+    ui.on_save_binding(move |key, action| {
+        if let Some(ui) = weak.upgrade() {
+            edit_preferences(&ui, &prefs, location.as_deref(), &size, |prefs| {
+                prefs.bind(key.as_str(), action.as_str())
+            });
+        }
+    });
+    let (weak, prefs, location, size) = (
+        ui.as_weak(),
+        preferences.clone(),
+        path.clone(),
+        normal_size.clone(),
+    );
+    ui.on_remove_binding(move |key| {
+        if let Some(ui) = weak.upgrade() {
+            edit_preferences(&ui, &prefs, location.as_deref(), &size, |prefs| {
+                prefs.unbind(key.as_str())
+            });
+        }
+    });
+    let (weak, prefs, location, size) = (
+        ui.as_weak(),
+        preferences.clone(),
+        path.clone(),
+        normal_size.clone(),
+    );
+    ui.on_save_appearance(move |light, color| {
+        if let Some(ui) = weak.upgrade() {
+            edit_preferences(&ui, &prefs, location.as_deref(), &size, |prefs| {
+                prefs.set_appearance(light, color.as_str())
+            });
+        }
+    });
+    let (weak, prefs, location, size) = (
+        ui.as_weak(),
+        preferences.clone(),
+        path.clone(),
+        normal_size.clone(),
+    );
+    ui.on_save_video_site_helper(move |chosen| {
+        if let Some(ui) = weak.upgrade() {
+            let selection = if chosen.is_empty() {
+                Ok(None)
+            } else {
+                player_services::VideoSiteTool::new(std::path::Path::new(chosen.as_str())).map(Some)
+            };
+            match selection {
+                Ok(tool) => {
+                    edit_preferences(&ui, &prefs, location.as_deref(), &size, |prefs| {
+                        prefs.set_video_site_helper(
+                            tool.as_ref().and_then(|tool| tool.path().to_str()),
                         )
-                    })
-                    .unwrap_or((1, 1))
-            },
-            move |frame| {
-                if let Some(ui) = weak_frame.upgrade() {
-                    ui.set_video_frame(frame);
+                    });
+                    if ui.get_preferences_error().is_empty() {
+                        ui.set_video_site_notice("Restart Foxide to apply this change".into());
+                    }
                 }
-            },
-            move |error| {
-                if let Some(ui) = weak_error.upgrade() {
-                    ui.set_status(error.into());
-                }
-            },
-            Arc::new(move || {
-                let weak = weak_wake.clone();
-                let _ = slint::invoke_from_event_loop(move || {
-                    if let Some(ui) = weak.upgrade() {
-                        ui.window().request_redraw();
+                Err(error) => ui.set_preferences_error(error.into()),
+            }
+        }
+    });
+    let weak = ui.as_weak();
+    ui.on_choose_video_site_helper(move || {
+        let weak = weak.clone();
+        std::thread::spawn(move || {
+            let dialog = rfd::AsyncFileDialog::new().set_title("Choose trusted yt-dlp executable");
+            #[cfg(windows)]
+            let dialog = dialog.add_filter("Native executable", &["exe"]);
+            if let Some(file) = futures_lite::future::block_on(dialog.pick_file()) {
+                let path = file.path().to_path_buf();
+                let _ = weak.upgrade_in_event_loop(move |ui| {
+                    if let Some(path) = path.to_str() {
+                        ui.invoke_save_video_site_helper(path.into());
+                    } else {
+                        ui.set_preferences_error("Helper path must be Unicode".into());
                     }
                 });
-            }),
-        )?;
+            }
+        });
+    });
+    let (weak, prefs, location, size) = (
+        ui.as_weak(),
+        preferences.clone(),
+        path.clone(),
+        normal_size.clone(),
+    );
+    ui.on_reset_preferences(move || {
+        if let Some(ui) = weak.upgrade() {
+            edit_preferences(&ui, &prefs, location.as_deref(), &size, |prefs| {
+                *prefs = Preferences::default();
+                Ok(())
+            });
+        }
+    });
+    let weak = ui.as_weak();
+    ui.on_toggle_compact(move || {
+        if let Some(ui) = weak.upgrade() {
+            ui.set_panel("".into());
+            edit_preferences(&ui, &preferences, path.as_deref(), &normal_size, |prefs| {
+                prefs.set_compact(!prefs.compact());
+                Ok(())
+            });
+        }
+    });
+}
+
+#[cfg(test)]
+mod cast_endpoint_tests {
+    use super::{cast_seek_target, parse_cast_address, supported_cast_extension};
+    use player_cast::{CastState, CastStatus};
+    use std::path::Path;
+
+    #[test]
+    fn cast_skip_targets_stay_inside_the_known_media_duration() {
+        let status = CastStatus {
+            state: CastState::Playing,
+            position: 4.0,
+            duration: Some(12.0),
+        };
+        assert_eq!(cast_seek_target(&status, -10.0), Some(0.0));
+        assert_eq!(cast_seek_target(&status, 10.0), Some(12.0));
+        let unknown_duration = CastStatus {
+            duration: None,
+            ..status
+        };
+        assert_eq!(cast_seek_target(&unknown_duration, 10.0), Some(14.0));
     }
+
+    #[test]
+    fn accepts_literal_local_receiver_addresses() {
+        assert_eq!(
+            parse_cast_address("192.168.1.20:8009").unwrap().to_string(),
+            "192.168.1.20:8009"
+        );
+    }
+
+    #[test]
+    fn rejects_nonlocal_or_nonliteral_receiver_addresses() {
+        for input in ["8.8.8.8:8009", "receiver.local:8009", "127.0.0.1:0"] {
+            assert!(parse_cast_address(input).is_err(), "accepted {input}");
+        }
+    }
+
+    #[test]
+    fn accepts_local_ipv6_receiver_addresses_and_rejects_global_ipv6() {
+        assert!(parse_cast_address("[fd00::20]:8009").is_ok());
+        assert!(parse_cast_address("[fe80::20]:8009").is_err());
+        assert!(parse_cast_address("[2001:4860:4860::8888]:8009").is_err());
+    }
+
+    #[test]
+    fn supports_only_the_containers_served_by_the_cast_origin() {
+        for path in [
+            "movie.mp4",
+            "clip.M4V",
+            "video.webm",
+            "movie.mkv",
+            "song.mp3",
+            "song.ogg",
+            "song.opus",
+            "song.flac",
+            "song.wav",
+        ] {
+            assert!(supported_cast_extension(Path::new(path)), "rejected {path}");
+        }
+        for path in ["stream.m3u8", "movie.avi", "movie.mp4.txt", "unknown"] {
+            assert!(
+                !supported_cast_extension(Path::new(path)),
+                "accepted {path}"
+            );
+        }
+    }
+}
+
+fn parse_cast_address(input: &str) -> Result<std::net::SocketAddr, ()> {
+    let address = input.parse::<std::net::SocketAddr>().map_err(|_| ())?;
+    let local = match address.ip() {
+        std::net::IpAddr::V4(ip) => ip.is_private() || ip.is_loopback() || ip.is_link_local(),
+        std::net::IpAddr::V6(ip) => {
+            ip.is_unique_local()
+                || ip.is_loopback()
+                || (ip.is_unicast_link_local()
+                    && matches!(address, std::net::SocketAddr::V6(v6) if v6.scope_id() != 0))
+        }
+    };
+    if !local || address.port() == 0 {
+        return Err(());
+    }
+    Ok(address)
+}
+
+fn supported_cast_extension(path: &std::path::Path) -> bool {
+    path.extension()
+        .and_then(|extension| extension.to_str())
+        .is_some_and(|extension| {
+            matches!(
+                extension.to_ascii_lowercase().as_str(),
+                "mp4" | "m4v" | "webm" | "mkv" | "mp3" | "ogg" | "opus" | "flac" | "wav"
+            )
+        })
+}
+
+fn cast_seek_target(status: &player_cast::CastStatus, offset: f64) -> Option<f64> {
+    if !status.position.is_finite() || !offset.is_finite() {
+        return None;
+    }
+    let duration = status
+        .duration
+        .filter(|duration| duration.is_finite() && *duration >= 0.0)
+        .unwrap_or(f64::MAX);
+    Some((status.position + offset).clamp(0.0, duration))
+}
+
+fn cast_receiver_rows(preferences: &Preferences) -> Vec<CastReceiverRow> {
+    preferences
+        .cast_receivers()
+        .iter()
+        .map(|receiver| CastReceiverRow {
+            name: receiver.name().into(),
+            endpoint: receiver.endpoint().into(),
+            fingerprint: receiver.fingerprint().into(),
+        })
+        .collect()
+}
+
+fn save_cast_preference(
+    ui: &PlayerWindow,
+    preferences: &Rc<RefCell<Preferences>>,
+    path: Option<&std::path::Path>,
+    edit: impl FnOnce(&mut Preferences) -> Result<(), String>,
+) {
+    let Some(path) = path else {
+        ui.set_cast_status("Receiver preferences cannot be saved because no local configuration path is available.".into());
+        return;
+    };
+    let mut candidate = preferences.borrow().clone();
+    match edit(&mut candidate).and_then(|()| candidate.save(path)) {
+        Ok(()) => {
+            ui.set_cast_paired_receivers(ModelRc::new(VecModel::from(cast_receiver_rows(
+                &candidate,
+            ))));
+            *preferences.borrow_mut() = candidate;
+            ui.set_cast_status("Remembered receivers were saved in local preferences. Certificate changes still require explicit review.".into());
+        }
+        Err(_) => ui.set_cast_status(
+            "Could not save receiver preferences. No receiver settings were changed.".into(),
+        ),
+    }
+}
+
+#[cfg(test)]
+fn install_cast(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>) {
+    install_cast_with_preferences(
+        ui,
+        state,
+        Rc::new(RefCell::new(Preferences::default())),
+        None,
+    );
+}
+
+fn install_cast_with_preferences(
+    ui: &PlayerWindow,
+    state: &Rc<RefCell<UiState>>,
+    preferences: Rc<RefCell<Preferences>>,
+    preferences_path: Option<PathBuf>,
+) {
+    install_cast_with_discovery(
+        ui,
+        state,
+        preferences,
+        preferences_path,
+        player_cast::discover_receivers,
+    );
+}
+
+fn install_cast_with_discovery(
+    ui: &PlayerWindow,
+    state: &Rc<RefCell<UiState>>,
+    preferences: Rc<RefCell<Preferences>>,
+    preferences_path: Option<PathBuf>,
+    discover: impl Fn(std::time::Duration) -> std::io::Result<Vec<player_cast::CastReceiver>>
+    + Send
+    + Sync
+    + 'static,
+) {
+    ui.set_cast_paired_receivers(ModelRc::new(VecModel::from(cast_receiver_rows(
+        &preferences.borrow(),
+    ))));
+    let weak = ui.as_weak();
+    ui.on_cast_select(move |name, endpoint, fingerprint| {
+        if let Some(ui) = weak.upgrade() {
+            ui.set_cast_name(name);
+            ui.set_cast_endpoint(endpoint);
+            ui.set_cast_fingerprint(fingerprint.clone());
+            ui.set_cast_status(
+                if fingerprint.is_empty() {
+                    "Receiver selected. Inspect its certificate and review the fingerprint before casting.".into()
+                } else {
+                    "Remembered receiver selected. Its saved fingerprint is required for casting; inspect again if you need to re-pair.".into()
+                },
+            );
+        }
+    });
+    let active: Arc<std::sync::Mutex<Option<CastController>>> =
+        Arc::new(std::sync::Mutex::new(None));
+    let last_status: Arc<std::sync::Mutex<Option<player_cast::CastStatus>>> =
+        Arc::new(std::sync::Mutex::new(None));
+    let (weak, state, active_for_connect, status_for_connect) = (
+        ui.as_weak(),
+        state.clone(),
+        active.clone(),
+        last_status.clone(),
+    );
+    ui.on_cast_connect(move |endpoint, fingerprint| {
+        let Some(ui) = weak.upgrade() else {
+            return;
+        };
+        if active_for_connect
+            .lock()
+            .expect("Cast controller lock poisoned")
+            .is_some()
+        {
+            ui.set_cast_status("A cast session is already active".into());
+            return;
+        }
+        let address = match parse_cast_address(&endpoint) {
+            Ok(address) => address,
+            Err(_) => {
+                ui.set_cast_status(
+                    "Enter a literal local receiver address and port, such as 192.168.1.20:8009"
+                        .into(),
+                );
+                return;
+            }
+        };
+        let pin = match fingerprint.parse::<CertificatePin>() {
+            Ok(pin) => pin,
+            Err(_) => {
+                ui.set_cast_status(
+                    "Enter a previously inspected 64 digit SHA-256 certificate fingerprint".into(),
+                );
+                return;
+            }
+        };
+        let selected = {
+            let state = state.borrow();
+            state.playlist.get(state.selected).cloned()
+        };
+        let Some(path) = selected.filter(|path| path.is_file() && supported_cast_extension(path))
+        else {
+            ui.set_cast_status("Choose a supported local media file before casting".into());
+            return;
+        };
+        ui.set_cast_status("Connecting to the explicitly pinned receiver…".into());
+        let event_window = weak.clone();
+        let active_for_events = active_for_connect.clone();
+        let status_for_events = status_for_connect.clone();
+        let controller =
+            CastController::start_file(path, address, pin, CastOptions::default(), move |event| {
+                let active_for_event = active_for_events.clone();
+                let status_for_event = status_for_events.clone();
+                match &event {
+                    CastEvent::Status(status) => {
+                        *status_for_event.lock().expect("Cast status lock poisoned") =
+                            Some(status.clone());
+                    }
+                    CastEvent::Stopped | CastEvent::Failed(_) => {
+                        *status_for_event.lock().expect("Cast status lock poisoned") = None;
+                    }
+                    CastEvent::Rejected(_) => {}
+                }
+                let _ = event_window.upgrade_in_event_loop(move |ui| match event {
+                    CastEvent::Status(status) => {
+                        ui.set_cast_active(true);
+                        ui.set_cast_paused(status.state == player_cast::CastState::Paused);
+                        ui.set_cast_status(
+                            format!("{:?} · {:.1} seconds", status.state, status.position).into(),
+                        );
+                    }
+                    CastEvent::Stopped => {
+                        ui.set_cast_active(false);
+                        ui.set_cast_paused(false);
+                        *active_for_event
+                            .lock()
+                            .expect("Cast controller lock poisoned") = None;
+                        ui.set_cast_status("Casting stopped".into());
+                    }
+                    CastEvent::Rejected(message) => {
+                        ui.set_cast_status(format!("Cast command rejected: {message}").into())
+                    }
+                    CastEvent::Failed(message) => {
+                        ui.set_cast_active(false);
+                        ui.set_cast_paused(false);
+                        *active_for_event
+                            .lock()
+                            .expect("Cast controller lock poisoned") = None;
+                        ui.set_cast_status(format!("Cast failed: {message}").into());
+                    }
+                });
+            });
+        match controller {
+            Ok(controller) => {
+                *active_for_connect
+                    .lock()
+                    .expect("Cast controller lock poisoned") = Some(controller)
+            }
+            Err(error) => {
+                ui.set_cast_status(format!("Could not start Cast worker: {error}").into())
+            }
+        }
+    });
+    let weak = ui.as_weak();
+    ui.on_cast_inspect(move |endpoint| {
+        let Some(ui) = weak.upgrade() else { return };
+        let address = match parse_cast_address(&endpoint) {
+            Ok(address) => address,
+            Err(()) => {
+                ui.set_cast_status("Enter a literal local receiver address and port before inspecting.".into());
+                return;
+            }
+        };
+        ui.set_cast_inspecting(true);
+        ui.set_cast_status("Inspecting the receiver certificate; this sends no Cast command…".into());
+        let window = weak.clone();
+        std::thread::spawn(move || {
+            let result = player_cast::inspect_receiver_certificate(
+                address,
+                std::time::Duration::from_secs(8),
+            );
+            let _ = window.upgrade_in_event_loop(move |ui| {
+                ui.set_cast_inspecting(false);
+                match result {
+                    Ok(pin) => {
+                        ui.set_cast_fingerprint(pin.to_string().into());
+                        ui.set_cast_status("Certificate observed. Review the fingerprint, then explicitly start casting to trust this receiver for this session.".into());
+                    }
+                    Err(_) => ui.set_cast_status("Certificate inspection failed or timed out; no receiver was trusted.".into()),
+                }
+            });
+        });
+    });
+    let (weak, discover) = (ui.as_weak(), Arc::new(discover));
+    ui.on_cast_discover(move || {
+        let Some(ui) = weak.upgrade() else { return };
+        if ui.get_cast_discovering() {
+            return;
+        }
+        ui.set_cast_discovering(true);
+        ui.set_cast_receivers(ModelRc::new(VecModel::from(Vec::<CastReceiverRow>::new())));
+        ui.set_cast_status("Searching the local network for Cast receivers for up to five seconds…".into());
+        let (window, discover) = (weak.clone(), discover.clone());
+        std::thread::spawn(move || {
+            let result = discover(std::time::Duration::from_secs(5));
+            let _ = window.upgrade_in_event_loop(move |ui| {
+                ui.set_cast_discovering(false);
+                match result {
+                    Ok(receivers) => {
+                        let rows = receivers
+                            .iter()
+                            .map(|receiver| CastReceiverRow {
+                                name: receiver.name.clone().into(),
+                                endpoint: receiver.address.to_string().into(),
+                                fingerprint: "".into(),
+                            })
+                            .collect::<Vec<_>>();
+                        ui.set_cast_receivers(ModelRc::new(VecModel::from(rows)));
+                        let count = receivers.len();
+                        ui.set_cast_status(
+                            if count == 0 {
+                                "No local Cast receivers found. You can enter an address manually.".into()
+                            } else {
+                                format!("Found {count} local receiver(s). Select one, inspect its certificate, then review the fingerprint before casting.").into()
+                            },
+                        );
+                    }
+                    Err(_) => ui.set_cast_status("Receiver discovery is unavailable on this network. You can enter a local address manually.".into()),
+                }
+            });
+        });
+    });
+    let (weak, active_for_control, status_for_control) = (ui.as_weak(), active, last_status);
+    ui.on_cast_control(move |command| {
+        let Some(ui) = weak.upgrade() else {
+            return;
+        };
+        match command.as_str() {
+            "stop" => {
+                if let Some(controller) = active_for_control
+                    .lock()
+                    .expect("Cast controller lock poisoned")
+                    .as_ref()
+                {
+                    controller.stop();
+                    ui.set_cast_status("Stopping cast session…".into());
+                }
+            }
+            "pause" => {
+                if let Some(controller) = active_for_control
+                    .lock()
+                    .expect("Cast controller lock poisoned")
+                    .as_ref()
+                    && let Err(error) = controller.pause()
+                {
+                    ui.set_cast_status(error.to_string().into());
+                }
+            }
+            "play" => {
+                if let Some(controller) = active_for_control
+                    .lock()
+                    .expect("Cast controller lock poisoned")
+                    .as_ref()
+                    && let Err(error) = controller.play()
+                {
+                    ui.set_cast_status(error.to_string().into());
+                }
+            }
+            "seek-back" | "seek-forward" => {
+                let status = status_for_control
+                    .lock()
+                    .expect("Cast status lock poisoned")
+                    .clone();
+                let offset = if command == "seek-back" { -10.0 } else { 10.0 };
+                let Some(target) = status
+                    .as_ref()
+                    .and_then(|status| cast_seek_target(status, offset))
+                else {
+                    ui.set_cast_status("Casting position is not available yet".into());
+                    return;
+                };
+                if let Some(controller) = active_for_control
+                    .lock()
+                    .expect("Cast controller lock poisoned")
+                    .as_ref()
+                    && let Err(error) = controller.seek(target)
+                {
+                    ui.set_cast_status(error.to_string().into());
+                }
+            }
+            _ => {}
+        }
+    });
+
+    let (weak, remember_preferences, path) =
+        (ui.as_weak(), preferences.clone(), preferences_path.clone());
+    ui.on_cast_remember(move |name, endpoint, fingerprint| {
+        if let Some(ui) = weak.upgrade() {
+            let name = if name.trim().is_empty() {
+                endpoint.to_string()
+            } else {
+                name.to_string()
+            };
+            save_cast_preference(&ui, &remember_preferences, path.as_deref(), |preferences| {
+                preferences.remember_cast_receiver(&name, endpoint.as_str(), fingerprint.as_str())
+            });
+        }
+    });
+
+    let (weak, preferences, path) = (ui.as_weak(), preferences, preferences_path);
+    ui.on_cast_forget(move |endpoint| {
+        if let Some(ui) = weak.upgrade() {
+            save_cast_preference(&ui, &preferences, path.as_deref(), |preferences| {
+                if preferences.forget_cast_receiver(endpoint.as_str()) {
+                    Ok(())
+                } else {
+                    Err("No remembered receiver matched the selected address".into())
+                }
+            });
+        }
+    });
+}
+
+fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Option<Rc<Engine>>) {
     let filter_state = state.clone();
     let filter_window = ui.as_weak();
     ui.on_filter_queue(move |query| {
@@ -345,7 +1091,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (weak, controller, playback) = (ui.as_weak(), state.clone(), engine.clone());
     ui.on_action(move |name, value| {
         let Some(ui) = weak.upgrade() else { return };
+        if matches!(name.as_str(), "frame-step" | "frame-back-step")
+            && (!ui.get_loaded() || !ui.get_has_video())
+        {
+            return;
+        }
         let action = match name.as_str() {
+            "url" | "preferences" => {
+                ui.set_panel(name);
+                return;
+            }
             "open" | "subtitle-file" => {
                 open_dialog(weak.clone(), name == "subtitle-file");
                 return;
@@ -412,6 +1167,120 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     });
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let args = Args::parse();
+    let startup = startup_commands(&args)?;
+    let config_path = args.config.clone().or_else(default_preferences_path);
+    let (preferences, config_error) = if args.preview_png.is_some() && args.config.is_none() {
+        (Preferences::default(), None)
+    } else {
+        match config_path.as_deref().map(Preferences::load).transpose() {
+            Ok(value) => (value.unwrap_or_default(), None),
+            Err(error) => (Preferences::default(), Some(error)),
+        }
+    };
+    if let Some(path) = args.preview_png {
+        return preview::render(&path, &preferences);
+    }
+    slint::BackendSelector::new()
+        .backend_name("winit".into())
+        .renderer_name("femtovg".into())
+        .select()?;
+    let ui = PlayerWindow::new()?;
+    let selected_helper = args
+        .yt_dlp
+        .as_deref()
+        .or_else(|| preferences.video_site_helper().map(std::path::Path::new));
+    let helper = selected_helper
+        .map(player_services::VideoSiteTool::new)
+        .transpose();
+    let helper = match helper {
+        Ok(tool) => tool,
+        Err(error) => {
+            ui.set_preferences_error(format!("Video sites disabled: {error}").into());
+            ui.set_video_site_notice("Choose a valid helper under View → Preferences".into());
+            None
+        }
+    };
+    let preferences = Rc::new(RefCell::new(preferences));
+    install_preferences(&ui, preferences.clone(), config_path.clone());
+    if let Some(error) = config_error {
+        ui.set_preferences_error(format!("Could not load preferences: {error}").into());
+    }
+    let radio_api = args
+        .radio_directory
+        .as_deref()
+        .map(player_services::RadioDirectory::new)
+        .transpose()?
+        .unwrap_or_else(player_services::RadioDirectory::public);
+    let _radio = network_ui::install_radio(&ui, Arc::new(network_ui::SystemHttp), radio_api);
+    updates_ui::install(&ui);
+    let state = Rc::new(RefCell::new(UiState::default()));
+    install_cast_with_preferences(&ui, &state, preferences, config_path);
+    let startup_engine = Engine::with_video_site_helper(helper.as_ref().map(|tool| tool.path()));
+    let startup_engine = match startup_engine {
+        Err(error) if helper.is_some() => {
+            ui.set_preferences_error(format!("Video sites unavailable: {error}").into());
+            ui.set_video_site_notice(
+                "Local playback remains available; choose a compatible engine and restart".into(),
+            );
+            Engine::new()
+        }
+        result => result,
+    };
+    let engine = match startup_engine {
+        Ok(engine) => Some(Rc::new(engine)),
+        Err(error) => {
+            ui.set_status(error.clone().into());
+            ui.set_diagnostics(error.into());
+            None
+        }
+    };
+    if let Some(engine) = &engine {
+        let weak_size = ui.as_weak();
+        let weak_frame = ui.as_weak();
+        let weak_error = ui.as_weak();
+        let weak_wake = ui.as_weak();
+        player_render::attach(
+            ui.window(),
+            engine,
+            move || {
+                weak_size
+                    .upgrade()
+                    .map(|ui| {
+                        let scale = ui.window().scale_factor();
+                        (
+                            (ui.get_video_width() * scale).round() as u32,
+                            (ui.get_video_height() * scale).round() as u32,
+                        )
+                    })
+                    .unwrap_or((1, 1))
+            },
+            move |frame| {
+                if let Some(ui) = weak_frame.upgrade() {
+                    ui.set_video_frame(frame);
+                }
+            },
+            move |error| {
+                if let Some(ui) = weak_error.upgrade() {
+                    ui.set_status(error.into());
+                }
+            },
+            Arc::new(move || {
+                let weak = weak_wake.clone();
+                let _ = slint::invoke_from_event_loop(move || {
+                    if let Some(ui) = weak.upgrade() {
+                        ui.window().request_redraw();
+                    }
+                });
+            }),
+        )?;
+    }
+    install_controls(&ui, &state, &engine);
+    shader_ui::install(&ui, &engine);
+    profile_ui::install(&ui, &engine);
     if let Some(engine) = &engine {
         for command in startup {
             engine.command(command)?;
@@ -420,20 +1289,67 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if !args.media.is_empty() {
         dispatch(&ui, &state, &engine, Action::Open(args.media));
     }
-    let timer = slint::Timer::default();
     if let Some(playback) = engine.clone() {
         let weak = ui.as_weak();
         let controller = state.clone();
-        let mut previous = Snapshot::default();
-        timer.start(
-            slint::TimerMode::Repeated,
-            Duration::from_millis(200),
-            move || {
-                if let (Some(ui), Some(snapshot)) = (weak.upgrade(), playback.snapshot()) {
-                    refresh(&ui, &controller, &snapshot, &mut previous);
+        let previous = RefCell::new(Snapshot::default());
+        let status_source = playback.clone();
+        let media_engine = Some(playback.clone());
+        let media_session = Rc::new(RefCell::new(None));
+        let session_for_refresh = media_session.clone();
+        let media_attempted = Rc::new(Cell::new(false));
+        let attempted_for_refresh = media_attempted.clone();
+        let media_attach_retry = Rc::new(RefCell::new(system_media::AttachRetry::default()));
+        let retry_for_refresh = media_attach_retry.clone();
+        ui.on_native_snapshot_ready(move || {
+            if let Some(ui) = weak.upgrade() {
+                if let Some(snapshot) = status_source.snapshot() {
+                    refresh(&ui, &controller, &snapshot, &mut previous.borrow_mut());
+                    if snapshot.loaded
+                        && controller.borrow().loaded
+                        && !attempted_for_refresh.get()
+                        && retry_for_refresh
+                            .borrow_mut()
+                            .due(std::time::Instant::now())
+                    {
+                        match system_media::attach(&ui, &controller, &media_engine) {
+                            Ok(system_media::AttachOutcome::Attached(session)) => {
+                                *session_for_refresh.borrow_mut() = Some(session);
+                                attempted_for_refresh.set(true);
+                            }
+                            Ok(system_media::AttachOutcome::RetryableNotReady) => {}
+                            Err(error) => {
+                                attempted_for_refresh.set(true);
+                                ui.set_status(
+                                    format!("System media controls unavailable: {error}").into(),
+                                );
+                            }
+                        }
+                    }
+                    if let Some(session) = session_for_refresh.borrow_mut().as_mut() {
+                        match session.publish(&snapshot, &controller.borrow()) {
+                            Ok(()) => session.last_error = None,
+                            Err(error) if session.last_error.as_deref() != Some(error.as_str()) => {
+                                session.last_error = Some(error.clone());
+                                ui.set_status(
+                                    format!("System media controls unavailable: {error}").into(),
+                                );
+                            }
+                            Err(_) => {}
+                        }
+                    }
+                } else {
+                    // A transient try-lock miss must not lose an idle update.
+                    let _ = ui
+                        .as_weak()
+                        .upgrade_in_event_loop(|ui| ui.invoke_native_snapshot_ready());
                 }
-            },
-        );
+            }
+        });
+        let weak = ui.as_weak();
+        playback.set_snapshot_notifier(Arc::new(move || {
+            let _ = weak.upgrade_in_event_loop(|ui| ui.invoke_native_snapshot_ready());
+        }));
     }
     let exit_timer = slint::Timer::default();
     if let Some(seconds) = args.quit_after {
@@ -450,139 +1366,5 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn benchmark_startup_is_explicit_and_preserves_speed_and_pause() {
-        let args = Args::try_parse_from([
-            "foxide-desktop",
-            "--benchmark-script",
-            "bench.lua",
-            "--speed",
-            "2",
-            "--paused",
-            "movie.mp4",
-        ])
-        .unwrap();
-        assert_eq!(
-            startup_commands(&args).unwrap(),
-            vec![
-                vec!["load-script".to_owned(), "bench.lua".to_owned()],
-                vec!["set".to_owned(), "speed".to_owned(), "2".to_owned()],
-                vec!["set".to_owned(), "pause".to_owned(), "yes".to_owned()],
-            ]
-        );
-        let defaults = Args::try_parse_from(["foxide-desktop"]).unwrap();
-        assert!(startup_commands(&defaults).unwrap().is_empty());
-        let invalid = Args::try_parse_from(["foxide-desktop", "--speed", "NaN"]).unwrap();
-        assert!(startup_commands(&invalid).is_err());
-    }
-    use slint::{
-        Model,
-        platform::{
-            Platform, WindowAdapter,
-            software_renderer::{MinimalSoftwareWindow, RepaintBufferType},
-        },
-    };
-
-    struct TestPlatform;
-    impl Platform for TestPlatform {
-        fn create_window_adapter(&self) -> Result<Rc<dyn WindowAdapter>, slint::PlatformError> {
-            Ok(MinimalSoftwareWindow::new(RepaintBufferType::ReusedBuffer))
-        }
-    }
-
-    #[test]
-    fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
-        slint::platform::set_platform(Box::new(TestPlatform)).unwrap();
-        let ui = PlayerWindow::new().unwrap();
-        let state = Rc::new(RefCell::new(UiState::default()));
-        state
-            .borrow_mut()
-            .dispatch(Action::Open(vec!["movie.mkv".into()]));
-        let mut previous = Snapshot::default();
-        let mut snapshot = Snapshot {
-            loaded: true,
-            path: "movie.mkv".into(),
-            title: "Movie".into(),
-            position: 65.1,
-            duration: 125.0,
-            speed: 1.0,
-            volume: 75.0,
-            hwdec: String::new(),
-            tracks: vec![player_render::Track {
-                id: 1,
-                kind: "audio".into(),
-                label: "English".into(),
-                selected: true,
-            }]
-            .into(),
-            ..Default::default()
-        };
-        refresh(&ui, &state, &snapshot, &mut previous);
-        assert!(ui.get_loaded());
-        assert_eq!(ui.get_media_title(), "Movie");
-        assert_eq!(ui.get_time_label(), "01:05");
-        assert_eq!(ui.get_duration_label(), "02:05");
-        assert_eq!(ui.get_status(), "Playing · 1.00×");
-        assert_eq!(ui.get_audio_tracks().row_count(), 1);
-        assert!(
-            !ui.get_has_video(),
-            "Audio-only playback must not enable frame/video controls"
-        );
-        update_queue(&ui, &state.borrow());
-        assert_eq!(ui.get_queue().row_count(), 1);
-        ui.set_queue_filter("missing".into());
-        update_queue(&ui, &state.borrow());
-        assert_eq!(ui.get_queue().row_count(), 0);
-        assert_eq!(ui.get_queue_count(), 1);
-        ui.set_queue_filter("movie".into());
-        update_queue(&ui, &state.borrow());
-        assert_eq!(ui.get_queue().row_data(0).unwrap().source_index, 0);
-        let diagnostics = ui.get_diagnostics();
-        assert!(diagnostics.contains("Active decoder: not active"));
-        ui.set_status("Command rejected".into());
-        snapshot.position = 65.9;
-        refresh(&ui, &state, &snapshot, &mut previous);
-        assert_eq!(ui.get_position(), 65.9);
-        assert_eq!(
-            ui.get_status(),
-            "Command rejected",
-            "Position ticks must not rebuild and overwrite unchanged playback status"
-        );
-        assert_eq!(ui.get_time_label(), "01:05");
-        assert_eq!(ui.get_diagnostics(), diagnostics);
-        snapshot.position = 66.0;
-        snapshot.paused = true;
-        snapshot.speed = 1.5;
-        snapshot.title = "New title".into();
-        snapshot.duration = 126.0;
-        snapshot.hwdec = "d3d11va".into();
-        Arc::make_mut(&mut snapshot.tracks)[0].selected = false;
-        refresh(&ui, &state, &snapshot, &mut previous);
-        assert_eq!(ui.get_time_label(), "01:06");
-        assert_eq!(ui.get_duration_label(), "02:06");
-        assert_eq!(ui.get_status(), "Paused · 1.50×");
-        assert_eq!(ui.get_media_title(), "New title");
-        assert!(ui.get_diagnostics().contains("d3d11va"));
-        assert!(!ui.get_audio_tracks().row_data(0).unwrap().selected);
-        snapshot.error = "Decode failed".into();
-        refresh(&ui, &state, &snapshot, &mut previous);
-        assert!(!ui.get_loaded());
-        assert_eq!(ui.get_status(), "Decode failed");
-        assert!(ui.get_diagnostics().contains("Decode failed"));
-        state
-            .borrow_mut()
-            .dispatch(Action::Open(vec!["next.mkv".into()]));
-        ui.set_status("Opening media…".into());
-        snapshot.path = "next.mkv".into();
-        snapshot.error.clear();
-        refresh(&ui, &state, &snapshot, &mut previous);
-        assert_eq!(
-            ui.get_status(),
-            "Paused · 1.50×",
-            "A newly loaded file replaces the opening status even when pause and speed are unchanged"
-        );
-    }
-}
+#[path = "desktop_tests.rs"]
+mod tests;

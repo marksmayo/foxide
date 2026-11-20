@@ -189,12 +189,13 @@ fn warm_priming_and_engine_events_never_become_display_measurements() {
     );
     let media = dir.join("fixture.txt");
     fs::write(&media, "Protocol fixture, not media").unwrap();
-    // Windows process creation under instrumentation can exceed 700ms.
+    // Delay the first event beyond the old fixed priming window.
     // This is a protocol-contract check, not a startup-performance assertion.
     let output = Command::new(env!("CARGO_BIN_EXE_player-bench"))
         .args(["run", "--player", "mpv", "--exe"])
         .arg(executable)
         .args([
+            "--arg=--fixture-delay-ms=4500",
             "--tuned",
             "--seeks",
             "--cache",
@@ -202,7 +203,7 @@ fn warm_priming_and_engine_events_never_become_display_measurements() {
             "--repeat",
             "1",
             "--duration",
-            "3",
+            "1",
             "--warmup",
             "0.1",
             "--sample-ms",
@@ -230,8 +231,13 @@ fn warm_priming_and_engine_events_never_become_display_measurements() {
             let run: serde_json::Value =
                 serde_json::from_slice(&fs::read(path.join("run.json")).unwrap()).unwrap();
             assert_eq!(run["status"], "internal-restart-observed");
-            assert_eq!(run["profile"], "hwdec-auto-safe-seeks");
-            assert!(run["startup_restart_observed_ms"].is_number());
+            assert_eq!(
+                run["profile"],
+                "hwdec-auto-safe-seeks-post-restart-sampling"
+            );
+            assert!(run["startup_restart_observed_ms"].as_f64().unwrap() >= 4500.0);
+            assert!(run["sampling_started_ms"].as_f64().unwrap() >= 4500.0);
+            assert!(!run["samples"].as_array().unwrap().is_empty());
             assert!(run["ttff_display_ms"].is_null());
             assert!(run["package_power_watts"].is_null());
         }
@@ -289,5 +295,76 @@ fn observing_an_existing_process_never_terminates_it() {
         .canonicalize()
         .unwrap();
     assert!(dir.starts_with(base));
+    fs::remove_dir_all(dir).unwrap();
+}
+
+#[test]
+fn startup_deadline_is_validated_and_a_non_ready_player_is_saved_as_incomplete() {
+    let dir = temp("startup deadline");
+    let media = dir.join("fixture.txt");
+    fs::write(&media, "Protocol-only fixture").unwrap();
+    for timeout in ["NaN", "0", "301"] {
+        let invalid = Command::new(env!("CARGO_BIN_EXE_player-bench"))
+            .args([
+                "run",
+                "--player",
+                "mpv",
+                "--startup-timeout",
+                timeout,
+                "--media",
+            ])
+            .arg(&media)
+            .output()
+            .unwrap();
+        assert!(!invalid.status.success());
+        assert!(String::from_utf8_lossy(&invalid.stderr).contains("startup-timeout"));
+    }
+    let executable = dir.join(if cfg!(windows) {
+        "protocol-player.exe"
+    } else {
+        "protocol-player"
+    });
+    let built = Command::new(std::env::var_os("RUSTC").unwrap_or_else(|| "rustc".into()))
+        .arg(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/protocol_player.rs"))
+        .arg("-o")
+        .arg(&executable)
+        .output()
+        .unwrap();
+    assert!(built.status.success());
+    let output = Command::new(env!("CARGO_BIN_EXE_player-bench"))
+        .args([
+            "run",
+            "--player",
+            "mpv",
+            "--repeat",
+            "1",
+            "--startup-timeout",
+            "0.1",
+            "--arg=--fixture-delay-ms=5000",
+            "--duration",
+            "1",
+            "--warmup",
+            "0.1",
+            "--exe",
+        ])
+        .arg(executable)
+        .arg("--media")
+        .arg(media)
+        .arg("--output")
+        .arg(&dir)
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    let run = fs::read_dir(&dir)
+        .unwrap()
+        .map(|e| e.unwrap().path())
+        .find(|p| p.join("run.json").is_file())
+        .unwrap();
+    let record: serde_json::Value =
+        serde_json::from_slice(&fs::read(run.join("run.json")).unwrap()).unwrap();
+    assert_eq!(record["status"], "incomplete-startup-timeout");
+    assert!(record["startup_restart_observed_ms"].is_null());
+    assert!(record["samples"].as_array().unwrap().is_empty());
+    assert_eq!(record["terminated_by_harness"], true);
     fs::remove_dir_all(dir).unwrap();
 }
