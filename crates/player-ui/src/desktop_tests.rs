@@ -280,6 +280,21 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
     let actions = Rc::new(RefCell::new(Vec::new()));
     let recorded = actions.clone();
     ui.on_action(move |name, value| recorded.borrow_mut().push((name.to_string(), value)));
+    ui.set_loaded(false);
+    controller_navigation::apply_action(
+        &ui,
+        &controller_state,
+        &None,
+        controller_navigation::ControllerAction::FocusNext,
+    );
+    controller_navigation::apply_action(
+        &ui,
+        &controller_state,
+        &None,
+        controller_navigation::ControllerAction::Activate,
+    );
+    assert_eq!(actions.borrow().last(), Some(&("open".into(), 0.0)));
+    actions.borrow_mut().clear();
     ui.set_loaded(true);
     ui.set_volume(80.0);
     ui.window()
