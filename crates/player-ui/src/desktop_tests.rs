@@ -98,6 +98,38 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
     let ui = PlayerWindow::new().unwrap();
     ui.window().set_size(slint::PhysicalSize::new(1180, 770));
     ui.show().unwrap();
+    let controller_state = Rc::new(RefCell::new(UiState {
+        loaded: true,
+        ..UiState::default()
+    }));
+    let _controller_timer = controller_navigation::install(&ui, controller_state.clone(), None);
+    for action in [
+        controller_navigation::ControllerAction::FocusPrevious,
+        controller_navigation::ControllerAction::FocusNext,
+        controller_navigation::ControllerAction::Activate,
+        controller_navigation::ControllerAction::Back,
+    ] {
+        controller_navigation::apply_action(&ui, &controller_state, &None, action);
+    }
+    controller_navigation::apply_action(
+        &ui,
+        &controller_state,
+        &None,
+        controller_navigation::ControllerAction::TogglePause,
+    );
+    assert!(ui.get_status().contains("Playback engine unavailable"));
+    controller_navigation::apply_action(
+        &ui,
+        &controller_state,
+        &None,
+        controller_navigation::ControllerAction::Previous,
+    );
+    controller_navigation::apply_action(
+        &ui,
+        &controller_state,
+        &None,
+        controller_navigation::ControllerAction::Next,
+    );
     install_cast(&ui, &Rc::new(RefCell::new(UiState::default())));
     ui.invoke_cast_control("seek-back".into());
     assert!(
@@ -145,6 +177,14 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
     }
     let _cleanup = RemoveSettings(settings_path.clone());
     install_preferences(&ui, preferences.clone(), Some(settings_path.clone()));
+    ui.set_panel("shortcuts".into());
+    assert!(ui.get_shortcut_help().contains("Game controller"));
+    assert!(
+        ui.get_shortcut_help()
+            .contains("Left/right shoulder: previous/next")
+    );
+    capture_customization(&ui, &rendered_window, "shortcuts");
+    ui.set_panel("".into());
     install_cast_with_discovery(
         &ui,
         &Rc::new(RefCell::new(UiState::default())),
@@ -240,6 +280,35 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
     let actions = Rc::new(RefCell::new(Vec::new()));
     let recorded = actions.clone();
     ui.on_action(move |name, value| recorded.borrow_mut().push((name.to_string(), value)));
+    ui.set_loaded(false);
+    controller_navigation::apply_action(
+        &ui,
+        &controller_state,
+        &None,
+        controller_navigation::ControllerAction::FocusNext,
+    );
+    controller_navigation::apply_action(
+        &ui,
+        &controller_state,
+        &None,
+        controller_navigation::ControllerAction::Activate,
+    );
+    assert_eq!(actions.borrow().last(), Some(&("open".into(), 0.0)));
+    actions.borrow_mut().clear();
+    controller_navigation::apply_action(
+        &ui,
+        &controller_state,
+        &None,
+        controller_navigation::ControllerAction::FocusNext,
+    );
+    controller_navigation::apply_action(
+        &ui,
+        &controller_state,
+        &None,
+        controller_navigation::ControllerAction::Activate,
+    );
+    assert_eq!(actions.borrow().last(), Some(&("playlist".into(), 0.0)));
+    actions.borrow_mut().clear();
     ui.set_loaded(true);
     ui.set_volume(80.0);
     ui.window()
