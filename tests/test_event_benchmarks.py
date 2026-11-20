@@ -19,6 +19,10 @@ class EventBenchmarkTests(unittest.TestCase):
         args = command_for('foxide', 'foxide-desktop.exe', 'avc1080', Path('movie.mp4'), None, 0, '', presentation='native-window')
         self.assertIn('--benchmark-script', args)
         self.assertNotIn('--headless', args)
+        self.assertNotIn('--mpv', args)
+        mpv = r'C:\workspace\foxide\tools\mpv\mpv.exe'
+        foxide_args = command_for('foxide', 'foxide.exe', 'avc1080', Path('movie.mp4'), None, 0, '', mpv_executable=mpv)
+        self.assertEqual(foxide_args[foxide_args.index('--mpv') + 1], mpv)
         self.assertTrue(any('--vo=null' in a for a in command_for('mpv', 'mpv', 'avc1080', Path('movie.mp4'), None, 0, '')))
 
     def test_unverified_playback_keeps_diagnostics_but_cannot_earn_a_medal(self):
