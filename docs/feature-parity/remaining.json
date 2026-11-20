@@ -90,8 +90,8 @@
       "id": "touch_gestures",
       "name": "Touch or trackpad playback gestures",
       "group": "Interface",
-      "stage": "queued",
-      "acceptance": "The desktop video surface maps horizontal trackpad scrolling and horizontal touch drags to bounded relative seeks, and vertical scrolling/drags to volume, with loaded-state, threshold and clamp tests. Physical trackpad/touchscreen validation remains before acceptance; no feature medal is claimed."
+      "stage": "in_progress",
+      "acceptance": "The desktop video surface maps horizontal trackpad scrolling and horizontal touch drags to bounded relative seeks, and vertical scrolling/drags to volume. The software-window UI test covers 31px/32px drag thresholds, seek direction and ±15s clamps, volume 0–100 clamps, trackpad scrolling, and disabled playback state. Physical trackpad/touchscreen validation remains before acceptance; no feature medal is claimed."
     },
     {
       "id": "system_media_controls",
