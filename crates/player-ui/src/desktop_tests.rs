@@ -177,6 +177,14 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
     }
     let _cleanup = RemoveSettings(settings_path.clone());
     install_preferences(&ui, preferences.clone(), Some(settings_path.clone()));
+    ui.set_panel("shortcuts".into());
+    assert!(ui.get_shortcut_help().contains("Game controller"));
+    assert!(
+        ui.get_shortcut_help()
+            .contains("Left/right shoulder: previous/next")
+    );
+    capture_customization(&ui, &rendered_window, "shortcuts");
+    ui.set_panel("".into());
     install_cast_with_discovery(
         &ui,
         &Rc::new(RefCell::new(UiState::default())),

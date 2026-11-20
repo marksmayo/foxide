@@ -390,14 +390,15 @@ fn apply_preferences(
             .map(|entry| slint::SharedString::from(entry.0))
             .collect::<Vec<_>>(),
     )));
-    ui.set_shortcut_help(
-        preferences
-            .bindings()
-            .map(|(key, action)| format!("{key}  —  {action}"))
-            .collect::<Vec<_>>()
-            .join("\n")
-            .into(),
+    let mut shortcut_help = preferences
+        .bindings()
+        .map(|(key, action)| format!("{key}  —  {action}"))
+        .collect::<Vec<_>>()
+        .join("\n");
+    shortcut_help.push_str(
+        "\n\nGame controller\nD-pad: move focus · South (A/Cross): select · East/Select: back\nStart: play/pause · Left/right shoulder: previous/next",
     );
+    ui.set_shortcut_help(shortcut_help.into());
     if ui.get_compact_mode() != preferences.compact() {
         if preferences.compact() {
             let current = ui.window().size();
