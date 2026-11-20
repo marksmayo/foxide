@@ -54,9 +54,11 @@ class WindowsPackagingTests(unittest.TestCase):
         with self.assertRaises(FileExistsError):
             self.build()
 
-    def test_installer_uses_the_existing_foxide_logo_as_its_setup_icon(self):
+    def test_installer_uses_the_existing_foxide_logo_for_setup_and_wizard_branding(self):
         script = (ROOT / 'packaging/Foxide.iss').read_text(encoding='utf-8')
         self.assertIn('SetupIconFile=', script)
+        self.assertIn('WizardImageFile=Foxide-wizard.bmp', script)
+        self.assertIn('WizardSmallImageFile=Foxide-small.bmp', script)
         self.assertIn('UninstallDisplayIcon={app}\\Foxide.ico', script)
         self.assertIn('Source: "Foxide.ico"; DestDir: "{app}"', script)
         self.assertIn('IconFilename: "{app}\\Foxide.ico"', script)
@@ -75,6 +77,11 @@ class WindowsPackagingTests(unittest.TestCase):
         self.assertEqual(png[:8], b'\x89PNG\r\n\x1a\n')
         self.assertEqual(int.from_bytes(png[16:20], 'big'), 256)
         self.assertEqual(int.from_bytes(png[20:24], 'big'), 256)
+        for name, width, height in [('Foxide-wizard.bmp', 164, 314), ('Foxide-small.bmp', 55, 55)]:
+            bitmap = (ROOT / 'packaging' / name).read_bytes()
+            self.assertEqual(bitmap[:2], b'BM')
+            self.assertEqual(int.from_bytes(bitmap[18:22], 'little', signed=True), width)
+            self.assertEqual(int.from_bytes(bitmap[22:26], 'little', signed=True), height)
 
     def test_invalid_version_commit_and_non_windows_file_fail_before_packaging(self):
         for version, commit in [('../escape', 'a'*40), ('0.0.1', 'bad')]:
