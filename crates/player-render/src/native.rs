@@ -119,9 +119,13 @@ impl Api {
             vec!["libmpv.so.2".into()]
         };
         let mut errors = Vec::new();
+        #[cfg(windows)]
         let mut runtime_file_found = false;
         for path in candidates {
-            runtime_file_found |= path.is_file();
+            #[cfg(windows)]
+            {
+                runtime_file_found |= path.is_file();
+            }
             // SAFETY: library stays owned by Api; every symbol has the documented
             // C signature from the pinned mpv client/render headers. No unload
             // occurs until the last client/render Arc has been released.
@@ -138,16 +142,12 @@ impl Api {
                 Err(error) => errors.push(error),
             }
         }
-        if cfg!(windows) && !runtime_file_found {
-            return Err(
-                "Playback runtime is not installed. Use Start Menu > Foxide > Install playback runtime, then restart Foxide. See Help > Open diagnostic log for details.".into(),
-            );
-        }
-        if cfg!(windows) {
-            return Err(
-                "Playback runtime was found, but Windows could not initialize it. A required runtime DLL may be missing or blocked. Re-run Start Menu > Foxide > Install playback runtime, then restart Foxide. See Help > Open diagnostic log.".into(),
-            );
-        }
+        #[cfg(windows)]
+        return Err(windows_runtime_error(
+            runtime_file_found,
+            &errors.join("; "),
+        ));
+        #[cfg(not(windows))]
         Err(format!(
             "Playback engine unavailable: {}",
             errors.join("; ")
@@ -400,6 +400,19 @@ impl Api {
         } else {
             Ok(())
         }
+    }
+}
+
+#[cfg(windows)]
+fn windows_runtime_error(runtime_file_found: bool, details: &str) -> String {
+    if runtime_file_found {
+        format!(
+            "Playback runtime was found, but Windows could not initialize it. A required runtime DLL may be missing or blocked. Re-run Start Menu > Foxide > Install playback runtime, then restart Foxide. See Help > Open diagnostic log. Details: {details}"
+        )
+    } else {
+        format!(
+            "Playback runtime is not installed. Use Start Menu > Foxide > Install playback runtime, then restart Foxide. See Help > Open diagnostic log for details. Details: {details}"
+        )
     }
 }
 impl Drop for Api {
@@ -810,7 +823,7 @@ mod snapshot_allocation_tests {
 
 #[cfg(all(test, windows))]
 mod missing_runtime_tests {
-    use super::Api;
+    use super::{Api, windows_runtime_error};
 
     #[test]
     fn absent_installed_runtime_explains_how_to_recover() {
@@ -822,6 +835,12 @@ mod missing_runtime_tests {
             error.contains("Install playback runtime"),
             "Missing runtime should give the installed-app recovery step; got: {error}"
         );
+    }
+
+    #[test]
+    fn distinguishes_missing_runtime_from_a_failed_runtime_load() {
+        assert!(windows_runtime_error(false, "not found").contains("is not installed"));
+        assert!(windows_runtime_error(true, "dependency missing").contains("could not initialize"));
     }
 }
 

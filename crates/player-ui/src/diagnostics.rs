@@ -81,28 +81,32 @@ fn open_log_at(
 }
 
 fn open_system_log(path: &std::path::Path) -> Result<(), String> {
+    system_log_command(path)
+        .spawn()
+        .map(|_| ())
+        .map_err(|error| error.to_string())
+}
+
+fn system_log_command(path: &std::path::Path) -> Command {
     #[cfg(windows)]
-    let mut command = {
+    let command = {
         let mut command = Command::new("explorer.exe");
         command.arg(&path);
         command
     };
     #[cfg(target_os = "macos")]
-    let mut command = {
+    let command = {
         let mut command = Command::new("open");
         command.arg(&path);
         command
     };
     #[cfg(all(not(windows), not(target_os = "macos")))]
-    let mut command = {
+    let command = {
         let mut command = Command::new("xdg-open");
         command.arg(&path);
         command
     };
     command
-        .spawn()
-        .map(|_| ())
-        .map_err(|error| error.to_string())
 }
 
 #[cfg(test)]
@@ -146,5 +150,12 @@ mod tests {
         .unwrap();
         assert!(viewer_called);
         let _ = fs::remove_dir_all(temp);
+    }
+
+    #[test]
+    fn system_viewer_command_points_at_the_log_file() {
+        let path = PathBuf::from("local-log-test/foxide.log");
+        let command = system_log_command(&path);
+        assert_eq!(command.get_args().last(), Some(path.as_os_str()));
     }
 }
