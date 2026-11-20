@@ -112,10 +112,27 @@ jobs:
           "$installerHash  $($installer[0].Name)" | Add-Content dist/SHA256SUMS.txt
           $resultsDirectory = (Resolve-Path results/local).Path
           $installDir = Join-Path $resultsDirectory 'installer-smoke'
-          & $installer[0].FullName /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /NOICONS "/DIR=$installDir"
+          $installerLog = Join-Path $resultsDirectory 'installer-smoke.log'
+          & $installer[0].FullName /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /NOICONS "/DIR=$installDir" "/LOG=$installerLog"
           if ($LASTEXITCODE -ne 0) { throw 'Windows installer smoke install failed' }
           foreach ($file in @('Foxide.exe', 'Install-PlaybackRuntime.ps1', 'BUILD-INFO.json')) {
-            if (-not (Test-Path -LiteralPath (Join-Path $installDir $file))) { throw "Installed payload missing $file" }
+            if (-not (Test-Path -LiteralPath (Join-Path $installDir $file))) {
+              Write-Host "Installer expected destination: $installDir"
+              if (Test-Path -LiteralPath $installDir) {
+                Get-ChildItem -LiteralPath $installDir -Force -Recurse | Select-Object -First 80 -ExpandProperty FullName
+              } else {
+                Write-Host 'Expected install directory was not created.'
+              }
+              $installedExecutables = @(Get-ChildItem -LiteralPath $resultsDirectory -Filter 'Foxide.exe' -File -Recurse -ErrorAction SilentlyContinue)
+              if ($installedExecutables.Count -gt 0) {
+                Write-Host 'Found the executable elsewhere under results/local:'
+                $installedExecutables | Select-Object -ExpandProperty FullName
+              }
+              if (Test-Path -LiteralPath $installerLog) {
+                Get-Content -LiteralPath $installerLog -Tail 100
+              }
+              throw "Installed payload missing $file"
+            }
           }
           $uninstaller = Join-Path $installDir 'unins000.exe'
           if (-not (Test-Path -LiteralPath $uninstaller)) { throw 'Installed uninstaller is missing' }
