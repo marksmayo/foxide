@@ -24,8 +24,14 @@ pub fn discover_receivers(timeout: Duration) -> io::Result<Vec<DiscoveredReceive
 }
 
 trait Browser {
-    fn next(&mut self, timeout: Duration) -> io::Result<Option<DiscoveredReceiver>>;
+    fn next(&mut self, timeout: Duration) -> io::Result<BrowserPoll>;
     fn close(&mut self);
+}
+
+enum BrowserPoll {
+    Receiver(DiscoveredReceiver),
+    Pending,
+    TimedOut,
 }
 
 struct MdnsBrowser {
@@ -44,17 +50,10 @@ impl MdnsBrowser {
 }
 
 impl Browser for MdnsBrowser {
-    fn next(&mut self, timeout: Duration) -> io::Result<Option<DiscoveredReceiver>> {
+    fn next(&mut self, timeout: Duration) -> io::Result<BrowserPoll> {
         match self.events.recv_timeout(timeout) {
-            Ok(ServiceEvent::ServiceResolved(service)) if service.is_valid() => {
-                Ok(receiver_from_resolved(
-                    &service.fullname,
-                    service.is_valid(),
-                    service.port,
-                    service.addresses.iter().map(ScopedIp::to_ip_addr),
-                ))
-            }
-            Ok(_) | Err(mdns_sd::RecvTimeoutError::Timeout) => Ok(None),
+            Ok(event) => Ok(poll_service_event(event)),
+            Err(mdns_sd::RecvTimeoutError::Timeout) => Ok(BrowserPoll::TimedOut),
             Err(mdns_sd::RecvTimeoutError::Disconnected) => {
                 Err(io::Error::other("Cast receiver discovery stopped"))
             }
@@ -64,6 +63,20 @@ impl Browser for MdnsBrowser {
     fn close(&mut self) {
         let _ = self.daemon.stop_browse(CAST_SERVICE);
         let _ = self.daemon.shutdown();
+    }
+}
+
+fn poll_service_event(event: ServiceEvent) -> BrowserPoll {
+    match event {
+        ServiceEvent::ServiceResolved(service) if service.is_valid() => receiver_from_resolved(
+            &service.fullname,
+            service.is_valid(),
+            service.port,
+            service.addresses.iter().map(ScopedIp::to_ip_addr),
+        )
+        .map(BrowserPoll::Receiver)
+        .unwrap_or(BrowserPoll::Pending),
+        _ => BrowserPoll::Pending,
     }
 }
 
@@ -95,10 +108,11 @@ fn collect_receivers(
             break;
         }
         match browser.next(remaining)? {
-            Some(receiver) => {
+            BrowserPoll::Receiver(receiver) => {
                 results.insert(receiver);
             }
-            None => break,
+            BrowserPoll::Pending => continue,
+            BrowserPoll::TimedOut => break,
         }
     }
     Ok(results.into_iter().collect())
@@ -158,8 +172,8 @@ fn receiver_from_records(
 #[cfg(test)]
 mod tests {
     use super::{
-        Browser, DiscoveredReceiver, MdnsBrowser, discover_with, receiver_from_records,
-        receiver_from_resolved, receiver_from_service,
+        Browser, BrowserPoll, DiscoveredReceiver, MdnsBrowser, discover_with, poll_service_event,
+        receiver_from_records, receiver_from_resolved, receiver_from_service,
     };
     use std::{
         cell::Cell,
@@ -171,13 +185,13 @@ mod tests {
     };
 
     struct FakeBrowser {
-        events: VecDeque<io::Result<Option<DiscoveredReceiver>>>,
+        events: VecDeque<io::Result<BrowserPoll>>,
         closed: Rc<Cell<bool>>,
     }
 
     impl Browser for FakeBrowser {
-        fn next(&mut self, _: Duration) -> io::Result<Option<DiscoveredReceiver>> {
-            self.events.pop_front().unwrap_or(Ok(None))
+        fn next(&mut self, _: Duration) -> io::Result<BrowserPoll> {
+            self.events.pop_front().unwrap_or(Ok(BrowserPoll::TimedOut))
         }
 
         fn close(&mut self) {
@@ -186,7 +200,7 @@ mod tests {
     }
 
     fn fake(
-        events: impl IntoIterator<Item = io::Result<Option<DiscoveredReceiver>>>,
+        events: impl IntoIterator<Item = io::Result<BrowserPoll>>,
         closed: Rc<Cell<bool>>,
     ) -> FakeBrowser {
         FakeBrowser {
@@ -320,9 +334,35 @@ mod tests {
         let result = discover_with(Duration::from_millis(100), || {
             Ok(fake(
                 [
-                    Ok(Some(receiver.clone())),
-                    Ok(Some(receiver.clone())),
-                    Ok(None),
+                    Ok(BrowserPoll::Receiver(receiver.clone())),
+                    Ok(BrowserPoll::Receiver(receiver.clone())),
+                    Ok(BrowserPoll::TimedOut),
+                ],
+                in_factory,
+            ))
+        })
+        .unwrap();
+        assert_eq!(result, [receiver]);
+        assert!(closed.get());
+    }
+
+    #[test]
+    fn continues_after_search_started_until_a_receiver_is_resolved() {
+        let receiver = DiscoveredReceiver {
+            name: "Receiver".into(),
+            address: SocketAddr::from(([192, 168, 1, 20], 8009)),
+        };
+        let closed = Rc::new(Cell::new(false));
+        let in_factory = closed.clone();
+        let search_started = poll_service_event(mdns_sd::ServiceEvent::SearchStarted(
+            "_googlecast._tcp.local.".into(),
+        ));
+        let result = discover_with(Duration::from_millis(100), || {
+            Ok(fake(
+                [
+                    Ok(search_started),
+                    Ok(BrowserPoll::Receiver(receiver.clone())),
+                    Ok(BrowserPoll::TimedOut),
                 ],
                 in_factory,
             ))
@@ -348,7 +388,7 @@ mod tests {
     #[test]
     fn stops_at_the_receiver_limit() {
         let events = (1..=40).map(|last| {
-            Ok(Some(DiscoveredReceiver {
+            Ok(BrowserPoll::Receiver(DiscoveredReceiver {
                 name: format!("Receiver {last}"),
                 address: SocketAddr::from(([10, 0, 0, last], 8009)),
             }))
