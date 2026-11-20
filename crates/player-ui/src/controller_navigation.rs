@@ -9,7 +9,7 @@ use slint::{
 use std::{cell::RefCell, rc::Rc, time::Duration};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum ControllerAction {
+pub(super) enum ControllerAction {
     FocusPrevious,
     FocusNext,
     Activate,
@@ -107,7 +107,7 @@ fn process_events(
     }
 }
 
-fn apply_action(
+pub(super) fn apply_action(
     ui: &PlayerWindow,
     state: &Rc<RefCell<UiState>>,
     engine: &Option<Rc<Engine>>,
