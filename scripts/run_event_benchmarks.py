@@ -60,7 +60,8 @@ def locate(player, system, discovered=None):
     return shutil.which(player)
 
 
-def command_for(player, executable, scenario, media, subtitle, port, password, presentation='software-null'):
+def command_for(player, executable, scenario, media, subtitle, port, password,
+                presentation='software-null', mpv_executable=None):
     script = str(ROOT / 'crates/player-bench/assets/bench.lua')
     if player == 'mpv':
         args = ['--no-config', '--load-scripts=no', '--vo=null', '--ao=null', '--hwdec=no',
@@ -75,6 +76,8 @@ def command_for(player, executable, scenario, media, subtitle, port, password, p
         args = ['--headless', '--loop-playlist', '--benchmark-script', script]
         if presentation == 'native-window':
             args = ['--benchmark-script', script]
+        elif mpv_executable:
+            args += ['--mpv', mpv_executable]
         if scenario == 'speed2x': args += ['--speed', '2']
         if scenario == 'paused': args.append('--paused')
         if scenario == 'ass': args += ['--subtitle', str(subtitle)]
@@ -127,7 +130,7 @@ def stop_owned(process, records, snapshot):
         process.wait()
 
 
-def collect(player, executable, scenario, media, subtitle, directory, settings, system, trial, media_hash=None, subtitle_hash=None, snapshot=None):
+def collect(player, executable, scenario, media, subtitle, directory, settings, system, trial, media_hash=None, subtitle_hash=None, snapshot=None, mpv_executable=None):
     directory.mkdir(parents=True, exist_ok=False)
     port, password = 0, ''
     if player == 'vlc':
@@ -136,7 +139,7 @@ def collect(player, executable, scenario, media, subtitle, directory, settings, 
             port = reservation.getsockname()[1]
         password = secrets.token_urlsafe(18)
     presentation = settings.get('presentation', 'software-null')
-    command = command_for(player, executable, scenario, media, subtitle, port, password, presentation)
+    command = command_for(player, executable, scenario, media, subtitle, port, password, presentation, mpv_executable)
     cohort = dict(settings, media_sha256=media_hash or digest(media), scenario=scenario,
                   mode=('native-default-window' if presentation == 'native-window' else 'software-null-output') if player in CORE else 'frontend-default-diagnostic')
     if scenario == 'ass': cohort['subtitle_sha256'] = subtitle_hash or digest(subtitle)
@@ -317,7 +320,8 @@ def main():
         identity = (fixture.stat().st_size, fixture.stat().st_mtime_ns)
         if identity != identities[SCENARIOS[scenario]]:
             raise ValueError('Immutable fixture changed during session: ' + str(fixture))
-        case = collect(pid, executable, scenario, fixture, subtitle, output / 'cases' / f'{pid}-{scenario}-{trial}', session, system, trial, hashes[SCENARIOS[scenario]], subtitle_hash, snapshot)
+        mpv_executable = discovered.get('mpv') if system == 'windows' and discovered else None
+        case = collect(pid, executable, scenario, fixture, subtitle, output / 'cases' / f'{pid}-{scenario}-{trial}', session, system, trial, hashes[SCENARIOS[scenario]], subtitle_hash, snapshot, mpv_executable)
         if (fixture.stat().st_size, fixture.stat().st_mtime_ns) != identity:
             raise ValueError('Immutable fixture changed during trial: ' + str(fixture))
         cases.append(case)
