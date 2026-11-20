@@ -260,6 +260,43 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
         actions.borrow().last(),
         Some(&("seek-relative".into(), 3.0))
     );
+    actions.borrow_mut().clear();
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerPressed {
+            position: slint::LogicalPosition::new(700.0, 350.0),
+            button: slint::platform::PointerEventButton::Left,
+        });
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerMoved {
+            position: slint::LogicalPosition::new(731.0, 350.0),
+        });
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerReleased {
+            position: slint::LogicalPosition::new(731.0, 350.0),
+            button: slint::platform::PointerEventButton::Left,
+        });
+    assert!(
+        actions.borrow().is_empty(),
+        "31px drag stays below threshold"
+    );
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerPressed {
+            position: slint::LogicalPosition::new(700.0, 350.0),
+            button: slint::platform::PointerEventButton::Left,
+        });
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerMoved {
+            position: slint::LogicalPosition::new(732.0, 350.0),
+        });
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerReleased {
+            position: slint::LogicalPosition::new(732.0, 350.0),
+            button: slint::platform::PointerEventButton::Left,
+        });
+    assert_eq!(
+        actions.borrow().last(),
+        Some(&("seek-relative".into(), 1.6))
+    );
     ui.window()
         .dispatch_event(slint::platform::WindowEvent::PointerPressed {
             position: slint::LogicalPosition::new(700.0, 350.0),
@@ -275,6 +312,60 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
             button: slint::platform::PointerEventButton::Left,
         });
     assert_eq!(actions.borrow().last(), Some(&("volume".into(), 73.75)));
+    actions.borrow_mut().clear();
+    ui.set_volume(4.0);
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerPressed {
+            position: slint::LogicalPosition::new(700.0, 350.0),
+            button: slint::platform::PointerEventButton::Left,
+        });
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerMoved {
+            position: slint::LogicalPosition::new(700.0, 381.0),
+        });
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerReleased {
+            position: slint::LogicalPosition::new(700.0, 381.0),
+            button: slint::platform::PointerEventButton::Left,
+        });
+    assert!(
+        actions.borrow().is_empty(),
+        "31px drag stays below threshold"
+    );
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerPressed {
+            position: slint::LogicalPosition::new(700.0, 350.0),
+            button: slint::platform::PointerEventButton::Left,
+        });
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerMoved {
+            position: slint::LogicalPosition::new(700.0, 382.0),
+        });
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerReleased {
+            position: slint::LogicalPosition::new(700.0, 382.0),
+            button: slint::platform::PointerEventButton::Left,
+        });
+    assert_eq!(actions.borrow().last(), Some(&("volume".into(), 0.0)));
+    actions.borrow_mut().clear();
+    ui.set_volume(96.0);
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerPressed {
+            position: slint::LogicalPosition::new(700.0, 350.0),
+            button: slint::platform::PointerEventButton::Left,
+        });
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerMoved {
+            position: slint::LogicalPosition::new(700.0, 270.0),
+        });
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerReleased {
+            position: slint::LogicalPosition::new(700.0, 270.0),
+            button: slint::platform::PointerEventButton::Left,
+        });
+    assert_eq!(actions.borrow().last(), Some(&("volume".into(), 100.0)));
+    actions.borrow_mut().clear();
+    ui.set_volume(80.0);
     ui.window()
         .dispatch_event(slint::platform::WindowEvent::PointerScrolled {
             position: slint::LogicalPosition::new(700.0, 350.0),

@@ -67,3 +67,7 @@ Report behavior only. Do not include receiver names, addresses, certificate fing
 
 The desktop adapter now connects playwire to the existing player action/state path for Windows SMTC, macOS Now Playing, and Linux MPRIS. It publishes title, artist, album, playback state, seek position and supported transport capabilities; OS callbacks are queued back to the Slint event loop. Local file paths and artwork URLs are withheld from system metadata. Unit tests cover command routing, idempotent play/pause state, metadata, stop clearing, seek limits and per-track identity. A native libmpv acceptance test and tagged fixture are wired into the Linux native-controls workflow. Local Windows desktop/UI and renderer tests plus strict UI clippy pass; hosted all-platform session and coverage evidence is pending. This remains in progress until hosted OS checks and user-facing interaction are verified.
 
+## Touch and trackpad gesture implementation checkpoint
+
+The desktop video surface maps horizontal trackpad scroll and horizontal pointer/touch drags to relative seeking, and vertical scroll/drags to volume. The software-window UI test checks the 31px/32px gesture threshold, seek direction and ±15-second clamps, volume limits, scroll behavior, and disabled playback state. This remains in progress until physical trackpad and touchscreen behavior is verified; no feature medal is claimed.
+
