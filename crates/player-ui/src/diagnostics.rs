@@ -15,16 +15,24 @@ enum LogPlatform {
     Linux,
 }
 
+#[cfg(windows)]
+fn current_log_platform() -> LogPlatform {
+    LogPlatform::Windows
+}
+
+#[cfg(target_os = "macos")]
+fn current_log_platform() -> LogPlatform {
+    LogPlatform::MacOs
+}
+
+#[cfg(not(any(windows, target_os = "macos")))]
+fn current_log_platform() -> LogPlatform {
+    LogPlatform::Linux
+}
+
 pub(super) fn log_path() -> Result<PathBuf, String> {
-    let platform = if cfg!(windows) {
-        LogPlatform::Windows
-    } else if cfg!(target_os = "macos") {
-        LogPlatform::MacOs
-    } else {
-        LogPlatform::Linux
-    };
     log_path_for(
-        platform,
+        current_log_platform(),
         std::env::var_os("LOCALAPPDATA").map(PathBuf::from),
         std::env::var_os("XDG_STATE_HOME").map(PathBuf::from),
         std::env::var_os("HOME").map(PathBuf::from),
@@ -113,14 +121,7 @@ pub(super) fn open_system_log(
 }
 
 fn system_log_command(path: &std::path::Path) -> Command {
-    let platform = if cfg!(windows) {
-        LogPlatform::Windows
-    } else if cfg!(target_os = "macos") {
-        LogPlatform::MacOs
-    } else {
-        LogPlatform::Linux
-    };
-    system_log_command_for(platform, path)
+    system_log_command_for(current_log_platform(), path)
 }
 
 fn system_log_command_for(platform: LogPlatform, path: &std::path::Path) -> Command {
@@ -280,5 +281,13 @@ mod tests {
             assert_eq!(command.get_program(), program);
             assert_eq!(command.get_args().last(), Some(path.as_os_str()));
         }
+    }
+
+    #[test]
+    fn append_reports_a_log_path_without_a_parent() {
+        assert_eq!(
+            append_at(std::path::Path::new(""), "event").unwrap_err(),
+            "Log path has no parent folder"
+        );
     }
 }
