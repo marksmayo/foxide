@@ -119,7 +119,9 @@ impl Api {
             vec!["libmpv.so.2".into()]
         };
         let mut errors = Vec::new();
+        let mut runtime_file_found = false;
         for path in candidates {
+            runtime_file_found |= path.is_file();
             // SAFETY: library stays owned by Api; every symbol has the documented
             // C signature from the pinned mpv client/render headers. No unload
             // occurs until the last client/render Arc has been released.
@@ -135,6 +137,16 @@ impl Api {
                 Ok(api) => return Ok(Arc::new(api)),
                 Err(error) => errors.push(error),
             }
+        }
+        if cfg!(windows) && !runtime_file_found {
+            return Err(
+                "Playback runtime is not installed. Use Start Menu > Foxide > Install playback runtime, then restart Foxide. See Help > Open diagnostic log for details.".into(),
+            );
+        }
+        if cfg!(windows) {
+            return Err(
+                "Playback runtime was found, but Windows could not initialize it. A required runtime DLL may be missing or blocked. Re-run Start Menu > Foxide > Install playback runtime, then restart Foxide. See Help > Open diagnostic log.".into(),
+            );
         }
         Err(format!(
             "Playback engine unavailable: {}",
@@ -793,6 +805,23 @@ mod snapshot_allocation_tests {
             thread::sleep(Duration::from_millis(50));
         }
         panic!("libmpv snapshot did not expose embedded title, artist, and album metadata");
+    }
+}
+
+#[cfg(all(test, windows))]
+mod missing_runtime_tests {
+    use super::Api;
+
+    #[test]
+    fn absent_installed_runtime_explains_how_to_recover() {
+        let Err(error) = Api::load(None) else {
+            // Developer machines may already have the optional runtime installed.
+            return;
+        };
+        assert!(
+            error.contains("Install playback runtime"),
+            "Missing runtime should give the installed-app recovery step; got: {error}"
+        );
     }
 }
 
