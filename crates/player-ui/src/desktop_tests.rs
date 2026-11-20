@@ -295,6 +295,20 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
     );
     assert_eq!(actions.borrow().last(), Some(&("open".into(), 0.0)));
     actions.borrow_mut().clear();
+    controller_navigation::apply_action(
+        &ui,
+        &controller_state,
+        &None,
+        controller_navigation::ControllerAction::FocusNext,
+    );
+    controller_navigation::apply_action(
+        &ui,
+        &controller_state,
+        &None,
+        controller_navigation::ControllerAction::Activate,
+    );
+    assert_eq!(actions.borrow().last(), Some(&("playlist".into(), 0.0)));
+    actions.borrow_mut().clear();
     ui.set_loaded(true);
     ui.set_volume(80.0);
     ui.window()
