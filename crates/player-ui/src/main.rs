@@ -1192,7 +1192,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let ui = PlayerWindow::new()?;
     diagnostics::record("Application started");
     ui.on_open_diagnostic_log(|| {
-        if let Err(error) = diagnostics::open_log() {
+        if let Err(error) = diagnostics::open_log(diagnostics::log_path, |path| {
+            diagnostics::open_system_log(path, |command| {
+                command
+                    .spawn()
+                    .map(|_| ())
+                    .map_err(|error| error.to_string())
+            })
+        }) {
             diagnostics::record("Could not open diagnostic log");
             eprintln!("Could not open diagnostic log: {error}");
         }
