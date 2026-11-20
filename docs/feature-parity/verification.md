@@ -67,3 +67,7 @@ Report behavior only. Do not include receiver names, addresses, certificate fing
 
 The desktop adapter now connects playwire to the existing player action/state path for Windows SMTC, macOS Now Playing, and Linux MPRIS. It publishes title, artist, album, playback state, seek position and supported transport capabilities; OS callbacks are queued back to the Slint event loop. Local file paths and artwork URLs are withheld from system metadata. Unit tests cover command routing, idempotent play/pause state, metadata, stop clearing, seek limits and per-track identity. A native libmpv acceptance test and tagged fixture are wired into the Linux native-controls workflow. Local Windows desktop/UI and renderer tests plus strict UI clippy pass; hosted all-platform session and coverage evidence is pending. This remains in progress until hosted OS checks and user-facing interaction are verified.
 
+## Game controller navigation implementation checkpoint
+
+The desktop now polls standardized gamepad events and routes D-pad focus traversal, confirm/back, playback toggle and previous/next through Slint or the shared playback action path. It surfaces controller connection and disconnection events without publishing device names. Mapping tests cover supported and ignored controls. Linux CI explicitly installs libudev development headers for the gilrs backend. This remains in progress until physical hot-plug and focus-order behavior is verified on supported desktop platforms.
+

@@ -1,3 +1,4 @@
+mod controller_navigation;
 mod profile_ui;
 mod shader_ui;
 mod system_media;
@@ -1279,6 +1280,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         )?;
     }
     install_controls(&ui, &state, &engine);
+    let _controller_timer = controller_navigation::install(&ui, state.clone(), engine.clone());
     shader_ui::install(&ui, &engine);
     profile_ui::install(&ui, &engine);
     if let Some(engine) = &engine {
