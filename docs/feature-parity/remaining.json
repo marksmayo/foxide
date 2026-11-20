@@ -98,7 +98,7 @@
       "name": "System media-control integration",
       "group": "Interface",
         "stage": "in_progress",
-        "acceptance": "Implementation is underway with a shared playwire adapter for Windows SMTC, macOS Now Playing, and Linux MPRIS. Play/pause, previous/next, seek, title/artist/album, playback state, and transport capabilities are wired through the player action path. Unit tests cover event routing, metadata publication, track identity, and seek behavior. A native libmpv metadata check is configured in CI but has not yet passed. Platform session interaction and user-visible behavior remain unverified; do not count this gap as closed until that evidence is recorded."
+        "acceptance": "A shared playwire adapter connects Windows SMTC, macOS Now Playing, and Linux MPRIS. The OS media session attaches as soon as the desktop engine is ready, including before a track loads; transient window readiness retries are rate-limited. Play/pause, previous/next, seek, title/artist/album, playback state, and transport capabilities use the player action path. Unit tests cover event routing, idle attachment retry policy, metadata publication, track identity, and seek behavior. A native libmpv metadata check is configured in CI but has not yet passed. Platform session interaction and user-visible behavior remain unverified; do not count this gap as closed until that evidence is recorded."
     },
     {
       "id": "compact_music_view",
