@@ -21,6 +21,7 @@ mod generated {
     slint::include_modules!();
 }
 use generated::*;
+mod diagnostics;
 mod network_ui;
 mod preview;
 mod updates_ui;
@@ -1189,6 +1190,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .renderer_name("femtovg".into())
         .select()?;
     let ui = PlayerWindow::new()?;
+    diagnostics::record("Application started");
+    ui.on_open_diagnostic_log(|| {
+        if let Err(error) = diagnostics::open_log(diagnostics::log_path, |path| {
+            diagnostics::open_system_log(path, |command| {
+                command
+                    .spawn()
+                    .map(|_| ())
+                    .map_err(|error| error.to_string())
+            })
+        }) {
+            diagnostics::record("Could not open diagnostic log");
+            eprintln!("Could not open diagnostic log: {error}");
+        }
+    });
     let selected_helper = args
         .yt_dlp
         .as_deref()
@@ -1233,11 +1248,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let engine = match startup_engine {
         Ok(engine) => Some(Rc::new(engine)),
         Err(error) => {
+            diagnostics::record(&format!("Playback engine initialization failed: {error}"));
             ui.set_status(error.clone().into());
             ui.set_diagnostics(error.into());
             None
         }
     };
+    if engine.is_some() {
+        diagnostics::record("Playback engine initialized");
+    }
     if let Some(engine) = &engine {
         let weak_size = ui.as_weak();
         let weak_frame = ui.as_weak();
