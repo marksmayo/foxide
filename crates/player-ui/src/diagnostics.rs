@@ -67,9 +67,20 @@ fn append_at(path: &std::path::Path, event: &str) -> Result<(), String> {
 
 pub(super) fn open_log() -> Result<(), String> {
     let path = log_path()?;
+    open_log_at(&path, open_system_log)
+}
+
+fn open_log_at(
+    path: &std::path::Path,
+    open: impl FnOnce(&std::path::Path) -> Result<(), String>,
+) -> Result<(), String> {
     if !path.exists() {
-        record("Foxide started; no diagnostic events recorded yet");
+        append_at(path, "Diagnostic log opened; no earlier events recorded")?;
     }
+    open(path)
+}
+
+fn open_system_log(path: &std::path::Path) -> Result<(), String> {
     #[cfg(windows)]
     let mut command = {
         let mut command = Command::new("explorer.exe");
@@ -113,6 +124,27 @@ mod tests {
                 .unwrap()
                 .contains("after rotation")
         );
+        let _ = fs::remove_dir_all(temp);
+    }
+
+    #[test]
+    fn opening_a_missing_log_creates_it_before_calling_the_viewer() {
+        let temp = std::env::temp_dir().join(format!("foxide-log-open-{}", std::process::id()));
+        let path = temp.join("foxide.log");
+        let _ = fs::remove_dir_all(&temp);
+        let mut viewer_called = false;
+        open_log_at(&path, |opened| {
+            viewer_called = true;
+            assert_eq!(opened, path);
+            assert!(
+                fs::read_to_string(opened)
+                    .unwrap()
+                    .contains("no earlier events recorded")
+            );
+            Ok(())
+        })
+        .unwrap();
+        assert!(viewer_called);
         let _ = fs::remove_dir_all(temp);
     }
 }
