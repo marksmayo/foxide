@@ -102,7 +102,10 @@ unsafe fn load_library(path: &std::path::Path) -> Result<Library, String> {
 }
 
 impl Api {
-    fn load(helper: Option<&player_services::VideoSiteTool>) -> Result<Arc<Self>, String> {
+    fn load(
+        helper: Option<&player_services::VideoSiteTool>,
+        thumbnail: bool,
+    ) -> Result<Arc<Self>, String> {
         let candidates: Vec<PathBuf> = if let Some(path) = std::env::var_os("FOXIDE_LIBMPV") {
             vec![path.into()]
         } else if cfg!(windows) {
@@ -130,7 +133,7 @@ impl Api {
                     continue;
                 }
             };
-            let loaded = unsafe { Self::from_library(library, helper) };
+            let loaded = unsafe { Self::from_library(library, helper, thumbnail) };
             match loaded {
                 Ok(api) => return Ok(Arc::new(api)),
                 Err(error) => errors.push(error),
@@ -145,6 +148,7 @@ impl Api {
     unsafe fn from_library(
         library: Library,
         helper: Option<&player_services::VideoSiteTool>,
+        thumbnail: bool,
     ) -> Result<Self, String> {
         // SAFETY: caller supplies an owned libmpv library. All functions are loaded
         // before creating a client so missing symbols cannot leak the client.
@@ -227,6 +231,7 @@ impl Api {
                 (c"keep-open", c"yes"),
                 (c"terminal", c"no"),
                 (c"input-default-bindings", c"no"),
+                (c"audio", if thumbnail { c"no" } else { c"auto" }),
             ] {
                 if option(api.handle, name.as_ptr(), value.as_ptr()) < 0 {
                     return Err("libmpv rejected a required playback option".into());
@@ -469,10 +474,18 @@ impl Engine {
     }
 
     pub fn with_video_site_helper(helper: Option<&std::path::Path>) -> Result<Self, String> {
+        Self::create(helper, false)
+    }
+
+    pub(crate) fn new_thumbnail() -> Result<Self, String> {
+        Self::create(None, true)
+    }
+
+    fn create(helper: Option<&std::path::Path>, thumbnail: bool) -> Result<Self, String> {
         let helper = helper
             .map(player_services::VideoSiteTool::new)
             .transpose()?;
-        let api = Api::load(helper.as_ref())?;
+        let api = Api::load(helper.as_ref(), thumbnail)?;
         let ready = Arc::new(AtomicBool::new(false));
         let stop = Arc::new(AtomicBool::new(false));
         let snapshot = Arc::new(Mutex::new(Snapshot::default()));
@@ -486,7 +499,11 @@ impl Engine {
         let (client, active, stopped, output) =
             (api.clone(), ready.clone(), stop.clone(), snapshot.clone());
         thread::Builder::new()
-            .name("foxide-engine".into())
+            .name(if thumbnail {
+                "foxide-thumbnail-engine".into()
+            } else {
+                "foxide-engine".into()
+            })
             .spawn(move || {
                 let mut last_path = String::new();
                 let mut requested_path: Arc<str> = Arc::from("");
