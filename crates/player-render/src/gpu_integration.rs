@@ -106,7 +106,10 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
         .unwrap();
     let ui = VideoProbe::new().unwrap();
     let engine = Rc::new(Engine::new().unwrap());
+    let thumbnails = Arc::new(crate::ThumbnailController::new());
     let samples = Rc::new(RefCell::new(Samples::default()));
+    let ready_buckets = Rc::new(RefCell::new(HashSet::<u64>::new()));
+    let second_requested = Rc::new(std::cell::Cell::new(false));
     let graphics = Rc::new(RefCell::new(None::<glow::Context>));
     let started = Instant::now();
     let weak_size = ui.as_weak();
@@ -116,9 +119,13 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
     let errors = samples.clone();
     let observations = samples.clone();
     let load_engine = engine.clone();
-    attach_observed(
+    let observer_thumbnails = thumbnails.clone();
+    let observer_buckets = ready_buckets.clone();
+    let observer_second_requested = second_requested.clone();
+    attach_inner(
         ui.window(),
         &engine,
+        Some(thumbnails.clone()),
         move || {
             weak_size
                 .upgrade()
@@ -131,6 +138,26 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
         move |frame| {
             if let Some(w) = weak_image.upgrade() {
                 w.set_frame(frame);
+            }
+        },
+        {
+            let weak = ui.as_weak();
+            let controller = thumbnails.clone();
+            let buckets = ready_buckets.clone();
+            move |frame, available| {
+                if let Some(w) = weak.upgrade() {
+                    w.set_thumbnail_frame(frame.clone());
+                    w.set_thumbnail_available(available);
+                }
+                if available {
+                    if let Some(request) = controller.current_request() {
+                        buckets
+                            .borrow_mut()
+                            .insert((request.position / 2.0).floor() as u64);
+                    }
+                    assert_eq!(frame.size().width, 256);
+                    assert_eq!(frame.size().height, 144);
+                }
             }
         },
         move |error| errors.borrow_mut().errors.push(error),
@@ -162,11 +189,15 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
                     *graphics.borrow_mut() = Some(gl);
                 }
             } else if matches!(state, slint::RenderingState::AfterRendering) {
-                observations.borrow_mut().presentations += 1;
+                let presentation = {
+                    let mut samples = observations.borrow_mut();
+                    samples.presentations += 1;
+                    samples.presentations
+                };
                 let Some(w) = weak_probe.upgrade() else {
                     return;
                 };
-                if observations.borrow().presentations == 1 {
+                if presentation == 1 {
                     if w.get_frame().size().width != 0 || w.get_frame().size().height != 0 {
                         observations
                             .borrow_mut()
@@ -178,6 +209,11 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
                     load_engine
                         .command(vec!["loadfile".into(), fixture.clone(), "replace".into()])
                         .unwrap();
+                    assert!(observer_thumbnails.request(fixture.clone(), 1, 2.0, 10.0));
+                } else if observer_buckets.borrow().contains(&1)
+                    && !observer_second_requested.replace(true)
+                {
+                    assert!(observer_thumbnails.request(fixture.clone(), 1, 4.0, 10.0));
                 }
                 let size = w.window().size();
                 if size.width == 0 || size.height < 8 {
@@ -264,11 +300,17 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
     .unwrap();
     let timer = slint::Timer::default();
     let sample_clock = samples.clone();
+    let timer_buckets = ready_buckets.clone();
     timer.start(
         slint::TimerMode::Repeated,
         Duration::from_millis(20),
         move || {
-            if sample_clock.borrow().timing.finished(started.elapsed()) {
+            let elapsed = started.elapsed();
+            if (sample_clock.borrow().timing.finished(elapsed)
+                && timer_buckets.borrow().contains(&1)
+                && timer_buckets.borrow().contains(&2))
+                || elapsed >= Duration::from_secs(20)
+            {
                 slint::quit_event_loop().unwrap();
             }
         },
@@ -323,137 +365,10 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
         "Video stalled: only {} distinct composited frames over five seconds after first presented video",
         samples.frames.len()
     );
-}
-
-#[test]
-#[ignore = "Requires an interactive or Xvfb OpenGL display, libmpv, and FOXIDE_RENDER_FIXTURE"]
-fn hover_thumbnails_decode_independently_and_publish_two_gpu_cache_slots() {
-    let fixture = std::env::var("FOXIDE_RENDER_FIXTURE")
-        .expect("Set FOXIDE_RENDER_FIXTURE to the asymmetric test video");
-    slint::BackendSelector::new()
-        .backend_name("winit".into())
-        .renderer_name("femtovg".into())
-        .select()
-        .unwrap();
-    let ui = VideoProbe::new().unwrap();
-    let engine = Rc::new(Engine::new().unwrap());
-    let thumbnails = Arc::new(crate::ThumbnailController::new());
-    let ready_buckets = Rc::new(RefCell::new(HashSet::<u64>::new()));
-    let second_requested = Rc::new(std::cell::Cell::new(false));
-    let errors = Rc::new(RefCell::new(Vec::<String>::new()));
-    let presentations = Rc::new(std::cell::Cell::new(0usize));
-    let started = Instant::now();
-
-    let image_ui = ui.as_weak();
-    let thumbnail_ui = ui.as_weak();
-    let error_events = errors.clone();
-    let error_ui = ui.as_weak();
-    let wake_ui = ui.as_weak();
-    let observer_engine = engine.clone();
-    let observer_thumbnails = thumbnails.clone();
-    let observer_buckets = ready_buckets.clone();
-    let observer_second_requested = second_requested.clone();
-    let observer_presentations = presentations.clone();
-    let observer_fixture = fixture.clone();
-    let callback_buckets = ready_buckets.clone();
-
-    attach_inner(
-        ui.window(),
-        &engine,
-        Some(thumbnails.clone()),
-        {
-            let weak = ui.as_weak();
-            move || {
-                weak.upgrade()
-                    .map(|ui| {
-                        let size = ui.window().size();
-                        (size.width, size.height)
-                    })
-                    .unwrap_or((1, 1))
-            }
-        },
-        move |frame| {
-            if let Some(ui) = image_ui.upgrade() {
-                ui.set_frame(frame);
-            }
-        },
-        move |frame, available| {
-            if let Some(ui) = thumbnail_ui.upgrade() {
-                ui.set_thumbnail_frame(frame.clone());
-                ui.set_thumbnail_available(available);
-            }
-            if available {
-                if let Some(request) = thumbnails.current_request() {
-                    callback_buckets
-                        .borrow_mut()
-                        .insert((request.position / 2.0).floor() as u64);
-                }
-                assert_eq!(frame.size().width, 256);
-                assert_eq!(frame.size().height, 144);
-            }
-        },
-        move |message| {
-            error_events.borrow_mut().push(message.clone());
-            if let Some(ui) = error_ui.upgrade() {
-                ui.set_frame(slint::Image::default());
-            }
-        },
-        Arc::new(move || {
-            let weak = wake_ui.clone();
-            let _ = slint::invoke_from_event_loop(move || {
-                if let Some(ui) = weak.upgrade() {
-                    ui.window().request_redraw();
-                }
-            });
-        }),
-        move |state, _| {
-            if !matches!(state, slint::RenderingState::AfterRendering) {
-                return;
-            }
-            let presentation = observer_presentations.get();
-            observer_presentations.set(presentation + 1);
-            if presentation == 0 {
-                observer_engine
-                    .command(vec![
-                        "loadfile".into(),
-                        observer_fixture.clone(),
-                        "replace".into(),
-                    ])
-                    .unwrap();
-                assert!(observer_thumbnails.request(observer_fixture.clone(), 1, 2.0, 10.0,));
-            } else if observer_buckets.borrow().contains(&1)
-                && !observer_second_requested.replace(true)
-            {
-                assert!(observer_thumbnails.request(observer_fixture.clone(), 1, 4.0, 10.0,));
-            }
-        },
-    )
-    .unwrap();
-
-    let timer = slint::Timer::default();
-    let timer_buckets = ready_buckets.clone();
-    timer.start(
-        slint::TimerMode::Repeated,
-        Duration::from_millis(20),
-        move || {
-            if timer_buckets.borrow().contains(&1) && timer_buckets.borrow().contains(&2)
-                || started.elapsed() >= Duration::from_secs(15)
-            {
-                slint::quit_event_loop().unwrap();
-            }
-        },
-    );
-    ui.run().unwrap();
-
     let buckets = ready_buckets.borrow();
     assert!(buckets.contains(&1), "first hover preview was not rendered");
     assert!(
         buckets.contains(&2),
         "second hover preview did not use another cache slot"
-    );
-    assert!(
-        errors.borrow().is_empty(),
-        "thumbnail rendering errors: {:?}",
-        errors.borrow()
     );
 }
