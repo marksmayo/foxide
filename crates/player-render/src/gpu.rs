@@ -623,6 +623,7 @@ fn attach_inner(
                                         Ok(next) => {
                                             preview_renderer = Some(next);
                                             preview_engine = Some(engine.clone());
+                                            engine.ready.store(true, Ordering::Release);
                                         }
                                         Err(message) => error(message),
                                     }
