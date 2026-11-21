@@ -122,6 +122,7 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
     let observer_thumbnails = thumbnails.clone();
     let observer_buckets = ready_buckets.clone();
     let observer_second_requested = second_requested.clone();
+    let observer_fixture = fixture.clone();
     attach_inner(
         ui.window(),
         &engine,
@@ -207,13 +208,17 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
                     // This only queues a control command; no normal libmpv API
                     // is called on the rendering thread.
                     load_engine
-                        .command(vec!["loadfile".into(), fixture.clone(), "replace".into()])
+                        .command(vec![
+                            "loadfile".into(),
+                            observer_fixture.clone(),
+                            "replace".into(),
+                        ])
                         .unwrap();
-                    assert!(observer_thumbnails.request(fixture.clone(), 1, 2.0, 10.0));
+                    assert!(observer_thumbnails.request(observer_fixture.clone(), 1, 2.0, 10.0));
                 } else if observer_buckets.borrow().contains(&1)
                     && !observer_second_requested.replace(true)
                 {
-                    assert!(observer_thumbnails.request(fixture.clone(), 1, 4.0, 10.0));
+                    assert!(observer_thumbnails.request(observer_fixture.clone(), 1, 4.0, 10.0));
                 }
                 let size = w.window().size();
                 if size.width == 0 || size.height < 8 {
@@ -366,7 +371,32 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
         samples.frames.len()
     );
     let buckets = ready_buckets.borrow();
-    assert!(buckets.contains(&1), "first hover preview was not rendered");
+    let preview_engine = thumbnails.preview_engine();
+    let preview_snapshot = preview_engine.as_ref().and_then(|engine| engine.snapshot());
+    assert!(
+        buckets.contains(&1),
+        "first hover preview was not rendered; preview_engine={} loaded={} request_matches={} path_matches={} position={} duration={} error={:?} renderer_errors={:?}",
+        preview_engine.is_some(),
+        preview_snapshot
+            .as_ref()
+            .is_some_and(|snapshot| snapshot.loaded),
+        preview_snapshot
+            .as_ref()
+            .is_some_and(|snapshot| snapshot.requested_path.as_ref() == fixture.as_str()),
+        preview_snapshot
+            .as_ref()
+            .is_some_and(|snapshot| snapshot.path == fixture),
+        preview_snapshot
+            .as_ref()
+            .map_or(-1.0, |snapshot| snapshot.position),
+        preview_snapshot
+            .as_ref()
+            .map_or(-1.0, |snapshot| snapshot.duration),
+        preview_snapshot
+            .as_ref()
+            .map(|snapshot| snapshot.error.as_str()),
+        samples.errors
+    );
     assert!(
         buckets.contains(&2),
         "second hover preview did not use another cache slot"
