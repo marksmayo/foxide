@@ -4,11 +4,19 @@ mod gpu;
 #[cfg(feature = "desktop")]
 mod native;
 #[cfg(feature = "desktop")]
+mod thumbnail_cache;
+#[cfg(feature = "desktop")]
+mod thumbnails;
+#[cfg(feature = "desktop")]
 pub use gpu::attach;
 #[cfg(feature = "gpu-integration")]
 pub use gpu::attach_observed;
 #[cfg(feature = "desktop")]
+pub use gpu::attach_with_thumbnails;
+#[cfg(feature = "desktop")]
 pub use native::{Engine, Snapshot, Track};
+#[cfg(feature = "desktop")]
+pub use thumbnails::ThumbnailController;
 
 #[cfg(any(feature = "desktop", test))]
 mod render_contract;

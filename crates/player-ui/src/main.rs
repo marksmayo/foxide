@@ -246,6 +246,9 @@ fn refresh(
     if snapshot.loaded && matches_selection {
         let mut state = state.borrow_mut();
         let newly_loaded = !state.loaded;
+        if newly_loaded {
+            state.generation = state.generation.wrapping_add(1);
+        }
         state.confirm_loaded(snapshot.duration);
         state.paused = snapshot.paused;
         state.muted = snapshot.muted;
@@ -1238,14 +1241,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             None
         }
     };
+    let thumbnails = Arc::new(player_render::ThumbnailController::new());
     if let Some(engine) = &engine {
         let weak_size = ui.as_weak();
         let weak_frame = ui.as_weak();
         let weak_error = ui.as_weak();
         let weak_wake = ui.as_weak();
-        player_render::attach(
+        player_render::attach_with_thumbnails(
             ui.window(),
             engine,
+            thumbnails.clone(),
             move || {
                 weak_size
                     .upgrade()
@@ -1263,6 +1268,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     ui.set_video_frame(frame);
                 }
             },
+            {
+                let weak = ui.as_weak();
+                move |frame, available| {
+                    if let Some(ui) = weak.upgrade() {
+                        ui.set_thumbnail_frame(frame);
+                        ui.set_thumbnail_available(available);
+                    }
+                }
+            },
             move |error| {
                 if let Some(ui) = weak_error.upgrade() {
                     ui.set_status(error.into());
@@ -1277,6 +1291,44 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 });
             }),
         )?;
+    }
+    if let Some(playback) = engine.clone() {
+        let weak = ui.as_weak();
+        let preview = thumbnails.clone();
+        let controller = state.clone();
+        ui.on_thumbnail_hover(move |position| {
+            if let Some(ui) = weak.upgrade() {
+                let snapshot = playback.snapshot();
+                if let Some(snapshot) = snapshot
+                    && snapshot.loaded
+                    && snapshot.duration.is_finite()
+                    && snapshot.duration > 0.0
+                    && snapshot
+                        .tracks
+                        .iter()
+                        .any(|track| track.kind == "video" && track.selected)
+                {
+                    let position = f64::from(position);
+                    ui.set_thumbnail_label(clock(position.clamp(0.0, snapshot.duration)).into());
+                    let generation = controller.borrow().generation;
+                    if !preview.request(snapshot.path, generation, position, snapshot.duration) {
+                        ui.set_thumbnail_available(false);
+                    }
+                    return;
+                }
+                preview.clear();
+                ui.set_thumbnail_available(false);
+            }
+        });
+        let weak = ui.as_weak();
+        let preview = thumbnails.clone();
+        ui.on_thumbnail_leave(move || {
+            preview.clear();
+            if let Some(ui) = weak.upgrade() {
+                ui.set_thumbnail_available(false);
+                ui.set_thumbnail_label(String::new().into());
+            }
+        });
     }
     install_controls(&ui, &state, &engine);
     shader_ui::install(&ui, &engine);
@@ -1304,6 +1356,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ui.on_native_snapshot_ready(move || {
             if let Some(ui) = weak.upgrade() {
                 if let Some(snapshot) = status_source.snapshot() {
+                    if snapshot.path != previous.borrow().path {
+                        thumbnails.clear();
+                        ui.set_thumbnail_available(false);
+                    }
                     refresh(&ui, &controller, &snapshot, &mut previous.borrow_mut());
                     if snapshot.loaded
                         && controller.borrow().loaded
