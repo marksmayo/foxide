@@ -844,7 +844,7 @@ mod missing_runtime_tests {
 
     #[test]
     fn absent_installed_runtime_explains_how_to_recover() {
-        let Err(error) = Api::load(None) else {
+        let Err(error) = Api::load(None, false) else {
             // Developer machines may already have the optional runtime installed.
             return;
         };
