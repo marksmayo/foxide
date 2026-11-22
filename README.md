@@ -3,11 +3,11 @@
 <!-- source-lines:start -->
 ![Lua source lines](https://img.shields.io/badge/Lua%20source%20lines-105-000080)
 ![PowerShell source lines](https://img.shields.io/badge/PowerShell%20source%20lines-206-5391fe)
-![Python source lines](https://img.shields.io/badge/Python%20source%20lines-5726-3776ab)
-![Rust source lines](https://img.shields.io/badge/Rust%20source%20lines-14279-dea584)
-![Slint source lines](https://img.shields.io/badge/Slint%20source%20lines-385-7c3aed)
-![TOML source lines](https://img.shields.io/badge/TOML%20source%20lines-225-9c4221)
-![YAML source lines](https://img.shields.io/badge/YAML%20source%20lines-1264-cb171e)
+![Python source lines](https://img.shields.io/badge/Python%20source%20lines-5926-3776ab)
+![Rust source lines](https://img.shields.io/badge/Rust%20source%20lines-17598-dea584)
+![Slint source lines](https://img.shields.io/badge/Slint%20source%20lines-506-7c3aed)
+![TOML source lines](https://img.shields.io/badge/TOML%20source%20lines-239-9c4221)
+![YAML source lines](https://img.shields.io/badge/YAML%20source%20lines-1402-cb171e)
 
 Physical source lines include comments and blank lines in crates/, scripts/, tests/, .github/, packaging/ and the root Cargo manifest. Vendored code, lockfiles, generated reports and build output are excluded. Refresh with python scripts/source_lines.py.
 <!-- source-lines:end -->
@@ -71,13 +71,13 @@ Overall feature gold counts each feature once across applicable platforms; perfo
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
-| mpv | 72 | 27 | 8 | 107 |
-| Foxide | 66 | 46 | 21 | 133 |
-| VLC | 61 | 13 | 22 | 96 |
+| mpv | 76 | 24 | 7 | 107 |
+| Foxide | 66 | 47 | 20 | 133 |
+| VLC | 56 | 16 | 24 | 96 |
 | IINA | 33 | 0 | 0 | 33 |
 | Infuse | 21 | 0 | 0 | 21 |
 | Kodi | 20 | 0 | 0 | 20 |
-| SMPlayer | 19 | 3 | 5 | 27 |
+| SMPlayer | 19 | 2 | 6 | 27 |
 | MPC-BE | 19 | 0 | 0 | 19 |
 | MPC-HC | 15 | 0 | 0 | 15 |
 | PotPlayer | 14 | 0 | 0 | 14 |
@@ -94,10 +94,10 @@ Overall feature gold counts each feature once across applicable platforms; perfo
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
-| VLC | 36 | 13 | 22 | 71 |
-| mpv | 35 | 27 | 8 | 70 |
-| Foxide | 27 | 46 | 21 | 94 |
-| SMPlayer | 4 | 3 | 5 | 12 |
+| mpv | 39 | 24 | 7 | 70 |
+| VLC | 31 | 16 | 24 | 71 |
+| Foxide | 27 | 47 | 20 | 94 |
+| SMPlayer | 4 | 2 | 6 | 12 |
 | FFplay | 0 | 0 | 0 | 0 |
 | GOM Player | 0 | 0 | 0 | 0 |
 | IINA | 0 | 0 | 0 | 0 |
@@ -144,9 +144,9 @@ Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CL
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
-| mpv | 58 | 16 | 5 | 79 |
-| Foxide | 47 | 23 | 11 | 81 |
-| VLC | 39 | 2 | 13 | 54 |
+| mpv | 60 | 14 | 5 | 79 |
+| Foxide | 47 | 24 | 10 | 81 |
+| VLC | 36 | 4 | 14 | 54 |
 | Kodi | 20 | 0 | 0 | 20 |
 | MPC-BE | 19 | 0 | 0 | 19 |
 | MPC-HC | 15 | 0 | 0 | 15 |
@@ -164,9 +164,9 @@ Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CL
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
-| mpv | 9 | 3 | 2 | 14 |
-| VLC | 4 | 0 | 5 | 9 |
-| Foxide | 2 | 10 | 2 | 14 |
+| mpv | 11 | 1 | 2 | 14 |
+| Foxide | 2 | 11 | 1 | 14 |
+| VLC | 1 | 2 | 6 | 9 |
 
 
 **Windows · Windowed playback · Foxide Desktop · Local**
@@ -279,10 +279,10 @@ Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CL
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
-| mpv | 44 | 5 | 1 | 50 |
-| Foxide | 40 | 8 | 4 | 52 |
+| mpv | 43 | 6 | 1 | 50 |
+| Foxide | 42 | 6 | 4 | 52 |
 | IINA | 33 | 0 | 0 | 33 |
-| VLC | 28 | 1 | 4 | 33 |
+| VLC | 27 | 2 | 4 | 33 |
 | Infuse | 21 | 0 | 0 | 21 |
 | Kodi | 19 | 0 | 0 | 19 |
 | SMPlayer | 13 | 0 | 0 | 13 |
@@ -295,9 +295,9 @@ Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CL
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
-| mpv | 8 | 5 | 1 | 14 |
-| VLC | 4 | 1 | 4 | 9 |
-| Foxide | 2 | 8 | 4 | 14 |
+| mpv | 7 | 6 | 1 | 14 |
+| Foxide | 4 | 6 | 4 | 14 |
+| VLC | 3 | 2 | 4 | 9 |
 
 <details><summary>macOS feature medals — shared gold</summary>
 
@@ -393,11 +393,11 @@ Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CL
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
-| Foxide | 54 | 15 | 6 | 75 |
-| VLC | 41 | 10 | 5 | 56 |
-| mpv | 41 | 6 | 2 | 49 |
+| Foxide | 52 | 17 | 6 | 75 |
+| mpv | 44 | 4 | 1 | 49 |
+| VLC | 40 | 10 | 6 | 56 |
 | Kodi | 18 | 0 | 0 | 18 |
-| SMPlayer | 16 | 3 | 5 | 24 |
+| SMPlayer | 16 | 2 | 6 | 24 |
 | Plex | 5 | 0 | 0 | 5 |
 | FFplay | 3 | 0 | 0 | 3 |
 
@@ -407,16 +407,16 @@ Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CL
 |---|---:|---:|---:|---:|
 | VLC | 14 | 10 | 0 | 24 |
 | Foxide | 12 | 8 | 4 | 24 |
-| SMPlayer | 4 | 3 | 5 | 12 |
+| SMPlayer | 4 | 2 | 6 | 12 |
 
 
 **Linux · Software decode · Foxide CLI · Hosted**
 
 | Player | 🥇 | 🥈 | 🥉 | Total |
 |---|---:|---:|---:|---:|
-| mpv | 6 | 6 | 2 | 14 |
-| Foxide | 5 | 7 | 2 | 14 |
-| VLC | 4 | 0 | 5 | 9 |
+| mpv | 9 | 4 | 1 | 14 |
+| Foxide | 3 | 9 | 2 | 14 |
+| VLC | 3 | 0 | 6 | 9 |
 
 <details><summary>Linux feature medals — shared gold</summary>
 
@@ -515,7 +515,7 @@ Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CL
 
 **Windows · Software decode · Foxide CLI · Hosted**
 
-![Windows: every measured metric](docs/scoreboards/windows-73f98f5fab-scenarios.svg)
+![Windows: every measured metric](docs/scoreboards/windows-ddf8b31419-scenarios.svg)
 
 **Windows · Windowed playback · Foxide Desktop · Local**
 
@@ -531,7 +531,7 @@ Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CL
 
 **macOS · Software decode · Foxide CLI · Hosted**
 
-![macOS: every measured metric](docs/scoreboards/macos-96a77626b5-scenarios.svg)
+![macOS: every measured metric](docs/scoreboards/macos-5fe680e539-scenarios.svg)
 
 #### Linux
 
@@ -539,17 +539,17 @@ Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CL
 
 **Linux · Native UI actions · default application windows · Hosted**
 
-![Linux: every measured metric](docs/scoreboards/linux-3ae5a55a68-scenarios.svg)
+![Linux: every measured metric](docs/scoreboards/linux-a0fb2cdfb5-scenarios.svg)
 
 **Linux · Software decode · Foxide CLI · Hosted**
 
-![Linux: every measured metric](docs/scoreboards/linux-71bda2b66d-scenarios.svg)
+![Linux: every measured metric](docs/scoreboards/linux-c6d8de6e11-scenarios.svg)
 
 ### Measurement details
 
-linux-hostedLinux-7.0.0-1017-azure-x86_64-with-glibc2.39x86_644 logical CPUs2026-11-16T12:16:40.779375+00:00linux-hosted · Linux-7.0.0-1017-azure-x86_64-with-glibc2.39 · x86_64 · 4 logical CPUs · 2026-11-16T12:16:40.779375+00:00.
+linux-hostedLinux-7.0.0-1014-aws-x86_64-with-glibc2.39x86_644 logical CPUs2026-11-22T21:11:18.745969+00:00linux-hosted · Linux-7.0.0-1014-aws-x86_64-with-glibc2.39 · x86_64 · 4 logical CPUs · 2026-11-22T21:11:18.745969+00:00.
 
-[Actions run](https://github.com/marksmayo/foxide/actions/runs/43864616988) · Source: `268ff8a0e8b86e9af7dcdef8ef0dc2421c076f23`. Freshness is per field; older platform results are retained with their original collection dates.
+[Actions run](https://github.com/marksmayo/foxide/actions/runs/45067453449) · Source: `a3c857c36fe1448484b98917aee021dc49c4c33e`. Freshness is per field; older platform results are retained with their original collection dates.
 
 Sampling: 8s after engine readiness, 2s warmup excluded; randomized order (seed 20261115); cache state uncontrolled.
 
@@ -557,39 +557,39 @@ Sampling: 8s after engine readiness, 2s warmup excluded; randomized order (seed 
 
 | Metric | Foxide | VLC | mpv |
 |---|---:|---:|---:|
-| Engine playback restart latency | **97.1** ms | — | 99.3 ms |
+| Engine playback restart latency | 93.7 ms | — | **89.3** ms |
 | Paused video CPU | **0** % of one core | — | **0** % of one core |
-| Paused video steady RAM | 112 MiB | — | **112** MiB |
-| 1080p H.264 CPU | 28.4 % of one core | **28.1** % of one core | 28.3 % of one core |
-| 1080p H.264 steady RAM | **131** MiB | 180 MiB | 131 MiB |
-| 4K60 HEVC 10-bit CPU | 174 % of one core | **173** % of one core | 174 % of one core |
+| Paused video steady RAM | 113 MiB | — | **112** MiB |
+| 1080p H.264 CPU | 28.7 % of one core | **28.6** % of one core | 28.7 % of one core |
+| 1080p H.264 steady RAM | 131 MiB | 171 MiB | **131** MiB |
+| 4K60 HEVC 10-bit CPU | 213 % of one core | 214 % of one core | **212** % of one core |
 | 4K60 HEVC 10-bit steady RAM | **466** MiB | 955 MiB | 466 MiB |
-| 4K AV1 CPU | 146 % of one core | — | **145** % of one core |
-| 4K AV1 steady RAM | **545** MiB | — | 545 MiB |
-| FLAC audio CPU | 0.65 % of one core | 0.823 % of one core | **0.487** % of one core |
-| FLAC audio steady RAM | 65.1 MiB | **39.3** MiB | 65.2 MiB |
-| 2× playback CPU | 55.8 % of one core | **55.8** % of one core | 56.1 % of one core |
+| 4K AV1 CPU | 165 % of one core | — | **164** % of one core |
+| 4K AV1 steady RAM | 546 MiB | — | **546** MiB |
+| FLAC audio CPU | **0.49** % of one core | 0.823 % of one core | 0.653 % of one core |
+| FLAC audio steady RAM | 65.2 MiB | **39.7** MiB | 65.3 MiB |
+| 2× playback CPU | 57.1 % of one core | **56.1** % of one core | 56.9 % of one core |
 | 2× playback steady RAM | 132 MiB | 180 MiB | **132** MiB |
-| Peak playback RAM | 131 MiB | 180 MiB | **131** MiB |
+| Peak playback RAM | 131 MiB | 171 MiB | **131** MiB |
 
 Bold values are gold medians. — means no eligible comparable result. Trial evidence and exact cohort IDs:
 
 | Metric | Cohort | Trials per eligible entrant |
 |---|---|---:|
-| Engine playback restart latency | `software-null-output/avc1080/edb99d706aa12466` | 3, 3 |
-| Paused video CPU | `software-null-output/paused/f7adaf40ba8131e3` | 3, 3 |
-| Paused video steady RAM | `software-null-output/paused/f7adaf40ba8131e3` | 3, 3 |
-| 1080p H.264 CPU | `software-null-output/avc1080/edb99d706aa12466` | 3, 3, 3 |
-| 1080p H.264 steady RAM | `software-null-output/avc1080/edb99d706aa12466` | 3, 3, 3 |
-| 4K60 HEVC 10-bit CPU | `software-null-output/hevc4k/acf7fe3b297ac162` | 3, 3, 3 |
-| 4K60 HEVC 10-bit steady RAM | `software-null-output/hevc4k/acf7fe3b297ac162` | 3, 3, 3 |
-| 4K AV1 CPU | `software-null-output/av14k/79234ecad2860a04` | 3, 3 |
-| 4K AV1 steady RAM | `software-null-output/av14k/79234ecad2860a04` | 3, 3 |
-| FLAC audio CPU | `software-null-output/flac/e671436203737949` | 3, 3, 3 |
-| FLAC audio steady RAM | `software-null-output/flac/e671436203737949` | 3, 3, 3 |
-| 2× playback CPU | `software-null-output/speed2x/d7761cb8b805df44` | 3, 3, 3 |
-| 2× playback steady RAM | `software-null-output/speed2x/d7761cb8b805df44` | 3, 3, 3 |
-| Peak playback RAM | `software-null-output/avc1080/edb99d706aa12466` | 3, 3, 3 |
+| Engine playback restart latency | `software-null-output/avc1080/b347a269e8a2c64d` | 3, 3 |
+| Paused video CPU | `software-null-output/paused/6ae3284754f1b2fb` | 3, 3 |
+| Paused video steady RAM | `software-null-output/paused/6ae3284754f1b2fb` | 3, 3 |
+| 1080p H.264 CPU | `software-null-output/avc1080/b347a269e8a2c64d` | 3, 3, 3 |
+| 1080p H.264 steady RAM | `software-null-output/avc1080/b347a269e8a2c64d` | 3, 3, 3 |
+| 4K60 HEVC 10-bit CPU | `software-null-output/hevc4k/38ae9ddcf75beb42` | 3, 3, 3 |
+| 4K60 HEVC 10-bit steady RAM | `software-null-output/hevc4k/38ae9ddcf75beb42` | 3, 3, 3 |
+| 4K AV1 CPU | `software-null-output/av14k/1f17d896c595b600` | 3, 3 |
+| 4K AV1 steady RAM | `software-null-output/av14k/1f17d896c595b600` | 3, 3 |
+| FLAC audio CPU | `software-null-output/flac/0e7ffdbae0abdbda` | 3, 3, 3 |
+| FLAC audio steady RAM | `software-null-output/flac/0e7ffdbae0abdbda` | 3, 3, 3 |
+| 2× playback CPU | `software-null-output/speed2x/0e4650fbcfdb9fc4` | 3, 3, 3 |
+| 2× playback steady RAM | `software-null-output/speed2x/0e4650fbcfdb9fc4` | 3, 3, 3 |
+| Peak playback RAM | `software-null-output/avc1080/b347a269e8a2c64d` | 3, 3, 3 |
 
 </details>
 
