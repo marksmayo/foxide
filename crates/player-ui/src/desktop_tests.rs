@@ -559,6 +559,7 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
     ui.set_loaded(false);
     ui.set_panel("".into());
     let state = Rc::new(RefCell::new(UiState::default()));
+    let preview_generation = Cell::new(0);
     state
         .borrow_mut()
         .dispatch(Action::Open(vec!["movie.mkv".into()]));
@@ -581,7 +582,8 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
         .into(),
         ..Default::default()
     };
-    refresh(&ui, &state, &snapshot, &mut previous);
+    refresh(&ui, &state, &preview_generation, &snapshot, &mut previous);
+    assert_eq!(preview_generation.get(), 1);
     assert!(ui.get_loaded());
     assert_eq!(ui.get_media_title(), "Movie");
     assert_eq!(ui.get_time_label(), "01:05");
@@ -593,14 +595,14 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
         "Audio-only playback must not enable frame/video controls"
     );
     snapshot.command_error = "Unsupported optional renderer control".into();
-    refresh(&ui, &state, &snapshot, &mut previous);
+    refresh(&ui, &state, &preview_generation, &snapshot, &mut previous);
     assert!(ui.get_loaded() && state.borrow().loaded);
     assert_eq!(ui.get_status(), "Unsupported optional renderer control");
     snapshot.command_error.clear();
-    refresh(&ui, &state, &snapshot, &mut previous);
+    refresh(&ui, &state, &preview_generation, &snapshot, &mut previous);
     assert_eq!(ui.get_status(), "Playing · 1.00×");
     snapshot.has_artwork = true;
-    refresh(&ui, &state, &snapshot, &mut previous);
+    refresh(&ui, &state, &preview_generation, &snapshot, &mut previous);
     assert!(ui.get_has_artwork());
     ui.invoke_toggle_compact();
     assert_eq!(ui.get_video_width(), 56.0);
@@ -625,7 +627,7 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
         "Compact mode must actually draw the artwork: {red_pixels} red pixels"
     );
     snapshot.has_artwork = false;
-    refresh(&ui, &state, &snapshot, &mut previous);
+    refresh(&ui, &state, &preview_generation, &snapshot, &mut previous);
     assert!(!ui.get_has_artwork());
     assert_eq!(ui.get_video_width(), 1.0);
     pixels.fill(slint::Rgb8Pixel::default());
@@ -646,13 +648,13 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
         selected: false,
     });
     snapshot.tracks = tracks.into();
-    refresh(&ui, &state, &snapshot, &mut previous);
+    refresh(&ui, &state, &preview_generation, &snapshot, &mut previous);
     assert!(
         !ui.get_has_video(),
         "An unselected video track must not enable frame controls"
     );
     Arc::make_mut(&mut snapshot.tracks)[1].selected = true;
-    refresh(&ui, &state, &snapshot, &mut previous);
+    refresh(&ui, &state, &preview_generation, &snapshot, &mut previous);
     assert!(ui.get_has_video());
     update_queue(&ui, &state.borrow());
     assert_eq!(ui.get_queue().row_count(), 1);
@@ -667,7 +669,7 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
     assert!(diagnostics.contains("Active decoder: not active"));
     ui.set_status("Command rejected".into());
     snapshot.position = 65.9;
-    refresh(&ui, &state, &snapshot, &mut previous);
+    refresh(&ui, &state, &preview_generation, &snapshot, &mut previous);
     assert_eq!(ui.get_position(), 65.9);
     assert_eq!(
         ui.get_status(),
@@ -683,7 +685,7 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
     snapshot.duration = 126.0;
     snapshot.hwdec = "d3d11va".into();
     Arc::make_mut(&mut snapshot.tracks)[0].selected = false;
-    refresh(&ui, &state, &snapshot, &mut previous);
+    refresh(&ui, &state, &preview_generation, &snapshot, &mut previous);
     assert_eq!(ui.get_time_label(), "01:06");
     assert_eq!(ui.get_duration_label(), "02:06");
     assert_eq!(ui.get_status(), "Paused · 1.50×");
@@ -691,7 +693,7 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
     assert!(ui.get_diagnostics().contains("d3d11va"));
     assert!(!ui.get_audio_tracks().row_data(0).unwrap().selected);
     snapshot.error = "Decode failed".into();
-    refresh(&ui, &state, &snapshot, &mut previous);
+    refresh(&ui, &state, &preview_generation, &snapshot, &mut previous);
     assert!(!ui.get_loaded());
     assert_eq!(ui.get_status(), "Decode failed");
     assert!(ui.get_diagnostics().contains("Decode failed"));
@@ -701,7 +703,8 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
     ui.set_status("Opening media…".into());
     snapshot.path = "next.mkv".into();
     snapshot.error.clear();
-    refresh(&ui, &state, &snapshot, &mut previous);
+    refresh(&ui, &state, &preview_generation, &snapshot, &mut previous);
+    assert_eq!(preview_generation.get(), 2);
     assert_eq!(
         ui.get_status(),
         "Paused · 1.50×",
@@ -874,12 +877,15 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
         speed: 1.0,
         ..Default::default()
     };
+    let preview_generation = Cell::new(0);
     refresh(
         &ui,
         &redirected,
+        &preview_generation,
         &redirected_snapshot,
         &mut Snapshot::default(),
     );
+    assert_eq!(preview_generation.get(), 1);
     assert!(
         ui.get_loaded() && redirected.borrow().loaded,
         "An extracted stream must remain associated with the page the user opened"

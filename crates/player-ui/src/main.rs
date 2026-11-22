@@ -225,6 +225,7 @@ fn open_dialog(weak: slint::Weak<PlayerWindow>, subtitle: bool) {
 fn refresh(
     ui: &PlayerWindow,
     state: &Rc<RefCell<UiState>>,
+    preview_generation: &Cell<u64>,
     snapshot: &Snapshot,
     previous: &mut Snapshot,
 ) {
@@ -247,7 +248,7 @@ fn refresh(
         let mut state = state.borrow_mut();
         let newly_loaded = !state.loaded;
         if newly_loaded {
-            state.generation = state.generation.wrapping_add(1);
+            preview_generation.set(preview_generation.get().wrapping_add(1));
         }
         state.confirm_loaded(snapshot.duration);
         state.paused = snapshot.paused;
@@ -1255,6 +1256,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _radio = network_ui::install_radio(&ui, Arc::new(network_ui::SystemHttp), radio_api);
     updates_ui::install(&ui);
     let state = Rc::new(RefCell::new(UiState::default()));
+    let preview_generation = Rc::new(Cell::new(0));
     install_cast_with_preferences(&ui, &state, preferences, config_path);
     let startup_engine = Engine::with_video_site_helper(helper.as_ref().map(|tool| tool.path()));
     let startup_engine = match startup_engine {
@@ -1329,12 +1331,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(playback) = engine.clone() {
         let weak = ui.as_weak();
         let preview = thumbnails.clone();
-        let controller = state.clone();
+        let generation = preview_generation.clone();
         ui.on_thumbnail_hover(move |position| {
             if let Some(ui) = weak.upgrade() {
                 let snapshot = playback.snapshot();
-                let generation = controller.borrow().generation;
-                update_thumbnail_preview(&ui, &preview, snapshot.as_ref(), generation, position);
+                update_thumbnail_preview(
+                    &ui,
+                    &preview,
+                    snapshot.as_ref(),
+                    generation.get(),
+                    position,
+                );
             }
         });
         let weak = ui.as_weak();
@@ -1370,6 +1377,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let attempted_for_refresh = media_attempted.clone();
         let media_attach_retry = Rc::new(RefCell::new(system_media::AttachRetry::default()));
         let retry_for_refresh = media_attach_retry.clone();
+        let generation_for_refresh = preview_generation.clone();
         ui.on_native_snapshot_ready(move || {
             if let Some(ui) = weak.upgrade() {
                 if let Some(snapshot) = status_source.snapshot() {
@@ -1377,7 +1385,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         thumbnails.clear();
                         ui.set_thumbnail_available(false);
                     }
-                    refresh(&ui, &controller, &snapshot, &mut previous.borrow_mut());
+                    refresh(
+                        &ui,
+                        &controller,
+                        &generation_for_refresh,
+                        &snapshot,
+                        &mut previous.borrow_mut(),
+                    );
                     if snapshot.loaded
                         && controller.borrow().loaded
                         && !attempted_for_refresh.get()

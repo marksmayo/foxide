@@ -57,7 +57,6 @@ pub struct UiState {
     pub muted: bool,
     pub duration: f64,
     pub selected: usize,
-    pub generation: u64,
     pub playlist_visible: bool,
     pub fullscreen: bool,
 }
