@@ -141,6 +141,7 @@ export component PlayerWindow inherits Window {
     in-out property <color> accent-color: #ef955f;
     in-out property <color> accent-text: #171a20;
     in-out property <bool> compact-mode: false;
+    in-out property <bool> picture-in-picture: false;
     in-out property <string> accent-hex: "#ef955f";
     in-out property <string> binding-key;
     in-out property <string> binding-action: "pause";
@@ -166,7 +167,8 @@ export component PlayerWindow inherits Window {
     callback reset-preferences();
     callback toggle-compact();
     title: media-title == "" ? "Foxide" : media-title + " — Foxide";
-    preferred-width: root.compact-mode ? 560px : 1180px; preferred-height: root.compact-mode ? 280px : 770px; min-width: root.compact-mode ? 420px : 760px; min-height: root.compact-mode ? 260px : 480px;
+    preferred-width: root.compact-mode ? 560px : 1180px; preferred-height: root.compact-mode ? 280px : 770px; min-width: root.picture-in-picture ? 360px : root.compact-mode ? 420px : 760px; min-height: root.picture-in-picture ? 240px : root.compact-mode ? 260px : 480px;
+    always-on-top: root.picture-in-picture;
     background: Appearance.background; default-font-size: 14px;
     in-out property <image> video-frame;
     in-out property <image> thumbnail-frame;
@@ -217,6 +219,7 @@ export component PlayerWindow inherits Window {
     full-screen: fullscreen-mode;
     forward-focus: keys;
     MenuBar {
+        visible: !root.picture-in-picture;
         Menu { title: "Media";
             MenuItem { title: "Open files…"; activated => { root.action("open", 0); } }
             MenuItem { title: "Internet radio…"; activated => { root.panel = "radio"; } }
@@ -299,6 +302,7 @@ export component PlayerWindow inherits Window {
         }
         Menu { title: "View";
             MenuItem { title: "Compact music view"; checked: root.compact-mode; activated => { root.toggle-compact(); } }
+            MenuItem { title: "Picture in picture"; checked: root.picture-in-picture; enabled: root.loaded && root.has-video; activated => { root.action("picture-in-picture", 0); } }
             MenuItem { title: "Preferences…"; activated => { root.panel = "preferences"; } }
             MenuItem { title: "Playlist"; checked: root.queue-visible; activated => { root.action("playlist", 0); } }
             MenuItem { title: "Playback information"; activated => { root.panel = "information"; } }
@@ -311,13 +315,14 @@ export component PlayerWindow inherits Window {
     }
     keys := FocusScope { width: parent.width; height: parent.height; key-pressed(event) => {
         if (event.text == Key.Escape && root.panel != "") { root.panel = ""; return accept; }
+        if (event.text == Key.Escape && root.picture-in-picture) { root.action("picture-in-picture", 0); return accept; }
         if (root.panel != "") { return reject; }
         if (event.text == Key.Escape && root.fullscreen-mode) { root.action("fullscreen", 0); return accept; }
         if (root.shortcut(event.text, event.modifiers.control, event.modifiers.alt, event.modifiers.shift, event.modifiers.meta)) { return accept; }
         return reject;
     }
     VerticalLayout { spacing: 0px; padding: 0px;
-        if (!root.fullscreen-mode && !root.compact-mode): Rectangle { height: 68px; background: Appearance.toolbar;
+        if (!root.fullscreen-mode && !root.compact-mode && !root.picture-in-picture): Rectangle { height: 68px; background: Appearance.toolbar;
             HorizontalLayout { padding-left: 24px; padding-right: 22px; spacing: 12px;
                 FoxMark { width: 30px; height: 30px; }
                 Text { text: "foxide"; font-size: 23px; font-weight: 700; color: Appearance.text; width: 95px; }
@@ -327,7 +332,7 @@ export component PlayerWindow inherits Window {
                 ToolButton { label: "ⓘ"; description: "Playback information"; clicked => { root.panel = "information"; } }
             }
         }
-        if (root.compact-mode): Rectangle { height: 104px; background: Appearance.background;
+        if (root.compact-mode && !root.picture-in-picture): Rectangle { height: 104px; background: Appearance.background;
             HorizontalLayout { padding: 18px; spacing: 16px;
                 Rectangle { width: 56px; height: 56px; background: transparent;
                     if (root.loaded && root.has-artwork): Image { source: root.video-frame; width: parent.width; height: parent.height; image-fit: contain; }
@@ -339,14 +344,14 @@ export component PlayerWindow inherits Window {
                 }
             }
         }
-        if (root.staged-update-version != "" && !root.fullscreen-mode): Rectangle { height: 42px; background: Appearance.selected;
+        if (root.staged-update-version != "" && !root.fullscreen-mode && !root.picture-in-picture): Rectangle { height: 42px; background: Appearance.selected;
             HorizontalLayout { padding-left: 20px; padding-right: 18px; spacing: 12px;
                 Text { text: "Foxide " + root.staged-update-version + " is ready to install"; color: Appearance.text; horizontal-stretch: 1; vertical-alignment: center; }
                 ToolButton { label: "Review update"; width: 120px; primary: true; clicked => { root.panel = "updates"; } }
             }
         }
         HorizontalLayout { spacing: 0px; min-height: 0px; max-height: root.compact-mode ? 0px : 100000px; vertical-stretch: root.compact-mode ? 0 : 1;
-            if (root.queue-visible && !root.compact-mode): Rectangle { width: 272px; background: Appearance.sidebar;
+            if (root.queue-visible && !root.compact-mode && !root.picture-in-picture): Rectangle { width: 272px; background: Appearance.sidebar;
                 VerticalLayout { padding: 18px; spacing: 16px;
                     HorizontalLayout { Text { text: "PLAYLIST"; color: Appearance.muted; font-size: 11px; font-weight: 700; } Text { text: root.queue.length; color: Appearance.accent; horizontal-alignment: right; } }
                     if (root.queue.length == 0): Text { text: "Your queue is clear.\nOpen a few files to get started."; color: Appearance.muted; wrap: word-wrap; }
@@ -363,7 +368,7 @@ export component PlayerWindow inherits Window {
                 }
             }
             Rectangle { visible: !root.compact-mode; background: Appearance.canvas;
-                VerticalLayout { padding: root.fullscreen-mode ? 0px : 20px; spacing: 0px;
+                VerticalLayout { padding: root.fullscreen-mode || root.picture-in-picture ? 0px : 20px; spacing: 0px;
                     screen := Rectangle { background: root.loaded ? #080e17 : Appearance.screen; border-radius: 12px; clip: true; vertical-stretch: 1;
                         Image { source: root.video-frame; width: parent.width; height: parent.height; image-fit: contain; visible: root.loaded && (root.has-video || root.has-artwork); }
                         if (root.loaded && !root.has-video && !root.has-artwork): VerticalLayout { alignment: center; spacing: 16px;
@@ -417,7 +422,7 @@ export component PlayerWindow inherits Window {
                 }
             }
         }
-        Rectangle { height: 112px; background: Appearance.toolbar;
+        if (!root.picture-in-picture): Rectangle { height: 112px; background: Appearance.toolbar;
             VerticalLayout { padding-left: 24px; padding-right: 24px; padding-top: 9px; padding-bottom: 10px; spacing: 8px;
                 HorizontalLayout { spacing: 14px;
                     Text { text: root.time-label; color: Appearance.text; width: 55px; font-size: 11px; vertical-alignment: center; }
@@ -447,6 +452,14 @@ export component PlayerWindow inherits Window {
                     Slider { width: root.compact-mode ? 72px : 100px; minimum: 0; maximum: 100; value: root.volume; changed(value) => { root.action("volume", value); } }
                     ToolButton { visible: !root.compact-mode; width: root.compact-mode ? 0px : 38px; label: "⛶"; description: "Toggle fullscreen"; selected: root.fullscreen-mode; clicked => { root.action("fullscreen", 0); } }
                 }
+            }
+        }
+        if (root.picture-in-picture): Rectangle { height: 56px; background: Appearance.toolbar;
+            HorizontalLayout { padding-left: 10px; padding-right: 10px; spacing: 8px;
+                ToolButton { label: root.paused ? "▶" : "Ⅱ"; description: root.paused ? "Play" : "Pause"; primary: true; clicked => { root.action("pause", 0); } }
+                Text { text: root.media-title == "" ? root.status : root.media-title; color: Appearance.text; horizontal-stretch: 1; overflow: elide; vertical-alignment: center; }
+                ToolButton { label: "Return"; description: "Return to main window"; width: 108px; clicked => { root.action("picture-in-picture", 0); } }
+                ToolButton { label: "×"; description: "Close Foxide"; clicked => { root.action("quit", 0); } }
             }
         }
     }
