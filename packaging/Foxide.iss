@@ -18,7 +18,10 @@ PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 Uninstallable=yes
-UninstallDisplayIcon={app}\Foxide.exe
+SetupIconFile=Foxide.ico
+WizardImageFile=Foxide-wizard.bmp
+WizardSmallImageFile=Foxide-small.bmp
+UninstallDisplayIcon={app}\Foxide.ico
 OutputDir=..\dist
 OutputBaseFilename=Foxide-{#AppVersion}-windows-x64-setup
 SetupLogging=yes
@@ -31,8 +34,9 @@ Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription:
 
 [Files]
 Source: "{#PayloadDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "Foxide.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\Foxide"; Filename: "{app}\Foxide.exe"
+Name: "{group}\Foxide"; Filename: "{app}\Foxide.exe"; IconFilename: "{app}\Foxide.ico"
 Name: "{group}\Install playback runtime"; Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\Install-PlaybackRuntime.ps1"""; WorkingDir: "{app}"
-Name: "{autodesktop}\Foxide"; Filename: "{app}\Foxide.exe"; Tasks: desktopicon
+Name: "{autodesktop}\Foxide"; Filename: "{app}\Foxide.exe"; IconFilename: "{app}\Foxide.ico"; Tasks: desktopicon
