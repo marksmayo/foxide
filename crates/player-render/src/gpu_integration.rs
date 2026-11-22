@@ -90,9 +90,27 @@ struct Samples {
 #[test]
 #[ignore = "Requires an interactive or Xvfb OpenGL display, libmpv, and FOXIDE_RENDER_FIXTURE"]
 fn composited_video_is_upright_and_advances_at_video_cadence() {
+    run_compositor_probe(false);
+}
+
+#[cfg(windows)]
+#[test]
+#[ignore = "Requires native display, libmpv and FOXIDE_RENDER_FIXTURE/FOXIDE_RENDER_SUBTITLE"]
+fn composited_video_survives_playback_and_window_transitions() {
+    run_compositor_probe(true);
+}
+
+fn run_compositor_probe(actions: bool) {
     let fixture = std::env::var("FOXIDE_RENDER_FIXTURE")
         .expect("Set FOXIDE_RENDER_FIXTURE to the asymmetric test video");
-    slint::BackendSelector::new()
+    let _angle_runtime = crate::AngleRuntime::from_environment().unwrap();
+    let selector = slint::BackendSelector::new();
+    let selector = if std::env::var_os("FOXIDE_ANGLE_RUNTIME").is_some() {
+        selector.require_opengl_es_with_version(3, 0)
+    } else {
+        selector
+    };
+    selector
         .backend_name("winit".into())
         .renderer_name("femtovg".into())
         .select()
@@ -257,11 +275,85 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
     .unwrap();
     let timer = slint::Timer::default();
     let sample_clock = samples.clone();
+    let action_engine = engine.clone();
+    let action_window = ui.as_weak();
+    let progress = Rc::new(RefCell::new((None::<Instant>, 0_u32)));
     timer.start(
         slint::TimerMode::Repeated,
         Duration::from_millis(20),
         move || {
-            if sample_clock.borrow().timing.finished(started.elapsed()) {
+            if actions {
+                let mut progress = progress.borrow_mut();
+                let snapshot = action_engine.snapshot().unwrap_or_default();
+                if progress.0.is_none() && snapshot.loaded && sample_clock.borrow().upright > 0 {
+                    progress.0 = Some(Instant::now());
+                }
+                if let Some(begin) = progress.0 {
+                    let second = begin.elapsed().as_secs() as u32;
+                    if second > progress.1 {
+                        progress.1 = second;
+                        let command = |args: &[&str]| {
+                            action_engine
+                                .command(args.iter().map(|s| s.to_string()).collect())
+                                .unwrap()
+                        };
+                        let window = action_window.upgrade().unwrap();
+                        match second {
+                            1 => command(&["set", "pause", "yes"]),
+                            2 => {
+                                assert!(snapshot.paused, "Pause not acknowledged");
+                                command(&["set", "pause", "no"]);
+                            }
+                            3 => {
+                                assert!(!snapshot.paused, "Resume not acknowledged");
+                                command(&["seek", "15", "absolute+exact"]);
+                            }
+                            4 => {
+                                assert!(
+                                    snapshot.position >= 15.0 && snapshot.position < 20.0,
+                                    "Seek not acknowledged: {}",
+                                    snapshot.position
+                                );
+                                command(&["set", "speed", "2"]);
+                            }
+                            5 => {
+                                assert_eq!(snapshot.speed, 2.0);
+                                window.window().set_size(slint::PhysicalSize::new(640, 360));
+                            }
+                            6 => window.window().set_fullscreen(true),
+                            7 => {
+                                assert!(window.window().is_fullscreen());
+                                window.window().set_fullscreen(false);
+                                window.window().set_size(slint::PhysicalSize::new(480, 270));
+                            }
+                            8 => {
+                                assert!(!window.window().is_fullscreen());
+                                command(&["set", "speed", "1"]);
+                                let subtitle = std::env::var("FOXIDE_RENDER_SUBTITLE")
+                                    .expect("Set FOXIDE_RENDER_SUBTITLE");
+                                command(&["sub-add", &subtitle, "select"]);
+                            }
+                            9 => {
+                                assert_eq!(snapshot.speed, 1.0);
+                                assert!(
+                                    snapshot
+                                        .tracks
+                                        .iter()
+                                        .any(|t| t.kind == "sub" && t.selected),
+                                    "Subtitle not selected"
+                                );
+                            }
+                            10 => {
+                                println!("[video-probe] playback/window transitions passed");
+                                slint::quit_event_loop().unwrap();
+                            }
+                            _ => {}
+                        }
+                    }
+                } else if started.elapsed() > Duration::from_secs(15) {
+                    panic!("No presented video before transition test deadline");
+                }
+            } else if sample_clock.borrow().timing.finished(started.elapsed()) {
                 slint::quit_event_loop().unwrap();
             }
         },

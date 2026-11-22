@@ -29,3 +29,5 @@ unsafe_code = "forbid"
 [workspace.lints.clippy]
 all = "warn"
 
+[patch.crates-io]
+glutin-winit = { path = "third_party/glutin-winit" }

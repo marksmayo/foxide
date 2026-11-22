@@ -15,3 +15,8 @@ mod render_contract;
 
 #[cfg(any(feature = "desktop", test))]
 mod dependency_paths;
+
+#[cfg(feature = "desktop")]
+mod angle;
+#[cfg(feature = "desktop")]
+pub use angle::AngleRuntime;
