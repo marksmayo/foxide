@@ -105,6 +105,8 @@ export component PlayerWindow inherits Window {
     in-out property <string> update-status: "Updates are checked automatically.";
     in-out property <string> staged-update-version;
     callback check-updates();
+    callback open-diagnostic-log();
+    callback open-playback-diagnostics();
     callback install-update();
     callback save-video-site-helper(string);
     callback choose-video-site-helper();
@@ -247,11 +249,13 @@ export component PlayerWindow inherits Window {
             MenuItem { title: "Picture in picture"; checked: root.picture-in-picture; enabled: root.loaded && root.has-video; activated => { root.action("picture-in-picture", 0); } }
             MenuItem { title: "Preferences…"; activated => { root.panel = "preferences"; } }
             MenuItem { title: "Playlist"; checked: root.queue-visible; activated => { root.action("playlist", 0); } }
-            MenuItem { title: "Playback information"; activated => { root.panel = "information"; } }
+            MenuItem { title: "Playback information"; activated => { root.open-playback-diagnostics(); } }
         }
         Menu { title: "Help";
             MenuItem { title: "Keyboard shortcuts"; activated => { root.panel = "shortcuts"; } }
             MenuItem { title: "Software updates…"; activated => { root.panel = "updates"; root.check-updates(); } }
+            MenuItem { title: "Playback diagnostics"; activated => { root.open-playback-diagnostics(); } }
+            MenuItem { title: "Open diagnostic log"; activated => { root.open-diagnostic-log(); } }
             MenuItem { title: "About Foxide"; activated => { root.panel = "about"; } }
         }
     }
@@ -271,7 +275,7 @@ export component PlayerWindow inherits Window {
                 Rectangle { horizontal-stretch: 1; background: transparent; }
                 ToolButton { label: "Open files"; width: 108px; primary: true; clicked => { root.action("open", 0); } }
                 ToolButton { label: "☷"; description: "Toggle playlist"; selected: root.queue-visible; clicked => { root.action("playlist", 0); } }
-                ToolButton { label: "ⓘ"; description: "Playback information"; clicked => { root.panel = "information"; } }
+                ToolButton { label: "ⓘ"; description: "Playback information"; clicked => { root.open-playback-diagnostics(); } }
             }
         }
         if (root.compact-mode && !root.picture-in-picture): Rectangle { height: 104px; background: Appearance.background;

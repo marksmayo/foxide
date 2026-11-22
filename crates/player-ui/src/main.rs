@@ -22,6 +22,7 @@ mod generated {
     slint::include_modules!();
 }
 use generated::*;
+mod diagnostics;
 mod network_ui;
 mod preview;
 mod updates_ui;
@@ -74,6 +75,30 @@ fn startup_commands(args: &Args) -> Result<Vec<Vec<String>>, String> {
         commands.push(vec!["set".into(), "pause".into(), "yes".into()]);
     }
     Ok(commands)
+}
+
+fn install_diagnostic_log_handler(
+    ui: &PlayerWindow,
+    open: impl Fn() -> Result<(), String> + 'static,
+) {
+    let weak = ui.as_weak();
+    ui.on_open_diagnostic_log(move || {
+        let Some(ui) = weak.upgrade() else { return };
+        if let Err(error) = open() {
+            diagnostics::record("Could not open diagnostic log");
+            ui.set_status(format!("Could not open diagnostic log: {error}").into());
+            eprintln!("Could not open diagnostic log: {error}");
+        }
+    });
+}
+
+fn install_playback_diagnostics_handler(ui: &PlayerWindow) {
+    let weak = ui.as_weak();
+    ui.on_open_playback_diagnostics(move || {
+        if let Some(ui) = weak.upgrade() {
+            ui.set_panel("information".into());
+        }
+    });
 }
 
 fn clock(seconds: f64) -> String {
@@ -1260,6 +1285,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .renderer_name("femtovg".into())
         .select()?;
     let ui = PlayerWindow::new()?;
+    diagnostics::record("Application started");
+    install_playback_diagnostics_handler(&ui);
+    install_diagnostic_log_handler(&ui, || {
+        diagnostics::open_log(diagnostics::log_path, |path| {
+            diagnostics::open_system_log(path, |command| {
+                command
+                    .spawn()
+                    .map(|_| ())
+                    .map_err(|error| error.to_string())
+            })
+        })
+    });
     let selected_helper = args
         .yt_dlp
         .as_deref()
@@ -1304,11 +1341,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let engine = match startup_engine {
         Ok(engine) => Some(Rc::new(engine)),
         Err(error) => {
+            diagnostics::record(&format!("Playback engine initialization failed: {error}"));
             ui.set_status(error.clone().into());
             ui.set_diagnostics(error.into());
             None
         }
     };
+    if engine.is_some() {
+        diagnostics::record("Playback engine initialized");
+    }
     if let Some(engine) = &engine {
         let weak_size = ui.as_weak();
         let weak_frame = ui.as_weak();
