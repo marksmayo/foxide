@@ -5,6 +5,8 @@ mod gpu;
 mod native;
 #[cfg(feature = "desktop")]
 pub use gpu::attach;
+#[cfg(feature = "gpu-integration")]
+pub use gpu::attach_observed;
 #[cfg(feature = "desktop")]
 pub use native::{Engine, Snapshot, Track};
 

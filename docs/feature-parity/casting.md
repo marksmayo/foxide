@@ -1,0 +1,67 @@
+# Chromecast implementation checkpoint
+
+Chromecast output remains **unaccepted** and receives no feature medal. The player-cast crate provides pinned control transport, receiver-restricted file serving and owned playback operations. Its bounded session worker keeps receiver I/O off the caller thread. The Slint desktop has a Cast menu and panel for manual local addresses or explicitly requested bounded mDNS discovery, an in-app bounded certificate-inspection action, and worker-backed cast, pause, resume and stop controls. A user can explicitly save and forget up to 32 local receivers in the host's preferences after reviewing the certificate fingerprint (current change); entries do not go into tracked project files. Saved fingerprints are reused for later sessions, and a changed certificate remains rejected until the user inspects and explicitly saves the new fingerprint. The Cast action is available only for confirmed loaded local media, including supported audio containers. The UI path and mDNS discovery have not yet been exercised against a physical receiver. Silent video has been confirmed on two receivers using the device probe, while audio and other codecs remain untested.
+
+## Transport and trust
+
+Cast V2.1 envelopes preserve routing, JSON/binary payloads and Unicode with a 64 KiB frame cap. Declared oversize, ambiguous, malformed and truncated messages are rejected before use. Rustls with the ring provider verifies TLS 1.2/1.3 handshake signatures.
+
+Certificate inspection returns a presented leaf-certificate SHA-256, then aborts before application commands. Inspection alone grants no trust. The user can explicitly start a session with the reviewed pin or separately choose Remember receiver to persist it in local preferences. A control connection requires an explicitly trusted fingerprint and rejects a changed certificate. This is pinning / trust on first use, not Google's device-authentication authority validation. No verification-disabled application connection is provided.
+
+Literal local-network addresses avoid an unbounded DNS lookup. Network operations have a total deadline, including fragmented TLS/frame reads. Request IDs start at a random nonzero value and increase within JavaScript's exact integer range. Root/application responses are correlated; unrelated frames have a bounded skip count. Transport-level heartbeats are handled before application routing, including the transport-0 endpoint.
+
+No discovery or receiver network request is added to desktop startup. mDNS discovery starts only after the user presses Find local receivers and is bounded to five seconds in the desktop. The desktop opens a receiver control connection only after the user selects or enters a literal local address, inspects its certificate, reviews the displayed fingerprint and starts casting. Inspection is bounded and sends no application command.
+
+## Owned media operations
+
+CastPlayback starts the default media receiver and loads an explicitly selected local file. Existing applications are refused by default, except those explicitly marked as an idle screen. Replacing a foreground application requires an explicit option. Paused startup is also explicit.
+
+An initial IDLE/LOADING acknowledgement does not count as ready playback. Startup waits for PLAYING or PAUSED within its network deadline. Receiver errors, invalid clocks and failed/ended loads propagate as failures.
+
+Pause, play, seek and stop check the captured application session and media session. A provided content ID must still match the private source URL. Optional media-information updates preserve known duration/position; they do not falsely imply lost ownership. Seek inputs reject nonfinite, negative and out-of-duration values.
+
+Stop targets only owned media, not a receiver-wide application STOP. Dropping revokes file serving and closes control transport. CastController performs status/heartbeat work on one worker, with a bounded command queue and changed-status notifications. Pause, play and seek enqueue without waiting for network I/O. Invalid seeks are rejected without closing the session; ownership or transport failures terminate it. Stop and Drop request best-effort owned stop without joining on the caller thread. In-flight operations and cleanup retain their configured network deadlines; cancellation is not instantaneous. Leaving an idle default receiver open is not a completed disconnect experience.
+
+## Restricted local-media origin
+
+The origin selects a local interface, binds an ephemeral port and creates a 256-bit random URL. It admits only the selected receiver IP and retains one open regular-file handle. Replacing its pathname cannot expose another file. There is no directory mapping or filename in the URL.
+
+GET, HEAD, preflight and single byte ranges support fetching and seeking. Headers have an 8 KiB cap and three-second total deadline. At most four connection workers run. File transfers use bounded buffers, write timeouts and shutdown checks. Native socket readiness and a Mio waker avoid listener polling and allow cancellation after a network interface disappears.
+
+Drop signals cleanup without waiting on HTTP clients; explicit shutdown waits for workers/file handles. This is LAN HTTP with a private URL and source-IP restriction. It does not encrypt the media stream or transcode unsupported codecs/containers.
+
+TransferStats reports accepted connections, selected-peer connections, valid file requests and media bytes queued through completed writes. Those counters prove neither decoding nor displayed frames.
+
+## Verification
+
+Fifty-seven automatic cases span the envelope codec, real loopback TLS, file HTTP serving and owned playback. The playback fixture fetches actual selected-file bytes through the restricted origin before confirming its simulated player state.
+
+Red/green cases include missing protocol/pinning APIs, interim load acknowledgement before readiness, transport heartbeat routing, optional media updates, invalid clocks and explicit receiver errors. Other cases cover changed certificates, inspection without application commands, unrelated/excessive responses, overall deadlines under trickled input, byte ranges, wrong peers/hosts/tokens, path replacement, concurrent seeks and shutdown during a slow transfer. Foreground takeover defaults and lost application/media ownership have negative tests.
+
+The earlier transport checkpoint de1a4c3052e87baa43bd7ceefcfc648082bb0663 passed the [combined desktop/GPU coverage gate](https://github.com/marksmayo/foxide/actions/runs/44080423510) at **91.05%** (4,427/4,862 lines). That measured checkpoint predates the owned-session additions; their current CI results must be reviewed separately. Casting also has an independent 90% floor for the crate and each source file, reusing the already collected profiles.
+
+## Physical receiver acceptance: silent video confirmed on two receivers
+
+Two owner receivers each fetched the selected silent H.264 test clip, reported PLAYING with an advancing clock, and acknowledged pause, seek, resume and owned stop. Each run served **2,460,206 bytes** to exactly one selected peer. The protocol assertions passed again during an owner-requested viewing window, but the owner reported that the TV switched to Chromecast and no video was visible. That short test failed physical playback acceptance. These counters establish file-transfer/control behavior only; they are not visible-playback, TTFF or power evidence. See [sanitized evidence](casting-device-acceptance.json).
+
+The saved receiver certificates had changed since earlier inspection. Controls refused both changed certificates; explicit owner approval preceded re-pairing. No automatic trust replacement was added. The cause of the certificate changes is not established.
+
+The owner adjusted local firewall access before the successful checks. The agent signalled the temporary helper to finish. Device names, addresses, fingerprints, raw diagnostics and helper files stay in ignored local data. The owner confirmed moving video on both TVs in the longer run. The silent fixture provides no audio acceptance. The short control probe stopped approximately three seconds after starting media. A subsequent run on each receiver used a 90-second silent clip, sustained PLAYING/clock progress for a 30-second viewing window, and then tested controls and stopped. Both receivers maintained clock progress past 30 seconds, and the owner explicitly reported moving video on both TVs. The three-second test had an inadequate observation window; the successful long-window test changed no production playback, transport or file-server code. This narrows the finding to the acceptance procedure; it does not establish the exact TV wake-up timing.
+
+The opt-in device test requires the device-integration feature plus explicit FOXIDE_CAST_TARGET, FOXIDE_CAST_PIN and FOXIDE_CAST_MEDIA values. It remains ignored in ordinary/offline/hosted tests. The default refuses foreground takeover. For an explicitly requested repeat, FOXIDE_CAST_REPEAT_DEFAULT_APP=1 permits replacing only the default Cast media receiver; other applications remain protected. FOXIDE_CAST_VIEW_SECONDS selects a bounded (up to 120 seconds) viewing window, **30 seconds by default**. Clips with a known duration must last at least five seconds longer than the window. Setting zero explicitly runs only the quick protocol checks. During it the probe checks continuing PLAYING state and clock progress. Output explicitly labels protocol success separately from unverified physical playback. Optional FOXIDE_CAST_TRACE output uses fixed protocol labels and routing-match flags, not identifiers, URLs or tokens.
+
+## Engineering commands
+
+```text
+cargo run -p player-cast --example receiver-status -- inspect IP:PORT
+cargo run -p player-cast --example receiver-status -- status IP:PORT SHA256_PIN
+cargo test -p player-cast --features device-integration --test device_probe -- --ignored --nocapture
+```
+
+Inspection does not grant trust. The read-only diagnostic does not launch applications. The device probe does attempt media load and owned playback controls.
+
+## Remaining work
+
+Exercise discovery, the remembered-receiver flow and the desktop panel against a physical receiver; verify its cast/pause/resume/stop lifecycle there. Physical audio acceptance and receiver codec compatibility beyond the tested H.264 clip also remain. The feature total stays at **8/49 accepted**, with **41 gaps remaining**.
+
+References: [Chromium envelope definition](https://chromium.googlesource.com/chromium/src.git/+/4d6bb36e3fcfb9742b6428e43a8e5df12681d0d0/components/cast_channel/proto/cast_channel.proto), [Rustls verifier contract](https://docs.rs/rustls/0.23.46/rustls/client/danger/trait.ServerCertVerifier.html), [Google media messages](https://developers.google.com/cast/docs/media/messages), and [Chromium transport-endpoint fix](https://chromium.googlesource.com/openscreen/+/8ef06d904f52e5595f0fbfd80ae93c123b3a35d5).

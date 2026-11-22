@@ -14,6 +14,16 @@ Each milestone exits on working software and evidence. Absolute latency/RAM/size
 | v0.9 | Release candidate, signed/notarized packages and repeatable native libraries; update strategy; long playback soak | License/source/notice audit, provenance/SBOM, platform packaging and uninstall checks; memory/resource leak checks; complete dedicated-machine benchmark report for all supported builds |
 | v1.0 | Feature-complete supported cross-platform release with published measurement protocol/results | All three tiers accepted; complete metric evidence, no approved-baseline regressions, known hardware/codec limitations documented; measured target misses require a recorded product decision rather than hidden exclusions |
 
+## Release and update rollout
+
+| Platform | Current state | Remaining work | Acceptance |
+|---|---|---|---|
+| Windows | Per-user installer and ZIP are available. The updater checks published releases, verifies SHA-256, downloads automatically, and stages the update for user approval before restart. Preview `v0.0.1-preview.2` is published. | Test the update from the previous preview install and fix any issues reported. | The existing preview install detects the newer preview, verifies and stages the ZIP, preserves user data, and updates only after approval. |
+| macOS | Release packaging and automatic updates are not implemented. | Add a repeatable signed/notarized release, update notifications, verified downloads, staging, and approval before installation/restart. | Install and update from a previous version on supported macOS; verify signature, checksum, preserved user data, and rollback/failure behavior. |
+| Linux | Release packaging and automatic updates are not implemented. | Define supported package formats and update channels; add release packaging, notifications, verified downloads, staging, and approval before installation/restart. | Install and update from a previous version on the supported Linux matrix; verify package integrity, preserved user data, and failure recovery. |
+
+Planning estimate for the macOS and Linux release/update work together: **15–30 engineering days**. Signing credentials, notarization, and distribution coverage can add calendar time. This is a rough estimate, not a commitment.
+
 Implementation order within v0.1: pin/audit native dependencies → wrap client lifecycle/options/errors → event worker and bounded commands → audio-only smoke → own window/context → render API initialization before file load → GPU wake/render/swap → same-surface OSD spike → fallback diagnostics → external presentation timing → power/GPU acceptance. Do not build a rich library UI before the surface-sharing and audio-clock constraints are proven.
 
 Revisit ADRs after the first native benchmarks, after each platform spike and before packaging. If libmpv's public render APIs or the GL path cannot meet native power, compare a GStreamer/native presentation spike under the same harness, then consider a custom FFmpeg pipeline only with a scoped synchronization/presentation plan. Preserve feature scope and transparent fallback across backends.

@@ -31,8 +31,11 @@ impl Drop for Scratch {
 }
 
 fn scratch() -> Scratch {
+    scratch_below(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../target/test-tmp"))
+}
+
+fn scratch_below(root: PathBuf) -> Scratch {
     static NEXT: AtomicUsize = AtomicUsize::new(0);
-    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../target/test-tmp");
     fs::create_dir_all(&root).unwrap();
     let path = root.join(format!(
         "launcher-{}-{}-{}",
@@ -197,7 +200,14 @@ fn engine_is_started_with_safe_argument_boundaries_and_errors_propagate() {
         .output()
         .unwrap();
     assert!(!failed.status.success());
+    #[cfg(not(unix))]
     assert!(String::from_utf8_lossy(&failed.stderr).contains("mpv exited"));
+    #[cfg(unix)]
+    assert_eq!(
+        failed.status.code(),
+        Some(7),
+        "Unix handoff preserves the engine exit code"
+    );
     let missing = Command::new(env!("CARGO_BIN_EXE_foxide"))
         .arg("--mpv")
         .arg(dir.join("does-not-exist"))
@@ -275,7 +285,9 @@ fn invalid_media_and_control_combinations_fail_before_engine_start() {
 
 #[test]
 fn absent_engine_never_falls_back_to_an_implicit_working_directory_search() {
-    let dir = scratch();
+    // Keep the link on the Cargo executable filesystem even with a custom target directory.
+    let root = PathBuf::from(env!("CARGO_BIN_EXE_foxide"));
+    let dir = scratch_below(root.parent().unwrap().join("launcher-test-tmp"));
     let app = dir.join("app");
     let media = dir.join("media");
     fs::create_dir_all(&app).unwrap();
@@ -285,6 +297,11 @@ fn absent_engine_never_falls_back_to_an_implicit_working_directory_search() {
     } else {
         "foxide"
     });
+    // Linux may reject exec of a freshly copied inode with ETXTBSY.
+    // The immutable Cargo binary can be linked without opening a writer.
+    #[cfg(target_os = "linux")]
+    fs::hard_link(env!("CARGO_BIN_EXE_foxide"), &executable).unwrap();
+    #[cfg(not(target_os = "linux"))]
     fs::copy(env!("CARGO_BIN_EXE_foxide"), &executable).unwrap();
     let name = if cfg!(windows) { "mpv.exe" } else { "mpv" };
     fs::write(media.join(name), "planted bare executable").unwrap();
@@ -309,4 +326,134 @@ fn absent_engine_never_falls_back_to_an_implicit_working_directory_search() {
         app.canonicalize().unwrap()
     );
     assert_eq!(planned.file_name(), Some(std::ffi::OsStr::new(name)));
+}
+
+#[cfg(unix)]
+#[test]
+fn unix_playback_replaces_the_launcher_instead_of_retaining_a_parent_process() {
+    let dir = scratch();
+    let executable = engine(&dir);
+    let media = dir.join("movie.mp4");
+    let pid_log = dir.join("engine.pid");
+    fs::write(&media, "Process-only fixture").unwrap();
+    let mut child = Command::new(env!("CARGO_BIN_EXE_foxide"))
+        .arg("--mpv")
+        .arg(executable)
+        .arg(media)
+        .env("FOXIDE_TEST_ENGINE_PID_LOG", &pid_log)
+        .spawn()
+        .unwrap();
+    let launcher_pid = child.id();
+    assert!(child.wait().unwrap().success());
+    let engine_pid: u32 = fs::read_to_string(pid_log).unwrap().parse().unwrap();
+    assert_eq!(
+        engine_pid, launcher_pid,
+        "Playback must not keep an idle wrapper process resident"
+    );
+}
+
+#[cfg(unix)]
+#[test]
+fn path_lookup_skips_relative_directories_and_non_executable_files() {
+    use std::os::unix::fs::PermissionsExt;
+
+    let dir = scratch();
+    let app = dir.join("app");
+    let relative = dir.join("relative");
+    let blocked = dir.join("blocked");
+    let not_a_file = dir.join("directory");
+    let working = dir.join("working");
+    for path in [&app, &relative, &blocked, &not_a_file, &working] {
+        fs::create_dir(path).unwrap();
+    }
+    let executable = app.join("foxide");
+    fs::copy(env!("CARGO_BIN_EXE_foxide"), &executable).unwrap();
+    let installed = working.join("mpv");
+    fs::rename(engine(&working), &installed).unwrap();
+    fs::copy(&installed, relative.join("mpv")).unwrap();
+    let blocked_engine = blocked.join("mpv");
+    fs::write(&blocked_engine, "not executable").unwrap();
+    fs::set_permissions(&blocked_engine, fs::Permissions::from_mode(0o644)).unwrap();
+    fs::create_dir(not_a_file.join("mpv")).unwrap();
+    let search = std::env::join_paths([
+        std::path::Path::new("relative"),
+        blocked.as_path(),
+        not_a_file.as_path(),
+        working.as_path(),
+    ])
+    .unwrap();
+    let launch = || {
+        let mut command = Command::new(&executable);
+        command
+            .current_dir(&dir)
+            .env_remove("FOXIDE_MPV")
+            .env("PATH", &search);
+        command
+    };
+    let plan = launch()
+        .args(["--print-command", "https://example.org/fixture.mp4"])
+        .output()
+        .unwrap();
+    assert!(
+        plan.status.success(),
+        "{}",
+        String::from_utf8_lossy(&plan.stderr)
+    );
+    let args: Vec<String> = serde_json::from_slice(&plan.stdout).unwrap();
+    assert_eq!(PathBuf::from(&args[0]), installed);
+
+    let log = dir.join("engine.log");
+    let played = launch()
+        .arg("https://example.org/fixture.mp4")
+        .env("FOXIDE_TEST_ENGINE_LOG", &log)
+        .output()
+        .unwrap();
+    assert!(
+        played.status.success(),
+        "{}",
+        String::from_utf8_lossy(&played.stderr)
+    );
+    assert!(
+        fs::read_to_string(log)
+            .unwrap()
+            .contains("https://example.org/fixture.mp4")
+    );
+}
+
+#[test]
+fn discovery_rejects_engine_copies_in_ancestor_tool_directories() {
+    let dir = scratch();
+    let app = dir.join("outer/application");
+    fs::create_dir_all(&app).unwrap();
+    let filename = if cfg!(windows) {
+        "foxide.exe"
+    } else {
+        "foxide"
+    };
+    let executable = app.join(filename);
+    #[cfg(target_os = "linux")]
+    fs::hard_link(env!("CARGO_BIN_EXE_foxide"), &executable).unwrap();
+    #[cfg(not(target_os = "linux"))]
+    fs::copy(env!("CARGO_BIN_EXE_foxide"), &executable).unwrap();
+    let engine_name = if cfg!(windows) { "mpv.exe" } else { "mpv" };
+    for ancestor in [dir.0.as_path(), app.parent().unwrap()] {
+        let tools = ancestor.join("tools/mpv");
+        fs::create_dir_all(&tools).unwrap();
+        let built = engine(&tools);
+        fs::rename(built, tools.join(engine_name)).unwrap();
+    }
+    let output = Command::new(&executable)
+        .env_remove("FOXIDE_MPV")
+        .env("PATH", "")
+        .args(["--print-command", "https://example.org/movie.mp4"])
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    let command: Vec<String> = serde_json::from_slice(&output.stdout).unwrap();
+    let selected = PathBuf::from(&command[0]);
+    assert_eq!(
+        selected.parent().unwrap().canonicalize().unwrap(),
+        app.canonicalize().unwrap()
+    );
+    assert_eq!(selected.file_name().unwrap(), engine_name);
 }

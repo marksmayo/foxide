@@ -248,6 +248,7 @@ class InstallerTests(unittest.TestCase):
              patch.object(libmpv.subprocess, 'run', side_effect=extract):
             self.call_libmpv(['--archive', archive, '--seven-zip', seven])
             download.assert_not_called()
+        self.assertEqual((self.tools / 'libmpv/libmpv-2.dll').read_bytes(), b'controlled dll')
 
     def test_libmpv_cli_missing_extractor_and_incompatible_platform_fail_early(self):
         with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as error:

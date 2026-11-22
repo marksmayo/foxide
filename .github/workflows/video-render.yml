@@ -8,10 +8,13 @@ permissions:
   contents: read
 jobs:
   orientation-and-cadence:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
     env:
       LIBGL_ALWAYS_SOFTWARE: '1'
+      FOXIDE_ICC_PROOF: ${{ github.workspace }}/results/local/icc-proof.ppm
+      FOXIDE_SHADER_PROOF: ${{ github.workspace }}/results/local/shader-proof.ppm
+      FOXIDE_ARTWORK_PROOF: ${{ github.workspace }}/results/local/artwork-proof.ppm
       FOXIDE_RENDER_FIXTURE: ${{ github.workspace }}/results/local/orientation.mkv
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -26,7 +29,7 @@ jobs:
         with:
           tool: cargo-llvm-cov@0.9.1
       - name: Install software OpenGL and the native media engine
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg libmpv2 xvfb xauth libgl1-mesa-dri libegl1-mesa-dev libxkbcommon-dev libxkbcommon-x11-dev libfontconfig1-dev libwayland-dev meson ninja-build pkg-config libavcodec-dev libavfilter-dev libavformat-dev libavutil-dev libswresample-dev libswscale-dev libplacebo-dev libass-dev
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg libmpv2 xvfb xauth libgl1-mesa-dri libegl1-mesa-dev libxkbcommon-dev libxkbcommon-x11-dev libfontconfig1-dev libwayland-dev meson ninja-build pkg-config libavcodec-dev libavfilter-dev libavformat-dev libavutil-dev libswresample-dev libswscale-dev libplacebo-dev libass-dev liblcms2-dev
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: mpv-player/mpv
@@ -46,23 +49,31 @@ jobs:
         run: |
           mkdir -p results/local
           ffmpeg -v error -f lavfi -i "testsrc2=size=320x180:rate=30:duration=10,drawbox=x=0:y=0:w=iw:h=ih/4:color=red:t=fill,drawbox=x=0:y=3*ih/4:w=iw:h=ih/4:color=blue:t=fill" -c:v ffv1 "$FOXIDE_RENDER_FIXTURE"
+      - name: Reset coverage profiles before combining test passes
+        run: cargo llvm-cov clean --workspace
+      - name: Verify video-site hook through the distribution Lua-enabled engine
+        env:
+          FOXIDE_LIBMPV: /usr/lib/x86_64-linux-gnu/libmpv.so.2
+        run: |
+          cargo llvm-cov --workspace --features player-ui/desktop,player-render/gpu-integration,player-render/video-site-integration --locked --no-report -- --ignored native:: --nocapture --test-threads=1
       - name: Verify compositor with the same features without instrumentation
         shell: bash
         run: |
           set -o pipefail
           set +e
-          baseline_status=0
           for trial in {1..12}; do
             xvfb-run -a -s '-screen 0 1280x720x24' cargo test --workspace --features player-ui/desktop,player-render/gpu-integration --locked -- --ignored --nocapture --test-threads=1 > "results/local/video-normal-$trial.log" 2>&1
             status=$?
             echo "Compositor trial $trial: exit $status"
             cat "results/local/video-normal-$trial.log"
-            if [ "$status" -ne 0 ]; then baseline_status=$status; fi
+            if [ "$status" -ne 0 ]; then exit "$status"; fi
           done
           set -e
-          test "$baseline_status" -eq 0
-      - name: Reset coverage profiles before combining test passes
-        run: cargo llvm-cov clean --workspace
+      - name: Archive the actual embedded-art compositor pixels
+        run: |
+          ffmpeg -v error -y -i "$FOXIDE_ARTWORK_PROOF" results/local/artwork-proof.png
+          ffmpeg -v error -y -i "$FOXIDE_SHADER_PROOF" results/local/shader-proof.png
+          ffmpeg -v error -y -i "$FOXIDE_ICC_PROOF" results/local/icc-proof.png
       - name: Verify reused texture invalidates cached layers without a native display
         run: cargo llvm-cov --workspace --features player-ui/desktop,player-render/gpu-integration --locked --no-report -- --test-threads=1
       - name: Verify actual composited orientation and changing video frames
@@ -70,8 +81,28 @@ jobs:
         run: |
           set -o pipefail
           xvfb-run -a -s '-screen 0 1280x720x24' cargo llvm-cov --workspace --features player-ui/desktop,player-render/gpu-integration --locked --no-report -- --ignored --nocapture --test-threads=1 2>&1 | tee results/local/video-regression.log
+      - name: Exercise real desktop startup, shutdown and preview entry points under coverage
+        shell: bash
+        run: |
+          set -o pipefail
+          cargo llvm-cov run -p player-ui --features player-ui/desktop,player-render/gpu-integration --bin foxide-desktop --locked --no-report -- --preview-png results/local/coverage-preview.png
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          Path('results/local/compact-config.json').write_text(json.dumps({'version': 1, 'bindings': {}, 'compact': True}), encoding='utf-8')
+          PY
+          cargo llvm-cov run -p player-ui --features player-ui/desktop,player-render/gpu-integration --bin foxide-desktop --locked --no-report -- --config results/local/compact-config.json --preview-png results/local/coverage-compact.png
+          python3 - <<'PY'
+          import struct
+          from pathlib import Path
+          for name, expected in [('coverage-preview.png', (1180, 770)), ('coverage-compact.png', (560, 280))]:
+              data = Path('results/local', name).read_bytes()
+              assert data[:8] == b'\x89PNG\r\n\x1a\n'
+              assert struct.unpack('>II', data[16:24]) == expected
+          PY
+          xvfb-run -a -s '-screen 0 1280x720x24' cargo llvm-cov run -p player-ui --features player-ui/desktop,player-render/gpu-integration --bin foxide-desktop --locked --no-report -- --config results/local/startup-config.json --quit-after 2 --speed 1.5 --paused "$FOXIDE_RENDER_FIXTURE"
       - name: Publish measured desktop and GPU coverage
-        run: cargo llvm-cov report --json --summary-only --output-path results/local/coverage-desktop-gpu.json
+        run: cargo llvm-cov report --fail-under-lines 90 --json --output-path results/local/coverage-desktop-gpu.json
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
@@ -81,3 +112,6 @@ jobs:
             results/local/video-uninstrumented.log
             results/local/video-*.log
             results/local/coverage-desktop-gpu.json
+            results/local/artwork-proof.png
+            results/local/shader-proof.png
+            results/local/icc-proof.png

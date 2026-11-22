@@ -1,0 +1,44 @@
+name: Prepare Cast transport dependencies
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/cast-dependencies.yml'
+permissions:
+  contents: read
+jobs:
+  dependency-cache:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      CARGO_HOME: /tmp/foxide-cast-cargo-${{ github.run_id }}
+    steps:
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
+      - name: Fetch isolated, pinned transport dependencies
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/cast-deps/src"
+          cat > "$RUNNER_TEMP/cast-deps/Cargo.toml" <<'TOML'
+          [package]
+          name = "foxide-cast-dependency-bootstrap"
+          version = "0.0.0"
+          edition = "2024"
+          [dependencies]
+          rustls = { version = "=0.23.46", default-features = false, features = ["ring", "std", "tls12"] }
+          sha2 = "=0.10.9"
+          mio = { version = "=1.2.5", features = ["os-poll", "net"] }
+          getrandom = "=0.3.4"
+          rcgen = { version = "=0.14.5", default-features = false, features = ["ring", "crypto"] }
+          TOML
+          echo 'fn main() {}' > "$RUNNER_TEMP/cast-deps/src/main.rs"
+          cargo fetch --manifest-path "$RUNNER_TEMP/cast-deps/Cargo.toml"
+          cp "$RUNNER_TEMP/cast-deps/Cargo.lock" "$CARGO_HOME/bootstrap.lock"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: cast-transport-dependency-cache
+          path: |
+            ${{ env.CARGO_HOME }}/registry/cache
+            ${{ env.CARGO_HOME }}/registry/index
+            ${{ env.CARGO_HOME }}/bootstrap.lock
+          include-hidden-files: true
+          retention-days: 3

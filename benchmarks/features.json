@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "research_date": "2026-11-16",
+  "research_date": "2026-11-17",
   "research_scope": "Desktop-platform official documentation and upstream sources. All supported entrants share gold. Sender/receiver and Chromecast/AirPlay are distinct events. Helper, backend and paid-tier requirements are recorded. Product-family mobile casting claims do not establish desktop support. Unknown/partial/planned is unranked and is not evidence of absence. Feature possession is separate from runtime acceptance and measured performance.",
   "features": [
     {
@@ -686,6 +686,119 @@
         "video"
       ],
       "research_batch": "desktop-2026-11-16"
+    },
+    {
+      "id": "dual_subtitles",
+      "name": "Two simultaneous subtitle tracks",
+      "group": "Subtitles",
+      "tier": 2,
+      "media_types": [
+        "video"
+      ]
+    },
+    {
+      "id": "upnp_browse",
+      "name": "Browse UPnP / DLNA media servers",
+      "group": "Network",
+      "tier": 2,
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "upnp_server",
+      "name": "Share a library as a UPnP server",
+      "group": "Network",
+      "tier": 2,
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "controller_navigation",
+      "name": "Game controller UI navigation",
+      "group": "Interface",
+      "tier": 2,
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "webdav_browse",
+      "name": "Browse WebDAV media shares",
+      "group": "Network",
+      "tier": 2,
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "nfs_browse",
+      "name": "Browse NFS media shares",
+      "group": "Network",
+      "tier": 2,
+      "media_types": [
+        "video",
+        "audio"
+      ]
+    },
+    {
+      "id": "trakt_sync",
+      "name": "Trakt watched-history scrobbling",
+      "group": "Library",
+      "tier": 2,
+      "media_types": [
+        "video"
+      ]
+    },
+    {
+      "id": "plex_server_client",
+      "name": "Native Plex server library integration",
+      "group": "Library",
+      "tier": 2,
+      "media_types": [
+        "video"
+      ]
+    },
+    {
+      "id": "emby_server_client",
+      "name": "Native Emby server library integration",
+      "group": "Library",
+      "tier": 2,
+      "media_types": [
+        "video"
+      ]
+    },
+    {
+      "id": "jellyfin_server_client",
+      "name": "Native Jellyfin server library integration",
+      "group": "Library",
+      "tier": 2,
+      "media_types": [
+        "video"
+      ]
+    },
+    {
+      "id": "skip_intro",
+      "name": "Skip detected episode intros",
+      "group": "Playback",
+      "tier": 2,
+      "media_types": [
+        "video"
+      ]
+    },
+    {
+      "id": "audio_visualization",
+      "name": "Music visualization display",
+      "group": "Audio",
+      "tier": 2,
+      "media_types": [
+        "audio"
+      ]
     }
   ],
   "players": [
@@ -2252,16 +2365,24 @@
     {
       "player": "foxide",
       "feature": "equalizer",
-      "status": "planned",
-      "sources": [],
-      "note": "Planned in Foxide; no medal until exposed by the application."
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/166c8893d6ee64f746d6f5b05d00054c6bd21650/docs/medal-features.md"
+      ],
+      "note": "Desktop preview: explicit user-facing controls and public dispatch tests; native command conformance for playback controls. See the feature guide for limits. No displayed-frame/power certification.",
+      "checked_utc": "2026-11-16",
+      "research_batch": "desktop-implementation-2026-11-16"
     },
     {
       "player": "foxide",
       "feature": "replaygain",
-      "status": "planned",
-      "sources": [],
-      "note": "Planned in Foxide; no medal until exposed by the application."
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/166c8893d6ee64f746d6f5b05d00054c6bd21650/docs/medal-features.md"
+      ],
+      "note": "Desktop preview: explicit user-facing controls and public dispatch tests; native command conformance for playback controls. See the feature guide for limits. No displayed-frame/power certification.",
+      "checked_utc": "2026-11-16",
+      "research_batch": "desktop-implementation-2026-11-16"
     },
     {
       "player": "foxide",
@@ -2964,10 +3085,17 @@
     {
       "player": "foxide",
       "feature": "youtube_urls",
-      "status": "planned",
-      "sources": [],
-      "note": "No accepted Foxide desktop implementation for this event; no medal.",
-      "research_batch": "desktop-2026-11-16"
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634166",
+        "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968633735",
+        "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634078",
+        "https://github.com/marksmayo/foxide/actions/runs/44062762763",
+        "https://github.com/marksmayo/foxide/blob/8e1abde4e2785bb62495774ce6abac2c1ece57df/crates/player-ui/ui/player.slint"
+      ],
+      "note": "Video-site URLs through an explicitly selected trusted yt-dlp helper. Native split-stream/header tests and a real Internet Archive page decoded audio/video on all three platforms; other sites remain dependent on the helper and provider availability.",
+      "research_batch": "foxide-native-services-2026-11-17",
+      "checked_utc": "2026-11-17"
     },
     {
       "player": "mpv",
@@ -3057,10 +3185,13 @@
     {
       "player": "foxide",
       "feature": "custom_keys",
-      "status": "planned",
-      "sources": [],
-      "note": "No accepted Foxide desktop implementation for this event; no medal.",
-      "research_batch": "desktop-2026-11-16"
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/f957f4da08af3a4a1171f3ac5f5475068ba6d887/docs/feature-parity/README.md"
+      ],
+      "note": "Editable, validated desktop bindings with modifiers, native function-key handling, persistence and reset. Public UI acceptance passed on Windows/macOS/Linux.",
+      "research_batch": "foxide-customization-2026-11-16",
+      "checked_utc": "2026-11-16"
     },
     {
       "player": "foobar2000",
@@ -3098,10 +3229,13 @@
     {
       "player": "foxide",
       "feature": "custom_layout",
-      "status": "planned",
-      "sources": [],
-      "note": "No accepted Foxide desktop implementation for this event; no medal.",
-      "research_batch": "desktop-2026-11-16"
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/f957f4da08af3a4a1171f3ac5f5475068ba6d887/docs/feature-parity/README.md"
+      ],
+      "note": "User-selectable light/dark skins, editable accent and compact/full layout. Not a free-form widget/layout designer. Persisted settings and rendered previews accepted on Windows/macOS/Linux.",
+      "research_batch": "foxide-customization-2026-11-16",
+      "checked_utc": "2026-11-16"
     },
     {
       "player": "iina",
@@ -3180,10 +3314,13 @@
     {
       "player": "foxide",
       "feature": "compact_music_view",
-      "status": "planned",
-      "sources": [],
-      "note": "No accepted Foxide desktop implementation for this event; no medal.",
-      "research_batch": "desktop-2026-11-16"
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/f957f4da08af3a4a1171f3ac5f5475068ba6d887/docs/feature-parity/README.md"
+      ],
+      "note": "Dedicated compact music layout with transport, seeking and volume; persists across restarts and restores normal window size. Does not claim gapless playback, album art or native PiP.",
+      "research_batch": "foxide-customization-2026-11-16",
+      "checked_utc": "2026-11-16"
     },
     {
       "player": "iina",
@@ -3210,10 +3347,13 @@
     {
       "player": "foxide",
       "feature": "dark_theme",
-      "status": "planned",
-      "sources": [],
-      "note": "No accepted Foxide desktop implementation for this event; no medal.",
-      "research_batch": "desktop-2026-11-16"
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/166c8893d6ee64f746d6f5b05d00054c6bd21650/docs/medal-features.md"
+      ],
+      "note": "Existing dark desktop shell and native-widget palette, verified by the rendered preview.",
+      "research_batch": "desktop-implementation-2026-11-16",
+      "checked_utc": "2026-11-16"
     },
     {
       "player": "wmp-modern",
@@ -3229,10 +3369,17 @@
     {
       "player": "foxide",
       "feature": "music_artwork",
-      "status": "planned",
-      "sources": [],
-      "note": "No accepted Foxide desktop implementation for this event; no medal.",
-      "research_batch": "desktop-2026-11-16"
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634166",
+        "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968633735",
+        "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634078",
+        "https://github.com/marksmayo/foxide/actions/runs/44062770533/job/133968633957",
+        "https://github.com/marksmayo/foxide/blob/8e1abde4e2785bb62495774ce6abac2c1ece57df/crates/player-ui/ui/player.slint"
+      ],
+      "note": "Embedded music artwork in normal and compact desktop views, cleared on file changes. Real FLAC audio/clock and native metadata passed on all platforms; actual shared-texture compositor pixels verified on Linux.",
+      "research_batch": "foxide-native-services-2026-11-17",
+      "checked_utc": "2026-11-17"
     },
     {
       "player": "infuse",
@@ -3676,10 +3823,17 @@
     {
       "player": "foxide",
       "feature": "radio_directory",
-      "status": "planned",
-      "sources": [],
-      "note": "No accepted Foxide desktop implementation for this event; no medal.",
-      "research_batch": "desktop-2026-11-16"
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634166",
+        "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968633735",
+        "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634078",
+        "https://github.com/marksmayo/foxide/actions/runs/44062762763",
+        "https://github.com/marksmayo/foxide/blob/8e1abde4e2785bb62495774ce6abac2c1ece57df/crates/player-ui/ui/player.slint"
+      ],
+      "note": "Desktop directory search, station selection/play and cancellation. Live search returned 50 stations and a returned FLAC stream decoded with an advancing clock on Windows/macOS/Linux.",
+      "research_batch": "foxide-native-services-2026-11-17",
+      "checked_utc": "2026-11-17"
     },
     {
       "player": "quicktime",
@@ -3720,10 +3874,13 @@
     {
       "player": "foxide",
       "feature": "video_rotate",
-      "status": "planned",
-      "sources": [],
-      "note": "No accepted Foxide desktop implementation for this event; no medal.",
-      "research_batch": "desktop-2026-11-16"
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/166c8893d6ee64f746d6f5b05d00054c6bd21650/docs/medal-features.md"
+      ],
+      "note": "Desktop preview: explicit user-facing controls and public dispatch tests; native command conformance for playback controls. See the feature guide for limits. No displayed-frame/power certification.",
+      "research_batch": "desktop-implementation-2026-11-16",
+      "checked_utc": "2026-11-16"
     },
     {
       "player": "mpv",
@@ -3739,10 +3896,17 @@
     {
       "player": "foxide",
       "feature": "icc_profiles",
-      "status": "planned",
-      "sources": [],
-      "note": "No accepted Foxide desktop implementation for this event; no medal.",
-      "research_batch": "desktop-2026-11-16"
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/actions/runs/44067941006/job/133986394019",
+        "https://github.com/marksmayo/foxide/actions/runs/44067941006/job/133986393918",
+        "https://github.com/marksmayo/foxide/actions/runs/44067941006/job/133986393473",
+        "https://github.com/marksmayo/foxide/actions/runs/44067940977/job/133986393405",
+        "https://github.com/marksmayo/foxide/blob/c82436888a6f61c356a1125161ed7bd4df46f1f3/crates/player-ui/ui/player.slint"
+      ],
+      "note": "Manual RGB display ICC profile selection/reset for the session. Bounded validation and desktop/native controls pass on all platforms; actual shared-texture pixels transform 128→55 and reset to 128 on the Linux compositor, matching Little CMS. Automatic per-monitor discovery/switching and physical calibration are not claimed.",
+      "research_batch": "foxide-icc-2026-11-17",
+      "checked_utc": "2026-11-17"
     },
     {
       "player": "mpv",
@@ -3758,10 +3922,17 @@
     {
       "player": "foxide",
       "feature": "user_shaders",
-      "status": "planned",
-      "sources": [],
-      "note": "No accepted Foxide desktop implementation for this event; no medal.",
-      "research_batch": "desktop-2026-11-16"
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634166",
+        "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968633735",
+        "https://github.com/marksmayo/foxide/actions/runs/44062770546/job/133968634078",
+        "https://github.com/marksmayo/foxide/actions/runs/44062770533/job/133968633957",
+        "https://github.com/marksmayo/foxide/blob/8e1abde4e2785bb62495774ce6abac2c1ece57df/crates/player-ui/ui/player.slint"
+      ],
+      "note": "Explicit session GPU shader selection/reset with bounded off-thread validation, lossless native paths, stale-result invalidation and nonfatal errors. Desktop callbacks/native configuration passed on all platforms; actual inversion, compile-error handling and restored pixels verified on Linux.",
+      "research_batch": "foxide-native-services-2026-11-17",
+      "checked_utc": "2026-11-17"
     },
     {
       "player": "mpv",
@@ -3777,10 +3948,13 @@
     {
       "player": "foxide",
       "feature": "deband",
-      "status": "planned",
-      "sources": [],
-      "note": "No accepted Foxide desktop implementation for this event; no medal.",
-      "research_batch": "desktop-2026-11-16"
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/166c8893d6ee64f746d6f5b05d00054c6bd21650/docs/medal-features.md"
+      ],
+      "note": "Desktop preview: explicit user-facing controls and public dispatch tests; native command conformance for playback controls. See the feature guide for limits. No displayed-frame/power certification.",
+      "research_batch": "desktop-implementation-2026-11-16",
+      "checked_utc": "2026-11-16"
     },
     {
       "player": "mpv",
@@ -3807,10 +3981,13 @@
     {
       "player": "foxide",
       "feature": "frame_step",
-      "status": "planned",
-      "sources": [],
-      "note": "No accepted Foxide desktop implementation for this event; no medal.",
-      "research_batch": "desktop-2026-11-16"
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/166c8893d6ee64f746d6f5b05d00054c6bd21650/docs/medal-features.md"
+      ],
+      "note": "Desktop preview: explicit user-facing controls and public dispatch tests; native command conformance for playback controls. See the feature guide for limits. No displayed-frame/power certification.",
+      "research_batch": "desktop-implementation-2026-11-16",
+      "checked_utc": "2026-11-16"
     },
     {
       "player": "potplayer",
@@ -3829,10 +4006,348 @@
     {
       "player": "foxide",
       "feature": "playlist_search",
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/166c8893d6ee64f746d6f5b05d00054c6bd21650/docs/medal-features.md"
+      ],
+      "note": "Desktop preview: explicit user-facing controls and public dispatch tests; native command conformance for playback controls. See the feature guide for limits. No displayed-frame/power certification.",
+      "research_batch": "desktop-implementation-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "mpv",
+      "feature": "dual_subtitles",
+      "status": "supported",
+      "sources": [
+        "https://mpv.io/manual/stable/#options-secondary-sid"
+      ],
+      "note": "Primary and secondary subtitle selection; secondary styling restrictions apply.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "smplayer",
+      "feature": "dual_subtitles",
+      "status": "supported",
+      "sources": [
+        "https://www.smplayer.info/en/screenshots"
+      ],
+      "note": "Official desktop screenshots explicitly document simultaneous subtitles; backend/build dependent.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "kodi",
+      "feature": "upnp_browse",
+      "status": "supported",
+      "sources": [
+        "https://kodi.wiki/view/Settings/Services/UPnP_DLNA"
+      ],
+      "note": "Enable UPnP support to discover servers.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "kodi",
+      "feature": "upnp_server",
+      "status": "supported",
+      "sources": [
+        "https://kodi.wiki/view/Settings/Services/UPnP_DLNA"
+      ],
+      "note": "Share my libraries enables the UPnP server; requires a configured library.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "kodi",
+      "feature": "controller_navigation",
+      "status": "supported",
+      "sources": [
+        "https://kodi.wiki/view/Settings/System/Input"
+      ],
+      "note": "Configured game controller can navigate the player as a remote.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "kodi",
+      "feature": "webdav_browse",
+      "status": "supported",
+      "sources": [
+        "https://kodi.wiki/view/Sources.xml/Types"
+      ],
+      "note": "Native network source; server authentication and access configuration required.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "kodi",
+      "feature": "nfs_browse",
+      "status": "supported",
+      "sources": [
+        "https://kodi.wiki/view/Sources.xml/Types"
+      ],
+      "note": "Native network source; server authentication and access configuration required.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "infuse",
+      "feature": "upnp_browse",
+      "status": "supported",
+      "sources": [
+        "https://support.firecore.com/hc/en-us/articles/215090977-Streaming-From-a-Mac-PC-or-NAS"
+      ],
+      "note": "Documented macOS network share connection; UPnP/DLNA does not support Infuse library features.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16",
+      "platforms": [
+        "macos"
+      ]
+    },
+    {
+      "player": "infuse",
+      "feature": "webdav_browse",
+      "status": "supported",
+      "sources": [
+        "https://support.firecore.com/hc/en-us/articles/215090977-Streaming-From-a-Mac-PC-or-NAS"
+      ],
+      "note": "Documented macOS network share connection; UPnP/DLNA does not support Infuse library features.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16",
+      "platforms": [
+        "macos"
+      ]
+    },
+    {
+      "player": "infuse",
+      "feature": "nfs_browse",
+      "status": "supported",
+      "sources": [
+        "https://support.firecore.com/hc/en-us/articles/215090977-Streaming-From-a-Mac-PC-or-NAS"
+      ],
+      "note": "Documented macOS network share connection; UPnP/DLNA does not support Infuse library features.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16",
+      "platforms": [
+        "macos"
+      ]
+    },
+    {
+      "player": "infuse",
+      "feature": "trakt_sync",
+      "status": "supported",
+      "sources": [
+        "https://support.firecore.com/hc/en-us/articles/4405098078743-Trakt-Sync"
+      ],
+      "note": "Trakt account required. Free tier sends history; Pro adds two-way sync, with media-server restrictions.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16",
+      "platforms": [
+        "macos"
+      ]
+    },
+    {
+      "player": "infuse",
+      "feature": "plex_server_client",
+      "status": "supported",
+      "sources": [
+        "https://support.firecore.com/hc/en-us/articles/360006462093-Streaming-from-Plex-Emby-and-Jellyfin"
+      ],
+      "note": "Native integration with authenticated server libraries, metadata and watch state; server required.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16",
+      "platforms": [
+        "macos"
+      ]
+    },
+    {
+      "player": "infuse",
+      "feature": "emby_server_client",
+      "status": "supported",
+      "sources": [
+        "https://support.firecore.com/hc/en-us/articles/360006462093-Streaming-from-Plex-Emby-and-Jellyfin"
+      ],
+      "note": "Native integration with authenticated server libraries, metadata and watch state; server required.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16",
+      "platforms": [
+        "macos"
+      ]
+    },
+    {
+      "player": "infuse",
+      "feature": "jellyfin_server_client",
+      "status": "supported",
+      "sources": [
+        "https://support.firecore.com/hc/en-us/articles/360006462093-Streaming-from-Plex-Emby-and-Jellyfin"
+      ],
+      "note": "Native integration with authenticated server libraries, metadata and watch state; server required.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16",
+      "platforms": [
+        "macos"
+      ]
+    },
+    {
+      "player": "plex",
+      "feature": "plex_server_client",
+      "status": "supported",
+      "sources": [
+        "https://support.plex.tv/articles/200288286-what-is-plex/"
+      ],
+      "note": "Plex desktop client connects to a Plex Media Server; server required.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "plex",
+      "feature": "skip_intro",
+      "status": "supported",
+      "sources": [
+        "https://support.plex.tv/articles/skip-content/"
+      ],
+      "note": "Desktop clients support Skip Intro when server markers exist; Plex Pass and eligible server analysis required.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "infuse",
+      "feature": "skip_intro",
+      "status": "supported",
+      "sources": [
+        "https://firecore.com/infuse"
+      ],
+      "note": "Intro skipping documented for current product; IntroDB/TheIntroDB data and compatible version required.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16",
+      "platforms": [
+        "macos"
+      ]
+    },
+    {
+      "player": "vlc",
+      "feature": "audio_visualization",
+      "status": "supported",
+      "sources": [
+        "https://docs.videolan.me/vlc-user/desktop/3.0/en/basic/audio.html"
+      ],
+      "note": "Audio menu offers visualizations; module availability depends on build.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "wmp-legacy",
+      "feature": "audio_visualization",
+      "status": "supported",
+      "sources": [
+        "https://learn.microsoft.com/en-us/previous-versions/windows/desktop/wmp/windows-media-player-custom-visualizations"
+      ],
+      "note": "Legacy Windows Media Player visualization API; does not establish support in the modern Media Player app.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16",
+      "platforms": [
+        "windows"
+      ]
+    },
+    {
+      "player": "kodi",
+      "feature": "audio_visualization",
+      "status": "supported",
+      "sources": [
+        "https://kodi.wiki/view/Ubuntu_binary_add-ons"
+      ],
+      "note": "Visualization add-on required; Ubuntu packages visualization binaries separately.",
+      "research_batch": "desktop-expanded-2026-11-16",
+      "checked_utc": "2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "dual_subtitles",
+      "status": "supported",
+      "sources": [
+        "https://github.com/marksmayo/foxide/blob/166c8893d6ee64f746d6f5b05d00054c6bd21650/docs/medal-features.md"
+      ],
+      "note": "Desktop preview: explicit user-facing controls and public dispatch tests; native command conformance for playback controls. See the feature guide for limits. No displayed-frame/power certification.",
+      "checked_utc": "2026-11-16",
+      "research_batch": "desktop-implementation-2026-11-16"
+    },
+    {
+      "player": "foxide",
+      "feature": "upnp_browse",
       "status": "planned",
       "sources": [],
-      "note": "No accepted Foxide desktop implementation for this event; no medal.",
-      "research_batch": "desktop-2026-11-16"
+      "note": "No accepted desktop implementation; libmpv backend capability alone does not establish a Foxide UI feature."
+    },
+    {
+      "player": "foxide",
+      "feature": "upnp_server",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted desktop implementation; libmpv backend capability alone does not establish a Foxide UI feature."
+    },
+    {
+      "player": "foxide",
+      "feature": "controller_navigation",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted desktop implementation; libmpv backend capability alone does not establish a Foxide UI feature."
+    },
+    {
+      "player": "foxide",
+      "feature": "webdav_browse",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted desktop implementation; libmpv backend capability alone does not establish a Foxide UI feature."
+    },
+    {
+      "player": "foxide",
+      "feature": "nfs_browse",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted desktop implementation; libmpv backend capability alone does not establish a Foxide UI feature."
+    },
+    {
+      "player": "foxide",
+      "feature": "trakt_sync",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted desktop implementation; libmpv backend capability alone does not establish a Foxide UI feature."
+    },
+    {
+      "player": "foxide",
+      "feature": "plex_server_client",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted desktop implementation; libmpv backend capability alone does not establish a Foxide UI feature."
+    },
+    {
+      "player": "foxide",
+      "feature": "emby_server_client",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted desktop implementation; libmpv backend capability alone does not establish a Foxide UI feature."
+    },
+    {
+      "player": "foxide",
+      "feature": "jellyfin_server_client",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted desktop implementation; libmpv backend capability alone does not establish a Foxide UI feature."
+    },
+    {
+      "player": "foxide",
+      "feature": "skip_intro",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted desktop implementation; libmpv backend capability alone does not establish a Foxide UI feature."
+    },
+    {
+      "player": "foxide",
+      "feature": "audio_visualization",
+      "status": "planned",
+      "sources": [],
+      "note": "No accepted desktop implementation; libmpv backend capability alone does not establish a Foxide UI feature."
     }
   ],
   "sources": {

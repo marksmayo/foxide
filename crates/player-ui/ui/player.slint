@@ -1,4 +1,25 @@
-import { Slider, ScrollView, LineEdit, Palette } from "std-widgets.slint";
+import { Slider, ScrollView, LineEdit, Palette, ComboBox } from "std-widgets.slint";
+export struct RadioRow { id: string, name: string, url: string, detail: string }
+export struct CastReceiverRow { name: string, endpoint: string, fingerprint: string }
+export struct BindingRow { key: string, action: string }
+export global Appearance {
+    in-out property <bool> light: false;
+    in-out property <color> accent: #ef955f;
+    in-out property <color> on-accent: #171a20;
+    out property <color> background: light ? #eef2f6 : #101722;
+    out property <color> toolbar: light ? #ffffff : #141d29;
+    out property <color> sidebar: light ? #e5ebf2 : #141e2b;
+    out property <color> screen: light ? #f8fafc : #080e17;
+    out property <color> canvas: light ? #dce4ee : #0b111b;
+    out property <color> text: light ? #172638 : #edf2f8;
+    out property <color> secondary: light ? #344b65 : #b9c7d8;
+    out property <color> muted: light ? #4d637b : #8e9fb7;
+    out property <color> selected: light ? #cddbea : #293649;
+    out property <color> hover: light ? #d8e3ee : #243141;
+    out property <color> dialog: light ? #f8fafc : #1b2839;
+    out property <color> border: light ? #9aadc2 : #34445a;
+}
+export struct QueueRow { source-index: int, label: string }
 export struct TrackRow { id: int, label: string, selected: bool }
 
 component ToolButton inherits Rectangle {
@@ -10,18 +31,18 @@ component ToolButton inherits Rectangle {
     callback clicked();
     property <string> icon: label == "☷" ? "queue" : label == "ⓘ" ? "info" : label == "⛶" ? "fullscreen" : label == "▶" ? "play" : label == "Ⅱ" ? "pause" : label == "◀|" ? "previous" : label == "|▶" ? "next" : label == "○" ? "muted" : label == "♪" ? "volume" : label == "×" ? "close" : "";
     width: 38px; height: 36px; border-radius: 8px;
-    background: primary ? #ef955f : selected ? #29384a : touch.has-hover ? #243141 : transparent;
+    background: primary ? Appearance.accent : selected ? Appearance.selected : touch.has-hover ? Appearance.hover : transparent;
     opacity: available ? 1 : 0.35;
-    border-width: focus.has-focus ? 1px : 0px; border-color: #ef955f;
+    border-width: focus.has-focus ? 1px : 0px; border-color: Appearance.accent;
     accessible-role: button; accessible-label: description;
     accessible-enabled: available;
     accessible-checkable: description == "Toggle playlist" || description == "Toggle fullscreen";
     accessible-checked: selected;
     accessible-action-default => { if (root.available) { root.clicked(); } }
     forward-focus: focus;
-    Text { visible: root.icon == ""; text: root.label; color: root.primary ? #171a20 : #e5edf5; font-size: 15px; horizontal-alignment: center; vertical-alignment: center; }
+    Text { visible: root.icon == ""; text: root.label; color: root.primary ? Appearance.on-accent : Appearance.text; font-size: 15px; horizontal-alignment: center; vertical-alignment: center; }
     Path { visible: root.icon != ""; width: 20px; height: 20px; x: (parent.width - self.width) / 2; y: (parent.height - self.height) / 2; viewbox-width: 24; viewbox-height: 24;
-        stroke: root.primary ? #171a20 : #c5d3e3; stroke-width: 1.7px; fill: root.icon == "play" || root.icon == "pause" ? (root.primary ? #171a20 : #c5d3e3) : transparent;
+        stroke: root.primary ? Appearance.on-accent : Appearance.secondary; stroke-width: 1.7px; fill: root.icon == "play" || root.icon == "pause" ? (root.primary ? Appearance.on-accent : Appearance.secondary) : transparent;
         commands: root.icon == "queue" ? "M4 6 H20 M4 12 H20 M4 18 H20" : root.icon == "fullscreen" ? "M4 9 V4 H9 M15 4 H20 V9 M20 15 V20 H15 M9 20 H4 V15" : root.icon == "play" ? "M8 5 L19 12 L8 19 Z" : root.icon == "pause" ? "M6 5 H10 V19 H6 Z M14 5 H18 V19 H14 Z" : root.icon == "previous" ? "M6 5 V19 M18 5 L8 12 L18 19 Z" : root.icon == "next" ? "M18 5 V19 M6 5 L16 12 L6 19 Z" : root.icon == "info" ? "M12 3 A9 9 0 1 0 12 21 A9 9 0 1 0 12 3 M12 11 V17 M12 7 V8" : root.icon == "close" ? "M6 6 L18 18 M18 6 L6 18" : root.icon == "muted" ? "M4 9 H8 L13 5 V19 L8 15 H4 Z M17 9 L22 15 M22 9 L17 15" : "M4 9 H8 L13 5 V19 L8 15 H4 Z M17 8 Q23 12 17 16";
     }
     focus := FocusScope { enabled: root.available; key-pressed(event) => { if (event.text == " " || event.text == "\n") { root.clicked(); return accept; } return reject; } }
@@ -29,17 +50,85 @@ component ToolButton inherits Rectangle {
 }
 component FoxMark inherits Rectangle {
     background: transparent; width: 70px; height: 70px;
-    Path { width: parent.width; height: parent.height; viewbox-width: 64; viewbox-height: 64; commands: "M9 7 L25 18 L39 18 L55 7 L59 36 L32 58 L5 36 Z"; fill: #ed975f; }
+    Path { width: parent.width; height: parent.height; viewbox-width: 64; viewbox-height: 64; commands: "M9 7 L25 18 L39 18 L55 7 L59 36 L32 58 L5 36 Z"; fill: Appearance.accent; }
     Path { width: parent.width; height: parent.height; viewbox-width: 64; viewbox-height: 64; commands: "M13 23 L29 34 L23 42 L11 33 Z M51 23 L35 34 L41 42 L53 33 Z"; fill: #132030; }
     Path { width: parent.width; height: parent.height; viewbox-width: 64; viewbox-height: 64; commands: "M24 44 L40 44 L32 52 Z"; fill: #fff1e6; }
 }
 export component PlayerWindow inherits Window {
-    init => { Palette.color-scheme = ColorScheme.dark; }
+    init => { Palette.color-scheme = root.light-theme ? ColorScheme.light : ColorScheme.dark; }
+    in-out property <bool> radio-busy: false;
+    in-out property <string> radio-query;
+    in-out property <string> radio-error;
+    in-out property <[RadioRow]> radio-stations;
+    in-out property <string> active-radio-name;
+    in-out property <string> active-radio-url;
+    callback radio-search(string);
+    callback radio-play(string, string);
+    callback cancel-services();
+    in-out property <string> cast-endpoint;
+    in-out property <string> cast-fingerprint;
+    in-out property <string> cast-status: "Enter a local receiver, inspect its certificate, then review the fingerprint before casting.";
+    in-out property <bool> cast-inspecting: false;
+    in-out property <bool> cast-discovering: false;
+    in-out property <[CastReceiverRow]> cast-receivers;
+    in-out property <[CastReceiverRow]> cast-paired-receivers;
+    in-out property <string> cast-name;
+    in-out property <bool> cast-active: false;
+    in-out property <bool> cast-available: false;
+    in-out property <bool> cast-paused: false;
+    callback cast-connect(string, string);
+    callback cast-inspect(string);
+    callback cast-discover();
+    callback cast-control(string);
+    callback cast-select(string, string, string);
+    callback cast-remember(string, string, string);
+    callback cast-forget(string);
+    changed panel => { if (root.panel != "radio") { root.cancel-services(); } }
+    in-out property <bool> light-theme: false;
+    in-out property <color> accent-color: #ef955f;
+    in-out property <color> accent-text: #171a20;
+    in-out property <bool> compact-mode: false;
+    in-out property <string> accent-hex: "#ef955f";
+    in-out property <string> binding-key;
+    in-out property <string> binding-action: "pause";
+    in-out property <string> preferences-error;
+    in-out property <string> shortcut-help;
+    in-out property <[BindingRow]> key-bindings;
+    in-out property <[string]> shortcut-actions;
+    changed light-theme => { Appearance.light = root.light-theme; Palette.color-scheme = root.light-theme ? ColorScheme.light : ColorScheme.dark; }
+    changed accent-color => { Appearance.accent = root.accent-color; }
+    changed accent-text => { Appearance.on-accent = root.accent-text; }
+    callback shortcut(string, bool, bool, bool, bool) -> bool;
+    in-out property <string> video-site-helper;
+    in-out property <string> video-site-notice;
+    in-out property <string> update-status: "Updates are checked automatically.";
+    in-out property <string> staged-update-version;
+    callback check-updates();
+    callback install-update();
+    callback save-video-site-helper(string);
+    callback choose-video-site-helper();
+    callback save-binding(string, string);
+    callback remove-binding(string);
+    callback save-appearance(bool, string);
+    callback reset-preferences();
+    callback toggle-compact();
     title: media-title == "" ? "Foxide" : media-title + " — Foxide";
-    preferred-width: 1180px; preferred-height: 770px; min-width: 760px; min-height: 480px;
-    background: #101722; default-font-size: 14px;
+    preferred-width: root.compact-mode ? 560px : 1180px; preferred-height: root.compact-mode ? 280px : 770px; min-width: root.compact-mode ? 420px : 760px; min-height: root.compact-mode ? 260px : 480px;
+    background: Appearance.background; default-font-size: 14px;
     in-out property <image> video-frame;
     in-out property <bool> loaded: false;
+    in-out property <bool> has-video: false;
+    in-out property <bool> has-artwork: false;
+    in-out property <string> shader-notice: "Choose only trusted shaders; they run on the GPU. Selection replaces the session stack.";
+    callback choose-shaders();
+    callback load-shader-files([string]);
+    callback shader-result-ready();
+    callback clear-shaders();
+    in-out property <string> color-profile-notice: "Manual ICC profile: choose the profile for your current monitor.";
+    callback choose-color-profile();
+    callback load-color-profile(string);
+    callback color-profile-result-ready();
+    callback clear-color-profile();
     in-out property <bool> paused: false;
     in-out property <bool> queue-visible: false;
     in-out property <bool> fullscreen-mode: false;
@@ -52,14 +141,18 @@ export component PlayerWindow inherits Window {
     in-out property <string> duration-label: "00:00";
     in-out property <string> status: "Ready when you are";
     in-out property <string> diagnostics: "No media loaded";
-    in-out property <[string]> queue;
+    in-out property <[QueueRow]> queue;
+    in-out property <int> queue-count: 0;
+    in-out property <string> queue-filter;
+    callback filter-queue(string);
     in-out property <int> selected-row: 0;
     in-out property <[TrackRow]> audio-tracks;
     in-out property <[TrackRow]> subtitle-tracks;
     in-out property <string> panel;
     in-out property <string> url;
-    out property <float> video-width: screen.width / 1px;
-    out property <float> video-height: screen.height / 1px;
+    out property <float> video-width: root.compact-mode ? (root.loaded && root.has-artwork ? 56 : 1) : screen.width / 1px;
+    out property <float> video-height: root.compact-mode ? (root.loaded && root.has-artwork ? 56 : 1) : screen.height / 1px;
+    callback native-snapshot-ready();
     callback action(string, float);
     callback open-url(string);
     callback files-picked([string], bool);
@@ -67,13 +160,16 @@ export component PlayerWindow inherits Window {
     forward-focus: keys;
     MenuBar {
         Menu { title: "Media";
-            MenuItem { title: "Open files…"; shortcut: @keys(Control + O); activated => { root.action("open", 0); } }
-            MenuItem { title: "Open URL…"; shortcut: @keys(Control + L); activated => { root.panel = "url"; } }
+            MenuItem { title: "Open files…"; activated => { root.action("open", 0); } }
+            MenuItem { title: "Internet radio…"; activated => { root.panel = "radio"; } }
+            MenuItem { title: "Open URL…"; activated => { root.panel = "url"; } }
             MenuSeparator {}
-            MenuItem { title: "Quit"; shortcut: @keys(Control + Q); activated => { root.action("quit", 0); } }
+            MenuItem { title: "Quit"; activated => { root.action("quit", 0); } }
         }
         Menu { title: "Playback";
             MenuItem { title: root.paused ? "Play" : "Pause"; enabled: root.loaded; activated => { root.action("pause", 0); } }
+            MenuItem { title: "Next frame"; enabled: root.loaded && root.has-video; activated => { root.action("frame-step", 0); } }
+            MenuItem { title: "Previous frame"; enabled: root.loaded && root.has-video; activated => { root.action("frame-back-step", 0); } }
             MenuItem { title: "Stop"; enabled: root.loaded; activated => { root.action("stop", 0); } }
             MenuSeparator {}
             MenuItem { title: "Back 5 seconds"; enabled: root.loaded; activated => { root.action("seek-relative", -5); } }
@@ -85,123 +181,311 @@ export component PlayerWindow inherits Window {
                 MenuItem { title: "2×"; enabled: root.loaded; activated => { root.action("speed", 2); } }
             }
             MenuSeparator {}
-            MenuItem { title: "Previous item"; enabled: root.queue.length > 0; activated => { root.action("previous", 0); } }
-            MenuItem { title: "Next item"; enabled: root.queue.length > 0; activated => { root.action("next", 0); } }
+            MenuItem { title: "Previous item"; enabled: root.queue-count > 0; activated => { root.action("previous", 0); } }
+            MenuItem { title: "Next item"; enabled: root.queue-count > 0; activated => { root.action("next", 0); } }
+        }
+        Menu { title: "Cast";
+            MenuItem { title: "Cast to a receiver…"; activated => { root.panel = "cast"; } }
+            MenuItem { title: "Pause casting"; enabled: root.cast-active && !root.cast-paused; activated => { root.cast-control("pause"); } }
+            MenuItem { title: "Resume casting"; enabled: root.cast-active && root.cast-paused; activated => { root.cast-control("play"); } }
+            MenuItem { title: "Seek back 10 seconds"; enabled: root.cast-active; activated => { root.cast-control("seek-back"); } }
+            MenuItem { title: "Seek forward 10 seconds"; enabled: root.cast-active; activated => { root.cast-control("seek-forward"); } }
+            MenuItem { title: "Stop casting"; enabled: root.cast-active; activated => { root.cast-control("stop"); } }
         }
         Menu { title: "Audio";
+            Menu { title: "ReplayGain";
+                MenuItem { title: "Off"; enabled: root.loaded; activated => { root.action("replaygain", 0); } }
+                MenuItem { title: "Track gain"; enabled: root.loaded; activated => { root.action("replaygain", 1); } }
+                MenuItem { title: "Album gain"; enabled: root.loaded; activated => { root.action("replaygain", 2); } }
+            }
+            Menu { title: "Equalizer";
+                MenuItem { title: "Off / reset audio filters"; enabled: root.loaded; activated => { root.action("equalizer", 0); } }
+                MenuItem { title: "Bass boost"; enabled: root.loaded; activated => { root.action("equalizer", 1); } }
+                MenuItem { title: "Voice clarity"; enabled: root.loaded; activated => { root.action("equalizer", 2); } }
+            }
             MenuItem { title: "Mute"; checked: root.muted; activated => { root.action("mute", 0); } }
             MenuSeparator {}
             for track in root.audio-tracks: MenuItem { title: track.label; checked: track.selected; enabled: root.loaded; activated => { root.action("audio-track", track.id); } }
         }
-        Menu { title: "Video"; MenuItem { title: "Fullscreen"; checked: root.fullscreen-mode; shortcut: @keys(F11); activated => { root.action("fullscreen", 0); } } }
+        Menu { title: "Video";
+            Menu { title: "Color management";
+                MenuItem { title: "Load display ICC profile…"; activated => { root.panel = "information"; root.choose-color-profile(); } }
+                MenuItem { title: "Clear manual profile"; activated => { root.panel = "information"; root.clear-color-profile(); } }
+            }
+            Menu { title: "GPU shaders";
+                MenuItem { title: "Load trusted shaders…"; activated => { root.panel = "information"; root.choose-shaders(); } }
+                MenuItem { title: "Clear shader stack"; activated => { root.panel = "information"; root.clear-shaders(); } }
+            }
+            Menu { title: "Rotation";
+                MenuItem { title: "Original"; enabled: root.loaded && root.has-video; activated => { root.action("rotation", 0); } }
+                MenuItem { title: "90° clockwise"; enabled: root.loaded && root.has-video; activated => { root.action("rotation", 90); } }
+                MenuItem { title: "180°"; enabled: root.loaded && root.has-video; activated => { root.action("rotation", 180); } }
+                MenuItem { title: "270° clockwise"; enabled: root.loaded && root.has-video; activated => { root.action("rotation", 270); } }
+            }
+            MenuItem { title: "Flip vertically"; enabled: root.loaded && root.has-video; activated => { root.action("flip-vertical", 0); } }
+            MenuItem { title: "Flip horizontally"; enabled: root.loaded && root.has-video; activated => { root.action("flip-horizontal", 0); } }
+            Menu { title: "Debanding";
+                MenuItem { title: "Off"; enabled: root.loaded && root.has-video; activated => { root.action("deband", 0); } }
+                MenuItem { title: "On"; enabled: root.loaded && root.has-video; activated => { root.action("deband", 1); } }
+            }
+            MenuItem { title: "Fullscreen"; checked: root.fullscreen-mode; activated => { root.action("fullscreen", 0); } } }
         Menu { title: "Subtitles";
+            Menu { title: "Secondary subtitles";
+                MenuItem { title: "Off"; enabled: root.loaded; activated => { root.action("secondary-subtitle", 0); } }
+                for track in root.subtitle-tracks: MenuItem { title: track.label; enabled: root.loaded; activated => { root.action("secondary-subtitle", track.id); } }
+            }
             MenuItem { title: "Load subtitle file…"; enabled: root.loaded; activated => { root.action("subtitle-file", 0); } }
             MenuItem { title: "Off"; enabled: root.loaded; activated => { root.action("subtitle-track", 0); } }
             MenuSeparator {}
             for track in root.subtitle-tracks: MenuItem { title: track.label; checked: track.selected; enabled: root.loaded; activated => { root.action("subtitle-track", track.id); } }
         }
         Menu { title: "View";
-            MenuItem { title: "Playlist"; checked: root.queue-visible; shortcut: @keys(Control + P); activated => { root.action("playlist", 0); } }
+            MenuItem { title: "Compact music view"; checked: root.compact-mode; activated => { root.toggle-compact(); } }
+            MenuItem { title: "Preferences…"; activated => { root.panel = "preferences"; } }
+            MenuItem { title: "Playlist"; checked: root.queue-visible; activated => { root.action("playlist", 0); } }
             MenuItem { title: "Playback information"; activated => { root.panel = "information"; } }
         }
         Menu { title: "Help";
             MenuItem { title: "Keyboard shortcuts"; activated => { root.panel = "shortcuts"; } }
+            MenuItem { title: "Software updates…"; activated => { root.panel = "updates"; root.check-updates(); } }
             MenuItem { title: "About Foxide"; activated => { root.panel = "about"; } }
         }
     }
     keys := FocusScope { width: parent.width; height: parent.height; key-pressed(event) => {
         if (event.text == Key.Escape && root.panel != "") { root.panel = ""; return accept; }
         if (root.panel != "") { return reject; }
-        if (event.text == " ") { root.action("pause", 0); return accept; }
-        if (event.text == "f") { root.action("fullscreen", 0); return accept; }
         if (event.text == Key.Escape && root.fullscreen-mode) { root.action("fullscreen", 0); return accept; }
-        if (event.text == Key.RightArrow) { root.action("seek-relative", 5); return accept; }
-        if (event.text == Key.LeftArrow) { root.action("seek-relative", -5); return accept; }
+        if (root.shortcut(event.text, event.modifiers.control, event.modifiers.alt, event.modifiers.shift, event.modifiers.meta)) { return accept; }
         return reject;
     }
     VerticalLayout { spacing: 0px; padding: 0px;
-        if (!root.fullscreen-mode): Rectangle { height: 68px; background: #131c28;
+        if (!root.fullscreen-mode && !root.compact-mode): Rectangle { height: 68px; background: Appearance.toolbar;
             HorizontalLayout { padding-left: 24px; padding-right: 22px; spacing: 12px;
                 FoxMark { width: 30px; height: 30px; }
-                Text { text: "foxide"; font-size: 23px; font-weight: 700; color: #f1f4f8; width: 95px; }
+                Text { text: "foxide"; font-size: 23px; font-weight: 700; color: Appearance.text; width: 95px; }
                 Rectangle { horizontal-stretch: 1; background: transparent; }
                 ToolButton { label: "Open files"; width: 108px; primary: true; clicked => { root.action("open", 0); } }
                 ToolButton { label: "☷"; description: "Toggle playlist"; selected: root.queue-visible; clicked => { root.action("playlist", 0); } }
                 ToolButton { label: "ⓘ"; description: "Playback information"; clicked => { root.panel = "information"; } }
             }
         }
-        HorizontalLayout { spacing: 0px;
-            if (root.queue-visible): Rectangle { width: 272px; background: #141e2b;
+        if (root.compact-mode): Rectangle { height: 104px; background: Appearance.background;
+            HorizontalLayout { padding: 18px; spacing: 16px;
+                Rectangle { width: 56px; height: 56px; background: transparent;
+                    if (root.loaded && root.has-artwork): Image { source: root.video-frame; width: parent.width; height: parent.height; image-fit: contain; }
+                    if (!root.loaded || !root.has-artwork): FoxMark { width: 56px; height: 56px; }
+                }
+                VerticalLayout { alignment: center; spacing: 6px;
+                    Text { text: root.media-title == "" ? "Foxide Music" : root.media-title; color: Appearance.text; font-size: 20px; font-weight: 600; overflow: elide; }
+                    Text { text: root.loaded ? root.status : "Open music from the Media menu"; color: Appearance.muted; font-size: 12px; overflow: elide; }
+                }
+            }
+        }
+        if (root.staged-update-version != "" && !root.fullscreen-mode): Rectangle { height: 42px; background: Appearance.selected;
+            HorizontalLayout { padding-left: 20px; padding-right: 18px; spacing: 12px;
+                Text { text: "Foxide " + root.staged-update-version + " is ready to install"; color: Appearance.text; horizontal-stretch: 1; vertical-alignment: center; }
+                ToolButton { label: "Review update"; width: 120px; primary: true; clicked => { root.panel = "updates"; } }
+            }
+        }
+        HorizontalLayout { spacing: 0px; min-height: 0px; max-height: root.compact-mode ? 0px : 100000px; vertical-stretch: root.compact-mode ? 0 : 1;
+            if (root.queue-visible && !root.compact-mode): Rectangle { width: 272px; background: Appearance.sidebar;
                 VerticalLayout { padding: 18px; spacing: 16px;
-                    HorizontalLayout { Text { text: "PLAYLIST"; color: #8293ab; font-size: 11px; font-weight: 700; } Text { text: root.queue.length; color: #ed975f; horizontal-alignment: right; } }
-                    if (root.queue.length == 0): Text { text: "Your queue is clear.\nOpen a few files to get started."; color: #8b9bb1; wrap: word-wrap; }
+                    HorizontalLayout { Text { text: "PLAYLIST"; color: Appearance.muted; font-size: 11px; font-weight: 700; } Text { text: root.queue.length; color: Appearance.accent; horizontal-alignment: right; } }
+                    if (root.queue.length == 0): Text { text: "Your queue is clear.\nOpen a few files to get started."; color: Appearance.muted; wrap: word-wrap; }
+                    LineEdit { text <=> root.queue-filter; placeholder-text: "Filter playlist…"; edited(text) => { root.filter-queue(text); } }
                     ScrollView { vertical-stretch: 1;
                         VerticalLayout { spacing: 6px;
-                            for item[index] in root.queue: Rectangle { height: 52px; border-radius: 8px; background: index == root.selected-row ? #293649 : row-touch.has-hover ? #202c3b : transparent;
-                                Text { x: 12px; width: parent.width - 24px; height: parent.height; text: item; overflow: elide; color: index == root.selected-row ? #f4b48c : #b9c7d8; vertical-alignment: center; font-size: 13px; }
-                                row-touch := TouchArea { clicked => { root.action("select", index); } }
+                            for item in root.queue: Rectangle { height: 52px; border-radius: 8px; background: item.source-index == root.selected-row ? Appearance.selected : row-touch.has-hover ? Appearance.hover : transparent;
+                                Text { x: 12px; width: parent.width - 24px; height: parent.height; text: item.label; overflow: elide; color: item.source-index == root.selected-row ? Appearance.accent : Appearance.secondary; vertical-alignment: center; font-size: 13px; }
+                                row-touch := TouchArea { clicked => { root.action("select", item.source-index); } }
                             }
                         }
                     }
-                    Text { text: "One good thing after another."; color: #6e829a; font-size: 11px; }
+                    Text { text: "One good thing after another."; color: Appearance.muted; font-size: 11px; }
                 }
             }
-            Rectangle { background: #0b111b;
+            Rectangle { visible: !root.compact-mode; background: Appearance.canvas;
                 VerticalLayout { padding: root.fullscreen-mode ? 0px : 20px; spacing: 0px;
-                    screen := Rectangle { background: #080e17; border-radius: 12px; clip: true; vertical-stretch: 1;
-                        Image { source: root.video-frame; image-fit: contain; visible: root.loaded; }
+                    screen := Rectangle { background: root.loaded ? #080e17 : Appearance.screen; border-radius: 12px; clip: true; vertical-stretch: 1;
+                        Image { source: root.video-frame; width: parent.width; height: parent.height; image-fit: contain; visible: root.loaded && (root.has-video || root.has-artwork); }
+                        if (root.loaded && !root.has-video && !root.has-artwork): VerticalLayout { alignment: center; spacing: 16px;
+                            FoxMark { width: 72px; height: 72px; horizontal-stretch: 0; }
+                            Text { text: root.media-title == "" ? "Audio playback" : root.media-title; color: Appearance.text; font-size: 20px; horizontal-alignment: center; overflow: elide; }
+                        }
                         if (!root.loaded): VerticalLayout { alignment: center; spacing: 16px;
-                            HorizontalLayout { alignment: center; FoxMark {} }
-                            Text { text: "Open something good."; color: #edf2f8; font-size: 29px; font-weight: 600; horizontal-alignment: center; }
-                            Text { text: "Movies, music, and everything in between."; color: #8e9fb7; font-size: 14px; horizontal-alignment: center; }
+                            Image { source: @image-url("../assets/foxide.webp"); height: min(280px, screen.height * 0.5); image-fit: contain; }
+                            Text { text: "Open something good."; color: Appearance.text; font-size: 29px; font-weight: 600; horizontal-alignment: center; }
+                            Text { text: "Movies, music, and everything in between."; color: Appearance.muted; font-size: 14px; horizontal-alignment: center; }
                             HorizontalLayout { alignment: center; spacing: 12px;
                                 ToolButton { label: "Open files…"; description: "Open media files"; width: 140px; height: 42px; primary: true; clicked => { root.action("open", 0); } }
                                 ToolButton { label: "Open URL"; width: 105px; height: 42px; clicked => { root.panel = "url"; } }
                             }
-                            Text { text: "Ctrl+O to open a file  ·  Space to play or pause"; color: #60758f; font-size: 11px; horizontal-alignment: center; }
+                            Text { text: "Open from the Media menu  ·  Edit keys under View → Preferences"; color: Appearance.muted; font-size: 11px; horizontal-alignment: center; }
+                        }
+                        TouchArea {
+                            enabled: root.loaded && root.panel == "";
+                            property <length> gesture-start-x: 0px;
+                            property <length> gesture-start-y: 0px;
+                            pointer-event(event) => {
+                                if (event.button == PointerEventButton.left && event.kind == PointerEventKind.down) {
+                                    self.gesture-start-x = self.mouse-x;
+                                    self.gesture-start-y = self.mouse-y;
+                                } else if (event.button == PointerEventButton.left && event.kind == PointerEventKind.up) {
+                                    if (abs(self.mouse-x - self.gesture-start-x) >= 32px && abs(self.mouse-x - self.gesture-start-x) >= abs(self.mouse-y - self.gesture-start-y)) {
+                                        root.action("seek-relative", min(15, max(-15, ((self.mouse-x - self.gesture-start-x) / 1px) / 20)));
+                                    } else if (abs(self.mouse-y - self.gesture-start-y) >= 32px) {
+                                        root.action("volume", min(100, max(0, root.volume - ((self.mouse-y - self.gesture-start-y) / 1px) / 8)));
+                                    }
+                                    self.gesture-start-x = 0px;
+                                    self.gesture-start-y = 0px;
+                                } else if (event.kind == PointerEventKind.cancel) {
+                                    self.gesture-start-x = 0px;
+                                    self.gesture-start-y = 0px;
+                                }
+                            }
+                            scroll-event(event) => {
+                                if (abs(event.delta-x) >= abs(event.delta-y) && abs(event.delta-x) > 0px) {
+                                    root.action("seek-relative", min(15, max(-15, (event.delta-x / 1px) / 20)));
+                                    EventResult.accept
+                                } else if (abs(event.delta-y) > 0px) {
+                                    root.action("volume", min(100, max(0, root.volume - (event.delta-y / 1px) / 8)));
+                                    EventResult.accept
+                                } else {
+                                    EventResult.reject
+                                }
+                            }
                         }
                     }
                 }
             }
         }
-        Rectangle { height: 112px; background: #141d29;
+        Rectangle { height: 112px; background: Appearance.toolbar;
             VerticalLayout { padding-left: 24px; padding-right: 24px; padding-top: 9px; padding-bottom: 10px; spacing: 8px;
                 HorizontalLayout { spacing: 14px;
-                    Text { text: root.time-label; color: #dce4ef; width: 55px; font-size: 11px; vertical-alignment: center; }
+                    Text { text: root.time-label; color: Appearance.text; width: 55px; font-size: 11px; vertical-alignment: center; }
                     Slider { enabled: root.loaded; minimum: 0; maximum: max(1, root.duration); value: root.position; changed(value) => { root.action("seek", value); } }
-                    Text { text: root.duration-label; color: #7e92ad; width: 55px; font-size: 11px; horizontal-alignment: right; vertical-alignment: center; }
+                    Text { text: root.duration-label; color: Appearance.muted; width: 55px; font-size: 11px; horizontal-alignment: right; vertical-alignment: center; }
                 }
                 HorizontalLayout { spacing: 10px;
-                    ToolButton { label: "◀|"; description: "Previous item"; available: root.queue.length > 0; clicked => { root.action("previous", 0); } }
+                    ToolButton { label: "◀|"; description: "Previous item"; available: root.queue-count > 0; clicked => { root.action("previous", 0); } }
                     ToolButton { label: root.loaded && !root.paused ? "Ⅱ" : "▶"; description: root.paused ? "Play" : "Pause"; available: root.loaded; primary: true; width: 48px; clicked => { root.action("pause", 0); } }
-                    ToolButton { label: "|▶"; description: "Next item"; available: root.queue.length > 0; clicked => { root.action("next", 0); } }
-                    VerticalLayout { padding-left: 12px; spacing: 1px;
-                        Text { text: root.media-title == "" ? "Nothing playing" : root.media-title; color: #dce5f0; font-size: 13px; overflow: elide; }
-                        Text { text: root.status; color: #8196b1; font-size: 11px; overflow: elide; }
+                    ToolButton { label: "|▶"; description: "Next item"; available: root.queue-count > 0; clicked => { root.action("next", 0); } }
+                    if (!root.compact-mode): VerticalLayout { padding-left: 12px; spacing: 1px;
+                        Text { text: root.media-title == "" ? "Nothing playing" : root.media-title; color: Appearance.text; font-size: 13px; overflow: elide; }
+                        Text { text: root.status; color: Appearance.muted; font-size: 11px; overflow: elide; }
                     }
                     Rectangle { horizontal-stretch: 1; background: transparent; }
                     ToolButton { label: root.muted ? "○" : "♪"; description: root.muted ? "Unmute" : "Mute"; clicked => { root.action("mute", 0); } }
-                    Slider { width: 100px; minimum: 0; maximum: 100; value: root.volume; changed(value) => { root.action("volume", value); } }
-                    ToolButton { label: "⛶"; description: "Toggle fullscreen"; selected: root.fullscreen-mode; clicked => { root.action("fullscreen", 0); } }
+                    Slider { width: root.compact-mode ? 72px : 100px; minimum: 0; maximum: 100; value: root.volume; changed(value) => { root.action("volume", value); } }
+                    ToolButton { visible: !root.compact-mode; width: root.compact-mode ? 0px : 38px; label: "⛶"; description: "Toggle fullscreen"; selected: root.fullscreen-mode; clicked => { root.action("fullscreen", 0); } }
                 }
             }
         }
     }
     if (root.panel != ""): Rectangle { background: #050a13bb;
         TouchArea { clicked => { root.panel = ""; } }
-        Rectangle { width: min(parent.width - 60px, 550px); height: root.panel == "url" ? 230px : 330px; x: (parent.width - self.width) / 2; y: (parent.height - self.height) / 2;
-            background: #1b2839; border-radius: 14px; border-width: 1px; border-color: #34445a;
+        Rectangle { width: min(parent.width - 60px, 550px); height: root.panel == "preferences" || root.panel == "radio" ? min(parent.height - 30px, 620px) : root.panel == "url" ? 300px : root.panel == "cast" ? min(parent.height - 30px, 680px) : 330px; x: (parent.width - self.width) / 2; y: (parent.height - self.height) / 2;
+            background: Appearance.dialog; border-radius: 14px; border-width: 1px; border-color: Appearance.border;
             VerticalLayout { padding: 24px; spacing: 18px;
                 HorizontalLayout {
-                    Text { text: root.panel == "url" ? "Open a network stream" : root.panel == "information" ? "Playback information" : root.panel == "shortcuts" ? "Keyboard shortcuts" : "Foxide"; color: #f0f4fa; font-size: 20px; font-weight: 600; vertical-alignment: center; }
+                    Text { text: root.panel == "radio" ? "Internet radio" : root.panel == "preferences" ? "Preferences" : root.panel == "url" ? "Open a network stream" : root.panel == "information" ? "Playback information" : root.panel == "shortcuts" ? "Keyboard shortcuts" : root.panel == "cast" ? "Cast to a receiver" : "Foxide"; color: Appearance.text; font-size: 20px; font-weight: 600; vertical-alignment: center; }
                     ToolButton { label: "×"; description: "Close dialog"; clicked => { root.panel = ""; } }
                 }
                 if (root.panel == "url"): VerticalLayout { spacing: 14px;
                     LineEdit { text <=> root.url; placeholder-text: "https://… or rtsp://…"; accepted => { root.open-url(root.url); root.panel = ""; } }
                     ToolButton { label: "Open stream"; width: 130px; primary: true; clicked => { root.open-url(root.url); root.panel = ""; } }
                 }
-                if (root.panel != "url"): Text { text: root.panel == "information" ? root.diagnostics : root.panel == "shortcuts" ? "Space       Play / pause\n← / →       Back / forward 5 seconds\nF / F11      Fullscreen\nEscape     Leave fullscreen\nCtrl+O      Open files\nCtrl+L       Open URL\nCtrl+P      Playlist\nCtrl+Q      Quit" : "A little less between you and your media.\n\nFoxide desktop preview\nBuilt with Rust, Slint, and libmpv.\n\nPlayback and GPU diagnostics are available\nunder View → Playback information."; color: #b5c6dc; wrap: word-wrap; font-size: 14px; }
-                Rectangle { vertical-stretch: 1; background: transparent; }
+                if (root.panel == "updates"): VerticalLayout { spacing: 14px;
+                    Text { text: root.staged-update-version == "" ? root.update-status : "Version " + root.staged-update-version + " is downloaded and checksum-checked. Restart Foxide to install it."; color: Appearance.secondary; wrap: word-wrap; }
+                    ToolButton { label: "Check now"; width: 110px; available: root.staged-update-version == ""; clicked => { root.check-updates(); } }
+                    ToolButton { visible: root.staged-update-version != ""; label: "Install and restart"; width: 170px; primary: true; clicked => { root.install-update(); } }
+                    Text { text: "Updates download in the background. Foxide asks before installing and restarting."; color: Appearance.muted; wrap: word-wrap; font-size: 12px; }
+                }
+                if (root.panel == "cast"): ScrollView { height: min(root.height - 110px, 560px);
+                    VerticalLayout { spacing: 12px;
+                    LineEdit { text <=> root.cast-endpoint; placeholder-text: "192.168.x.x:8009"; }
+                    ToolButton { label: root.cast-discovering ? "Searching local network…" : "Find local receivers"; width: 190px; available: !root.cast-discovering; clicked => { root.cast-discover(); } }
+                    ScrollView { visible: root.cast-receivers.length > 0; height: 48px;
+                        VerticalLayout { spacing: 4px;
+                            for receiver in root.cast-receivers: ToolButton { label: receiver.name + " · " + receiver.endpoint; description: "Select " + receiver.name; width: 460px; clicked => { root.cast-select(receiver.name, receiver.endpoint, receiver.fingerprint); } }
+                        }
+                    }
+                    ScrollView { visible: root.cast-paired-receivers.length > 0; height: 48px;
+                        VerticalLayout { spacing: 4px;
+                            for receiver in root.cast-paired-receivers: ToolButton { label: receiver.name + " · " + receiver.endpoint; description: "Use remembered receiver " + receiver.name; width: 460px; clicked => { root.cast-select(receiver.name, receiver.endpoint, receiver.fingerprint); } }
+                        }
+                    }
+                    LineEdit { text <=> root.cast-name; placeholder-text: "Optional receiver name"; }
+                    ToolButton { label: root.cast-inspecting ? "Inspecting receiver…" : "Inspect receiver certificate"; width: 210px; available: !root.cast-inspecting; clicked => { root.cast-inspect(root.cast-endpoint); } }
+                    LineEdit { text <=> root.cast-fingerprint; placeholder-text: "SHA-256 certificate fingerprint"; }
+                    Text { text: root.cast-status; color: Appearance.secondary; wrap: word-wrap; }
+                    ToolButton { label: "Cast current media"; width: 150px; primary: true; available: root.cast-available && !root.cast-active; clicked => { root.cast-connect(root.cast-endpoint, root.cast-fingerprint); } }
+                    ToolButton { label: root.cast-paused ? "Resume casting" : "Pause casting"; width: 150px; available: root.cast-active; clicked => { root.cast-control(root.cast-paused ? "play" : "pause"); } }
+                    HorizontalLayout {
+                        ToolButton { label: "−10 s"; width: 90px; available: root.cast-active; clicked => { root.cast-control("seek-back"); } }
+                        ToolButton { label: "+10 s"; width: 90px; available: root.cast-active; clicked => { root.cast-control("seek-forward"); } }
+                    }
+                    ToolButton { label: "Stop casting"; width: 120px; available: root.cast-active; clicked => { root.cast-control("stop"); } }
+                    HorizontalLayout {
+                        ToolButton { label: "Remember receiver"; width: 160px; available: root.cast-endpoint != ""; clicked => { root.cast-remember(root.cast-name, root.cast-endpoint, root.cast-fingerprint); } }
+                        ToolButton { label: "Forget selected"; width: 150px; available: root.cast-endpoint != ""; clicked => { root.cast-forget(root.cast-endpoint); } }
+                    }
+                }
+                }
+                if (root.panel == "radio"): VerticalLayout { spacing: 12px; vertical-stretch: 1;
+                    HorizontalLayout { spacing: 8px;
+                        LineEdit { text <=> root.radio-query; placeholder-text: "Search stations by name…"; accepted => { if (!root.radio-busy) { root.radio-search(root.radio-query); } } }
+                        ToolButton { label: "Search"; width: 75px; available: !root.radio-busy; clicked => { root.radio-search(root.radio-query); } }
+                        ToolButton { label: "Cancel"; width: 70px; available: root.radio-busy; clicked => { root.cancel-services(); } }
+                    }
+                    Text { text: root.radio-busy ? "Searching Radio Browser…" : root.radio-error; color: Appearance.secondary; wrap: word-wrap; }
+                    ScrollView { vertical-stretch: 1;
+                        VerticalLayout { spacing: 8px;
+                            for station in root.radio-stations: Rectangle { height: 65px; background: Appearance.sidebar; border-radius: 8px;
+                                HorizontalLayout { padding: 10px; spacing: 8px;
+                                    VerticalLayout { Text { text: station.name; color: Appearance.text; overflow: elide; } Text { text: station.detail; color: Appearance.muted; font-size: 11px; overflow: elide; } }
+                                    ToolButton { label: "Play"; width: 60px; primary: true; available: !root.radio-busy; clicked => { root.radio-play(station.url, station.id); } }
+                                }
+                            }
+                        }
+                    }
+                    Text { text: "Directory: Radio Browser · Streams supplied by their broadcasters"; color: Appearance.muted; font-size: 11px; wrap: word-wrap; }
+                }
+                if (root.panel == "preferences"): ScrollView { vertical-stretch: 1;
+                    VerticalLayout { spacing: 12px; padding-right: 12px;
+                        Text { text: "APPEARANCE"; color: Appearance.muted; font-size: 11px; }
+                        HorizontalLayout { spacing: 8px;
+                            ComboBox { model: ["Dark", "Light"]; current-index: root.light-theme ? 1 : 0; selected(value) => { root.save-appearance(value == "Light", root.accent-hex); } }
+                            LineEdit { text <=> root.accent-hex; placeholder-text: "#ef955f"; accepted => { root.save-appearance(root.light-theme, root.accent-hex); } }
+                            ToolButton { label: "Apply"; width: 65px; clicked => { root.save-appearance(root.light-theme, root.accent-hex); } }
+                        }
+                        Text { text: "VIDEO SITES"; color: Appearance.muted; font-size: 11px; }
+                        Text { text: "Choose a trusted yt-dlp executable to play supported video-site URLs. Restart Foxide to apply changes."; color: Appearance.secondary; wrap: word-wrap; font-size: 12px; }
+                        Text { text: root.video-site-helper == "" ? "Disabled" : root.video-site-helper; color: Appearance.text; overflow: elide; }
+                        HorizontalLayout { spacing: 8px;
+                            ToolButton { label: "Choose yt-dlp…"; width: 150px; clicked => { root.choose-video-site-helper(); } }
+                            ToolButton { label: "Disable"; width: 85px; available: root.video-site-helper != ""; clicked => { root.save-video-site-helper(""); } }
+                        }
+                        Text { text: root.video-site-notice; color: Appearance.secondary; wrap: word-wrap; font-size: 12px; }
+                        Text { text: "KEYBOARD BINDINGS"; color: Appearance.muted; font-size: 11px; }
+                        Text { text: "Use Ctrl, Alt, Shift or Meta (Command on macOS). Escape always closes dialogs. Remove a binding before reassigning its key."; color: Appearance.secondary; wrap: word-wrap; font-size: 12px; }
+                        HorizontalLayout { spacing: 8px;
+                            LineEdit { text <=> root.binding-key; placeholder-text: "Ctrl+K"; }
+                            ComboBox { model: root.shortcut-actions; current-value <=> root.binding-action; }
+                            ToolButton { label: "Bind"; width: 60px; clicked => { root.save-binding(root.binding-key, root.binding-action); } }
+                        }
+                        Text { text: root.preferences-error; color: #d85b54; wrap: word-wrap; }
+                        for binding in root.key-bindings: Rectangle { height: 34px; vertical-stretch: 0; background: transparent; HorizontalLayout { spacing: 8px;
+                            Text { text: binding.key; color: Appearance.text; width: 140px; vertical-alignment: center; }
+                            Text { text: binding.action; color: Appearance.secondary; horizontal-stretch: 1; vertical-alignment: center; }
+                            ToolButton { label: "Remove"; width: 75px; clicked => { root.remove-binding(binding.key); } }
+                        } }
+                        ToolButton { label: "Reset preferences"; width: 170px; clicked => { root.reset-preferences(); } }
+                    }
+                }
+                if (root.panel == "shortcuts"): ScrollView { vertical-stretch: 1; Text { text: root.shortcut-help + "\nEscape  —  Close dialog / leave fullscreen"; color: Appearance.secondary; wrap: word-wrap; } }
+                if (root.panel != "url" && root.panel != "preferences" && root.panel != "shortcuts" && root.panel != "radio" && root.panel != "cast" && root.panel != "updates"): Text { text: root.panel == "information" ? root.diagnostics + "\n\nGPU shaders\n" + root.shader-notice + "\n\nDisplay color profile\n" + root.color-profile-notice : root.panel == "shortcuts" ? root.shortcut-help : "A little less between you and your media.\n\nFoxide desktop preview\nBuilt with Rust, Slint, and libmpv.\n\nPlayback and GPU diagnostics are available\nunder View → Playback information."; color: Appearance.secondary; wrap: word-wrap; font-size: 14px; }
+                if (root.panel != "preferences" && root.panel != "shortcuts" && root.panel != "radio"): Rectangle { vertical-stretch: 1; background: transparent; }
             }
         }
     }

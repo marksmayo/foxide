@@ -2,14 +2,22 @@
 use std::path::{Path, PathBuf};
 
 pub(crate) fn windows_libraries(executable: &Path) -> Vec<PathBuf> {
-    let mut paths = vec![executable.with_file_name("libmpv-2.dll")];
-    paths.extend(
-        executable
-            .ancestors()
-            .skip(1)
-            .take(3)
-            .map(|root| root.join("tools/libmpv/libmpv-2.dll")),
-    );
+    let application_dir = executable.parent().expect("Executable has a parent");
+    let mut paths = vec![
+        executable.with_file_name("libmpv-2.dll"),
+        application_dir.join("tools/libmpv/libmpv-2.dll"),
+    ];
+    if application_dir
+        .file_name()
+        .is_some_and(|name| name == "debug")
+        && application_dir
+            .parent()
+            .and_then(Path::file_name)
+            .is_some_and(|name| name == "target")
+        && let Some(repository_root) = application_dir.parent().and_then(Path::parent)
+    {
+        paths.push(repository_root.join("tools/libmpv/libmpv-2.dll"));
+    }
     paths
 }
 
@@ -18,18 +26,20 @@ mod tests {
     use super::*;
 
     #[test]
-    fn installed_library_precedes_development_copies_and_all_paths_are_anchored() {
+    fn library_discovery_never_leaves_the_application_directory() {
         let root = std::env::current_dir().unwrap();
-        let executable = root.join("application/target/debug/foxide-desktop.exe");
+        let executable = root.join("application/bin/foxide-desktop.exe");
         let paths = windows_libraries(&executable);
         assert_eq!(paths[0], executable.with_file_name("libmpv-2.dll"));
-        assert_eq!(paths.len(), 4);
-        assert_eq!(paths[3], root.join("application/tools/libmpv/libmpv-2.dll"));
-        assert!(
-            paths
-                .iter()
-                .all(|p| p.is_absolute() && p.starts_with(root.join("application")))
+        assert_eq!(
+            paths,
+            vec![
+                executable.with_file_name("libmpv-2.dll"),
+                executable
+                    .parent()
+                    .unwrap()
+                    .join("tools/libmpv/libmpv-2.dll")
+            ]
         );
-        assert!(!paths.contains(&root.join("tools/libmpv/libmpv-2.dll")));
     }
 }

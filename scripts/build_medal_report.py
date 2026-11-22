@@ -169,39 +169,46 @@ def markdown(boards, relative, sessions=(), provenance=None):
         parts.append(f'**{title}**\n\n' + medal_table(medal_rows(boards, kind)) + '\n')
     parts.append(f'[Raw scores]({relative}/medals.json) · [Feature sources]({relative}/features.json) · [Performance protocols]({relative}/performance-events.json) · [Download optional HTML]({relative}/report.html)\n\n')
     parts.append('Windowed fields use **Foxide Desktop**; software-only fields use the **Foxide CLI** launcher. Engine playback evidence is distinct from physical frame presentation. UI-action metrics, displayed TTFF, power and battery results remain pending unless explicitly measured.\n\n')
+    medals, charts, details = [], [], []
     for platform, board in boards.items():
-        parts.append(f'### {LABELS[platform]}\n\n![{LABELS[platform]} medal scores]({relative}/{platform}.svg)\n\n')
-        parts.append(medal_table([dict(name=p['name'], gold=p['feature_gold']+p['performance_gold'], silver=p['performance_silver'], bronze=p['performance_bronze']) for p in sorted(board['players'], key=lambda p: (-(p['feature_gold']+p['performance_gold']), -p['performance_silver'], -p['performance_bronze'], p['name']))]))
-        for field in fields_for(platform, board, sessions):
-            parts.append(f'\n**{field["label"]}**\n\n')
-            info = field['info']
-            details = [field['host'], info.get('os', ''), info.get('arch', ''),
-                       str(info['cpu_count']) + ' logical CPUs' if info.get('cpu_count') else '',
-                       field['utc'] or 'Collection date unavailable']
-            parts.append(md(' · '.join(x for x in details if x)) + '.\n\n')
-            if info.get('run_id'):
-                parts.append(f'[Actions run](https://github.com/marksmayo/foxide/actions/runs/{md(info["run_id"])}) · ')
-            if info.get('source_commit'):
-                parts.append(f'Source: `{md(info["source_commit"])}`. ')
-            parts.append('Freshness is per field; older platform results are retained with their original collection dates.\n\n')
-            if info.get('duration'):
-                parts.append(f"Sampling: {md(info['duration'])}s after engine readiness, {md(info.get('warmup', 0))}s warmup excluded; {('randomized order (seed ' + str(info['order_seed']) + ')') if info.get('order_seed') is not None else 'original collection order'}; cache state uncontrolled.\n\n")
-            if field['mode'] == 'native-default-window':
-                parts.append('Exploratory native playback at each player’s default window size and audio route; dimensions are not normalized. Hardware fallback and observer overhead differ. This field does not establish displayed FPS or battery efficiency.\n\n')
-                parts.append(decoder_table(field, sessions))
+        label = LABELS[platform]
+        medals.append(f'### {label} medals\n\n')
+        medals.append(medal_table([dict(name=p['name'], gold=p['feature_gold']+p['performance_gold'], silver=p['performance_silver'], bronze=p['performance_bronze']) for p in sorted(board['players'], key=lambda p: (-(p['feature_gold']+p['performance_gold']), -p['performance_silver'], -p['performance_bronze'], p['name']))]))
+        charts.append(f'#### {label}\n\n![{label} medal scores]({relative}/{platform}.svg)\n\n')
+        fields = fields_for(platform, board, sessions)
+        for field in fields:
             podium = {}
             for event in field['events']:
                 for rank in event['rankings']:
                     row = podium.setdefault(rank['player'], dict(name=field['names'][rank['player']], gold=0, silver=0, bronze=0))
                     if rank['medal']:
                         row[rank['medal']] += 1
+            medals.append(f'\n**{label} · {field["label"]}**\n\n')
             if podium:
-                parts.append(medal_table(sorted(podium.values(), key=lambda p: (-p['gold'], -p['silver'], -p['bronze'], p['name']))) + '\n')
-            parts.append(f'![{LABELS[platform]}: every measured metric]({relative}/{field["slug"]}-scenarios.svg)\n\n')
-            parts.append('<details><summary>Every measured metric — median values and podiums</summary>\n\n')
+                medals.append(medal_table(sorted(podium.values(), key=lambda p: (-p['gold'], -p['silver'], -p['bronze'], p['name']))) + '\n')
+            else:
+                medals.append('No eligible comparable medals in this field.\n\n')
+            charts.append(f'**{label} · {field["label"]}**\n\n![{label}: every measured metric]({relative}/{field["slug"]}-scenarios.svg)\n\n')
+            details.append(f'\n#### {label} · {field["label"]}\n\n')
+            info = field['info']
+            details = [field['host'], info.get('os', ''), info.get('arch', ''),
+                       str(info['cpu_count']) + ' logical CPUs' if info.get('cpu_count') else '',
+                       field['utc'] or 'Collection date unavailable']
+            details.append(md(' · '.join(x for x in details if x)) + '.\n\n')
+            if info.get('run_id'):
+                details.append(f'[Actions run](https://github.com/marksmayo/foxide/actions/runs/{md(info["run_id"])}) · ')
+            if info.get('source_commit'):
+                details.append(f'Source: `{md(info["source_commit"])}`. ')
+            details.append('Freshness is per field; older platform results are retained with their original collection dates.\n\n')
+            if info.get('duration'):
+                details.append(f"Sampling: {md(info['duration'])}s after engine readiness, {md(info.get('warmup', 0))}s warmup excluded; {('randomized order (seed ' + str(info['order_seed']) + ')') if info.get('order_seed') is not None else 'original collection order'}; cache state uncontrolled.\n\n")
+            if field['mode'] == 'native-default-window':
+                details.append('Exploratory native playback at each player’s default window size and audio route; dimensions are not normalized. Hardware fallback and observer overhead differ. This field does not establish displayed FPS or battery efficiency.\n\n')
+                details.append(decoder_table(field, sessions))
+            details.append('<details><summary>Every measured metric — median values and podiums</summary>\n\n')
             entrants = [p for p in board['players'] if any(r['player'] == p['id'] for e in field['events'] for r in e['rankings'])]
             if entrants:
-                parts.append('| Metric | ' + ' | '.join(md(p['name']) for p in entrants) + ' |\n|---|' + '---:|'*len(entrants) + '\n')
+                details.append('| Metric | ' + ' | '.join(md(p['name']) for p in entrants) + ' |\n|---|' + '---:|'*len(entrants) + '\n')
                 for event in field['events']:
                     if not event['rankings']: continue
                     ranks = {r['player']: r for r in event['rankings']}
@@ -211,22 +218,32 @@ def markdown(boards, relative, sessions=(), provenance=None):
                         value = f'{r["value"]:.3g}' if r else '—'
                         if r and r['medal'] == 'gold': value = f'**{value}**'
                         cells.append(value + (' ' + md(event['unit']) if r else ''))
-                    parts.append('| ' + md(event['name']) + ' | ' + ' | '.join(cells) + ' |\n')
+                    details.append('| ' + md(event['name']) + ' | ' + ' | '.join(cells) + ' |\n')
             else:
-                parts.append('No eligible comparable measurements.\n')
-            parts.append('\nBold values are gold medians. — means no eligible comparable result. Trial evidence and exact cohort IDs:\n\n')
-            parts.append('| Metric | Cohort | Trials per eligible entrant |\n|---|---|---:|\n')
+                details.append('No eligible comparable measurements.\n')
+            details.append('\nBold values are gold medians. — means no eligible comparable result. Trial evidence and exact cohort IDs:\n\n')
+            details.append('| Metric | Cohort | Trials per eligible entrant |\n|---|---|---:|\n')
             for e in field['events']:
                 if e['rankings']:
-                    parts.append(f'| {md(e["name"])} | `{md(e["profile"])}` | ' + ', '.join(str(r['trials']) for r in e['rankings']) + ' |\n')
-            parts.append('\n</details>\n\n')
-        parts.append('<details><summary>Runtime outcomes and feature events</summary>\n\n| Player | Runtime outcome | Evidence / limitation |\n|---|---|---|\n')
-        for p in board['players']:
-            parts.append(f'| {md(p["name"])} | {md(board["runtime"][p["id"]]["status"])} | {md(board["runtime"][p["id"]].get("details", ""))} |\n')
-        parts.append('\n| Feature | ' + ' | '.join(md(p['name']) for p in board['players']) + ' |\n|---|' + '---:|'*len(board['players']) + '\n')
-        for f in board['features']:
-            parts.append('| '+md(f['name'])+' | '+' | '.join('N/A' if p['id'] not in f['applicable'] else '🥇' if p['id'] in f['awards'] else '?' for p in board['players'])+' |\n')
-        parts.append('\n? = undocumented/unverified. N/A = inapplicable media type.\n\n</details>\n\n')
+                    details.append(f'| {md(e["name"])} | `{md(e["profile"])}` | ' + ', '.join(str(r['trials']) for r in e['rankings']) + ' |\n')
+            details.append('\n</details>\n\n')
+        medals.append(f'<details><summary>{label} feature medals — shared gold</summary>\n\n')
+        omitted = board.get('omitted_universal_features', [])
+        if omitted:
+            medals.append(f'{len(omitted)} universal feature events omitted: every eligible player has documented gold. Evidence remains in the raw scores and feature sources.\n\n')
+        medals.append('| Feature | ' + ' | '.join(md(p['name']) for p in board['players']) + ' |\n|---|' + '---:|'*len(board['players']) + '\n')
+        for feature in board['features']:
+            medals.append('| '+md(feature['name'])+' | '+' | '.join('N/A' if p['id'] not in feature['applicable'] else '🥇' if p['id'] in feature['awards'] else '?' for p in board['players'])+' |\n')
+        medals.append('\n? = undocumented/unverified. N/A = inapplicable media type.\n\n</details>\n\n')
+        details.append(f'<details><summary>{label} runtime outcomes</summary>\n\n| Player | Runtime outcome | Evidence / limitation |\n|---|---|---|\n')
+        for player in board['players']:
+            details.append(f'| {md(player["name"])} | {md(board["runtime"][player["id"]]["status"])} | {md(board["runtime"][player["id"]].get("details", ""))} |\n')
+        details.append('\n</details>\n\n')
+    parts.extend(medals)
+    parts.append('### Charts\n\n')
+    parts.extend(charts)
+    parts.append('### Measurement details\n\n')
+    parts.extend(details)
     return ''.join(parts)
 
 
@@ -274,7 +291,7 @@ def render(catalog, protocol, boards, provenance, charts=None):
     script = '''const buttons=[...document.querySelectorAll('[data-platform]')],sections=[...document.querySelectorAll('.platform')];let active=null;buttons.forEach(b=>b.addEventListener('click',()=>{if(active===b)return;buttons.forEach(x=>x.setAttribute('aria-pressed',String(x===b)));sections.forEach(s=>{const hidden=s.id!==b.dataset.platform;if(s.hidden!==hidden)s.hidden=hidden});active=b;location.hash=b.dataset.platform}));document.querySelectorAll('.filter').forEach(i=>{const rows=[...i.closest('article').querySelectorAll('tbody tr')];let previous=null;i.addEventListener('input',()=>{const query=i.value.toLowerCase();if(query===previous)return;previous=query;rows.forEach(r=>{const hidden=!r.dataset.search.includes(query);if(r.hidden!==hidden)r.hidden=hidden})})});const selected=buttons.find(b=>b.dataset.platform===location.hash.slice(1));if(selected)selected.click();'''
 
     buttons = ''.join(f'<button data-platform="{p}" aria-pressed="{str(p == "windows").lower()}">{label}</button>' for p, label in LABELS.items())
-    return f'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Foxide · The Player Games</title><style>{style}</style></head><body><header><div class="brand">🦊 Foxide / Research &amp; Engineering</div><h1>The Player <span>Games.</span></h1><p class="lede">A transparent scoreboard for desktop media players. Documented capabilities earn shared golds. Real measurements decide performance podiums.</p><div class="stats"><div><b>{len(catalog["players"])}</b><span>players in the field</span></div><div><b>{len(catalog["features"])}</b><span>feature medal events</span></div><div><b>{len(protocol["events"])}</b><span>performance events</span></div><div><b>3</b><span>platform boards</span></div></div><aside class="notice"><strong>Evidence before medals.</strong> Gold features are documentation findings; unknown never means absent. Performance requires ≥3 verified repeats and ≥2 comparable entrants in one cohort. Hosted VM software/null-output results are separate from physical GPU, battery, and displayed-frame measurements. Windowed Foxide fields use the Slint/libmpv desktop; software-null fields use its CLI launcher.</aside></header><main><nav class="tabs" aria-label="Platform">{buttons}</nav>{"".join(sections)}</main><footer>{source_link(provenance["run_url"], "Actions run") if provenance["run_url"] else "Local validation"} · Source commit: {esc(provenance["source_commit"] or "working tree")} · {esc(provenance["generated_utc"])}<br>Generated from <a href="medals.json">versioned score data</a>. No synthetic benchmark results. Feature research: {esc(catalog["research_date"])}. Performance ties use competition ranks (1, 1, 3); feature possession always shares gold.</footer><script>{script}</script></body></html>'
+    return f'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Foxide · The Player Games</title><style>{style}</style></head><body><header><div class="brand">🦊 Foxide / Research &amp; Engineering</div><h1>The Player <span>Games.</span></h1><p class="lede">A transparent scoreboard for desktop media players. Documented capabilities earn shared golds. Real measurements decide performance podiums.</p><div class="stats"><div><b>{len(catalog["players"])}</b><span>players in the field</span></div><div><b>{len(catalog["features"])}</b><span>researched feature events</span></div><div><b>{len(protocol["events"])}</b><span>performance events</span></div><div><b>3</b><span>platform boards</span></div></div><aside class="notice"><strong>Evidence before medals.</strong> Gold features are documentation findings; unknown never means absent. Performance requires ≥3 verified repeats and ≥2 comparable entrants in one cohort. Hosted VM software/null-output results are separate from physical GPU, battery, and displayed-frame measurements. Windowed Foxide fields use the Slint/libmpv desktop; software-null fields use its CLI launcher.</aside></header><main><nav class="tabs" aria-label="Platform">{buttons}</nav>{"".join(sections)}</main><footer>{source_link(provenance["run_url"], "Actions run") if provenance["run_url"] else "Local validation"} · Source commit: {esc(provenance["source_commit"] or "working tree")} · {esc(provenance["generated_utc"])}<br>Generated from <a href="medals.json">versioned score data</a>. No synthetic benchmark results. Feature research: {esc(catalog["research_date"])}. Performance ties use competition ranks (1, 1, 3); feature possession always shares gold.</footer><script>{script}</script></body></html>'
 
 
 def write_report(catalog, protocol, measurements, output, readme=None, sessions=()):

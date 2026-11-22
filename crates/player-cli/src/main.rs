@@ -1,4 +1,4 @@
-use anyhow::{Context, Result, bail, ensure};
+use anyhow::{Context, Result, ensure};
 use clap::Parser;
 use player_core::PlaybackOptions;
 use std::{ffi::OsString, path::PathBuf, process::Command};
@@ -75,19 +75,18 @@ fn mpv_path(explicit: Option<PathBuf>) -> PathBuf {
         return path;
     }
     let filename = if cfg!(windows) { "mpv.exe" } else { "mpv" };
-    let mut roots = Vec::with_capacity(3);
-    if let Ok(exe) = std::env::current_exe() {
-        roots.extend(exe.ancestors().skip(1).take(3).map(PathBuf::from));
-    }
-    let mut seen = std::collections::HashSet::new();
-    let suffix = PathBuf::from("tools/mpv").join(filename);
-    let bundled = roots
-        .into_iter()
-        .filter(|root| seen.insert(root.clone()))
-        .map(|root| root.join(&suffix))
-        .find(|path| path.is_file());
-    if let Some(path) = bundled {
-        return path;
+    if let Ok(executable) = std::env::current_exe() {
+        let bundled = [
+            executable.with_file_name(filename),
+            executable
+                .parent()
+                .expect("Executable has a parent")
+                .join("tools/mpv")
+                .join(filename),
+        ];
+        if let Some(path) = bundled.into_iter().find(|path| path.is_file()) {
+            return path;
+        }
     }
     // Resolve PATH explicitly: a bare Windows command also searches the working
     // directory, even when that directory is absent from PATH.
@@ -96,7 +95,20 @@ fn mpv_path(explicit: Option<PathBuf>) -> PathBuf {
         .flat_map(|paths| std::env::split_paths(&paths).collect::<Vec<_>>())
         .filter(|directory| directory.is_absolute())
         .map(|directory| directory.join(filename))
-        .find(|path| path.is_file())
+        .find(|path| {
+            let Ok(metadata) = path.metadata() else {
+                return false;
+            };
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                metadata.is_file() && metadata.permissions().mode() & 0o111 != 0
+            }
+            #[cfg(not(unix))]
+            {
+                metadata.is_file()
+            }
+        })
     {
         return path;
     }
@@ -209,12 +221,21 @@ fn main() -> Result<()> {
         return Ok(());
     }
     eprintln!("Foxide bootstrap: playback is provided by an external mpv process.");
-    let status = Command::new(executable)
-        .args(engine_args)
-        .status()
-        .context("Install mpv or supply --mpv <path-to-mpv>")?;
-    if !status.success() {
-        bail!("mpv exited with {status}");
+    let mut command = Command::new(executable);
+    command.args(engine_args);
+    #[cfg(unix)]
+    {
+        use std::os::unix::process::CommandExt;
+        // Preserve PID, inherited handles and the engine's exit status while
+        // releasing the launcher's address space for the whole playback session.
+        Err(command.exec()).context("Install mpv or supply --mpv <path-to-mpv>")
     }
-    Ok(())
+    #[cfg(not(unix))]
+    {
+        let status = command
+            .status()
+            .context("Install mpv or supply --mpv <path-to-mpv>")?;
+        ensure!(status.success(), "mpv exited with {status}");
+        Ok(())
+    }
 }

@@ -21,6 +21,7 @@ fn run_fixture(count: usize, cpu_mode: u8) -> Run {
         cache_evidence: None,
         pid: 1,
         started_unix_ms: 0,
+        sampling_started_ms: 0.0,
         duration_seconds: count as f64 * 0.25,
         warmup_seconds: 2.0,
         sample_interval_ms: 250,

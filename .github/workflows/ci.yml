@@ -1,5 +1,9 @@
 name: Code checks
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
 permissions:
   contents: read
 concurrency:
@@ -32,6 +36,8 @@ jobs:
           tool: cargo-llvm-cov@0.9.1
       - name: Enforce Rust workspace line coverage
         run: cargo llvm-cov --workspace --locked --fail-under-lines 90 --json --summary-only --output-path results/local/coverage-rust.json
+      - name: Enforce casting coverage independently for every source file
+        run: cargo llvm-cov report --package player-cast --fail-under-lines 90 --fail-under-file-lines 90 --json --summary-only --output-path results/local/coverage-cast.json
       - name: Enforce policy coverage and report coverage for every Python script
         shell: bash
         run: |
@@ -39,11 +45,21 @@ jobs:
           python -m coverage run --branch --source=scripts --data-file=results/local/.coverage-medals -m unittest discover -s tests
           python -m coverage report --data-file=results/local/.coverage-medals --include="*/medal_events.py,*/build_medal_report.py,*/event_benchmarks.py,*/collection_io.py,*/ui_benchmarks.py,*/refresh_scoreboards.py,*/publication.py" --fail-under=90
           python -m coverage report --data-file=results/local/.coverage-medals --include="*/install-mpv.py,*/install-libmpv.py" --fail-under=90
+          for script in windows_metrics.py session-manifest.py source_lines.py; do
+            python -m coverage report --data-file=results/local/.coverage-medals --include="*/$script" --fail-under=90
+          done
           python -m coverage report --data-file=results/local/.coverage-medals
           python -m coverage json --data-file=results/local/.coverage-medals -o results/local/coverage-medals.json
+      - name: Verify medal and publication decision mutations
+        if: runner.os == 'Linux'
+        run: python tests/mutation_check.py results/local/policy-mutations.json
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: coverage-${{ runner.os }}
-          path: results/local/coverage-*.json
+          path: |
+            results/local/coverage-*.json
+            results/local/policy-mutations.json
+      - name: Verify offline report interaction contract
+        run: node scripts/check-report.mjs results/windows-comparison/report.html
       - run: cargo build --workspace --release --locked
