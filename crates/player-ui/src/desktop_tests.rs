@@ -87,7 +87,7 @@ fn capture_customization(ui: &PlayerWindow, window: &MinimalSoftwareWindow, name
 }
 
 #[test]
-fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
+fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
     let rendered_window = MinimalSoftwareWindow::new(RepaintBufferType::NewBuffer);
     let (event_sender, event_receiver) = std::sync::mpsc::channel();
     slint::platform::set_platform(Box::new(TestPlatform(
@@ -130,6 +130,16 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
         &None,
         controller_navigation::ControllerAction::Next,
     );
+    install_playback_diagnostics_handler(&ui);
+    ui.invoke_open_playback_diagnostics();
+    assert_eq!(ui.get_panel(), "information");
+    install_diagnostic_log_handler(&ui, || Err("viewer unavailable".into()));
+    ui.invoke_open_diagnostic_log();
+    assert_eq!(
+        ui.get_status(),
+        "Could not open diagnostic log: viewer unavailable"
+    );
+    ui.set_panel("".into());
     let state = Rc::new(RefCell::new(UiState::default()));
     install_controls(&ui, &state, &None);
     ui.set_loaded(true);
