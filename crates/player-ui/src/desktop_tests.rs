@@ -107,6 +107,19 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
         ui.get_status(),
         "Could not open diagnostic log: viewer unavailable"
     );
+    ui.set_panel("".into());
+    let state = Rc::new(RefCell::new(UiState::default()));
+    install_controls(&ui, &state, &None);
+    ui.set_loaded(true);
+    ui.set_has_video(true);
+    ui.invoke_action("picture-in-picture".into(), 0.0);
+    assert!(ui.get_picture_in_picture());
+    assert_eq!(ui.window().size(), slint::PhysicalSize::new(520, 350));
+    ui.invoke_action("picture-in-picture".into(), 0.0);
+    assert!(!ui.get_picture_in_picture());
+    assert_eq!(ui.window().size(), slint::PhysicalSize::new(1180, 770));
+    ui.set_loaded(false);
+    ui.set_has_video(false);
     install_cast(&ui, &Rc::new(RefCell::new(UiState::default())));
     ui.invoke_cast_control("seek-back".into());
     assert!(
