@@ -76,6 +76,21 @@ fn startup_commands(args: &Args) -> Result<Vec<Vec<String>>, String> {
     Ok(commands)
 }
 
+fn install_diagnostic_log_handler(
+    ui: &PlayerWindow,
+    open: impl Fn() -> Result<(), String> + 'static,
+) {
+    let weak = ui.as_weak();
+    ui.on_open_diagnostic_log(move || {
+        let Some(ui) = weak.upgrade() else { return };
+        if let Err(error) = open() {
+            diagnostics::record("Could not open diagnostic log");
+            ui.set_status(format!("Could not open diagnostic log: {error}").into());
+            eprintln!("Could not open diagnostic log: {error}");
+        }
+    });
+}
+
 fn clock(seconds: f64) -> String {
     let total = seconds.max(0.0) as u64;
     if total >= 3600 {
@@ -1191,18 +1206,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .select()?;
     let ui = PlayerWindow::new()?;
     diagnostics::record("Application started");
-    ui.on_open_diagnostic_log(|| {
-        if let Err(error) = diagnostics::open_log(diagnostics::log_path, |path| {
+    install_diagnostic_log_handler(&ui, || {
+        diagnostics::open_log(diagnostics::log_path, |path| {
             diagnostics::open_system_log(path, |command| {
                 command
                     .spawn()
                     .map(|_| ())
                     .map_err(|error| error.to_string())
             })
-        }) {
-            diagnostics::record("Could not open diagnostic log");
-            eprintln!("Could not open diagnostic log: {error}");
-        }
+        })
     });
     let selected_helper = args
         .yt_dlp
