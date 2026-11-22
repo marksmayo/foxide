@@ -436,6 +436,64 @@ fn publish_frame(frame: slint::Image, image: &impl Fn(slint::Image)) {
     image(frame);
 }
 
+#[cfg(test)]
+mod resolver_tests {
+    use super::{Resolver, get_proc, wake};
+    use std::{
+        collections::HashMap,
+        ffi::c_void,
+        ptr,
+        sync::{
+            Arc,
+            atomic::{AtomicUsize, Ordering},
+        },
+    };
+
+    fn resolver_with_known(name: &str, pointer: *const c_void) -> Resolver {
+        Resolver {
+            known: HashMap::from([(name.to_owned(), pointer)]),
+            libraries: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn resolver_returns_cached_gl_functions_and_null_for_unknown_names() {
+        let expected = ptr::NonNull::<u8>::dangling().as_ptr().cast::<c_void>();
+        let resolver = resolver_with_known("glClear", expected);
+        assert_eq!(resolver.lookup(c"glClear"), expected);
+        assert!(resolver.lookup(c"glMissing").is_null());
+    }
+
+    #[test]
+    fn proc_callback_rejects_null_context_or_name_and_resolves_cached_functions() {
+        let expected = ptr::NonNull::<u8>::dangling().as_ptr().cast::<c_void>();
+        let mut resolver = Box::new(resolver_with_known("glClear", expected));
+        let context = (&mut *resolver as *mut Resolver).cast::<c_void>();
+        assert!(get_proc(ptr::null_mut(), c"glClear".as_ptr()).is_null());
+        assert!(get_proc(context, ptr::null()).is_null());
+        assert_eq!(get_proc(context, c"glClear".as_ptr()), expected);
+        assert!(get_proc(context, c"glMissing".as_ptr()).is_null());
+    }
+
+    #[test]
+    fn wake_callback_runs_and_contains_panics() {
+        let calls = Arc::new(AtomicUsize::new(0));
+        let callback_calls = calls.clone();
+        let mut callback: Box<Arc<dyn Fn() + Send + Sync>> = Box::new(Arc::new(move || {
+            callback_calls.fetch_add(1, Ordering::SeqCst);
+        }));
+        let context = (&mut *callback as *mut Arc<dyn Fn() + Send + Sync>).cast::<c_void>();
+
+        wake(ptr::null_mut());
+        wake(context);
+        assert_eq!(calls.load(Ordering::SeqCst), 1);
+
+        let mut panicking: Box<Arc<dyn Fn() + Send + Sync>> =
+            Box::new(Arc::new(|| panic!("callback")));
+        wake((&mut *panicking as *mut Arc<dyn Fn() + Send + Sync>).cast::<c_void>());
+    }
+}
+
 #[cfg(all(test, feature = "gpu-integration"))]
 #[path = "gpu_integration.rs"]
 mod integration;
