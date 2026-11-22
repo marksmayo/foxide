@@ -98,6 +98,18 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
     let ui = PlayerWindow::new().unwrap();
     ui.window().set_size(slint::PhysicalSize::new(1180, 770));
     ui.show().unwrap();
+    let state = Rc::new(RefCell::new(UiState::default()));
+    install_controls(&ui, &state, &None);
+    ui.set_loaded(true);
+    ui.set_has_video(true);
+    ui.invoke_action("picture-in-picture".into(), 0.0);
+    assert!(ui.get_picture_in_picture());
+    assert_eq!(ui.window().size(), slint::PhysicalSize::new(520, 350));
+    ui.invoke_action("picture-in-picture".into(), 0.0);
+    assert!(!ui.get_picture_in_picture());
+    assert_eq!(ui.window().size(), slint::PhysicalSize::new(1180, 770));
+    ui.set_loaded(false);
+    ui.set_has_video(false);
     install_cast(&ui, &Rc::new(RefCell::new(UiState::default())));
     ui.invoke_cast_control("seek-back".into());
     assert!(
