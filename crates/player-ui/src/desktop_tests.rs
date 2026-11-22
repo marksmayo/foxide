@@ -98,6 +98,9 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
     let ui = PlayerWindow::new().unwrap();
     ui.window().set_size(slint::PhysicalSize::new(1180, 770));
     ui.show().unwrap();
+    install_playback_diagnostics_handler(&ui);
+    ui.invoke_open_playback_diagnostics();
+    assert_eq!(ui.get_panel(), "information");
     install_diagnostic_log_handler(&ui, || Err("viewer unavailable".into()));
     ui.invoke_open_diagnostic_log();
     assert_eq!(

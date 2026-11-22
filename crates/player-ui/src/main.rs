@@ -91,6 +91,15 @@ fn install_diagnostic_log_handler(
     });
 }
 
+fn install_playback_diagnostics_handler(ui: &PlayerWindow) {
+    let weak = ui.as_weak();
+    ui.on_open_playback_diagnostics(move || {
+        if let Some(ui) = weak.upgrade() {
+            ui.set_panel("information".into());
+        }
+    });
+}
+
 fn clock(seconds: f64) -> String {
     let total = seconds.max(0.0) as u64;
     if total >= 3600 {
@@ -1206,6 +1215,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .select()?;
     let ui = PlayerWindow::new()?;
     diagnostics::record("Application started");
+    install_playback_diagnostics_handler(&ui);
     install_diagnostic_log_handler(&ui, || {
         diagnostics::open_log(diagnostics::log_path, |path| {
             diagnostics::open_system_log(path, |command| {
