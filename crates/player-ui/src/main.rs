@@ -1,4 +1,5 @@
 mod controller_navigation;
+mod picture_in_picture;
 mod profile_ui;
 mod shader_ui;
 mod system_media;
@@ -1082,6 +1083,7 @@ fn install_cast_with_discovery(
 }
 
 fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Option<Rc<Engine>>) {
+    let pip_mode = Rc::new(RefCell::new(picture_in_picture::PictureInPictureMode::Main));
     let filter_state = state.clone();
     let filter_window = ui.as_weak();
     ui.on_filter_queue(move |query| {
@@ -1090,9 +1092,14 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
             update_queue(&ui, &filter_state.borrow());
         }
     });
-    let (weak, controller, playback) = (ui.as_weak(), state.clone(), engine.clone());
+    let (weak, controller, playback, pip_mode) =
+        (ui.as_weak(), state.clone(), engine.clone(), pip_mode);
     ui.on_action(move |name, value| {
         let Some(ui) = weak.upgrade() else { return };
+        if name == "picture-in-picture" {
+            toggle_picture_in_picture(&ui, &pip_mode);
+            return;
+        }
         if matches!(name.as_str(), "frame-step" | "frame-back-step")
             && (!ui.get_loaded() || !ui.get_has_video())
         {
@@ -1169,6 +1176,63 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
             }
         }
     });
+}
+
+fn toggle_picture_in_picture(
+    ui: &PlayerWindow,
+    mode: &Rc<RefCell<picture_in_picture::PictureInPictureMode>>,
+) {
+    use picture_in_picture::{PictureInPictureMode, WindowConfiguration, WindowEffect};
+    let window = ui.window();
+    let current_mode = *mode.borrow();
+    match current_mode {
+        PictureInPictureMode::Main => {
+            let size = window.size();
+            let position = window.position();
+            let current = WindowConfiguration {
+                width: size.width.max(1),
+                height: size.height.max(1),
+                x: position.x,
+                y: position.y,
+                fullscreen: window.is_fullscreen(),
+                maximized: window.is_maximized(),
+                compact: ui.get_compact_mode(),
+            };
+            let (next_mode, effect) = PictureInPictureMode::enter(current);
+            *mode.borrow_mut() = next_mode;
+            ui.set_panel("".into());
+            ui.set_queue_visible(false);
+            ui.set_fullscreen_mode(false);
+            ui.set_compact_mode(false);
+            window.set_fullscreen(false);
+            window.set_maximized(false);
+            ui.set_picture_in_picture(true);
+            if let WindowEffect::Resize { width, height } = effect {
+                window.set_size(slint::LogicalSize::new(width as f32, height as f32));
+            }
+        }
+        PictureInPictureMode::PictureInPicture(previous) => {
+            let Some((next_mode, WindowEffect::Restore(previous))) =
+                PictureInPictureMode::PictureInPicture(previous).exit()
+            else {
+                return;
+            };
+            *mode.borrow_mut() = next_mode;
+            ui.set_picture_in_picture(false);
+            window.set_fullscreen(false);
+            window.set_maximized(false);
+            window.set_size(slint::PhysicalSize::new(previous.width, previous.height));
+            window.set_position(slint::PhysicalPosition::new(previous.x, previous.y));
+            ui.set_compact_mode(previous.compact);
+            ui.set_fullscreen_mode(previous.fullscreen);
+            if previous.maximized {
+                window.set_maximized(true);
+            }
+            if previous.fullscreen {
+                window.set_fullscreen(true);
+            }
+        }
+    }
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
