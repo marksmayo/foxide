@@ -1172,6 +1172,40 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
     });
 }
 
+fn update_thumbnail_preview(
+    ui: &PlayerWindow,
+    preview: &player_render::ThumbnailController,
+    snapshot: Option<&Snapshot>,
+    generation: u64,
+    position: f32,
+) -> bool {
+    let Some(snapshot) = snapshot.filter(|snapshot| {
+        snapshot.loaded
+            && snapshot.duration.is_finite()
+            && snapshot.duration > 0.0
+            && snapshot
+                .tracks
+                .iter()
+                .any(|track| track.kind == "video" && track.selected)
+    }) else {
+        preview.clear();
+        ui.set_thumbnail_available(false);
+        return false;
+    };
+    let position = f64::from(position);
+    ui.set_thumbnail_label(clock(position.clamp(0.0, snapshot.duration)).into());
+    let accepted = preview.request(
+        snapshot.path.clone(),
+        generation,
+        position,
+        snapshot.duration,
+    );
+    if !accepted {
+        ui.set_thumbnail_available(false);
+    }
+    accepted
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
     let startup = startup_commands(&args)?;
@@ -1299,25 +1333,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ui.on_thumbnail_hover(move |position| {
             if let Some(ui) = weak.upgrade() {
                 let snapshot = playback.snapshot();
-                if let Some(snapshot) = snapshot
-                    && snapshot.loaded
-                    && snapshot.duration.is_finite()
-                    && snapshot.duration > 0.0
-                    && snapshot
-                        .tracks
-                        .iter()
-                        .any(|track| track.kind == "video" && track.selected)
-                {
-                    let position = f64::from(position);
-                    ui.set_thumbnail_label(clock(position.clamp(0.0, snapshot.duration)).into());
-                    let generation = controller.borrow().generation;
-                    if !preview.request(snapshot.path, generation, position, snapshot.duration) {
-                        ui.set_thumbnail_available(false);
-                    }
-                    return;
-                }
-                preview.clear();
-                ui.set_thumbnail_available(false);
+                let generation = controller.borrow().generation;
+                update_thumbnail_preview(&ui, &preview, snapshot.as_ref(), generation, position);
             }
         });
         let weak = ui.as_weak();

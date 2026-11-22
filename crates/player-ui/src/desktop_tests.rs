@@ -25,6 +25,7 @@ fn benchmark_startup_is_explicit_and_preserves_speed_and_pause() {
     let invalid = Args::try_parse_from(["foxide-desktop", "--speed", "NaN"]).unwrap();
     assert!(startup_commands(&invalid).is_err());
 }
+
 use slint::{
     Model,
     platform::{
@@ -96,6 +97,77 @@ fn playback_refresh_preserves_visible_state_across_ticks_tracks_and_errors() {
     )))
     .unwrap();
     let ui = PlayerWindow::new().unwrap();
+    let thumbnails = player_render::ThumbnailController::new();
+    let video = Snapshot {
+        loaded: true,
+        path: "clip.mkv".into(),
+        duration: 12.0,
+        tracks: vec![player_render::Track {
+            id: 1,
+            kind: "video".into(),
+            label: "Video".into(),
+            selected: true,
+        }]
+        .into(),
+        ..Default::default()
+    };
+    assert!(update_thumbnail_preview(
+        &ui,
+        &thumbnails,
+        Some(&video),
+        4,
+        5.7
+    ));
+    assert_eq!(ui.get_thumbnail_label(), "00:05");
+    ui.set_thumbnail_available(true);
+    assert!(!update_thumbnail_preview(&ui, &thumbnails, None, 4, 5.7));
+    assert!(!ui.get_thumbnail_available());
+    let remote = Snapshot {
+        path: "https://example.test/clip.mkv".into(),
+        ..video.clone()
+    };
+    assert!(!update_thumbnail_preview(
+        &ui,
+        &thumbnails,
+        Some(&remote),
+        4,
+        5.7
+    ));
+    assert!(!ui.get_thumbnail_available());
+    for ineligible in [
+        Snapshot {
+            loaded: false,
+            ..video.clone()
+        },
+        Snapshot {
+            duration: 0.0,
+            ..video.clone()
+        },
+        Snapshot {
+            duration: f64::INFINITY,
+            ..video.clone()
+        },
+        Snapshot {
+            tracks: vec![player_render::Track {
+                id: 2,
+                kind: "audio".into(),
+                label: "Audio".into(),
+                selected: true,
+            }]
+            .into(),
+            ..video.clone()
+        },
+    ] {
+        ui.set_thumbnail_available(true);
+        assert!(!update_thumbnail_preview(
+            &ui,
+            &thumbnails,
+            Some(&ineligible),
+            4,
+            5.7
+        ));
+        assert!(!ui.get_thumbnail_available());
+    }
     ui.window().set_size(slint::PhysicalSize::new(1180, 770));
     ui.show().unwrap();
     install_cast(&ui, &Rc::new(RefCell::new(UiState::default())));
