@@ -1,5 +1,6 @@
 use crate::native::{Api, Engine, Handle, Param};
 use crate::render_contract::{Fbo, TEXTURE_ORIGIN_BOTTOM_LEFT, render_texture};
+use crate::thumbnail_cache::{ThumbnailCache, ThumbnailKey};
 use glow::HasContext;
 use libloading::Library;
 use std::{
@@ -74,6 +75,17 @@ struct Init {
     context: *mut c_void,
 }
 
+const THUMBNAIL_WIDTH: u32 = 256;
+const THUMBNAIL_HEIGHT: u32 = 144;
+const THUMBNAIL_CACHE_BYTES: usize = 16 * 1024 * 1024;
+const THUMBNAIL_BYTES: usize = THUMBNAIL_WIDTH as usize * THUMBNAIL_HEIGHT as usize * 4;
+
+struct GpuTarget {
+    texture: glow::Texture,
+    framebuffer: glow::Framebuffer,
+    size: (u32, u32),
+}
+
 struct Renderer {
     api: Arc<Api>,
     gl: glow::Context,
@@ -81,7 +93,9 @@ struct Renderer {
     texture: glow::Texture,
     framebuffer: glow::Framebuffer,
     size: (u32, u32),
-    _resolver: Box<Resolver>,
+    thumbnail_targets: Vec<Option<GpuTarget>>,
+    thumbnail_cache: ThumbnailCache,
+    _resolver: Arc<Resolver>,
     callback: Box<Arc<dyn Fn() + Send + Sync>>,
 }
 impl Renderer {
@@ -114,10 +128,35 @@ impl Renderer {
             .into_iter()
             .filter_map(|name| unsafe { Library::new(name).ok() })
             .collect();
-        let mut resolver = Box::new(Resolver { known, libraries });
+        let resolver = Arc::new(Resolver { known, libraries });
+        Self::with_resolver(api, gl, resolver, callback)
+    }
+
+    fn new_shared(
+        api: Arc<Api>,
+        resolver: Arc<Resolver>,
+        callback: Arc<dyn Fn() + Send + Sync>,
+    ) -> Result<Self, String> {
+        // SAFETY: rendering setup runs while the same Slint OpenGL context is current;
+        // Resolver retains the matching platform libraries and known entry points.
+        let gl = unsafe {
+            glow::Context::from_loader_function(|name| {
+                let name_c = CString::new(name).unwrap();
+                resolver.lookup(&name_c)
+            })
+        };
+        Self::with_resolver(api, gl, resolver, callback)
+    }
+
+    fn with_resolver(
+        api: Arc<Api>,
+        gl: glow::Context,
+        resolver: Arc<Resolver>,
+        callback: Arc<dyn Fn() + Send + Sync>,
+    ) -> Result<Self, String> {
         let mut init = Init {
             get_proc,
-            context: (&mut *resolver as *mut Resolver).cast(),
+            context: Arc::as_ptr(&resolver).cast_mut().cast(),
         };
         let mut params = [
             Param {
@@ -159,6 +198,8 @@ impl Renderer {
             };
             (texture, framebuffer)
         };
+        let thumbnail_cache = ThumbnailCache::new(THUMBNAIL_CACHE_BYTES, THUMBNAIL_BYTES);
+        let extra_thumbnail_slots = thumbnail_cache.capacity().saturating_sub(1);
         let mut renderer = Self {
             api,
             gl,
@@ -166,6 +207,8 @@ impl Renderer {
             texture,
             framebuffer,
             size: (0, 0),
+            thumbnail_targets: (0..extra_thumbnail_slots).map(|_| None).collect(),
+            thumbnail_cache,
             _resolver: resolver,
             callback: Box::new(callback),
         };
@@ -181,6 +224,15 @@ impl Renderer {
     }
 
     fn frame(&mut self, width: u32, height: u32) -> Result<Option<slint::Image>, String> {
+        self.frame_with_force(width, height, false)
+    }
+
+    fn frame_with_force(
+        &mut self,
+        width: u32,
+        height: u32,
+        force: bool,
+    ) -> Result<Option<slint::Image>, String> {
         let (width, height) = (width.clamp(1, 8192), height.clamp(1, 8192));
         // SAFETY: exclusively called from this window's BeforeRendering callback.
         // The texture name remains valid until RenderingTeardown. Resizing replaces
@@ -189,7 +241,7 @@ impl Renderer {
             // In default control mode update drains notifications without GPU
             // allocations. An initial wake is not a decoded video frame.
             let updates = (self.api.render_update)(self.context);
-            if self.size == (0, 0) && updates & 1 == 0 {
+            if self.size == (0, 0) && updates & 1 == 0 && !force {
                 return Ok(None);
             }
             let gl = &self.gl;
@@ -326,6 +378,97 @@ impl Renderer {
             ))
         }
     }
+
+    fn frame_thumbnail(
+        &mut self,
+        key: &ThumbnailKey,
+        decoder_ready: bool,
+    ) -> Result<Option<slint::Image>, String> {
+        let Some(reservation) = self.thumbnail_cache.reserve(key.clone()) else {
+            return Ok(None);
+        };
+        let slot = reservation.slot();
+        if self.thumbnail_cache.is_ready(key) {
+            return self.image_for_thumbnail_slot(slot).map(Some);
+        }
+        if !decoder_ready {
+            return Ok(None);
+        }
+        if self.frame_thumbnail_slot(slot)? {
+            self.thumbnail_cache.mark_ready(key);
+            self.image_for_thumbnail_slot(slot).map(Some)
+        } else {
+            Ok(None)
+        }
+    }
+
+    fn frame_thumbnail_slot(&mut self, slot: usize) -> Result<bool, String> {
+        if slot == 0 {
+            return self
+                .frame_with_force(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, true)
+                .map(|frame| frame.is_some());
+        }
+        let index = slot - 1;
+        let target_count = self.thumbnail_targets.len();
+        let Some(target) = self.thumbnail_targets.get_mut(index) else {
+            return Err(format!(
+                "Thumbnail texture slot {slot} exceeds bounded cache capacity {}",
+                target_count + 1
+            ));
+        };
+        if target.is_none() {
+            let texture = unsafe { self.gl.create_texture() }.map_err(|error| error.to_string())?;
+            let framebuffer = match unsafe { self.gl.create_framebuffer() } {
+                Ok(framebuffer) => framebuffer,
+                Err(error) => {
+                    unsafe { self.gl.delete_texture(texture) };
+                    return Err(error.to_string());
+                }
+            };
+            *target = Some(GpuTarget {
+                texture,
+                framebuffer,
+                size: (0, 0),
+            });
+        }
+        let mut target = self.thumbnail_targets[index].take().unwrap();
+        std::mem::swap(&mut self.texture, &mut target.texture);
+        std::mem::swap(&mut self.framebuffer, &mut target.framebuffer);
+        std::mem::swap(&mut self.size, &mut target.size);
+        let result = self.frame_with_force(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, true);
+        std::mem::swap(&mut self.texture, &mut target.texture);
+        std::mem::swap(&mut self.framebuffer, &mut target.framebuffer);
+        std::mem::swap(&mut self.size, &mut target.size);
+        self.thumbnail_targets[index] = Some(target);
+        result.map(|frame| frame.is_some())
+    }
+
+    fn image_for_thumbnail_slot(&self, slot: usize) -> Result<slint::Image, String> {
+        let texture = if slot == 0 {
+            self.texture
+        } else {
+            self.thumbnail_targets
+                .get(slot - 1)
+                .and_then(Option::as_ref)
+                .map(|target| target.texture)
+                .ok_or_else(|| format!("Thumbnail texture slot {slot} is unavailable"))?
+        };
+        // SAFETY: this renderer retains the texture until RenderingTeardown, and
+        // the Slint image is only used with the same current OpenGL context.
+        let builder = unsafe {
+            slint::BorrowedOpenGLTextureBuilder::new_gl_2d_rgba_texture(
+                texture.0,
+                [THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT].into(),
+            )
+        };
+        Ok(builder
+            .origin(if TEXTURE_ORIGIN_BOTTOM_LEFT {
+                slint::BorrowedOpenGLTextureOrigin::BottomLeft
+            } else {
+                slint::BorrowedOpenGLTextureOrigin::TopLeft
+            })
+            .build())
+    }
 }
 impl Drop for Renderer {
     fn drop(&mut self) {
@@ -336,6 +479,10 @@ impl Drop for Renderer {
             (self.api.render_free)(self.context);
             self.gl.delete_framebuffer(self.framebuffer);
             self.gl.delete_texture(self.texture);
+            for target in self.thumbnail_targets.iter().flatten() {
+                self.gl.delete_framebuffer(target.framebuffer);
+                self.gl.delete_texture(target.texture);
+            }
         }
     }
 }
@@ -353,6 +500,29 @@ pub fn attach(
     attach_observed(window, engine, size, image, error, wakeup, |_, _| {})
 }
 
+pub fn attach_with_thumbnails(
+    window: &slint::Window,
+    engine: &Engine,
+    thumbnails: Arc<crate::thumbnails::ThumbnailController>,
+    size: impl Fn() -> (u32, u32) + 'static,
+    image: impl Fn(slint::Image) + 'static,
+    thumbnail_image: impl Fn(slint::Image, bool) + 'static,
+    error: impl Fn(String) + 'static,
+    wakeup: Arc<dyn Fn() + Send + Sync>,
+) -> Result<(), String> {
+    attach_inner(
+        window,
+        engine,
+        Some(thumbnails),
+        size,
+        image,
+        thumbnail_image,
+        error,
+        wakeup,
+        |_, _| {},
+    )
+}
+
 /// Opt-in rendering observer for compositor diagnostics; called with the render context current.
 pub fn attach_observed(
     window: &slint::Window,
@@ -361,17 +531,49 @@ pub fn attach_observed(
     image: impl Fn(slint::Image) + 'static,
     error: impl Fn(String) + 'static,
     wakeup: Arc<dyn Fn() + Send + Sync>,
+    observe: impl FnMut(slint::RenderingState, &slint::GraphicsAPI) + 'static,
+) -> Result<(), String> {
+    attach_inner(
+        window,
+        engine,
+        None,
+        size,
+        image,
+        |_, _| {},
+        error,
+        wakeup,
+        observe,
+    )
+}
+
+fn attach_inner(
+    window: &slint::Window,
+    engine: &Engine,
+    thumbnails: Option<Arc<crate::thumbnails::ThumbnailController>>,
+    size: impl Fn() -> (u32, u32) + 'static,
+    image: impl Fn(slint::Image) + 'static,
+    thumbnail_image: impl Fn(slint::Image, bool) + 'static,
+    error: impl Fn(String) + 'static,
+    wakeup: Arc<dyn Fn() + Send + Sync>,
     mut observe: impl FnMut(slint::RenderingState, &slint::GraphicsAPI) + 'static,
 ) -> Result<(), String> {
     let api = engine.api.clone();
     let ready = engine.ready.clone();
     let changed = Arc::new(AtomicBool::new(true));
     let frame_changed = changed.clone();
+    let preview_wakeup = wakeup.clone();
     let notify: Arc<dyn Fn() + Send + Sync> = Arc::new(move || {
         frame_changed.store(true, Ordering::Release);
         wakeup();
     });
+    if let Some(thumbnails) = &thumbnails {
+        thumbnails.set_wakeup(Arc::new(move || preview_wakeup()));
+    }
     let mut renderer: Option<Renderer> = None;
+    let mut preview_renderer: Option<Renderer> = None;
+    let mut preview_engine: Option<Arc<Engine>> = None;
+    let mut resolver: Option<Arc<Resolver>> = None;
+    let preview_notify = notify.clone();
     window
         .set_rendering_notifier(move |state, graphics| {
             match state {
@@ -379,6 +581,7 @@ pub fn attach_observed(
                     if let slint::GraphicsAPI::NativeOpenGL { get_proc_address } = graphics {
                         match Renderer::new(api.clone(), get_proc_address, notify.clone()) {
                             Ok(value) => {
+                                resolver = Some(value._resolver.clone());
                                 renderer = Some(value);
                                 ready.store(true, Ordering::Release);
                             }
@@ -391,22 +594,69 @@ pub fn attach_observed(
                 slint::RenderingState::BeforeRendering => {
                     if let Some(renderer) = renderer.as_mut() {
                         let (width, height) = size();
-                        if !changed.swap(false, Ordering::AcqRel)
-                            && renderer.size == (width.clamp(1, 8192), height.clamp(1, 8192))
+                        if changed.swap(false, Ordering::AcqRel)
+                            || renderer.size != (width.clamp(1, 8192), height.clamp(1, 8192))
                         {
-                            return;
+                            match renderer.frame(width, height) {
+                                Ok(Some(frame)) => publish_frame(frame, &image),
+                                Ok(None) => {}
+                                Err(message) => error(message),
+                            }
                         }
-                        match renderer.frame(width, height) {
-                            Ok(Some(frame)) => publish_frame(frame, &image),
-                            Ok(None) => {}
-                            Err(message) => error(message),
+                    }
+                    if let Some(thumbnails) = &thumbnails {
+                        let request = thumbnails.current_request();
+                        let has_request = request.is_some();
+                        if let (Some(request), Some(engine)) =
+                            (request, thumbnails.preview_engine())
+                        {
+                            let needs_preview_renderer = preview_engine
+                                .as_ref()
+                                .is_none_or(|current| !Arc::ptr_eq(current, &engine));
+                            if needs_preview_renderer {
+                                if let Some(resolver) = resolver.as_ref() {
+                                    match Renderer::new_shared(
+                                        engine.api.clone(),
+                                        resolver.clone(),
+                                        preview_notify.clone(),
+                                    ) {
+                                        Ok(next) => {
+                                            preview_renderer = Some(next);
+                                            preview_engine = Some(engine.clone());
+                                            engine.ready.store(true, Ordering::Release);
+                                        }
+                                        Err(message) => error(message),
+                                    }
+                                }
+                            }
+                            if let Some(preview_renderer) = preview_renderer.as_mut() {
+                                let decoder_ready = engine.snapshot().is_some_and(|snapshot| {
+                                    snapshot.loaded
+                                        && snapshot.path == request.media.as_ref()
+                                        && (snapshot.position - request.position).abs() <= 0.75
+                                });
+                                match preview_renderer.frame_thumbnail(&request.key, decoder_ready)
+                                {
+                                    Ok(Some(frame)) => {
+                                        publish_thumbnail_frame(frame, &thumbnail_image)
+                                    }
+                                    Ok(None) => {}
+                                    Err(message) => error(message),
+                                }
+                            }
+                        } else if !has_request {
+                            thumbnail_image(slint::Image::default(), false);
                         }
                     }
                 }
                 slint::RenderingState::RenderingTeardown => {
                     ready.store(false, Ordering::Release);
                     image(slint::Image::default());
+                    thumbnail_image(slint::Image::default(), false);
                     renderer = None;
+                    preview_renderer = None;
+                    preview_engine = None;
+                    resolver = None;
                 }
                 _ => {}
             }
@@ -422,6 +672,11 @@ fn publish_frame(frame: slint::Image, image: &impl Fn(slint::Image)) {
     // before Slint draws, so no intermediate blank frame is presented.
     image(slint::Image::default());
     image(frame);
+}
+
+fn publish_thumbnail_frame(frame: slint::Image, image: &impl Fn(slint::Image, bool)) {
+    image(slint::Image::default(), false);
+    image(frame, true);
 }
 
 #[cfg(all(test, feature = "gpu-integration"))]

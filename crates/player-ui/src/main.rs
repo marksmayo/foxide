@@ -9,7 +9,13 @@ use player_render::{Engine, Snapshot};
 use player_settings::Preferences;
 use player_ui::{Action, Effect, UiState};
 use slint::{ComponentHandle, ModelRc, VecModel};
-use std::{cell::RefCell, path::PathBuf, rc::Rc, sync::Arc, time::Duration};
+use std::{
+    cell::{Cell, RefCell},
+    path::PathBuf,
+    rc::Rc,
+    sync::Arc,
+    time::Duration,
+};
 // Only pinned Slint compiler output may use its generated vtable unsafe code.
 // Hand-written UI glue remains under deny(unsafe_code); FFI lives in player-render.
 #[allow(unsafe_code)]
@@ -246,6 +252,7 @@ fn open_dialog(weak: slint::Weak<PlayerWindow>, subtitle: bool) {
 fn refresh(
     ui: &PlayerWindow,
     state: &Rc<RefCell<UiState>>,
+    preview_generation: &Cell<u64>,
     snapshot: &Snapshot,
     previous: &mut Snapshot,
 ) {
@@ -267,6 +274,9 @@ fn refresh(
     if snapshot.loaded && matches_selection {
         let mut state = state.borrow_mut();
         let newly_loaded = !state.loaded;
+        if newly_loaded {
+            preview_generation.set(preview_generation.get().wrapping_add(1));
+        }
         state.confirm_loaded(snapshot.duration);
         state.paused = snapshot.paused;
         state.muted = snapshot.muted;
@@ -1197,6 +1207,40 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
     });
 }
 
+fn update_thumbnail_preview(
+    ui: &PlayerWindow,
+    preview: &player_render::ThumbnailController,
+    snapshot: Option<&Snapshot>,
+    generation: u64,
+    position: f32,
+) -> bool {
+    let Some(snapshot) = snapshot.filter(|snapshot| {
+        snapshot.loaded
+            && snapshot.duration.is_finite()
+            && snapshot.duration > 0.0
+            && snapshot
+                .tracks
+                .iter()
+                .any(|track| track.kind == "video" && track.selected)
+    }) else {
+        preview.clear();
+        ui.set_thumbnail_available(false);
+        return false;
+    };
+    let position = f64::from(position);
+    ui.set_thumbnail_label(clock(position.clamp(0.0, snapshot.duration)).into());
+    let accepted = preview.request(
+        snapshot.path.clone(),
+        generation,
+        position,
+        snapshot.duration,
+    );
+    if !accepted {
+        ui.set_thumbnail_available(false);
+    }
+    accepted
+}
+
 fn toggle_picture_in_picture(
     ui: &PlayerWindow,
     mode: &Rc<RefCell<picture_in_picture::PictureInPictureMode>>,
@@ -1315,6 +1359,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _radio = network_ui::install_radio(&ui, Arc::new(network_ui::SystemHttp), radio_api);
     updates_ui::install(&ui);
     let state = Rc::new(RefCell::new(UiState::default()));
+    let preview_generation = Rc::new(Cell::new(0));
     install_cast_with_preferences(&ui, &state, preferences, config_path);
     let startup_engine = Engine::with_video_site_helper(helper.as_ref().map(|tool| tool.path()));
     let startup_engine = match startup_engine {
@@ -1336,6 +1381,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             None
         }
     };
+    let thumbnails = Arc::new(player_render::ThumbnailController::new());
     if engine.is_some() {
         diagnostics::record("Playback engine initialized");
     }
@@ -1344,9 +1390,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let weak_frame = ui.as_weak();
         let weak_error = ui.as_weak();
         let weak_wake = ui.as_weak();
-        player_render::attach(
+        player_render::attach_with_thumbnails(
             ui.window(),
             engine,
+            thumbnails.clone(),
             move || {
                 weak_size
                     .upgrade()
@@ -1364,6 +1411,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     ui.set_video_frame(frame);
                 }
             },
+            {
+                let weak = ui.as_weak();
+                move |frame, available| {
+                    if let Some(ui) = weak.upgrade() {
+                        ui.set_thumbnail_frame(frame);
+                        ui.set_thumbnail_available(available);
+                    }
+                }
+            },
             move |error| {
                 if let Some(ui) = weak_error.upgrade() {
                     ui.set_status(error.into());
@@ -1378,6 +1434,32 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 });
             }),
         )?;
+    }
+    if let Some(playback) = engine.clone() {
+        let weak = ui.as_weak();
+        let preview = thumbnails.clone();
+        let generation = preview_generation.clone();
+        ui.on_thumbnail_hover(move |position| {
+            if let Some(ui) = weak.upgrade() {
+                let snapshot = playback.snapshot();
+                update_thumbnail_preview(
+                    &ui,
+                    &preview,
+                    snapshot.as_ref(),
+                    generation.get(),
+                    position,
+                );
+            }
+        });
+        let weak = ui.as_weak();
+        let preview = thumbnails.clone();
+        ui.on_thumbnail_leave(move || {
+            preview.clear();
+            if let Some(ui) = weak.upgrade() {
+                ui.set_thumbnail_available(false);
+                ui.set_thumbnail_label(String::new().into());
+            }
+        });
     }
     install_controls(&ui, &state, &engine);
     let _controller_timer = controller_navigation::install(&ui, state.clone(), engine.clone());
@@ -1401,10 +1483,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let session_for_refresh = media_session.clone();
         let media_attach_retry = Rc::new(RefCell::new(system_media::AttachRetry::default()));
         let retry_for_refresh = media_attach_retry.clone();
+        let generation_for_refresh = preview_generation.clone();
         ui.on_native_snapshot_ready(move || {
             if let Some(ui) = weak.upgrade() {
                 if let Some(snapshot) = status_source.snapshot() {
-                    refresh(&ui, &controller, &snapshot, &mut previous.borrow_mut());
+                    if snapshot.path != previous.borrow().path {
+                        thumbnails.clear();
+                        ui.set_thumbnail_available(false);
+                    }
+                    refresh(
+                        &ui,
+                        &controller,
+                        &generation_for_refresh,
+                        &snapshot,
+                        &mut previous.borrow_mut(),
+                    );
                     if retry_for_refresh
                         .borrow_mut()
                         .due(std::time::Instant::now())
