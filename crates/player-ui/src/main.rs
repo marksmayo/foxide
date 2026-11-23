@@ -136,16 +136,18 @@ fn intro_skip_target(snapshot: &Snapshot) -> Option<f64> {
 }
 
 fn is_intro_marker(title: &str) -> bool {
-    let words = title
-        .to_lowercase()
-        .split(|character: char| !character.is_alphanumeric())
-        .filter(|word| !word.is_empty())
-        .map(str::to_owned)
-        .collect::<Vec<_>>();
-    words.iter().any(|word| word == "intro" || word == "recap")
-        || words.windows(2).any(|pair| {
-            matches!(pair, [first, second] if (first == "opening" && second == "credits") || (first == "previously" && second == "on"))
-        })
+    let mut previous = "";
+    for word in title.split(|character: char| !character.is_alphanumeric()) {
+        if word.eq_ignore_ascii_case("intro")
+            || word.eq_ignore_ascii_case("recap")
+            || (previous.eq_ignore_ascii_case("opening") && word.eq_ignore_ascii_case("credits"))
+            || (previous.eq_ignore_ascii_case("previously") && word.eq_ignore_ascii_case("on"))
+        {
+            return true;
+        }
+        previous = word;
+    }
+    false
 }
 
 fn update_queue(ui: &PlayerWindow, state: &UiState) {
