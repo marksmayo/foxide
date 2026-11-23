@@ -21,7 +21,7 @@ pub use thumbnails::ThumbnailController;
 /// Build the libmpv filter graph that preserves audio output and renders a waveform.
 pub fn audio_visualization_filter(audio_track_id: u32) -> String {
     format!(
-        "[aid{audio_track_id}] asplit [foxide-audio] [foxide-viz]; [foxide-audio] [ao]; [foxide-viz] showwaves=s=960x270:mode=cline:rate=24:colors=0x87e64b [vo]"
+        "[aid{audio_track_id}] asplit [foxide-viz] [ao] ; [foxide-viz] showwaves=s=960x270:mode=cline:rate=24:colors=0x87e64b [vo]"
     )
 }
 

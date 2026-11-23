@@ -319,7 +319,7 @@ mod tests {
             [Effect::Engine(vec![
                 "set".into(),
                 "lavfi-complex".into(),
-                "[aid7] asplit [foxide-audio] [foxide-viz]; [foxide-audio] [ao]; [foxide-viz] showwaves=s=960x270:mode=cline:rate=24:colors=0x87e64b [vo]".into(),
+                "[aid7] asplit [foxide-viz] [ao] ; [foxide-viz] showwaves=s=960x270:mode=cline:rate=24:colors=0x87e64b [vo]".into(),
             ])]
         );
         assert!(state.audio_visualization);
