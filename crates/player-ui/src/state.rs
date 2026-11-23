@@ -271,4 +271,17 @@ mod tests {
         state.loaded = false;
         assert!(state.dispatch(Action::SetPaused(false)).is_empty());
     }
+
+    #[test]
+    fn opening_a_playlist_schedules_every_track_for_contiguous_playback() {
+        let tracks = vec!["first.flac".into(), "second.flac".into(), "third.flac".into()];
+        let mut state = UiState::default();
+
+        let effects = state.dispatch(Action::Open(tracks.clone()));
+
+        assert_eq!(effects, vec![Effect::LoadPlaylist(tracks.clone())]);
+        assert_eq!(state.playlist, tracks);
+        assert_eq!(state.selected, 0);
+        assert!(!state.loaded);
+    }
 }
