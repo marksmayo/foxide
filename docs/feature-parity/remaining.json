@@ -6,15 +6,15 @@
       "id": "thumbnails",
       "name": "Seekbar thumbnail previews",
       "group": "Interface",
-      "stage": "queued",
-      "acceptance": "Needs a bounded thumbnail decoder/cache and scrubbing presentation tests; not a decoder-readback shortcut."
+      "stage": "in_progress",
+      "acceptance": "Implementation merged in PR #23: hover-only previews use a separate paused libmpv client, a 16 MiB bounded GPU LRU cache, coalesced requests, keyboard support and accessibility. Slint hover/eligibility tests and hosted desktop, compositor, and CodSpeed checks passed. Manual desktop hover positioning and real-media preview behavior remain unverified; do not count this gap as closed yet."
     },
     {
       "id": "pip",
       "name": "Native picture in picture",
       "group": "Interface",
-      "stage": "queued",
-      "acceptance": "Native picture-in-picture needs OS-specific window lifecycle, focus and multi-display acceptance."
+      "stage": "in_progress",
+      "acceptance": "Implementation merged in PR #22: the View action opens a compact always-on-top window while playback continues, with Play/Pause, Return and Close controls; returning restores the previous size, position and window modes. UI and window-state tests plus hosted desktop, compositor, release-package and CodSpeed checks passed. Manual OS-specific focus, window lifecycle and multi-display behavior remain unverified; do not count this gap as closed yet."
     },
     {
       "id": "gapless",
