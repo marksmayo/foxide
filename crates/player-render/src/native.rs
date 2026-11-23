@@ -244,6 +244,7 @@ impl Api {
                 (c"terminal", c"no"),
                 (c"input-default-bindings", c"no"),
                 (c"audio", if thumbnail { c"no" } else { c"auto" }),
+                (c"gapless-audio", if thumbnail { c"no" } else { c"yes" }),
             ] {
                 if option(api.handle, name.as_ptr(), value.as_ptr()) < 0 {
                     return Err("libmpv rejected a required playback option".into());
@@ -465,6 +466,7 @@ pub struct Snapshot {
     pub paused: bool,
     pub position: f64,
     pub duration: f64,
+    pub playlist_position: usize,
     pub speed: f64,
     pub volume: f64,
     pub muted: bool,
@@ -681,6 +683,7 @@ impl Engine {
                         paused: client.get(c"pause") == "yes",
                         position: client.number(c"time-pos"),
                         duration: client.number(c"duration"),
+                        playlist_position: client.number(c"playlist-pos").max(0.0) as usize,
                         speed: client.number(c"speed"),
                         volume: client.number(c"volume"),
                         muted: client.get(c"mute") == "yes",

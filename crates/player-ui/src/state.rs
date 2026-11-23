@@ -11,6 +11,7 @@ pub enum Action {
     Next,
     Previous,
     Select(usize),
+    PlaylistPosition(usize),
     SeekAbsolute(f64),
     Volume(f64),
     AudioTrack(u32),
@@ -36,6 +37,8 @@ pub enum PlaybackControl {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Effect {
     Load(PathBuf),
+    LoadPlaylist(Vec<PathBuf>),
+    PlayPlaylistIndex(usize),
     Pause(bool),
     Mute(bool),
     Seek(f64),
@@ -189,7 +192,7 @@ impl UiState {
                 self.playlist
                     .first()
                     .cloned()
-                    .map(Effect::Load)
+                    .map(|_| Effect::LoadPlaylist(self.playlist.clone()))
                     .into_iter()
                     .collect()
             }
@@ -209,6 +212,10 @@ impl UiState {
             }
             Action::Previous if self.selected > 0 => self.select(self.selected - 1),
             Action::Select(index) if index < self.playlist.len() => self.select(index),
+            Action::PlaylistPosition(index) if index < self.playlist.len() => {
+                self.selected = index;
+                Vec::new()
+            }
             Action::SeekAbsolute(value) if self.loaded && value.is_finite() => {
                 vec![Effect::SeekAbsolute(value.clamp(0.0, self.duration))]
             }
@@ -240,8 +247,12 @@ impl UiState {
 
     fn select(&mut self, index: usize) -> Vec<Effect> {
         self.selected = index;
-        self.loaded = false;
-        vec![Effect::Load(self.playlist[index].clone())]
+        if self.loaded {
+            vec![Effect::PlayPlaylistIndex(index)]
+        } else {
+            self.loaded = false;
+            vec![Effect::Load(self.playlist[index].clone())]
+        }
     }
 }
 
@@ -287,5 +298,38 @@ mod tests {
         assert_eq!(state.playlist, tracks);
         assert_eq!(state.selected, 0);
         assert!(!state.loaded);
+    }
+
+    #[test]
+    fn selecting_another_track_in_a_loaded_playlist_keeps_the_queue() {
+        let tracks = vec![
+            "first.flac".into(),
+            "second.flac".into(),
+            "third.flac".into(),
+        ];
+        let mut state = UiState::default();
+        state.dispatch(Action::Open(tracks.clone()));
+        state.confirm_loaded(12.0);
+
+        assert_eq!(
+            state.dispatch(Action::Next),
+            vec![Effect::PlayPlaylistIndex(1)]
+        );
+        assert_eq!(state.playlist, tracks);
+        assert_eq!(state.selected, 1);
+        assert!(state.loaded);
+    }
+
+    #[test]
+    fn automatic_playlist_advance_updates_selection_without_reloading() {
+        let tracks = vec!["first.flac".into(), "second.flac".into()];
+        let mut state = UiState::default();
+        state.dispatch(Action::Open(tracks.clone()));
+        state.confirm_loaded(12.0);
+
+        assert!(state.dispatch(Action::PlaylistPosition(1)).is_empty());
+        assert_eq!(state.selected, 1);
+        assert_eq!(state.playlist, tracks);
+        assert!(state.loaded);
     }
 }

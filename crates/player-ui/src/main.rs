@@ -164,8 +164,35 @@ fn dispatch(
                 .is_some_and(|path| path.is_file() && supported_cast_extension(path)),
     );
     for effect in effects {
+        if let Effect::LoadPlaylist(paths) = &effect {
+            match engine {
+                Some(engine) => {
+                    for (index, path) in paths.iter().enumerate() {
+                        let mode = if index == 0 { "replace" } else { "append" };
+                        if let Err(error) = engine.command(vec![
+                            "loadfile".into(),
+                            player_core::external_path(path.clone())
+                                .to_string_lossy()
+                                .into_owned(),
+                            mode.into(),
+                        ]) {
+                            ui.set_status(error.into());
+                            break;
+                        }
+                    }
+                }
+                None => {
+                    ui.set_status("Playback engine unavailable — see setup instructions".into())
+                }
+            }
+            continue;
+        }
         let args: Vec<String> = match effect {
             Effect::Engine(command) => command,
+            Effect::LoadPlaylist(_) => unreachable!("handled before command mapping"),
+            Effect::PlayPlaylistIndex(index) => {
+                vec!["set".into(), "playlist-pos".into(), index.to_string()]
+            }
             Effect::Load(path) => vec![
                 "loadfile".into(),
                 player_core::external_path(path)
@@ -258,6 +285,13 @@ fn refresh(
 ) {
     if snapshot == previous {
         return;
+    }
+    if snapshot.loaded && snapshot.playlist_position != previous.playlist_position {
+        let mut state = state.borrow_mut();
+        if snapshot.playlist_position < state.playlist.len() {
+            state.dispatch(Action::PlaylistPosition(snapshot.playlist_position));
+            ui.set_selected_row(state.selected as i32);
+        }
     }
     let expected = state
         .borrow()
