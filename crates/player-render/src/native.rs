@@ -839,6 +839,45 @@ mod snapshot_allocation_tests {
         }
         panic!("libmpv snapshot did not expose embedded title, artist, and album metadata");
     }
+
+    #[test]
+    #[ignore = "Native playlist acceptance; requires generated short audio fixtures and libmpv"]
+    #[cfg(feature = "system-media-integration")]
+    fn native_playlist_advances_to_the_queued_audio_track() {
+        use std::time::Instant;
+
+        let first = std::env::var("FOXIDE_GAPLESS_FIRST")
+            .expect("workflow must provide the first short audio fixture");
+        let second = std::env::var("FOXIDE_GAPLESS_SECOND")
+            .expect("workflow must provide the second short audio fixture");
+        let engine = Engine::new().expect("libmpv must be available");
+        for (name, value) in [("vo", "null"), ("ao", "null"), ("pause", "no")] {
+            engine
+                .command(vec!["set".into(), name.into(), value.into()])
+                .unwrap();
+        }
+        engine.ready.store(true, Ordering::Release);
+        engine
+            .command(vec!["loadfile".into(), first, "replace".into()])
+            .unwrap();
+        engine
+            .command(vec!["loadfile".into(), second, "append".into()])
+            .unwrap();
+
+        let deadline = Instant::now() + Duration::from_secs(15);
+        while Instant::now() < deadline {
+            let snapshot = engine.snapshot().unwrap_or_default();
+            if !snapshot.error.is_empty() {
+                panic!("libmpv failed to play queued audio: {}", snapshot.error);
+            }
+            if snapshot.loaded && snapshot.playlist_position == 1 {
+                engine.command(vec!["stop".into()]).unwrap();
+                return;
+            }
+            thread::sleep(Duration::from_millis(20));
+        }
+        panic!("libmpv did not automatically advance to the queued audio track");
+    }
 }
 
 #[cfg(all(test, windows))]

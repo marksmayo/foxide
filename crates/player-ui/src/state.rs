@@ -247,12 +247,7 @@ impl UiState {
 
     fn select(&mut self, index: usize) -> Vec<Effect> {
         self.selected = index;
-        if self.loaded {
-            vec![Effect::PlayPlaylistIndex(index)]
-        } else {
-            self.loaded = false;
-            vec![Effect::Load(self.playlist[index].clone())]
-        }
+        vec![Effect::PlayPlaylistIndex(index)]
     }
 }
 
@@ -318,6 +313,21 @@ mod tests {
         assert_eq!(state.playlist, tracks);
         assert_eq!(state.selected, 1);
         assert!(state.loaded);
+    }
+
+    #[test]
+    fn selecting_during_initial_load_keeps_the_queued_playlist() {
+        let tracks = vec!["first.flac".into(), "second.flac".into()];
+        let mut state = UiState::default();
+        state.dispatch(Action::Open(tracks.clone()));
+
+        assert_eq!(
+            state.dispatch(Action::Select(1)),
+            vec![Effect::PlayPlaylistIndex(1)]
+        );
+        assert_eq!(state.playlist, tracks);
+        assert_eq!(state.selected, 1);
+        assert!(!state.loaded);
     }
 
     #[test]
