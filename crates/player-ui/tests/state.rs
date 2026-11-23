@@ -15,7 +15,10 @@ fn empty_player_cannot_seek_and_opening_files_populates_one_ordered_queue() {
     assert!(state.dispatch(Action::Seek(30.0)).is_empty());
     assert_eq!(
         state.dispatch(Action::Open(vec!["one.mkv".into(), "two.mkv".into()])),
-        [Effect::Load("one.mkv".into())]
+        [Effect::LoadPlaylist(vec![
+            "one.mkv".into(),
+            "two.mkv".into()
+        ])]
     );
     assert_eq!(state.playlist.len(), 2);
     assert!(
@@ -47,15 +50,12 @@ fn queue_navigation_tracks_and_window_commands_share_the_same_dispatch() {
     let mut state = UiState::default();
     state.dispatch(Action::Open(vec!["one.mkv".into(), "two.mkv".into()]));
     state.confirm_loaded(120.0);
-    assert_eq!(
-        state.dispatch(Action::Next),
-        [Effect::Load("two.mkv".into())]
-    );
-    assert!(!state.loaded);
+    assert_eq!(state.dispatch(Action::Next), [Effect::PlayPlaylistIndex(1)]);
+    assert!(state.loaded);
     assert!(state.dispatch(Action::Next).is_empty());
     assert_eq!(
         state.dispatch(Action::Previous),
-        [Effect::Load("one.mkv".into())]
+        [Effect::PlayPlaylistIndex(0)]
     );
     state.confirm_loaded(120.0);
     assert_eq!(
@@ -232,7 +232,7 @@ fn playlist_search_preserves_original_selection_indices_and_ignores_folder_names
     assert_eq!(state.filtered_indices(""), [0, 1, 2]);
     assert_eq!(
         state.dispatch(Action::Select(state.filtered_indices("02")[0])),
-        [Effect::Load("/media/ÉPISODE 02.mkv".into())]
+        [Effect::PlayPlaylistIndex(2)]
     );
     assert_eq!(state.selected, 2);
 }

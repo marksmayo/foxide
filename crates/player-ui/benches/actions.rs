@@ -102,7 +102,7 @@ fn playlist_navigation<const OP: u8>(bencher: Bencher, count: usize) {
     assert!(
         effects
             .iter()
-            .all(|effect| matches!(effect, Effect::Load(_)))
+            .all(|effect| matches!(effect, Effect::PlayPlaylistIndex(_)))
     );
     bencher
         .with_inputs(|| state(count, true))
