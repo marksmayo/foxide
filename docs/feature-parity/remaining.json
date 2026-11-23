@@ -342,8 +342,8 @@
       "id": "audio_visualization",
       "name": "Music visualization display",
       "group": "Audio",
-      "stage": "queued",
-      "acceptance": "Needs an audio-analysis/render pipeline and resource/frame-pacing benchmarks."
+      "stage": "in_progress",
+      "acceptance": "An Audio menu control routes a selected audio track through libmpv lavfi-complex, splits the original audio to output, and renders a bounded 960x270/24fps waveform through the existing video surface. The UI disables the option for video tracks and updates or clears the filter on track changes. Unit tests cover graph commands and state; Windows desktop compilation passes. Native filter acceptance, visual behavior, resource/frame pacing benchmarks, and physical-device verification remain pending; no feature medal is claimed."
     }
   ],
   "baseline_gap_count": 49,

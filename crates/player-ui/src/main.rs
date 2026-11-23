@@ -156,6 +156,7 @@ fn dispatch(
     ui.set_queue_visible(state.playlist_visible);
     ui.set_fullscreen_mode(state.fullscreen);
     ui.set_loaded(state.loaded);
+    ui.set_audio_visualization(state.audio_visualization);
     ui.set_cast_available(
         state.loaded
             && state
@@ -371,6 +372,46 @@ fn refresh(
         ui.set_diagnostics(format!("Video renderer: shared OpenGL texture\nRequested decoder: auto-safe\nActive decoder: {}\n\nHardware decoding does not by itself certify zero-copy.\nNative GPU/power acceptance remains platform-specific.\n\n{}", if snapshot.hwdec.is_empty() { "not active" } else { &snapshot.hwdec }, snapshot.error).into());
     }
     *previous = snapshot.clone();
+}
+
+fn refresh_audio_visualization(
+    ui: &PlayerWindow,
+    state: &Rc<RefCell<UiState>>,
+    engine: &Engine,
+    snapshot: &Snapshot,
+) {
+    if !state.borrow().audio_visualization || !snapshot.loaded {
+        return;
+    }
+    let video_selected = snapshot
+        .tracks
+        .iter()
+        .any(|track| track.kind == "video" && track.selected);
+    let audio_track_id = snapshot
+        .tracks
+        .iter()
+        .find(|track| track.kind == "audio" && track.selected)
+        .map(|track| track.id)
+        .filter(|id| *id > 0);
+    if video_selected || audio_track_id.is_none() {
+        let effects = state.borrow_mut().dispatch(Action::SetAudioVisualization {
+            enabled: false,
+            audio_track_id: 0,
+        });
+        for effect in effects {
+            if let Effect::Engine(command) = effect
+                && let Err(error) = engine.command(command)
+            {
+                ui.set_status(error.into());
+            }
+        }
+        ui.set_audio_visualization(false);
+        return;
+    }
+    let filter = player_ui::audio_visualization_filter(audio_track_id.unwrap());
+    if let Err(error) = engine.command(vec!["set".into(), "lavfi-complex".into(), filter]) {
+        ui.set_status(error.into());
+    }
 }
 
 fn default_preferences_path() -> Option<PathBuf> {
@@ -1151,6 +1192,30 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
             "seek" => Action::SeekAbsolute(value as f64),
             "speed" => Action::SetSpeed(value as f64),
             "volume" => Action::Volume(value as f64),
+            "audio-visualization" if value == 0.0 => Action::SetAudioVisualization {
+                enabled: false,
+                audio_track_id: 0,
+            },
+            "audio-visualization" if value == 1.0 => {
+                let audio_track_id = playback
+                    .as_ref()
+                    .and_then(|engine| engine.snapshot())
+                    .and_then(|snapshot| {
+                        snapshot
+                            .tracks
+                            .iter()
+                            .find(|track| track.kind == "audio" && track.selected)
+                            .map(|track| track.id)
+                    });
+                let Some(audio_track_id) = audio_track_id.filter(|id| *id > 0) else {
+                    ui.set_status("No selected audio track is available to visualize".into());
+                    return;
+                };
+                Action::SetAudioVisualization {
+                    enabled: true,
+                    audio_track_id,
+                }
+            }
             "select" if value >= 0.0 => Action::Select(value as usize),
             "audio-track" if value > 0.0 => Action::AudioTrack(value as u32),
             "subtitle-track" if value >= 0.0 => Action::SubtitleTrack(value as u32),
@@ -1487,7 +1552,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ui.on_native_snapshot_ready(move || {
             if let Some(ui) = weak.upgrade() {
                 if let Some(snapshot) = status_source.snapshot() {
-                    if snapshot.path != previous.borrow().path {
+                    let media_changed = snapshot.path != previous.borrow().path;
+                    let tracks_changed = snapshot.tracks != previous.borrow().tracks;
+                    if media_changed {
                         thumbnails.clear();
                         ui.set_thumbnail_available(false);
                     }
@@ -1498,6 +1565,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         &snapshot,
                         &mut previous.borrow_mut(),
                     );
+                    if media_changed || tracks_changed {
+                        refresh_audio_visualization(
+                            &ui,
+                            &controller,
+                            status_source.as_ref(),
+                            &snapshot,
+                        );
+                    }
                     if retry_for_refresh
                         .borrow_mut()
                         .due(std::time::Instant::now())
