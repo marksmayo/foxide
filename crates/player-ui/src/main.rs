@@ -156,6 +156,7 @@ fn dispatch(
     ui.set_queue_visible(state.playlist_visible);
     ui.set_fullscreen_mode(state.fullscreen);
     ui.set_loaded(state.loaded);
+    ui.set_audio_passthrough(state.audio_passthrough);
     ui.set_cast_available(
         state.loaded
             && state
@@ -1151,6 +1152,9 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
             "seek" => Action::SeekAbsolute(value as f64),
             "speed" => Action::SetSpeed(value as f64),
             "volume" => Action::Volume(value as f64),
+            "audio-passthrough" if value == 0.0 || value == 1.0 => {
+                Action::SetAudioPassthrough(value == 1.0)
+            }
             "select" if value >= 0.0 => Action::Select(value as usize),
             "audio-track" if value > 0.0 => Action::AudioTrack(value as u32),
             "subtitle-track" if value >= 0.0 => Action::SubtitleTrack(value as u32),
