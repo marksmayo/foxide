@@ -21,7 +21,7 @@ jobs:
           key: desktop-ui
       - name: Linux window toolkit prerequisites
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libxkbcommon-dev libfontconfig1-dev libwayland-dev libegl1-mesa-dev
+        run: sudo apt-get update && sudo apt-get install -y libxkbcommon-dev libfontconfig1-dev libwayland-dev libegl1-mesa-dev libudev-dev
       - run: cargo build -p player-ui --features desktop --bin foxide-desktop --release --locked
       - name: Verify desktop state refresh and customization without a native display
         env:

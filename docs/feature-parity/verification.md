@@ -71,3 +71,7 @@ The desktop adapter connects playwire to the existing player action/state path f
 
 The desktop video surface maps horizontal trackpad scroll and horizontal pointer/touch drags to relative seeking, and vertical scroll/drags to volume. The software-window UI test checks the 31px/32px gesture threshold, seek direction and ±15-second clamps, volume limits, scroll behavior, and disabled playback state. This remains in progress until physical trackpad and touchscreen behavior is verified; no feature medal is claimed.
 
+## Game controller navigation implementation checkpoint
+
+The desktop now polls standardized gamepad events and routes D-pad focus traversal, confirm/back, playback toggle and previous/next through Slint or the shared playback action path. It surfaces controller connection and disconnection events without publishing device names. Mapping tests cover supported and ignored controls. Linux CI explicitly installs libudev development headers for the gilrs backend. This remains in progress until physical hot-plug and focus-order behavior is verified on supported desktop platforms.
+
