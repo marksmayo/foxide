@@ -801,6 +801,77 @@ mod snapshot_allocation_tests {
     }
 
     #[test]
+    #[ignore = "Native libmpv visualization acceptance; requires a generated WAV fixture and libmpv"]
+    #[cfg(feature = "system-media-integration")]
+    fn native_audio_visualization_filter_processes_audio_without_stopping_playback() {
+        use std::time::Instant;
+
+        let fixture = std::env::var("FOXIDE_AUDIO_VISUALIZATION_FIXTURE")
+            .expect("workflow must provide the audio visualization fixture");
+        let engine = Engine::new().expect("libmpv must be available");
+        for (name, value) in [("vo", "null"), ("ao", "null"), ("pause", "no")] {
+            engine
+                .command(vec!["set".into(), name.into(), value.into()])
+                .unwrap();
+        }
+        engine.ready.store(true, Ordering::Release);
+        engine
+            .command(vec!["loadfile".into(), fixture, "replace".into()])
+            .unwrap();
+
+        let load_deadline = Instant::now() + Duration::from_secs(15);
+        let (audio_track_id, start_position) = loop {
+            let snapshot = engine.snapshot().unwrap_or_default();
+            assert!(
+                snapshot.error.is_empty(),
+                "libmpv failed to load audio fixture: {}",
+                snapshot.error
+            );
+            if snapshot.loaded
+                && let Some(track) = snapshot
+                    .tracks
+                    .iter()
+                    .find(|track| track.kind == "audio" && track.selected)
+            {
+                break (track.id, snapshot.position);
+            }
+            assert!(
+                Instant::now() < load_deadline,
+                "libmpv did not load an audio track from the fixture"
+            );
+            thread::sleep(Duration::from_millis(20));
+        };
+        assert!(audio_track_id > 0);
+
+        engine
+            .command(vec![
+                "set".into(),
+                "lavfi-complex".into(),
+                crate::audio_visualization_filter(audio_track_id),
+            ])
+            .unwrap();
+        let playback_deadline = Instant::now() + Duration::from_secs(5);
+        loop {
+            let snapshot = engine.snapshot().unwrap_or_default();
+            assert!(
+                snapshot.error.is_empty() && snapshot.command_error.is_empty(),
+                "libmpv rejected the visualization graph: {} {}",
+                snapshot.error,
+                snapshot.command_error
+            );
+            if snapshot.loaded && snapshot.position > start_position + 0.1 {
+                engine.command(vec!["stop".into()]).unwrap();
+                return;
+            }
+            assert!(
+                Instant::now() < playback_deadline,
+                "audio playback did not advance with the visualization graph enabled"
+            );
+            thread::sleep(Duration::from_millis(20));
+        }
+    }
+
+    #[test]
     #[ignore = "Native libmpv metadata acceptance; requires generated tagged fixture and libmpv"]
     #[cfg(feature = "system-media-integration")]
     fn native_snapshot_exposes_embedded_track_metadata() {

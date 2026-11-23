@@ -1,3 +1,4 @@
+use player_render::audio_visualization_filter;
 use std::path::PathBuf;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -291,12 +292,6 @@ impl UiState {
         effects.push(Effect::Load(self.playlist[index].clone()));
         effects
     }
-}
-
-pub fn audio_visualization_filter(audio_track_id: u32) -> String {
-    format!(
-        "[aid{audio_track_id}] asplit [foxide-audio] [foxide-viz]; [foxide-audio] [ao]; [foxide-viz] showwaves=s=960x270:mode=cline:rate=24:colors=0x87e64b [vo]"
-    )
 }
 
 #[cfg(test)]

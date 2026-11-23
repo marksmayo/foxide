@@ -3,7 +3,8 @@
 use player_core::Command;
 mod state;
 pub mod system_media_controls;
-pub use state::{Action, Effect, PlaybackControl, UiState, audio_visualization_filter};
+pub use player_render::audio_visualization_filter;
+pub use state::{Action, Effect, PlaybackControl, UiState};
 
 /// Initial mpv-compatible shortcut subset. Modifiers and text editing are handled by the UI.
 #[inline]

@@ -13,7 +13,7 @@ player-cast = { path = "../player-cast", optional = true }
 slint = { version = "=1.18.1", default-features = false, features = ["std", "backend-winit", "renderer-femtovg", "renderer-software", "accessibility", "compat-1-18", "raw-window-handle-06"], optional = true }
 playwire = { workspace = true, optional = true }
 raw-window-handle = { version = "0.6", optional = true }
-player-render = { path = "../player-render", features = ["desktop"], optional = true }
+player-render = { path = "../player-render" }
 serde_json = { workspace = true, optional = true }
 rfd = { version = "0.15", optional = true }
 futures-lite = { version = "2", optional = true }
@@ -23,7 +23,7 @@ gilrs = { version = "=0.11.2", optional = true }
 
 [features]
 native-controls = ["desktop"]
-desktop = ["dep:player-services", "dep:player-settings", "dep:player-cast", "dep:slint", "dep:slint-build", "dep:player-render", "dep:serde_json", "dep:rfd", "dep:futures-lite", "dep:clap", "dep:image", "dep:playwire", "dep:raw-window-handle", "dep:gilrs"]
+desktop = ["dep:player-services", "dep:player-settings", "dep:player-cast", "dep:slint", "dep:slint-build", "player-render/desktop", "dep:serde_json", "dep:rfd", "dep:futures-lite", "dep:clap", "dep:image", "dep:playwire", "dep:raw-window-handle", "dep:gilrs"]
 
 [build-dependencies]
 slint-build = { version = "=1.18.1", optional = true }
