@@ -111,6 +111,43 @@ fn clock(seconds: f64) -> String {
     }
 }
 
+fn intro_skip_target(snapshot: &Snapshot) -> Option<f64> {
+    if !snapshot.loaded
+        || !snapshot.position.is_finite()
+        || !snapshot.duration.is_finite()
+        || snapshot.position < 0.0
+        || snapshot.duration <= 0.0
+    {
+        return None;
+    }
+    let current = snapshot.chapters.get(snapshot.chapter_index)?;
+    let next = snapshot.chapters.get(snapshot.chapter_index + 1)?;
+    if !is_intro_marker(&current.title)
+        || !current.start.is_finite()
+        || !next.start.is_finite()
+        || snapshot.position < current.start
+        || next.start <= snapshot.position
+        || next.start <= current.start
+        || next.start > snapshot.duration
+    {
+        return None;
+    }
+    Some(next.start)
+}
+
+fn is_intro_marker(title: &str) -> bool {
+    let words = title
+        .to_lowercase()
+        .split(|character: char| !character.is_alphanumeric())
+        .filter(|word| !word.is_empty())
+        .map(str::to_owned)
+        .collect::<Vec<_>>();
+    words.iter().any(|word| word == "intro" || word == "recap")
+        || words.windows(2).any(|pair| {
+            matches!(pair, [first, second] if (first == "opening" && second == "credits") || (first == "previously" && second == "on"))
+        })
+}
+
 fn update_queue(ui: &PlayerWindow, state: &UiState) {
     let rows = state
         .filtered_indices(ui.get_queue_filter().as_str())
@@ -259,6 +296,7 @@ fn refresh(
     if snapshot == previous {
         return;
     }
+    ui.set_skip_intro_available(intro_skip_target(snapshot).is_some());
     let expected = state
         .borrow()
         .playlist
@@ -1150,6 +1188,17 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
             "seek-relative" => Action::Seek(value as f64),
             "seek" => Action::SeekAbsolute(value as f64),
             "speed" => Action::SetSpeed(value as f64),
+            "skip-intro" => {
+                let target = playback
+                    .as_ref()
+                    .and_then(|engine| engine.snapshot())
+                    .and_then(|snapshot| intro_skip_target(&snapshot));
+                let Some(target) = target else {
+                    ui.set_skip_intro_available(false);
+                    return;
+                };
+                Action::SeekAbsolute(target)
+            }
             "volume" => Action::Volume(value as f64),
             "select" if value >= 0.0 => Action::Select(value as usize),
             "audio-track" if value > 0.0 => Action::AudioTrack(value as u32),

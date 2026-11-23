@@ -14,7 +14,7 @@ pub use gpu::attach_observed;
 #[cfg(feature = "desktop")]
 pub use gpu::attach_with_thumbnails;
 #[cfg(feature = "desktop")]
-pub use native::{Engine, Snapshot, Track};
+pub use native::{Chapter, Engine, Snapshot, Track};
 #[cfg(feature = "desktop")]
 pub use thumbnails::ThumbnailController;
 

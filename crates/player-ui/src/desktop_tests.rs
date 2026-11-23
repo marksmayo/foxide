@@ -1247,3 +1247,48 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
     }
     assert_eq!(ui.get_update_status(), "Foxide is up to date.");
 }
+
+#[test]
+fn intro_skip_requires_a_marked_current_chapter_and_a_safe_next_boundary() {
+    let snapshot = Snapshot {
+        loaded: true,
+        position: 12.0,
+        duration: 180.0,
+        chapter_index: 0,
+        chapters: vec![
+            player_render::Chapter {
+                title: "Previously On".into(),
+                start: 0.0,
+            },
+            player_render::Chapter {
+                title: "Episode".into(),
+                start: 48.0,
+            },
+        ]
+        .into(),
+        ..Snapshot::default()
+    };
+    assert_eq!(intro_skip_target(&snapshot), Some(48.0));
+
+    let mut ordinary = snapshot.clone();
+    Arc::make_mut(&mut ordinary.chapters)[0].title = "Scene One".into();
+    assert_eq!(intro_skip_target(&ordinary), None);
+
+    ordinary.chapter_index = 1;
+    assert_eq!(intro_skip_target(&ordinary), None);
+    ordinary.chapter_index = 0;
+    ordinary.position = 48.0;
+    assert_eq!(intro_skip_target(&ordinary), None);
+
+    ordinary = snapshot.clone();
+    Arc::make_mut(&mut ordinary.chapters)[0].title = "Opening Credits".into();
+    assert_eq!(intro_skip_target(&ordinary), Some(48.0));
+    Arc::make_mut(&mut ordinary.chapters)[0].title = "Recap".into();
+    assert_eq!(intro_skip_target(&ordinary), Some(48.0));
+
+    ordinary.duration = 47.0;
+    assert_eq!(intro_skip_target(&ordinary), None);
+    ordinary.duration = 180.0;
+    ordinary.loaded = false;
+    assert_eq!(intro_skip_target(&ordinary), None);
+}

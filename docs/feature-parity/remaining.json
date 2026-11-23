@@ -335,8 +335,8 @@
       "id": "skip_intro",
       "name": "Skip detected episode intros",
       "group": "Playback",
-      "stage": "queued",
-      "acceptance": "Needs marker detection/provider integration and seek-boundary acceptance."
+      "stage": "in_progress",
+      "acceptance": "Current slice exposes a Skip intro action for marked mpv chapters (intro, recap, opening credits, or previously on) and seeks only to the next in-duration chapter boundary. Provider-based detection, broader marker validation, and Windows playback acceptance remain required."
     },
     {
       "id": "audio_visualization",

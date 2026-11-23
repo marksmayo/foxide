@@ -193,6 +193,7 @@ export component PlayerWindow inherits Window {
     in-out property <bool> queue-visible: false;
     in-out property <bool> fullscreen-mode: false;
     in-out property <bool> muted: false;
+    in-out property <bool> skip-intro-available: false;
     in-out property <float> position: 0;
     in-out property <float> duration: 0;
     in-out property <float> volume: 80;
@@ -231,6 +232,7 @@ export component PlayerWindow inherits Window {
         }
         Menu { title: "Playback";
             MenuItem { title: root.paused ? "Play" : "Pause"; enabled: root.loaded; activated => { root.action("pause", 0); } }
+            MenuItem { title: "Skip intro"; enabled: root.skip-intro-available; activated => { root.action("skip-intro", 0); } }
             MenuItem { title: "Next frame"; enabled: root.loaded && root.has-video; activated => { root.action("frame-step", 0); } }
             MenuItem { title: "Previous frame"; enabled: root.loaded && root.has-video; activated => { root.action("frame-back-step", 0); } }
             MenuItem { title: "Stop"; enabled: root.loaded; activated => { root.action("stop", 0); } }

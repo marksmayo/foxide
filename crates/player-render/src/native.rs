@@ -389,6 +389,19 @@ impl Api {
             .filter(|v| v.is_finite())
             .unwrap_or(0.0)
     }
+    fn dynamic(&self, name: &str) -> String {
+        CString::new(name)
+            .ok()
+            .map(|name| self.get(&name))
+            .unwrap_or_default()
+    }
+    fn dynamic_number(&self, name: &str) -> f64 {
+        self.dynamic(name)
+            .parse::<f64>()
+            .ok()
+            .filter(|value| value.is_finite())
+            .unwrap_or(0.0)
+    }
     fn send(&self, args: &[String]) -> Result<(), String> {
         let strings = args
             .iter()
@@ -454,6 +467,11 @@ pub struct Track {
     pub selected: bool,
 }
 #[derive(Clone, Debug, Default, PartialEq)]
+pub struct Chapter {
+    pub title: String,
+    pub start: f64,
+}
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct Snapshot {
     pub path: String,
     /// Original user selection, retained across helper redirects without per-tick allocation.
@@ -465,6 +483,8 @@ pub struct Snapshot {
     pub paused: bool,
     pub position: f64,
     pub duration: f64,
+    pub chapter_index: usize,
+    pub chapters: Arc<[Chapter]>,
     pub speed: f64,
     pub volume: f64,
     pub muted: bool,
@@ -534,6 +554,7 @@ impl Engine {
                 let mut requested_path: Arc<str> = Arc::from("");
                 let mut file_loaded = false;
                 let mut tracks: Arc<[Track]> = Arc::from([]);
+                let mut chapters: Arc<[Chapter]> = Arc::from([]);
                 let mut has_artwork = false;
                 let mut error = String::new();
                 let mut command_error = String::new();
@@ -635,6 +656,15 @@ impl Engine {
                     let path = client.get(c"path");
                     if path != last_path || tracks.is_empty() {
                         let mut next_tracks = Vec::new();
+                        let chapter_count =
+                            client.number(c"chapter-list/count").clamp(0.0, 256.0) as usize;
+                        chapters = (0..chapter_count)
+                            .map(|index| Chapter {
+                                title: client.dynamic(&format!("chapter-list/{index}/title")),
+                                start: client.dynamic_number(&format!("chapter-list/{index}/time")),
+                            })
+                            .collect::<Vec<_>>()
+                            .into();
                         has_artwork = false;
                         let count = client.number(c"track-list/count").clamp(0.0, 256.0) as u32;
                         for i in 0..count {
@@ -681,6 +711,8 @@ impl Engine {
                         paused: client.get(c"pause") == "yes",
                         position: client.number(c"time-pos"),
                         duration: client.number(c"duration"),
+                        chapter_index: client.number(c"chapter").max(0.0) as usize,
+                        chapters: chapters.clone(),
                         speed: client.number(c"speed"),
                         volume: client.number(c"volume"),
                         muted: client.get(c"mute") == "yes",
