@@ -286,8 +286,8 @@
       "id": "controller_navigation",
       "name": "Game controller UI navigation",
       "group": "Interface",
-      "stage": "queued",
-      "acceptance": "Needs controller mapping, hot-plug, focus and device acceptance."
+      "stage": "in_progress",
+      "acceptance": "The desktop polls standardized gilrs gamepad events and maps D-pad left/up and right/down to backward/forward focus traversal, South to activate, East/Select to back, Start to play/pause, and the left/right shoulders to previous/next. Connection and disconnection events are surfaced in the player status. Automated mapping tests pass; physical-controller hot-plug and focus-order acceptance remain pending, so no feature medal is claimed."
     },
     {
       "id": "webdav_browse",

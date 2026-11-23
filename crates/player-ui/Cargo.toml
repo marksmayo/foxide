@@ -19,10 +19,11 @@ rfd = { version = "0.15", optional = true }
 futures-lite = { version = "2", optional = true }
 clap = { workspace = true, optional = true }
 image = { version = "0.25", default-features = false, features = ["png", "webp"], optional = true }
+gilrs = { version = "=0.11.2", optional = true }
 
 [features]
 native-controls = ["desktop"]
-desktop = ["dep:player-services", "dep:player-settings", "dep:player-cast", "dep:slint", "dep:slint-build", "dep:player-render", "dep:serde_json", "dep:rfd", "dep:futures-lite", "dep:clap", "dep:image", "dep:playwire", "dep:raw-window-handle"]
+desktop = ["dep:player-services", "dep:player-settings", "dep:player-cast", "dep:slint", "dep:slint-build", "dep:player-render", "dep:serde_json", "dep:rfd", "dep:futures-lite", "dep:clap", "dep:image", "dep:playwire", "dep:raw-window-handle", "dep:gilrs"]
 
 [build-dependencies]
 slint-build = { version = "=1.18.1", optional = true }

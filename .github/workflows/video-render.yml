@@ -29,7 +29,7 @@ jobs:
         with:
           tool: cargo-llvm-cov@0.9.1
       - name: Install software OpenGL and the native media engine
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg libmpv2 xvfb xauth libgl1-mesa-dri libegl1-mesa-dev libxkbcommon-dev libxkbcommon-x11-dev libfontconfig1-dev libwayland-dev meson ninja-build pkg-config libavcodec-dev libavfilter-dev libavformat-dev libavutil-dev libswresample-dev libswscale-dev libplacebo-dev libass-dev liblcms2-dev
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg libmpv2 xvfb xauth libgl1-mesa-dri libegl1-mesa-dev libxkbcommon-dev libxkbcommon-x11-dev libfontconfig1-dev libwayland-dev libudev-dev meson ninja-build pkg-config libavcodec-dev libavfilter-dev libavformat-dev libavutil-dev libswresample-dev libswscale-dev libplacebo-dev libass-dev liblcms2-dev
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: mpv-player/mpv
