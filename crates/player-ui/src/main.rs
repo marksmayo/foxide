@@ -8,7 +8,13 @@ use player_render::{Engine, Snapshot};
 use player_settings::Preferences;
 use player_ui::{Action, Effect, UiState};
 use slint::{ComponentHandle, ModelRc, VecModel};
-use std::{cell::{Cell, RefCell}, path::PathBuf, rc::Rc, sync::Arc, time::Duration};
+use std::{
+    cell::{Cell, RefCell},
+    path::PathBuf,
+    rc::Rc,
+    sync::Arc,
+    time::Duration,
+};
 // Only pinned Slint compiler output may use its generated vtable unsafe code.
 // Hand-written UI glue remains under deny(unsafe_code); FFI lives in player-render.
 #[allow(unsafe_code)]
