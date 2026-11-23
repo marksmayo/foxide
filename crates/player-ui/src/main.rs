@@ -8,13 +8,7 @@ use player_render::{Engine, Snapshot};
 use player_settings::Preferences;
 use player_ui::{Action, Effect, UiState};
 use slint::{ComponentHandle, ModelRc, VecModel};
-use std::{
-    cell::{Cell, RefCell},
-    path::PathBuf,
-    rc::Rc,
-    sync::Arc,
-    time::Duration,
-};
+use std::{cell::RefCell, path::PathBuf, rc::Rc, sync::Arc, time::Duration};
 // Only pinned Slint compiler output may use its generated vtable unsafe code.
 // Hand-written UI glue remains under deny(unsafe_code); FFI lives in player-render.
 #[allow(unsafe_code)]
@@ -1478,8 +1472,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let media_engine = Some(playback.clone());
         let media_session = Rc::new(RefCell::new(None));
         let session_for_refresh = media_session.clone();
-        let media_attempted = Rc::new(Cell::new(false));
-        let attempted_for_refresh = media_attempted.clone();
         let media_attach_retry = Rc::new(RefCell::new(system_media::AttachRetry::default()));
         let retry_for_refresh = media_attach_retry.clone();
         let generation_for_refresh = preview_generation.clone();
@@ -1497,21 +1489,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         &snapshot,
                         &mut previous.borrow_mut(),
                     );
-                    if snapshot.loaded
-                        && controller.borrow().loaded
-                        && !attempted_for_refresh.get()
-                        && retry_for_refresh
-                            .borrow_mut()
-                            .due(std::time::Instant::now())
+                    if retry_for_refresh
+                        .borrow_mut()
+                        .due(std::time::Instant::now())
                     {
                         match system_media::attach(&ui, &controller, &media_engine) {
                             Ok(system_media::AttachOutcome::Attached(session)) => {
                                 *session_for_refresh.borrow_mut() = Some(session);
-                                attempted_for_refresh.set(true);
+                                retry_for_refresh.borrow_mut().finish();
                             }
                             Ok(system_media::AttachOutcome::RetryableNotReady) => {}
                             Err(error) => {
-                                attempted_for_refresh.set(true);
+                                retry_for_refresh.borrow_mut().finish();
                                 ui.set_status(
                                     format!("System media controls unavailable: {error}").into(),
                                 );
