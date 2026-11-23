@@ -274,7 +274,11 @@ mod tests {
 
     #[test]
     fn opening_a_playlist_schedules_every_track_for_contiguous_playback() {
-        let tracks = vec!["first.flac".into(), "second.flac".into(), "third.flac".into()];
+        let tracks = vec![
+            "first.flac".into(),
+            "second.flac".into(),
+            "third.flac".into(),
+        ];
         let mut state = UiState::default();
 
         let effects = state.dispatch(Action::Open(tracks.clone()));
