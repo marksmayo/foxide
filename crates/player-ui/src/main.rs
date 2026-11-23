@@ -1,3 +1,4 @@
+mod controller_navigation;
 mod picture_in_picture;
 mod profile_ui;
 mod shader_ui;
@@ -409,14 +410,15 @@ fn apply_preferences(
             .map(|entry| slint::SharedString::from(entry.0))
             .collect::<Vec<_>>(),
     )));
-    ui.set_shortcut_help(
-        preferences
-            .bindings()
-            .map(|(key, action)| format!("{key}  —  {action}"))
-            .collect::<Vec<_>>()
-            .join("\n")
-            .into(),
+    let mut shortcut_help = preferences
+        .bindings()
+        .map(|(key, action)| format!("{key}  —  {action}"))
+        .collect::<Vec<_>>()
+        .join("\n");
+    shortcut_help.push_str(
+        "\n\nGame controller\nD-pad: move focus · South (A/Cross): select · East/Select: back\nStart: play/pause · Left/right shoulder: previous/next",
     );
+    ui.set_shortcut_help(shortcut_help.into());
     if ui.get_compact_mode() != preferences.compact() {
         if preferences.compact() {
             let current = ui.window().size();
@@ -1378,6 +1380,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         )?;
     }
     install_controls(&ui, &state, &engine);
+    let _controller_timer = controller_navigation::install(&ui, state.clone(), engine.clone());
     shader_ui::install(&ui, &engine);
     profile_ui::install(&ui, &engine);
     if let Some(engine) = &engine {
