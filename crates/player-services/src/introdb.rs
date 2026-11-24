@@ -113,7 +113,14 @@ impl IntroDb {
         {
             return Err("IntroDB returned invalid intro boundaries".into());
         }
-        let confidence = intro.get("confidence").and_then(serde_json::Value::as_f64);
+        let confidence = match intro.get("confidence") {
+            None | Some(serde_json::Value::Null) => None,
+            Some(value) => Some(
+                value
+                    .as_f64()
+                    .ok_or("IntroDB returned an invalid confidence value")?,
+            ),
+        };
         if confidence.is_some_and(|value| !value.is_finite() || !(0.0..=1.0).contains(&value)) {
             return Err("IntroDB returned an invalid confidence value".into());
         }
@@ -232,6 +239,7 @@ mod tests {
         for body in [
             br#"{"imdb_id":"tt0903748","season":1,"episode":2,"intro":{"start_sec":2,"end_sec":20}}"#.to_vec(),
             br#"{"imdb_id":"tt0903747","season":1,"episode":2,"intro":{"start_sec":2,"end_sec":20,"confidence":1.1}}"#.to_vec(),
+            br#"{"imdb_id":"tt0903747","season":1,"episode":2,"intro":{"start_sec":2,"end_sec":20,"confidence":"certain"}}"#.to_vec(),
             vec![b' '; INTRO_RESPONSE_LIMIT + 1],
         ] {
             let client = Fixture {
