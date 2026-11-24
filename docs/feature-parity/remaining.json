@@ -21,14 +21,14 @@
       "name": "Gapless audio playback",
       "group": "Audio",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #26 at 612a312: queued playlists, automatic advancement, queue retention on Stop, native PCM capture, and hosted virtual PulseAudio loopback are covered; loopback measured 0 ms longest internal silence across the 440 Hz→880 Hz transition. Removing the snapshot-only PlaylistPosition action improved the CodSpeed count from 34 to 26 regressed benchmarks (29 improved, 224 untouched), but the 612a312 report still flags slower load_confirmation and several common dispatch cases, so performance is not clean. Native playback controls, Windows packaging, and native helper acceptance on Linux/macOS/Windows passed. Linux and Windows Code checks passed; macOS is finishing the release build. The compositor is in progress and Desktop UI is queued. Physical listening across several track boundaries and Previous/Next remains pending; do not close this gap or claim a medal."
+      "acceptance": "Implementation is in draft PR #26 at 6a55c2b: queued playlists, automatic advancement, queue retention on Stop, native PCM capture, and hosted virtual PulseAudio loopback are implemented. The latest optional-control dispatch follow-up is on this head to investigate the remaining CodSpeed regressions. The isolated Windows worktree passed desktop tests and a 93.40% workspace coverage gate, but it predates current PR head 612a312; exact-head CI and CodSpeed for 6a55c2b are pending. Virtual loopback is not physical listening evidence. Physical multi-track listening and Previous/Next acceptance remain pending; do not close this gap or claim a medal."
     },
     {
       "id": "disc",
       "name": "DVD / Blu-ray structure playback",
       "group": "Playback",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #31 at d331ad8: DVD/Blu-ray folder and ISO selection, structure/signature validation, disc-menu navigation actions, and resetting disc state for ordinary media. Desktop state/callback tests pass, a generated NTSC DVD ISO loaded through libmpv and advanced through a title, and all seven current-head CI checks passed. Packaged release playback, Blu-ray media, physical drives, and packaging/licensing review remain pending. Do not count this gap as closed or claim a medal yet."
+      "acceptance": "Implementation is in draft PR #31 at ce45782: DVD/Blu-ray folder and ISO selection, structure/signature validation, disc-menu navigation, and dispatch-path performance follow-up. The earlier NTSC DVD fixture loaded and advanced through a title; e4c270a CodSpeed reported 16 improved, 5 regressed, 258 unchanged and flagged cross-hardware comparisons as provisional. Current-head CI and CodSpeed for ce45782 are queued. Packaged-runtime playback, Blu-ray media, physical drives, and packaging/licensing review remain pending. Do not close this gap or claim a medal."
     },
     {
       "id": "chromecast_output",
