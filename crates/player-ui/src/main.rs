@@ -154,11 +154,7 @@ fn dispatch_action(state: &mut UiState, action: Action) -> Vec<Effect> {
     if clear_visualization {
         effects.insert(
             0,
-            Effect::Engine(vec![
-                "set".into(),
-                "lavfi-complex".into(),
-                String::new(),
-            ]),
+            Effect::Engine(vec!["set".into(), "lavfi-complex".into(), String::new()]),
         );
     }
     effects
