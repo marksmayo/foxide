@@ -153,4 +153,3 @@ fn desktop_menu_commands_are_accepted_by_the_native_media_engine() {
     assert_eq!(result["errors"], json!([]), "{result}\n{log}");
     assert!(status.success(), "{result}\n{log}");
 }
-
