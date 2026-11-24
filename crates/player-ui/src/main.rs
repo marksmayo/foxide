@@ -1111,7 +1111,11 @@ fn install_cast_with_discovery(
     });
 }
 
-fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Option<Rc<Engine>>) -> Rc<RefCell<Option<PlayerWindow>>> {
+fn install_controls(
+    ui: &PlayerWindow,
+    state: &Rc<RefCell<UiState>>,
+    engine: &Option<Rc<Engine>>,
+) -> Rc<RefCell<Option<PlayerWindow>>> {
     let pip_mode = Rc::new(RefCell::new(picture_in_picture::PictureInPictureMode::Main));
     let pip_window = Rc::new(RefCell::new(None));
     let filter_state = state.clone();
