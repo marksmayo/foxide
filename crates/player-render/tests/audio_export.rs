@@ -114,4 +114,3 @@ fn write_test_wav(path: &std::path::Path) {
     }
     fs::write(path, bytes).unwrap();
 }
-
