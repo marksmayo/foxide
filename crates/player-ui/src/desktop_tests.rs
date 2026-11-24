@@ -1275,6 +1275,33 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
 }
 
 #[test]
+fn skip_intro_menu_action_seeks_to_the_next_chapter_boundary() {
+    let snapshot = Snapshot {
+        loaded: true,
+        position: 12.0,
+        duration: 180.0,
+        chapter_index: 0,
+        chapters: vec![
+            player_render::Chapter {
+                title: "Previously On".into(),
+                start: 0.0,
+            },
+            player_render::Chapter {
+                title: "Episode".into(),
+                start: 48.0,
+            },
+        ]
+        .into(),
+        ..Snapshot::default()
+    };
+
+    assert_eq!(
+        intro_skip_action(Some(&snapshot), "", 0, 0, -1.0, -1.0),
+        Some(Action::SeekAbsolute(48.0))
+    );
+}
+
+#[test]
 fn intro_skip_requires_a_marked_current_chapter_and_a_safe_next_boundary() {
     let snapshot = Snapshot {
         loaded: true,

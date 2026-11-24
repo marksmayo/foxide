@@ -169,6 +169,20 @@ fn online_intro_skip_target(
     Some(end)
 }
 
+fn intro_skip_action(
+    snapshot: Option<&Snapshot>,
+    imdb_id: &str,
+    season: u32,
+    episode: u32,
+    start: f64,
+    end: f64,
+) -> Option<Action> {
+    let snapshot = snapshot?;
+    let target = intro_skip_target(snapshot)
+        .or_else(|| online_intro_skip_target(snapshot, imdb_id, season, episode, start, end))?;
+    Some(Action::SeekAbsolute(target))
+}
+
 fn is_intro_marker(title: &str) -> bool {
     let mut previous = "";
     for word in title.split(|character: char| !character.is_alphanumeric()) {
@@ -1256,23 +1270,19 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
             "speed" => Action::SetSpeed(value as f64),
             "skip-intro" => {
                 let snapshot = playback.as_ref().and_then(|engine| engine.snapshot());
-                let target = snapshot.as_ref().and_then(|snapshot| {
-                    intro_skip_target(snapshot).or_else(|| {
-                        online_intro_skip_target(
-                            snapshot,
-                            ui.get_introdb_imdb_id().as_str(),
-                            ui.get_introdb_season().max(0) as u32,
-                            ui.get_introdb_episode().max(0) as u32,
-                            f64::from(ui.get_online_intro_start()),
-                            f64::from(ui.get_online_intro_end()),
-                        )
-                    })
-                });
-                let Some(target) = target else {
+                let action = intro_skip_action(
+                    snapshot.as_ref(),
+                    ui.get_introdb_imdb_id().as_str(),
+                    ui.get_introdb_season().max(0) as u32,
+                    ui.get_introdb_episode().max(0) as u32,
+                    f64::from(ui.get_online_intro_start()),
+                    f64::from(ui.get_online_intro_end()),
+                );
+                let Some(action) = action else {
                     ui.set_skip_intro_available(false);
                     return;
                 };
-                Action::SeekAbsolute(target)
+                action
             }
             "lookup-intro" => {
                 if ui.get_introdb_busy() {
