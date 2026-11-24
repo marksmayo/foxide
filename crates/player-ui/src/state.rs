@@ -1,4 +1,4 @@
-use std::{path::PathBuf, sync::Arc};
+use std::{path::PathBuf, sync::{Arc, OnceLock}};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Action {
@@ -52,7 +52,7 @@ pub enum Effect {
     Engine(Vec<String>),
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct UiState {
     pub playlist: Arc<Vec<PathBuf>>,
     pub loaded: bool,
@@ -62,6 +62,26 @@ pub struct UiState {
     pub selected: usize,
     pub playlist_visible: bool,
     pub fullscreen: bool,
+}
+
+fn empty_playlist() -> Arc<Vec<PathBuf>> {
+    static EMPTY: OnceLock<Arc<Vec<PathBuf>>> = OnceLock::new();
+    Arc::clone(EMPTY.get_or_init(|| Arc::new(Vec::new())))
+}
+
+impl Default for UiState {
+    fn default() -> Self {
+        Self {
+            playlist: empty_playlist(),
+            loaded: false,
+            paused: false,
+            muted: false,
+            duration: 0.0,
+            selected: 0,
+            playlist_visible: false,
+            fullscreen: false,
+        }
+    }
 }
 
 impl Action {
@@ -186,15 +206,18 @@ impl UiState {
     pub fn dispatch(&mut self, action: Action) -> Vec<Effect> {
         match action {
             Action::Open(files) => {
+                if files.is_empty() {
+                    if !self.playlist.is_empty() {
+                        self.playlist = empty_playlist();
+                    }
+                    self.selected = 0;
+                    self.loaded = false;
+                    return Vec::new();
+                }
                 self.playlist = Arc::new(files);
                 self.selected = 0;
                 self.loaded = false;
-                self.playlist
-                    .first()
-                    .cloned()
-                    .map(|_| Effect::LoadPlaylist(self.playlist.clone()))
-                    .into_iter()
-                    .collect()
+                vec![Effect::LoadPlaylist(self.playlist.clone())]
             }
             Action::TogglePause if self.loaded => vec![Effect::Pause(!self.paused)],
             Action::SetPaused(paused) if self.loaded => {
@@ -255,6 +278,17 @@ impl UiState {
 mod tests {
     use super::{Action, Effect, UiState};
 
+    use std::sync::Arc;
+
+    #[test]
+    fn empty_playlist_open_has_no_load_effect_and_shares_empty_storage() {
+        let mut first = UiState::default();
+        let mut second = UiState::default();
+
+        assert!(first.dispatch(Action::Open(Vec::new())).is_empty());
+        assert!(second.dispatch(Action::Open(Vec::new())).is_empty());
+        assert!(Arc::ptr_eq(&first.playlist, &second.playlist));
+    }
     #[test]
     fn system_media_play_and_pause_wait_for_engine_confirmation() {
         let mut state = UiState::default();
