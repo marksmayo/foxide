@@ -302,7 +302,6 @@ impl UiState {
 #[cfg(test)]
 mod tests {
     use super::{Action, Effect, UiState};
-
     use std::path::PathBuf;
 
     #[test]
@@ -324,6 +323,7 @@ mod tests {
         assert_eq!(state.dispatch(Action::Stop), vec![Effect::Stop]);
         assert!(!state.audio_visualization);
     }
+
     #[test]
     fn music_visualization_splits_audio_to_output_and_rendered_waveform() {
         let mut state = UiState::default();
