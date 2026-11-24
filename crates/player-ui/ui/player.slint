@@ -142,6 +142,7 @@ export component PlayerWindow inherits Window {
     in-out property <color> accent-text: #171a20;
     in-out property <bool> compact-mode: false;
     in-out property <bool> picture-in-picture: false;
+    in-out property <bool> panorama-active: false;
     in-out property <string> accent-hex: "#ef955f";
     in-out property <string> binding-key;
     in-out property <string> binding-action: "pause";
@@ -295,13 +296,13 @@ export component PlayerWindow inherits Window {
                 }
             }
             Menu { title: "360° panoramic view";
-                MenuItem { title: "Off"; enabled: root.loaded && root.has-video; activated => { root.action("panorama-360", 0); } }
-                MenuItem { title: "Front"; enabled: root.loaded && root.has-video; activated => { root.action("panorama-360", 1); } }
-                MenuItem { title: "Look left"; enabled: root.loaded && root.has-video; activated => { root.action("panorama-360", 2); } }
-                MenuItem { title: "Look right"; enabled: root.loaded && root.has-video; activated => { root.action("panorama-360", 3); } }
-                MenuItem { title: "Look behind"; enabled: root.loaded && root.has-video; activated => { root.action("panorama-360", 4); } }
-                MenuItem { title: "Look up"; enabled: root.loaded && root.has-video; activated => { root.action("panorama-360", 5); } }
-                MenuItem { title: "Look down"; enabled: root.loaded && root.has-video; activated => { root.action("panorama-360", 6); } }
+                MenuItem { title: "Off"; enabled: root.loaded && root.has-video; activated => { root.action("panorama-360", 0); root.panorama-active = false; } }
+                MenuItem { title: "Front"; enabled: root.loaded && root.has-video; activated => { root.action("panorama-360", 1); root.panorama-active = true; } }
+                MenuItem { title: "Look left"; enabled: root.loaded && root.has-video; activated => { root.action("panorama-360", 2); root.panorama-active = true; } }
+                MenuItem { title: "Look right"; enabled: root.loaded && root.has-video; activated => { root.action("panorama-360", 3); root.panorama-active = true; } }
+                MenuItem { title: "Look behind"; enabled: root.loaded && root.has-video; activated => { root.action("panorama-360", 4); root.panorama-active = true; } }
+                MenuItem { title: "Look up"; enabled: root.loaded && root.has-video; activated => { root.action("panorama-360", 5); root.panorama-active = true; } }
+                MenuItem { title: "Look down"; enabled: root.loaded && root.has-video; activated => { root.action("panorama-360", 6); root.panorama-active = true; } }
             }
             Menu { title: "Rotation";
                 MenuItem { title: "Original"; enabled: root.loaded && root.has-video; activated => { root.action("rotation", 0); } }
@@ -417,25 +418,43 @@ export component PlayerWindow inherits Window {
                             enabled: root.loaded && root.panel == "";
                             property <length> gesture-start-x: 0px;
                             property <length> gesture-start-y: 0px;
+                            property <length> gesture-last-x: 0px;
+                            property <length> gesture-last-y: 0px;
+                            property <bool> gesture-active: false;
                             pointer-event(event) => {
                                 if (event.button == PointerEventButton.left && event.kind == PointerEventKind.down) {
                                     self.gesture-start-x = self.mouse-x;
                                     self.gesture-start-y = self.mouse-y;
+                                    self.gesture-last-x = self.mouse-x;
+                                    self.gesture-last-y = self.mouse-y;
+                                    self.gesture-active = true;
+                                } else if (self.gesture-active && event.kind == PointerEventKind.move && root.panorama-active) {
+                                    root.action("panorama-yaw", -((self.mouse-x - self.gesture-last-x) / 1px) / 2);
+                                    root.action("panorama-pitch", -((self.mouse-y - self.gesture-last-y) / 1px) / 2);
+                                    self.gesture-last-x = self.mouse-x;
+                                    self.gesture-last-y = self.mouse-y;
                                 } else if (event.button == PointerEventButton.left && event.kind == PointerEventKind.up) {
-                                    if (abs(self.mouse-x - self.gesture-start-x) >= 32px && abs(self.mouse-x - self.gesture-start-x) >= abs(self.mouse-y - self.gesture-start-y)) {
+                                    if (root.panorama-active) {
+                                    } else if (abs(self.mouse-x - self.gesture-start-x) >= 32px && abs(self.mouse-x - self.gesture-start-x) >= abs(self.mouse-y - self.gesture-start-y)) {
                                         root.action("seek-relative", min(15, max(-15, ((self.mouse-x - self.gesture-start-x) / 1px) / 20)));
                                     } else if (abs(self.mouse-y - self.gesture-start-y) >= 32px) {
                                         root.action("volume", min(100, max(0, root.volume - ((self.mouse-y - self.gesture-start-y) / 1px) / 8)));
                                     }
+                                    self.gesture-active = false;
                                     self.gesture-start-x = 0px;
                                     self.gesture-start-y = 0px;
                                 } else if (event.kind == PointerEventKind.cancel) {
+                                    self.gesture-active = false;
                                     self.gesture-start-x = 0px;
                                     self.gesture-start-y = 0px;
                                 }
                             }
                             scroll-event(event) => {
-                                if (abs(event.delta-x) >= abs(event.delta-y) && abs(event.delta-x) > 0px) {
+                                if (root.panorama-active) {
+                                    root.action("panorama-yaw", -(event.delta-x / 1px) / 2);
+                                    root.action("panorama-pitch", -(event.delta-y / 1px) / 2);
+                                    EventResult.accept
+                                } else if (abs(event.delta-x) >= abs(event.delta-y) && abs(event.delta-x) > 0px) {
                                     root.action("seek-relative", min(15, max(-15, (event.delta-x / 1px) / 20)));
                                     EventResult.accept
                                 } else if (abs(event.delta-y) > 0px) {

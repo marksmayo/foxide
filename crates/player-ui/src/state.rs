@@ -29,6 +29,8 @@ pub enum PlaybackControl {
     Rotation(u16),
     Stereo3d(u8),
     Panorama360(u8),
+    PanoramaYaw(f64),
+    PanoramaPitch(f64),
     ReplayGain(u8),
     Deband(bool),
     Equalizer(u8),
@@ -61,6 +63,7 @@ pub struct UiState {
     pub selected: usize,
     pub playlist_visible: bool,
     pub fullscreen: bool,
+    pub panorama_angles: Option<(f64, f64)>,
 }
 
 impl Action {
@@ -89,6 +92,12 @@ impl Action {
                 if value.is_finite() && (0.0..=6.0).contains(&value) && value.fract() == 0.0 =>
             {
                 PlaybackControl::Panorama360(value as u8)
+            }
+            "panorama-yaw" if value.is_finite() && (-180.0..=180.0).contains(&value) => {
+                PlaybackControl::PanoramaYaw(value)
+            }
+            "panorama-pitch" if value.is_finite() && (-180.0..=180.0).contains(&value) => {
+                PlaybackControl::PanoramaPitch(value)
             }
             "flip-vertical" => PlaybackControl::Flip(true),
             "flip-horizontal" => PlaybackControl::Flip(false),
@@ -177,6 +186,7 @@ impl PlaybackControl {
                     ),
                 ])
             }
+            Self::PanoramaYaw(_) | Self::PanoramaPitch(_) => None,
             Self::Flip(vertical) => Some(vec![
                 "vf".into(),
                 "toggle".into(),
@@ -239,6 +249,7 @@ impl UiState {
     pub fn dispatch(&mut self, action: Action) -> Vec<Effect> {
         match action {
             Action::Open(files) => {
+                self.panorama_angles = None;
                 self.playlist = files;
                 self.selected = 0;
                 self.loaded = false;
@@ -282,11 +293,58 @@ impl UiState {
                 Vec::new()
             }
             Action::Stop => {
+                self.panorama_angles = None;
                 self.loaded = false;
                 self.paused = false;
                 vec![Effect::Stop]
             }
             Action::Quit => vec![Effect::Quit],
+            Action::Playback(PlaybackControl::Panorama360(mode)) if self.loaded => {
+                let angles = match mode {
+                    0 => None,
+                    1 => Some((0.0, 0.0)),
+                    2 => Some((-90.0, 0.0)),
+                    3 => Some((90.0, 0.0)),
+                    4 => Some((180.0, 0.0)),
+                    5 => Some((0.0, 45.0)),
+                    6 => Some((0.0, -45.0)),
+                    _ => return Vec::new(),
+                };
+                self.panorama_angles = angles;
+                PlaybackControl::Panorama360(mode)
+                    .command()
+                    .map(Effect::Engine)
+                    .into_iter()
+                    .collect()
+            }
+            Action::Playback(PlaybackControl::PanoramaYaw(delta)) if self.loaded => {
+                let Some((yaw, pitch)) = self.panorama_angles else {
+                    return Vec::new();
+                };
+                let yaw = (yaw + delta + 180.0).rem_euclid(360.0) - 180.0;
+                self.panorama_angles = Some((yaw, pitch));
+                vec![Effect::Engine(vec![
+                    "vf-command".into(),
+                    "@foxide-panorama360".into(),
+                    "yaw".into(),
+                    yaw.to_string(),
+                    "v360".into(),
+                ])]
+            }
+            Action::Playback(PlaybackControl::PanoramaPitch(delta)) if self.loaded => {
+                let Some((yaw, pitch)) = self.panorama_angles else {
+                    return Vec::new();
+                };
+                let pitch = (pitch + delta).clamp(-89.0, 89.0);
+                self.panorama_angles = Some((yaw, pitch));
+                vec![Effect::Engine(vec![
+                    "vf-command".into(),
+                    "@foxide-panorama360".into(),
+                    "pitch".into(),
+                    pitch.to_string(),
+                    "v360".into(),
+                ])]
+            }
             Action::Playback(control) if self.loaded => {
                 control.command().map(Effect::Engine).into_iter().collect()
             }
@@ -295,6 +353,7 @@ impl UiState {
     }
 
     fn select(&mut self, index: usize) -> Vec<Effect> {
+        self.panorama_angles = None;
         self.selected = index;
         self.loaded = false;
         vec![Effect::Load(self.playlist[index].clone())]
@@ -375,6 +434,51 @@ mod tests {
         for preset in [-1.0, 0.5, 1.5, 7.0, f64::NAN, f64::INFINITY] {
             assert!(Action::control("panorama-360", preset).is_none());
         }
+    }
+
+    #[test]
+    fn panorama_360_drag_updates_the_active_projection_without_replacing_it() {
+        let mut state = UiState::default();
+        state.confirm_loaded(42.0);
+        state.dispatch(Action::control("panorama-360", 1.0).unwrap());
+
+        assert_eq!(
+            state.dispatch(Action::control("panorama-yaw", -12.0).unwrap()),
+            vec![Effect::Engine(vec![
+                "vf-command".into(),
+                "@foxide-panorama360".into(),
+                "yaw".into(),
+                "-12".into(),
+                "v360".into(),
+            ])]
+        );
+        assert_eq!(
+            state.dispatch(Action::control("panorama-yaw", 180.0).unwrap()),
+            vec![Effect::Engine(vec![
+                "vf-command".into(),
+                "@foxide-panorama360".into(),
+                "yaw".into(),
+                "168".into(),
+                "v360".into(),
+            ])]
+        );
+        assert_eq!(
+            state.dispatch(Action::control("panorama-pitch", 120.0).unwrap()),
+            vec![Effect::Engine(vec![
+                "vf-command".into(),
+                "@foxide-panorama360".into(),
+                "pitch".into(),
+                "89".into(),
+                "v360".into(),
+            ])]
+        );
+        assert!(Action::control("panorama-yaw", 181.0).is_none());
+        state.dispatch(Action::control("panorama-360", 0.0).unwrap());
+        assert!(
+            state
+                .dispatch(Action::control("panorama-yaw", 1.0).unwrap())
+                .is_empty()
+        );
     }
 
     #[test]

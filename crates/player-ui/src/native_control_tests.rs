@@ -77,6 +77,23 @@ fn desktop_menu_commands_are_accepted_by_the_native_media_engine() {
         requests
             .push(json!({"name":name,"command":command,"property":property,"expected":expected}));
     }
+    for (name, value) in [
+        ("panorama-360", 1.0),
+        ("panorama-yaw", -12.0),
+        ("panorama-pitch", 8.0),
+        ("panorama-360", 0.0),
+    ] {
+        let effects = state.dispatch(Action::control(name, value).unwrap());
+        let [Effect::Engine(command)] = effects.as_slice() else {
+            panic!("Panorama control did not reach engine: {name}");
+        };
+        requests.push(json!({
+            "name": name,
+            "command": command,
+            "property": "",
+            "expected": null
+        }));
+    }
     let requests_path = probe.directory.join("requests.json");
     let output_path = probe.directory.join("result.json");
     fs::write(&requests_path, serde_json::to_vec(&requests).unwrap()).unwrap();
