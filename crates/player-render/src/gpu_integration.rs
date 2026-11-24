@@ -426,6 +426,10 @@ fn audio_visualization_renders_changing_waveform_pixels() {
     let graphics = Rc::new(RefCell::new(None::<glow::Context>));
     let graph_sent = Rc::new(Cell::new(false));
     let start_position = Rc::new(Cell::new(0.0));
+    let graph_started = Rc::new(Cell::new(None::<Instant>));
+    let frame_times = Rc::new(RefCell::new(Vec::<Duration>::new()));
+    let rss_baseline_kib = Rc::new(Cell::new(0_u64));
+    let rss_peak_kib = Rc::new(Cell::new(0_u64));
     let samples = Rc::new(RefCell::new((
         0_usize,
         HashSet::<u64>::new(),
@@ -440,6 +444,8 @@ fn audio_visualization_renders_changing_waveform_pixels() {
     let weak_wakeup = ui.as_weak();
     let weak_readback = ui.as_weak();
     let image_samples = samples.clone();
+    let rendered_graph_started = graph_started.clone();
+    let rendered_frame_times = frame_times.clone();
     let wakeup = Arc::new(move || {
         let weak = weak_wakeup.clone();
         let _ = slint::invoke_from_event_loop(move || {
@@ -544,7 +550,13 @@ fn audio_visualization_renders_changing_waveform_pixels() {
                     let mut hash = std::hash::DefaultHasher::new();
                     pixels.hash(&mut hash);
                     samples.0 = samples.0.max(green_pixels);
-                    samples.1.insert(hash.finish());
+                    if samples.1.insert(hash.finish())
+                        && let Some(graph_started) = rendered_graph_started.get()
+                    {
+                        rendered_frame_times
+                            .borrow_mut()
+                            .push(graph_started.elapsed());
+                    }
                 }
             }
         },
@@ -560,6 +572,9 @@ fn audio_visualization_renders_changing_waveform_pixels() {
     let timer_engine = engine.clone();
     let timer_graph_sent = graph_sent.clone();
     let timer_start_position = start_position.clone();
+    let timer_graph_started = graph_started.clone();
+    let timer_rss_baseline = rss_baseline_kib.clone();
+    let timer_rss_peak = rss_peak_kib.clone();
     let timer_samples = samples.clone();
     let timer = slint::Timer::default();
     timer.start(
@@ -594,9 +609,20 @@ fn audio_visualization_renders_changing_waveform_pixels() {
                 }
                 timer_start_position.set(snapshot.position);
                 timer_graph_sent.set(true);
+                let now = Instant::now();
+                timer_graph_started.set(Some(now));
+                if let Some(rss) = process_rss_kib() {
+                    timer_rss_baseline.set(rss);
+                    timer_rss_peak.set(rss);
+                }
             }
-            if timer_graph_sent.get() && started.elapsed() >= Duration::from_secs(3) {
-                slint::quit_event_loop().unwrap();
+            if let Some(graph_started) = timer_graph_started.get() {
+                if let Some(rss) = process_rss_kib() {
+                    timer_rss_peak.set(timer_rss_peak.get().max(rss));
+                }
+                if graph_started.elapsed() >= Duration::from_secs(3) {
+                    slint::quit_event_loop().unwrap();
+                }
             } else if started.elapsed() >= Duration::from_secs(20) {
                 timer_samples
                     .borrow_mut()
@@ -625,9 +651,29 @@ fn audio_visualization_renders_changing_waveform_pixels() {
                 .collect::<Vec<_>>()
         })
         .unwrap_or_default();
+    let observed_frame_times = frame_times.borrow();
+    let frame_span = observed_frame_times
+        .first()
+        .zip(observed_frame_times.last())
+        .map(|(first, last)| last.saturating_sub(*first))
+        .unwrap_or_default();
+    let unique_frame_rate = if frame_span.is_zero() {
+        0.0
+    } else {
+        observed_frame_times.len().saturating_sub(1) as f64 / frame_span.as_secs_f64()
+    };
+    let max_frame_interval = observed_frame_times
+        .windows(2)
+        .map(|pair| pair[1].saturating_sub(pair[0]))
+        .max()
+        .unwrap_or_default();
     println!(
-        "waveform max_green_pixels={max_green_pixels} max_nonblack_pixels={max_nonblack_pixels} unique_frames={} frame_size={frame_size:?} rendering_setup={rendering_setup} position={} loaded={} command_error={:?} errors={errors:?} diagnostics={diagnostics:?}",
+        "waveform max_green_pixels={max_green_pixels} max_nonblack_pixels={max_nonblack_pixels} unique_frames={} unique_frame_rate_hz={unique_frame_rate:.2} max_frame_interval_ms={} frame_size={frame_size:?} rss_baseline_kib={} rss_sampled_peak_kib={} rss_sampled_delta_kib={} rendering_setup={rendering_setup} position={} loaded={} command_error={:?} errors={errors:?} diagnostics={diagnostics:?}",
         frames.len(),
+        max_frame_interval.as_millis(),
+        rss_baseline_kib.get(),
+        rss_peak_kib.get(),
+        rss_peak_kib.get().saturating_sub(rss_baseline_kib.get()),
         snapshot.position,
         snapshot.loaded,
         snapshot.command_error
@@ -650,4 +696,17 @@ fn audio_visualization_renders_changing_waveform_pixels() {
         "Waveform was static or never rendered: only {} distinct frames",
         frames.len()
     );
+}
+
+fn process_rss_kib() -> Option<u64> {
+    #[cfg(target_os = "linux")]
+    {
+        let status = std::fs::read_to_string("/proc/self/status").ok()?;
+        let resident = status.lines().find(|line| line.starts_with("VmRSS:"))?;
+        return resident.split_whitespace().nth(1)?.parse().ok();
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        None
+    }
 }
