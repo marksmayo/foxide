@@ -2,6 +2,7 @@ local utils = require "mp.utils"
 local msg = require "mp.msg"
 local result = assert(utils.parse_json('{"completed":0,"errors":[]}'))
 local finished = false
+local started = false
 local function finish()
     if finished then return end
     finished = true
@@ -20,6 +21,8 @@ mp.add_timeout(12, function()
     finish()
 end)
 mp.register_event("file-loaded", function()
+    if started then return end
+    started = true
     mp.add_timeout(0.2, function()
         local file = assert(io.open(os.getenv("FOXIDE_CONTROL_REQUESTS"), "rb"))
         local requests = assert(utils.parse_json(file:read("*a"))); file:close()
@@ -48,3 +51,4 @@ mp.register_event("file-loaded", function()
         step(1)
     end)
 end)
+
