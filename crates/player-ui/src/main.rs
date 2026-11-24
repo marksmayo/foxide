@@ -1111,8 +1111,9 @@ fn install_cast_with_discovery(
     });
 }
 
-fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Option<Rc<Engine>>) {
+fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Option<Rc<Engine>>) -> Rc<RefCell<Option<PlayerWindow>>> {
     let pip_mode = Rc::new(RefCell::new(picture_in_picture::PictureInPictureMode::Main));
+    let pip_window = Rc::new(RefCell::new(None));
     let filter_state = state.clone();
     let filter_window = ui.as_weak();
     ui.on_filter_queue(move |query| {
@@ -1121,12 +1122,19 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
             update_queue(&ui, &filter_state.borrow());
         }
     });
-    let (weak, controller, playback, pip_mode) =
-        (ui.as_weak(), state.clone(), engine.clone(), pip_mode);
+    let (weak, controller, playback, pip_mode, pip_slot) = (
+        ui.as_weak(),
+        state.clone(),
+        engine.clone(),
+        pip_mode,
+        pip_window.clone(),
+    );
     ui.on_action(move |name, value| {
         let Some(ui) = weak.upgrade() else { return };
         if name == "picture-in-picture" {
-            toggle_picture_in_picture(&ui, &pip_mode);
+            if let Err(error) = toggle_picture_in_picture(&ui, &pip_mode, &pip_slot) {
+                ui.set_status(error.into());
+            }
             return;
         }
         if matches!(name.as_str(), "frame-step" | "frame-back-step")
@@ -1205,6 +1213,7 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
             }
         }
     });
+    pip_window
 }
 
 fn update_thumbnail_preview(
@@ -1244,57 +1253,79 @@ fn update_thumbnail_preview(
 fn toggle_picture_in_picture(
     ui: &PlayerWindow,
     mode: &Rc<RefCell<picture_in_picture::PictureInPictureMode>>,
-) {
-    use picture_in_picture::{PictureInPictureMode, WindowConfiguration, WindowEffect};
-    let window = ui.window();
+    pip_slot: &Rc<RefCell<Option<PlayerWindow>>>,
+) -> Result<(), String> {
+    use picture_in_picture::{PictureInPictureMode, WindowEffect};
     let current_mode = *mode.borrow();
     match current_mode {
         PictureInPictureMode::Main => {
-            let size = window.size();
-            let position = window.position();
-            let current = WindowConfiguration {
-                width: size.width.max(1),
-                height: size.height.max(1),
-                x: position.x,
-                y: position.y,
-                fullscreen: window.is_fullscreen(),
-                maximized: window.is_maximized(),
-                compact: ui.get_compact_mode(),
+            let Some((next_mode, WindowEffect::ShowSeparateWindow)) = current_mode.enter() else {
+                return Err("Could not open picture-in-picture".into());
             };
-            let (next_mode, effect) = PictureInPictureMode::enter(current);
-            *mode.borrow_mut() = next_mode;
-            ui.set_panel("".into());
-            ui.set_queue_visible(false);
-            ui.set_fullscreen_mode(false);
-            ui.set_compact_mode(false);
-            window.set_fullscreen(false);
-            window.set_maximized(false);
-            ui.set_picture_in_picture(true);
-            if let WindowEffect::Resize { width, height } = effect {
-                window.set_size(slint::LogicalSize::new(width as f32, height as f32));
+            if pip_slot.borrow().is_none() {
+                let pip = PlayerWindow::new().map_err(|error| error.to_string())?;
+                pip.set_picture_in_picture(true);
+                pip.set_loaded(ui.get_loaded());
+                pip.set_has_video(ui.get_has_video());
+                pip.set_video_frame(ui.get_video_frame());
+                pip.window().set_size(slint::LogicalSize::new(520.0, 350.0));
+
+                let weak_pip = pip.as_weak();
+                let weak_main = ui.as_weak();
+                let return_mode = mode.clone();
+                pip.on_action(move |name, _| {
+                    if name == "picture-in-picture" {
+                        if let Some(window) = weak_pip.upgrade() {
+                            window.hide().ok();
+                        }
+                        *return_mode.borrow_mut() = PictureInPictureMode::Main;
+                        if let Some(main) = weak_main.upgrade() {
+                            main.set_pip_active(false);
+                        }
+                    }
+                });
+                let close_mode = mode.clone();
+                let close_main = ui.as_weak();
+                pip.window().on_close_requested(move || {
+                    *close_mode.borrow_mut() = PictureInPictureMode::Main;
+                    if let Some(main) = close_main.upgrade() {
+                        main.set_pip_active(false);
+                    }
+                    slint::CloseRequestResponse::HideWindow
+                });
+                *pip_slot.borrow_mut() = Some(pip);
             }
+            let pip_slot = pip_slot.borrow();
+            let pip = pip_slot
+                .as_ref()
+                .ok_or_else(|| "Picture-in-picture window was not created".to_owned())?;
+            pip.set_loaded(ui.get_loaded());
+            pip.set_has_video(ui.get_has_video());
+            pip.set_video_frame(ui.get_video_frame());
+            pip.show().map_err(|error| error.to_string())?;
+            *mode.borrow_mut() = next_mode;
+            ui.set_pip_active(true);
         }
-        PictureInPictureMode::PictureInPicture(previous) => {
-            let Some((next_mode, WindowEffect::Restore(previous))) =
-                PictureInPictureMode::PictureInPicture(previous).exit()
-            else {
-                return;
+        PictureInPictureMode::PictureInPicture => {
+            let Some((next_mode, WindowEffect::HideSeparateWindow)) = current_mode.exit() else {
+                return Err("Could not return to the main window".into());
             };
             *mode.borrow_mut() = next_mode;
-            ui.set_picture_in_picture(false);
-            window.set_fullscreen(false);
-            window.set_maximized(false);
-            window.set_size(slint::PhysicalSize::new(previous.width, previous.height));
-            window.set_position(slint::PhysicalPosition::new(previous.x, previous.y));
-            ui.set_compact_mode(previous.compact);
-            ui.set_fullscreen_mode(previous.fullscreen);
-            if previous.maximized {
-                window.set_maximized(true);
+            if let Some(pip) = pip_slot.borrow().as_ref() {
+                pip.hide().map_err(|error| error.to_string())?;
             }
-            if previous.fullscreen {
-                window.set_fullscreen(true);
-            }
+            ui.set_pip_active(false);
         }
+    }
+    Ok(())
+}
+
+fn publish_frame_to_picture_in_picture(
+    frame: slint::Image,
+    pip_slot: &Rc<RefCell<Option<PlayerWindow>>>,
+) {
+    if let Some(pip) = pip_slot.borrow().as_ref() {
+        pip.set_video_frame(frame);
     }
 }
 
@@ -1382,12 +1413,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     };
     let thumbnails = Arc::new(player_render::ThumbnailController::new());
+    let pip_window = install_controls(&ui, &state, &engine);
     if engine.is_some() {
         diagnostics::record("Playback engine initialized");
     }
     if let Some(engine) = &engine {
         let weak_size = ui.as_weak();
         let weak_frame = ui.as_weak();
+        let frame_pip = pip_window.clone();
         let weak_error = ui.as_weak();
         let weak_wake = ui.as_weak();
         player_render::attach_with_thumbnails(
@@ -1408,8 +1441,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             },
             move |frame| {
                 if let Some(ui) = weak_frame.upgrade() {
-                    ui.set_video_frame(frame);
+                    ui.set_video_frame(frame.clone());
                 }
+                publish_frame_to_picture_in_picture(frame, &frame_pip);
             },
             {
                 let weak = ui.as_weak();
@@ -1461,7 +1495,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         });
     }
-    install_controls(&ui, &state, &engine);
     let _controller_timer = controller_navigation::install(&ui, state.clone(), engine.clone());
     shader_ui::install(&ui, &engine);
     profile_ui::install(&ui, &engine);
@@ -1476,6 +1509,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(playback) = engine.clone() {
         let weak = ui.as_weak();
         let controller = state.clone();
+        let snapshot_pip = pip_window.clone();
         let previous = RefCell::new(Snapshot::default());
         let status_source = playback.clone();
         let media_engine = Some(playback.clone());
@@ -1498,6 +1532,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         &snapshot,
                         &mut previous.borrow_mut(),
                     );
+                    if let Some(pip) = snapshot_pip.borrow().as_ref() {
+                        pip.set_loaded(ui.get_loaded());
+                        pip.set_has_video(ui.get_has_video());
+                        if !ui.get_loaded() || !ui.get_has_video() {
+                            pip.set_video_frame(slint::Image::default());
+                        }
+                    }
                     if retry_for_refresh
                         .borrow_mut()
                         .due(std::time::Instant::now())
