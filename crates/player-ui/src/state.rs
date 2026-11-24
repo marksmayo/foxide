@@ -299,7 +299,29 @@ impl UiState {
                 vec![Effect::Stop]
             }
             Action::Quit => vec![Effect::Quit],
-            Action::Playback(PlaybackControl::Panorama360(mode)) if self.loaded => {
+            Action::Playback(
+                control @ (PlaybackControl::Panorama360(_)
+                | PlaybackControl::PanoramaYaw(_)
+                | PlaybackControl::PanoramaPitch(_)),
+            ) if self.loaded => self.panorama(control),
+            Action::Playback(control) if self.loaded => {
+                control.command().map(Effect::Engine).into_iter().collect()
+            }
+            _ => Vec::new(),
+        }
+    }
+
+    fn select(&mut self, index: usize) -> Vec<Effect> {
+        self.panorama_angles = None;
+        self.selected = index;
+        self.loaded = false;
+        vec![Effect::Load(self.playlist[index].clone())]
+    }
+    // Keep the stateful panorama path out of the common playback-action hot path.
+    #[inline(never)]
+    fn panorama(&mut self, control: PlaybackControl) -> Vec<Effect> {
+        match control {
+            PlaybackControl::Panorama360(mode) => {
                 let angles = match mode {
                     0 => None,
                     1 => Some((0.0, 0.0)),
@@ -317,7 +339,7 @@ impl UiState {
                     .into_iter()
                     .collect()
             }
-            Action::Playback(PlaybackControl::PanoramaYaw(delta)) if self.loaded => {
+            PlaybackControl::PanoramaYaw(delta) => {
                 let Some((yaw, pitch)) = self.panorama_angles else {
                     return Vec::new();
                 };
@@ -331,7 +353,7 @@ impl UiState {
                     "v360".into(),
                 ])]
             }
-            Action::Playback(PlaybackControl::PanoramaPitch(delta)) if self.loaded => {
+            PlaybackControl::PanoramaPitch(delta) => {
                 let Some((yaw, pitch)) = self.panorama_angles else {
                     return Vec::new();
                 };
@@ -345,18 +367,8 @@ impl UiState {
                     "v360".into(),
                 ])]
             }
-            Action::Playback(control) if self.loaded => {
-                control.command().map(Effect::Engine).into_iter().collect()
-            }
             _ => Vec::new(),
         }
-    }
-
-    fn select(&mut self, index: usize) -> Vec<Effect> {
-        self.panorama_angles = None;
-        self.selected = index;
-        self.loaded = false;
-        vec![Effect::Load(self.playlist[index].clone())]
     }
 }
 
