@@ -224,7 +224,7 @@
       "name": "Audio conversion or transcoding",
       "group": "Editing",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #35 at c65d968: local-file export to WAV PCM16 or FLAC through libmpv, with source/extension validation, temporary output and no-clobber publish while playback remains independent. Native export acceptance passed on an earlier head; the current export acceptance and other hosted checks are queued or in progress. Current-head CodSpeed completed and reports no performance change. Desktop session acceptance remains pending; do not close this gap or claim a medal yet."
+      "acceptance": "Implementation is in draft PR #35 at c65d968: local-file export to WAV PCM16 or FLAC through libmpv, with source/extension validation, temporary output and no-clobber publish while playback remains independent. All eight current-head hosted checks passed, including native WAV/FLAC export acceptance and Desktop UI. CodSpeed reports no performance change. Desktop session acceptance remains pending; do not close this gap or claim a medal."
     },
     {
       "id": "cd_rip",
