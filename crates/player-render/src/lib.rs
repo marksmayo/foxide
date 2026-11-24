@@ -14,6 +14,8 @@ pub use gpu::attach_observed;
 #[cfg(feature = "desktop")]
 pub use gpu::attach_with_thumbnails;
 #[cfg(feature = "desktop")]
+pub use native::{AudioExportFormat, export_audio};
+#[cfg(feature = "desktop")]
 pub use native::{Engine, Snapshot, Track};
 #[cfg(feature = "desktop")]
 pub use thumbnails::ThumbnailController;
@@ -23,3 +25,4 @@ mod render_contract;
 
 #[cfg(any(feature = "desktop", test))]
 mod dependency_paths;
+

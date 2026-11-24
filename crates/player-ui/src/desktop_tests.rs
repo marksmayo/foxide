@@ -1,6 +1,19 @@
 use super::*;
 
 #[test]
+fn audio_export_menu_actions_select_only_supported_output_profiles() {
+    assert_eq!(
+        audio_export_format_for_action("export-audio-wav"),
+        Some(AudioExportFormat::WavPcm16)
+    );
+    assert_eq!(
+        audio_export_format_for_action("export-audio-flac"),
+        Some(AudioExportFormat::Flac)
+    );
+    assert_eq!(audio_export_format_for_action("export-audio-mp3"), None);
+}
+
+#[test]
 fn benchmark_startup_is_explicit_and_preserves_speed_and_pause() {
     let args = Args::try_parse_from([
         "foxide-desktop",
@@ -1247,3 +1260,4 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
     }
     assert_eq!(ui.get_update_status(), "Foxide is up to date.");
 }
+

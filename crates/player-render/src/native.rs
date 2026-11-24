@@ -1,7 +1,8 @@
 use libloading::Library;
 use std::{
     ffi::{CStr, CString, c_char, c_int, c_ulong, c_void},
-    path::PathBuf,
+    fs,
+    path::{Path, PathBuf},
     sync::{
         Arc, Mutex,
         atomic::{AtomicBool, Ordering},
@@ -105,6 +106,7 @@ impl Api {
     fn load(
         helper: Option<&player_services::VideoSiteTool>,
         thumbnail: bool,
+        extra_options: &[(&CStr, &CStr)],
     ) -> Result<Arc<Self>, String> {
         let candidates: Vec<PathBuf> = if let Some(path) = std::env::var_os("FOXIDE_LIBMPV") {
             vec![path.into()]
@@ -139,7 +141,7 @@ impl Api {
                     continue;
                 }
             };
-            let loaded = unsafe { Self::from_library(library, helper, thumbnail) };
+            let loaded = unsafe { Self::from_library(library, helper, thumbnail, extra_options) };
             match loaded {
                 Ok(api) => return Ok(Arc::new(api)),
                 Err(error) => errors.push(error),
@@ -161,6 +163,7 @@ impl Api {
         library: Library,
         helper: Option<&player_services::VideoSiteTool>,
         thumbnail: bool,
+        extra_options: &[(&CStr, &CStr)],
     ) -> Result<Self, String> {
         // SAFETY: caller supplies an owned libmpv library. All functions are loaded
         // before creating a client so missing symbols cannot leak the client.
@@ -247,6 +250,14 @@ impl Api {
             ] {
                 if option(api.handle, name.as_ptr(), value.as_ptr()) < 0 {
                     return Err("libmpv rejected a required playback option".into());
+                }
+            }
+            for (name, value) in extra_options {
+                if option(api.handle, name.as_ptr(), value.as_ptr()) < 0 {
+                    return Err(format!(
+                        "libmpv rejected the requested encoding option {}",
+                        name.to_string_lossy()
+                    ));
                 }
             }
             let enabled = if helper.is_some() { c"yes" } else { c"no" };
@@ -476,6 +487,160 @@ pub struct Snapshot {
     pub command_error: String,
     pub error: String,
 }
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum AudioExportFormat {
+    WavPcm16,
+    Flac,
+}
+
+impl AudioExportFormat {
+    fn extension(self) -> &'static str {
+        match self {
+            Self::WavPcm16 => "wav",
+            Self::Flac => "flac",
+        }
+    }
+
+    fn container(self) -> &'static CStr {
+        match self {
+            Self::WavPcm16 => c"wav",
+            Self::Flac => c"flac",
+        }
+    }
+
+    fn codec(self) -> &'static CStr {
+        match self {
+            Self::WavPcm16 => c"pcm_s16le",
+            Self::Flac => c"flac",
+        }
+    }
+}
+
+/// Export one local media file's audio stream. The destination is created only
+/// after encoding succeeds, and an existing file is never replaced.
+pub fn export_audio(
+    input: &Path,
+    destination: &Path,
+    format: AudioExportFormat,
+) -> Result<(), String> {
+    let (input, destination, parent) = validate_export_paths(input, destination, format)?;
+    let temp = tempfile::Builder::new()
+        .prefix(".foxide-audio-export-")
+        .suffix(&format!(".{}", format.extension()))
+        .tempfile_in(&parent)
+        .map_err(|error| format!("Could not reserve a temporary export file: {error}"))?;
+    let temp_path = temp.into_temp_path();
+    let output_value = CString::new(temp_path.to_string_lossy().as_bytes())
+        .map_err(|_| "Export path contains a null byte")?;
+    let options = [
+        (c"o", output_value.as_c_str()),
+        (c"of", format.container()),
+        (c"oac", format.codec()),
+        (c"ovc", c"no"),
+        (c"vid", c"no"),
+        (c"keep-open", c"no"),
+    ];
+    let api = Api::load(None, false, &options)?;
+    let input_value = input.to_string_lossy().into_owned();
+    api.send(&["loadfile".into(), input_value, "replace".into()])?;
+
+    let mut file_loaded = false;
+    loop {
+        // SAFETY: event contents are read before the next wait_event call, which
+        // invalidates the previous event as documented by libmpv.
+        let event = unsafe { (api.wait_event)(api.handle, 0.25) };
+        if event.is_null() {
+            return Err("libmpv stopped while exporting audio".into());
+        }
+        // SAFETY: event is non-null and its payload is inspected before waiting again.
+        let event = unsafe { &*event };
+        match event.kind {
+            0 => continue,
+            8 => file_loaded = true,
+            7 => {
+                if event.data.is_null() {
+                    return Err("libmpv ended audio export without a result".into());
+                }
+                // SAFETY: MPV_EVENT_END_FILE carries mpv_event_end_file.
+                let end = unsafe { &*event.data.cast::<End>() };
+                if end.reason != 0 || !file_loaded {
+                    return Err(format!(
+                        "Audio export did not finish successfully (reason {}, error {})",
+                        end.reason, end.error
+                    ));
+                }
+                break;
+            }
+            1 => return Err("libmpv shut down during audio export".into()),
+            _ => {}
+        }
+    }
+    drop(api);
+
+    let metadata = fs::metadata(&temp_path)
+        .map_err(|error| format!("libmpv did not produce an audio file: {error}"))?;
+    if metadata.len() < 44 {
+        return Err("The exported audio file is empty or incomplete".into());
+    }
+    temp_path
+        .persist_noclobber(&destination)
+        .map_err(|error| format!("Could not create the export destination: {}", error.error))?;
+    Ok(())
+}
+
+fn validate_export_paths(
+    input: &Path,
+    destination: &Path,
+    format: AudioExportFormat,
+) -> Result<(PathBuf, PathBuf, PathBuf), String> {
+    let input = input
+        .canonicalize()
+        .map_err(|_| "Choose an existing local media file to export")?;
+    if !input.is_file() {
+        return Err("Choose an existing local media file to export".into());
+    }
+    let parent = destination
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+        .unwrap_or_else(|| Path::new("."))
+        .canonicalize()
+        .map_err(|_| "Choose an existing destination folder")?;
+    let name = destination
+        .file_name()
+        .filter(|name| !name.is_empty())
+        .ok_or("Choose a file name for the audio export")?;
+    let extension = destination
+        .extension()
+        .and_then(|extension| extension.to_str())
+        .ok_or("Choose a .wav or .flac destination")?;
+    if !extension.eq_ignore_ascii_case(format.extension()) {
+        return Err(format!(
+            "Choose a .{} destination for this export format",
+            format.extension()
+        ));
+    }
+    let destination = parent.join(name);
+    if destination.exists() {
+        return Err("The export destination already exists; choose another file".into());
+    }
+    if same_path(&input, &destination) {
+        return Err("The export destination must differ from the source file".into());
+    }
+    Ok((input, destination, parent))
+}
+
+#[cfg(windows)]
+fn same_path(left: &Path, right: &Path) -> bool {
+    left.to_string_lossy()
+        .eq_ignore_ascii_case(&right.to_string_lossy())
+}
+
+#[cfg(not(windows))]
+fn same_path(left: &Path, right: &Path) -> bool {
+    left == right
+}
+
 enum Request {
     Command(Vec<String>),
     Shaders(Vec<player_services::ShaderFile>),
@@ -510,7 +675,7 @@ impl Engine {
         let helper = helper
             .map(player_services::VideoSiteTool::new)
             .transpose()?;
-        let api = Api::load(helper.as_ref(), thumbnail)?;
+        let api = Api::load(helper.as_ref(), thumbnail, &[])?;
         let ready = Arc::new(AtomicBool::new(false));
         let stop = Arc::new(AtomicBool::new(false));
         let snapshot = Arc::new(Mutex::new(Snapshot::default()));
@@ -844,7 +1009,7 @@ mod missing_runtime_tests {
 
     #[test]
     fn absent_installed_runtime_explains_how_to_recover() {
-        let Err(error) = Api::load(None, false) else {
+        let Err(error) = Api::load(None, false, &[]) else {
             // Developer machines may already have the optional runtime installed.
             return;
         };
@@ -868,3 +1033,4 @@ mod video_site_tests;
 #[cfg(all(test, feature = "live-service-integration"))]
 #[path = "native_live.rs"]
 mod live_services;
+

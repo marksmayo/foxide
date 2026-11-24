@@ -1,0 +1,30 @@
+name: Audio export acceptance
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/audio-export.yml'
+      - 'crates/player-render/Cargo.toml'
+      - 'crates/player-render/src/native.rs'
+      - 'crates/player-render/tests/audio_export.rs'
+      - 'crates/player-ui/src/main.rs'
+      - 'crates/player-ui/ui/player.slint'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-encoding:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
+        with:
+          key: audio-export
+      - name: Install libmpv and Linux desktop build dependencies
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends mpv libmpv2 ffmpeg libfontconfig1-dev libxkbcommon-dev libwayland-dev libegl1-mesa-dev libudev-dev
+      - name: Verify safe output selection and audio format conversion
+        run: |
+          cargo test -p player-render --features system-media-integration --test audio_export --locked
+          cargo test -p player-render --features system-media-integration --test audio_export --locked native_audio_export_creates_playable_wav_and_flac_files -- --ignored --nocapture
+

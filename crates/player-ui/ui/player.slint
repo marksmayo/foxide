@@ -269,6 +269,9 @@ export component PlayerWindow inherits Window {
             MenuItem { title: "Mute"; checked: root.muted; activated => { root.action("mute", 0); } }
             MenuSeparator {}
             for track in root.audio-tracks: MenuItem { title: track.label; checked: track.selected; enabled: root.loaded; activated => { root.action("audio-track", track.id); } }
+            MenuSeparator {}
+            MenuItem { title: "Export audio as WAV…"; enabled: root.loaded; activated => { root.action("export-audio-wav", 0); } }
+            MenuItem { title: "Export audio as FLAC…"; enabled: root.loaded; activated => { root.action("export-audio-flac", 0); } }
         }
         Menu { title: "Video";
             Menu { title: "Color management";
@@ -576,3 +579,4 @@ export component PlayerWindow inherits Window {
     }
     }
 }
+
