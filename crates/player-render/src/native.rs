@@ -868,6 +868,44 @@ mod snapshot_allocation_tests {
         }
         panic!("libmpv snapshot did not expose embedded title, artist, and album metadata");
     }
+
+    #[test]
+    #[ignore = "Native chapter metadata acceptance; requires a generated chaptered fixture and libmpv"]
+    #[cfg(feature = "system-media-integration")]
+    fn native_snapshot_exposes_embedded_intro_chapter_markers() {
+        use std::time::Instant;
+
+        let fixture = std::env::var("FOXIDE_INTRO_FIXTURE")
+            .expect("workflow must provide a chaptered intro-marker fixture");
+        let engine = Engine::new().expect("libmpv must be available");
+        for (name, value) in [("vo", "null"), ("ao", "null"), ("pause", "no")] {
+            engine
+                .command(vec!["set".into(), name.into(), value.into()])
+                .unwrap();
+        }
+        engine.ready.store(true, Ordering::Release);
+        engine
+            .command(vec!["loadfile".into(), fixture, "replace".into()])
+            .unwrap();
+
+        let deadline = Instant::now() + Duration::from_secs(15);
+        while Instant::now() < deadline {
+            let snapshot = engine.snapshot().unwrap_or_default();
+            if !snapshot.error.is_empty() {
+                panic!("libmpv failed to load chapter fixture: {}", snapshot.error);
+            }
+            if snapshot.loaded && snapshot.chapters.len() >= 2 {
+                assert_eq!(snapshot.chapters[0].title, "Previously On");
+                assert_eq!(snapshot.chapters[0].start, 0.0);
+                assert_eq!(snapshot.chapters[1].title, "Episode");
+                assert_eq!(snapshot.chapters[1].start, 3.0);
+                engine.command(vec!["stop".into()]).unwrap();
+                return;
+            }
+            thread::sleep(Duration::from_millis(50));
+        }
+        panic!("libmpv snapshot did not expose the embedded intro marker chapters");
+    }
 }
 
 #[cfg(all(test, windows))]
