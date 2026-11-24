@@ -20,8 +20,8 @@
       "id": "gapless",
       "name": "Gapless audio playback",
       "group": "Audio",
-      "stage": "queued",
-      "acceptance": "Needs queued/preloaded tracks and audio-loopback evidence of gap-free transitions."
+      "stage": "in_progress",
+      "acceptance": "Desktop playback queues selected files in libmpv and enables gapless-audio; unit tests cover queue selection and automatic advance. Native libmpv playback is also captured through the PCM/WAV output: two queued 0.5-second WAVs produced 44,100 samples with no measured silent 5 ms window in the Windows runtime check. Hosted native-controls CI will repeat this PCM check. Physical audio-device loopback remains pending; do not count this gap as accepted without that evidence."
     },
     {
       "id": "disc",

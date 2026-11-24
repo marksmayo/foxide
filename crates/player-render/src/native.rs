@@ -106,6 +106,14 @@ impl Api {
         helper: Option<&player_services::VideoSiteTool>,
         thumbnail: bool,
     ) -> Result<Arc<Self>, String> {
+        Self::load_with_options(helper, thumbnail, &[])
+    }
+
+    fn load_with_options(
+        helper: Option<&player_services::VideoSiteTool>,
+        thumbnail: bool,
+        extra_options: &[(&CStr, &CStr)],
+    ) -> Result<Arc<Self>, String> {
         let candidates: Vec<PathBuf> = if let Some(path) = std::env::var_os("FOXIDE_LIBMPV") {
             vec![path.into()]
         } else if cfg!(windows) {
@@ -139,7 +147,7 @@ impl Api {
                     continue;
                 }
             };
-            let loaded = unsafe { Self::from_library(library, helper, thumbnail) };
+            let loaded = unsafe { Self::from_library(library, helper, thumbnail, extra_options) };
             match loaded {
                 Ok(api) => return Ok(Arc::new(api)),
                 Err(error) => errors.push(error),
@@ -161,6 +169,7 @@ impl Api {
         library: Library,
         helper: Option<&player_services::VideoSiteTool>,
         thumbnail: bool,
+        extra_options: &[(&CStr, &CStr)],
     ) -> Result<Self, String> {
         // SAFETY: caller supplies an owned libmpv library. All functions are loaded
         // before creating a client so missing symbols cannot leak the client.
@@ -248,6 +257,14 @@ impl Api {
             ] {
                 if option(api.handle, name.as_ptr(), value.as_ptr()) < 0 {
                     return Err("libmpv rejected a required playback option".into());
+                }
+            }
+            for (name, value) in extra_options {
+                if option(api.handle, name.as_ptr(), value.as_ptr()) < 0 {
+                    return Err(format!(
+                        "libmpv rejected the requested output option {}",
+                        name.to_string_lossy()
+                    ));
                 }
             }
             let enabled = if helper.is_some() { c"yes" } else { c"no" };
@@ -508,11 +525,35 @@ impl Engine {
         Self::create(None, true)
     }
 
+    #[cfg(test)]
+    fn new_audio_capture(path: &std::path::Path) -> Result<Self, String> {
+        let path = CString::new(path.to_string_lossy().as_bytes())
+            .map_err(|_| "PCM capture path contains a null byte")?;
+        let options = [
+            (c"vo", c"null"),
+            (c"ao", c"pcm"),
+            (c"ao-pcm-file", path.as_c_str()),
+            (c"ao-pcm-waveheader", c"yes"),
+            (c"audio-format", c"s16"),
+            (c"audio-samplerate", c"44100"),
+            (c"audio-channels", c"mono"),
+        ];
+        Self::create_with_options(None, false, &options)
+    }
+
     fn create(helper: Option<&std::path::Path>, thumbnail: bool) -> Result<Self, String> {
+        Self::create_with_options(helper, thumbnail, &[])
+    }
+
+    fn create_with_options(
+        helper: Option<&std::path::Path>,
+        thumbnail: bool,
+        extra_options: &[(&CStr, &CStr)],
+    ) -> Result<Self, String> {
         let helper = helper
             .map(player_services::VideoSiteTool::new)
             .transpose()?;
-        let api = Api::load(helper.as_ref(), thumbnail)?;
+        let api = Api::load_with_options(helper.as_ref(), thumbnail, extra_options)?;
         let ready = Arc::new(AtomicBool::new(false));
         let stop = Arc::new(AtomicBool::new(false));
         let snapshot = Arc::new(Mutex::new(Snapshot::default()));
@@ -877,6 +918,143 @@ mod snapshot_allocation_tests {
             thread::sleep(Duration::from_millis(20));
         }
         panic!("libmpv did not automatically advance to the queued audio track");
+    }
+
+    #[test]
+    #[ignore = "Native gapless audio acceptance; requires generated WAV fixtures and libmpv"]
+    #[cfg(feature = "system-media-integration")]
+    fn native_playlist_pcm_capture_has_no_silence_at_track_boundary() {
+        use std::time::Instant;
+
+        let first = std::env::var("FOXIDE_GAPLESS_FIRST")
+            .expect("workflow must provide the first short audio fixture");
+        let second = std::env::var("FOXIDE_GAPLESS_SECOND")
+            .expect("workflow must provide the second short audio fixture");
+        let capture = std::env::var("FOXIDE_GAPLESS_CAPTURE")
+            .expect("workflow must provide a PCM capture path");
+        let engine = Engine::new_audio_capture(std::path::Path::new(&capture))
+            .expect("libmpv must initialize the PCM capture output");
+        engine.ready.store(true, Ordering::Release);
+        engine
+            .command(vec!["loadfile".into(), first, "replace".into()])
+            .unwrap();
+        engine
+            .command(vec!["loadfile".into(), second, "append".into()])
+            .unwrap();
+
+        let deadline = Instant::now() + Duration::from_secs(15);
+        while Instant::now() < deadline {
+            let snapshot = engine.snapshot().unwrap_or_default();
+            assert!(
+                snapshot.error.is_empty(),
+                "libmpv failed to capture queued audio: {}",
+                snapshot.error
+            );
+            if snapshot.loaded
+                && snapshot.playlist_position == 1
+                && snapshot.duration > 0.0
+                && snapshot.position >= snapshot.duration - 0.02
+            {
+                engine.command(vec!["stop".into()]).unwrap();
+                break;
+            }
+            thread::sleep(Duration::from_millis(20));
+        }
+        assert!(
+            Instant::now() < deadline,
+            "libmpv did not finish the second queued audio track"
+        );
+        drop(engine);
+        thread::sleep(Duration::from_millis(250));
+
+        let bytes = std::fs::read(capture).expect("libmpv should write its PCM capture");
+        assert!(
+            bytes.starts_with(b"RIFF"),
+            "PCM capture must include a WAV header"
+        );
+        let mut channels = 0_u16;
+        let mut sample_rate = 0_u32;
+        let mut bits_per_sample = 0_u16;
+        let mut data = None;
+        let mut offset = 12;
+        while offset + 8 <= bytes.len() {
+            let tag = &bytes[offset..offset + 4];
+            let length =
+                u32::from_le_bytes(bytes[offset + 4..offset + 8].try_into().unwrap()) as usize;
+            let start = offset + 8;
+            let end = start.saturating_add(length);
+            assert!(end <= bytes.len(), "WAV chunk exceeds the capture file");
+            if tag == b"fmt " {
+                assert!(length >= 16, "WAV format chunk is incomplete");
+                let format = u16::from_le_bytes(bytes[start..start + 2].try_into().unwrap());
+                if format == 0xfffe {
+                    assert!(length >= 40, "WAV extensible format chunk is incomplete");
+                    let subtype =
+                        u32::from_le_bytes(bytes[start + 24..start + 28].try_into().unwrap());
+                    assert_eq!(subtype, 1, "WAV extensible subtype should be PCM");
+                } else {
+                    assert_eq!(format, 1, "WAV encoding should be PCM");
+                }
+                channels = u16::from_le_bytes(bytes[start + 2..start + 4].try_into().unwrap());
+                sample_rate = u32::from_le_bytes(bytes[start + 4..start + 8].try_into().unwrap());
+                bits_per_sample =
+                    u16::from_le_bytes(bytes[start + 14..start + 16].try_into().unwrap());
+            } else if tag == b"data" {
+                data = Some(&bytes[start..end]);
+                break;
+            }
+            offset = end + (length & 1);
+        }
+        assert_eq!(channels, 1, "capture should remain mono");
+        assert_eq!(sample_rate, 44_100, "capture sample rate should be stable");
+        assert_eq!(bits_per_sample, 16, "capture should use PCM16");
+        let samples = data.expect("WAV capture must contain audio samples");
+        assert_eq!(
+            samples.len() % 2,
+            0,
+            "PCM16 capture must contain whole samples"
+        );
+        let samples = samples
+            .chunks_exact(2)
+            .map(|sample| i16::from_le_bytes([sample[0], sample[1]]) as i32)
+            .collect::<Vec<_>>();
+        assert!(
+            samples.len() > 44_100 * 9 / 10,
+            "both tracks should be captured"
+        );
+
+        let window = sample_rate as usize / 200;
+        let quiet_windows = samples
+            .chunks(window)
+            .map(|chunk| {
+                let mean_square = chunk
+                    .iter()
+                    .map(|sample| i64::from(*sample) * i64::from(*sample))
+                    .sum::<i64>() as f64
+                    / chunk.len() as f64;
+                mean_square.sqrt() < 1_500.0
+            })
+            .collect::<Vec<_>>();
+        let mut longest_silence_windows = 0;
+        let mut current_silence_windows = 0;
+        for quiet in quiet_windows {
+            if quiet {
+                current_silence_windows += 1;
+                longest_silence_windows = longest_silence_windows.max(current_silence_windows);
+            } else {
+                current_silence_windows = 0;
+            }
+        }
+        println!(
+            "gapless PCM capture sample_rate={sample_rate} sample_count={} longest_silence_ms={}",
+            samples.len(),
+            longest_silence_windows * 5
+        );
+        assert!(
+            longest_silence_windows <= 4,
+            "queued audio contains a silence gap of {} ms",
+            longest_silence_windows * 5
+        );
     }
 }
 
