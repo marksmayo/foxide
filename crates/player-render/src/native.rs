@@ -822,7 +822,7 @@ mod snapshot_allocation_tests {
         }
         engine.ready.store(true, Ordering::Release);
         engine
-            .command(vec!["loadfile".into(), "dvd://".into(), "replace".into()])
+            .command(vec!["loadfile".into(), "dvd://longest".into(), "replace".into()])
             .unwrap();
 
         let deadline = Instant::now() + Duration::from_secs(20);
