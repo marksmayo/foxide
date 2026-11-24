@@ -28,7 +28,7 @@
       "name": "DVD / Blu-ray structure playback",
       "group": "Playback",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #31 at ce45782: DVD/Blu-ray folder and ISO selection, structure/signature validation, disc-menu navigation, and a dispatch-path performance follow-up. Current-head CodSpeed run 45499692481 completed with no performance change across 279 measurable benchmarks; five optimized-out and two system-call-dominated cases are not comparable. Windows packaging run 45499692483 and Native playback controls run 45499692428 passed; Code checks, Desktop UI, and native helper were queued at the last check. The earlier DVD fixture played through a title; packaged-runtime playback, Blu-ray media, physical drives, and packaging/licensing review remain pending. Do not close this gap or claim a medal."
+      "acceptance": "Implementation is in draft PR #31 at ce45782: DVD/Blu-ray folder and ISO selection, structure/signature validation, disc-menu navigation, and a dispatch-path performance follow-up. Current-head CodSpeed run 45499692481 completed with no measured performance change across 279 measurable benchmarks; five optimized-out and two system-call-dominated cases are not comparable. Windows packaging (45499692483), Native playback controls (45499692428), and Video compositor (45499692441) passed. Native helper run 45499692397 is in progress; Code checks and Desktop UI were queued at the latest check. The earlier DVD fixture played through a title; packaged-runtime playback, Blu-ray media, physical drives, and packaging/licensing review remain pending. Do not close this gap or claim a medal."
     },
     {
       "id": "chromecast_output",
