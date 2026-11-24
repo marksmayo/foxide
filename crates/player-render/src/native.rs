@@ -1080,7 +1080,14 @@ mod snapshot_allocation_tests {
             .chunks_exact(2)
             .map(|sample| i16::from_le_bytes([sample[0], sample[1]]))
             .collect::<Vec<_>>();
-        assert_pcm_wav_has_gapless_boundary(&test_pcm_wav(&samples), "PulseAudio device loopback");
+        let active_span_ms = assert_pcm_wav_has_gapless_boundary(
+            &test_pcm_wav(&samples),
+            "PulseAudio device loopback",
+        );
+        assert!(
+            active_span_ms >= 3_000,
+            "PulseAudio loopback captured only {active_span_ms} ms of active audio; expected both 2-second tracks and a sustained second track"
+        );
     }
 
     #[test]
@@ -1093,7 +1100,12 @@ mod snapshot_allocation_tests {
         contiguous.extend(std::iter::repeat_n(0_i16, 220));
         contiguous.extend_from_slice(&second_track);
         contiguous.extend(std::iter::repeat_n(0_i16, 441));
-        assert_pcm_wav_has_gapless_boundary(&test_pcm_wav(&contiguous), "synthetic capture");
+        let active_span_ms =
+            assert_pcm_wav_has_gapless_boundary(&test_pcm_wav(&contiguous), "synthetic capture");
+        assert!(
+            active_span_ms >= 190,
+            "synthetic capture should retain the active audio span, got {active_span_ms} ms"
+        );
 
         let mut with_gap = vec![0_i16; 441];
         with_gap.extend_from_slice(&first_track);
@@ -1140,7 +1152,7 @@ mod snapshot_allocation_tests {
         wav
     }
 
-    fn assert_pcm_wav_has_gapless_boundary(bytes: &[u8], capture_kind: &str) {
+    fn assert_pcm_wav_has_gapless_boundary(bytes: &[u8], capture_kind: &str) -> u64 {
         assert!(
             bytes.starts_with(b"RIFF"),
             "{capture_kind} must provide a WAV file"
@@ -1245,8 +1257,9 @@ mod snapshot_allocation_tests {
                 current_silence_windows = 0;
             }
         }
+        let active_span_ms = (last_active - first_active) as u64 * 5;
         println!(
-            "gapless {capture_kind} sample_rate={sample_rate} sample_count={} first_track_hz={first_frequency:.1} second_track_hz={last_frequency:.1} longest_internal_silence_ms={}",
+            "gapless {capture_kind} sample_rate={sample_rate} sample_count={} first_track_hz={first_frequency:.1} second_track_hz={last_frequency:.1} active_span_ms={active_span_ms} longest_internal_silence_ms={}",
             samples.len(),
             longest_silence_windows * 5
         );
@@ -1255,6 +1268,7 @@ mod snapshot_allocation_tests {
             "{capture_kind} contains a track-boundary silence gap of {} ms",
             longest_silence_windows * 5
         );
+        active_span_ms
     }
 
     fn positive_zero_crossing_frequency(samples: &[i32], sample_rate: u32) -> f64 {
