@@ -21,7 +21,7 @@
       "name": "Gapless audio playback",
       "group": "Audio",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #26 at 880ffce. The desktop queues adjacent tracks and selects playlist positions without replacing the queue; tests cover navigation and automatic advancement. Native PCM capture passed (44,100 samples with no measured silent 5 ms window), and hosted virtual loopback verified 440 Hz→880 Hz order with 0 ms longest internal silence. Virtual output does not establish physical gapless playback. Physical transitions across multiple boundaries and Previous/Next remain pending; do not close this gap or claim a medal yet."
+      "acceptance": "Implementation is in draft PR #26 at d05682d. Playlist navigation, automatic advancement, Stop queue retention, native PCM capture, and hosted virtual loopback are covered by tests; hosted loopback measured 0 ms longest internal silence across the 440 Hz→880 Hz transition. A queue-sharing optimization is covered by a new state test; the Windows desktop compile and player-ui test suite pass locally. Current-head CI and CodSpeed are running. Physical listening across multiple track boundaries and Previous/Next remains pending; do not close this gap or claim a medal yet."
     },
     {
       "id": "disc",
@@ -182,7 +182,7 @@
       "name": "HD audio bitstream passthrough",
       "group": "Audio",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #27 at 05891ae: an explicit session-only desktop passthrough control requests AC3, EAC3, DTS, DTS-HD, and TrueHD plus exclusive output, with a control to disable it. State tests and all seven current-head CI checks passed. These checks do not verify bitstream output; a compatible physical receiver/route must identify each claimed format with audible output, and decoded output must still work when passthrough is disabled. Do not close the gap or claim a medal yet."
+      "acceptance": "Implementation is in draft PR #27 at 48937d3: an explicit session-only desktop passthrough control requests AC3, EAC3, DTS, DTS-HD, and TrueHD plus exclusive output, with a control to disable it. State tests pass; current-head Video compositor and Windows release packaging checks passed, and the other five checks are queued or in progress. These checks do not verify bitstream output; a compatible physical receiver/route must identify each claimed format with audible output, and decoded output must still work when passthrough is disabled. Do not close the gap or claim a medal yet."
     },
     {
       "id": "video_360",
