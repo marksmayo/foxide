@@ -288,8 +288,7 @@ fn refresh(
     }
     if snapshot.loaded && snapshot.playlist_position != previous.playlist_position {
         let mut state = state.borrow_mut();
-        if snapshot.playlist_position < state.playlist.len() {
-            state.dispatch(Action::PlaylistPosition(snapshot.playlist_position));
+        if state.sync_playlist_position(snapshot.playlist_position) {
             ui.set_selected_row(state.selected as i32);
         }
     }
