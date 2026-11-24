@@ -59,8 +59,8 @@ jobs:
         run: cargo test -p player-render --features system-media-integration --lib --locked native_snapshot_exposes_embedded_track_metadata -- --ignored --nocapture
       - name: Verify native intro markers reach player snapshots
         run: cargo test -p player-render --features system-media-integration --lib --locked native_snapshot_exposes_embedded_intro_chapter_markers -- --ignored --nocapture
-      - name: Verify a live IntroDB response
-        run: cargo test -p player-services --lib --locked introdb::tests::live_provider_response_contains_a_known_episode_intro -- --ignored --exact --nocapture
+      - name: Verify a live IntroDB episode response
+        run: cargo test -p player-services --lib --locked introdb::tests::live_provider_response_matches_the_requested_episode -- --ignored --exact --nocapture
       - name: Verify desktop menu commands on the native engine
         run: cargo test -p player-ui --features native-controls --lib --locked desktop_menu_commands -- --ignored --nocapture
 
