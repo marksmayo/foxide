@@ -222,34 +222,55 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
     let initial_frame = slint::Image::from_rgba8(slint::SharedPixelBuffer::new(2, 2));
     ui.set_video_frame(initial_frame.clone());
     ui.invoke_action("picture-in-picture".into(), 0.0);
-    assert!(!ui.get_picture_in_picture(), "The main window remains in normal mode");
+    assert!(
+        !ui.get_picture_in_picture(),
+        "The main window remains in normal mode"
+    );
     assert_eq!(ui.window().size(), slint::PhysicalSize::new(1180, 770));
     assert!(ui.get_pip_active());
-    assert!(pip_window
-        .borrow()
-        .as_ref()
-        .is_some_and(PlayerWindow::get_picture_in_picture));
-    assert_eq!(pip_window.borrow().as_ref().unwrap().get_video_frame(), initial_frame);
+    assert!(
+        pip_window
+            .borrow()
+            .as_ref()
+            .is_some_and(PlayerWindow::get_picture_in_picture)
+    );
+    assert_eq!(
+        pip_window.borrow().as_ref().unwrap().get_video_frame(),
+        initial_frame
+    );
     let next_frame = slint::Image::from_rgba8(slint::SharedPixelBuffer::new(4, 3));
     publish_frame_to_picture_in_picture(next_frame.clone(), &pip_window);
-    assert_eq!(pip_window.borrow().as_ref().unwrap().get_video_frame(), next_frame);
+    assert_eq!(
+        pip_window.borrow().as_ref().unwrap().get_video_frame(),
+        next_frame
+    );
     ui.invoke_action("picture-in-picture".into(), 0.0);
     assert!(!ui.get_pip_active());
-    assert!(pip_window
-        .borrow()
-        .as_ref()
-        .is_some_and(|pip| !pip.window().is_visible()));
+    assert!(
+        pip_window
+            .borrow()
+            .as_ref()
+            .is_some_and(|pip| !pip.window().is_visible())
+    );
     ui.invoke_action("picture-in-picture".into(), 0.0);
-    assert!(pip_window
+    assert!(
+        pip_window
+            .borrow()
+            .as_ref()
+            .is_some_and(|pip| pip.window().is_visible())
+    );
+    pip_window
         .borrow()
         .as_ref()
-        .is_some_and(|pip| pip.window().is_visible()));
-    pip_window.borrow().as_ref().unwrap().invoke_action("picture-in-picture".into(), 0.0);
+        .unwrap()
+        .invoke_action("picture-in-picture".into(), 0.0);
     assert!(!ui.get_pip_active());
-    assert!(pip_window
-        .borrow()
-        .as_ref()
-        .is_some_and(|pip| !pip.window().is_visible()));
+    assert!(
+        pip_window
+            .borrow()
+            .as_ref()
+            .is_some_and(|pip| !pip.window().is_visible())
+    );
     assert_eq!(ui.window().size(), slint::PhysicalSize::new(1180, 770));
     ui.set_loaded(false);
     ui.set_has_video(false);
