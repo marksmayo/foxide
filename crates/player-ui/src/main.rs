@@ -1178,6 +1178,7 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
                 .iter()
                 .any(|prefix| url.starts_with(prefix))
             {
+                ui.set_panorama_active(false);
                 dispatch(
                     &ui,
                     &controller,

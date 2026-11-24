@@ -632,6 +632,12 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
     );
     ui.set_panorama_active(false);
     actions.borrow_mut().clear();
+    ui.set_panorama_active(true);
+    ui.invoke_open_url("https://example.test/next.mp4".into());
+    assert!(
+        !ui.get_panorama_active(),
+        "opening a new URL exits panorama mode"
+    );
     assert!(ui.invoke_shortcut("k".into(), true, false, false, false));
     assert_eq!(&*actions.borrow(), &[("pause".into(), 0.0)]);
     ui.invoke_save_binding("F2".into(), "next".into());
