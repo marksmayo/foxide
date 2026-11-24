@@ -801,6 +801,58 @@ mod snapshot_allocation_tests {
     }
 
     #[test]
+    #[ignore = "Native DVD playback acceptance; requires a generated DVD ISO and libdvdnav-enabled libmpv"]
+    #[cfg(feature = "system-media-integration")]
+    fn native_dvd_iso_advances_through_a_title() {
+        use std::time::Instant;
+
+        let dvd = std::env::var("FOXIDE_DVD_ISO")
+            .expect("workflow must provide a generated DVD video ISO");
+        let engine = Engine::new().expect("libmpv must be available");
+        for (name, value) in [
+            ("vo", "null"),
+            ("ao", "null"),
+            ("pause", "no"),
+            ("dvd-device", dvd.as_str()),
+            ("disc-menu", "yes"),
+        ] {
+            engine
+                .command(vec!["set".into(), name.into(), value.into()])
+                .unwrap();
+        }
+        engine.ready.store(true, Ordering::Release);
+        engine
+            .command(vec!["loadfile".into(), "dvd://".into(), "replace".into()])
+            .unwrap();
+
+        let deadline = Instant::now() + Duration::from_secs(20);
+        let mut last_snapshot = Snapshot::default();
+        while Instant::now() < deadline {
+            let snapshot = engine.snapshot().unwrap_or_default();
+            last_snapshot = snapshot.clone();
+            assert!(
+                snapshot.error.is_empty(),
+                "libmpv failed to play generated DVD ISO: {}",
+                snapshot.error
+            );
+            if snapshot.loaded && snapshot.duration > 1.0 && snapshot.position > 0.5 {
+                engine.command(vec!["stop".into()]).unwrap();
+                return;
+            }
+            thread::sleep(Duration::from_millis(50));
+        }
+        panic!(
+            "libmpv did not advance through the generated DVD title: loaded={}, path={:?}, position={:.3}, duration={:.3}, error={:?}, command_error={:?}",
+            last_snapshot.loaded,
+            last_snapshot.path,
+            last_snapshot.position,
+            last_snapshot.duration,
+            last_snapshot.error,
+            last_snapshot.command_error
+        );
+    }
+
+    #[test]
     #[ignore = "Native libmpv metadata acceptance; requires generated tagged fixture and libmpv"]
     #[cfg(feature = "system-media-integration")]
     fn native_snapshot_exposes_embedded_track_metadata() {
