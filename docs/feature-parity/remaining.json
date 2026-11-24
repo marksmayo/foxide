@@ -336,7 +336,7 @@
       "name": "Skip detected episode intros",
       "group": "Playback",
       "stage": "in_progress",
-      "acceptance": "The Playback menu exposes Skip intro when the current embedded chapter title marks an intro, recap, opening credits, or previously on segment, and seeks only to a later in-duration chapter boundary. Unit tests cover marker recognition and safe boundaries. A generated chaptered MP4 verifies that the native libmpv snapshot receives the Previously On marker and the 3-second next chapter boundary; the hosted Windows native test step passed in run 45307106505. Chapter-file metadata is the marker source for this slice; external service providers are not claimed. User-visible Windows playback acceptance remains required; no feature medal is claimed."
+      "acceptance": "The Playback menu exposes Skip intro when the current embedded chapter title marks an intro, recap, opening credits, or previously on segment, and seeks only to a later in-duration chapter boundary. Unit tests cover marker recognition and safe boundaries. A generated chaptered MP4 verifies that the native libmpv snapshot receives the Previously On marker and the 3-second next chapter boundary; hosted Windows native chapter and desktop-menu integration checks passed in run 45307106505. Chapter-file metadata is the marker source for this slice; external service providers are not claimed. User-visible Windows playback acceptance remains required; no feature medal is claimed."
     },
     {
       "id": "audio_visualization",
