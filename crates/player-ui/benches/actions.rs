@@ -15,7 +15,7 @@ fn playlist(count: usize) -> Vec<PathBuf> {
 
 fn state(count: usize, loaded: bool) -> UiState {
     let mut state = UiState {
-        playlist: playlist(count),
+        playlist: std::sync::Arc::new(playlist(count)),
         selected: count / 2,
         ..Default::default()
     };
@@ -167,3 +167,4 @@ fn playlist_filter<const COUNT: usize>(bencher: Bencher, query: &str) {
     let queue = state(COUNT, true);
     bencher.bench(|| black_box(&queue).filtered_indices(black_box(query)));
 }
+

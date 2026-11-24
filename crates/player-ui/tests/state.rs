@@ -13,12 +13,16 @@ fn mute_uses_confirmed_state_and_never_assumes_command_success() {
 fn empty_player_cannot_seek_and_opening_files_populates_one_ordered_queue() {
     let mut state = UiState::default();
     assert!(state.dispatch(Action::Seek(30.0)).is_empty());
+    let effects = state.dispatch(Action::Open(vec!["one.mkv".into(), "two.mkv".into()]));
+    let [Effect::LoadPlaylist(queued)] = effects.as_slice() else {
+        panic!("Opening files must schedule one ordered queue");
+    };
     assert_eq!(
-        state.dispatch(Action::Open(vec!["one.mkv".into(), "two.mkv".into()])),
-        [Effect::LoadPlaylist(vec![
-            "one.mkv".into(),
-            "two.mkv".into()
-        ])]
+        queued
+            .iter()
+            .map(|path| path.to_str().unwrap())
+            .collect::<Vec<_>>(),
+        ["one.mkv", "two.mkv"]
     );
     assert_eq!(state.playlist.len(), 2);
     assert!(
@@ -259,3 +263,4 @@ fn loading_unusable_durations_cannot_expose_an_invalid_seek_range() {
         );
     }
 }
+

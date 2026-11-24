@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, sync::Arc};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Action {
@@ -37,7 +37,7 @@ pub enum PlaybackControl {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Effect {
     Load(PathBuf),
-    LoadPlaylist(Vec<PathBuf>),
+    LoadPlaylist(Arc<Vec<PathBuf>>),
     PlayPlaylistIndex(usize),
     Pause(bool),
     Mute(bool),
@@ -54,7 +54,7 @@ pub enum Effect {
 
 #[derive(Debug, Default)]
 pub struct UiState {
-    pub playlist: Vec<PathBuf>,
+    pub playlist: Arc<Vec<PathBuf>>,
     pub loaded: bool,
     pub paused: bool,
     pub muted: bool,
@@ -186,7 +186,7 @@ impl UiState {
     pub fn dispatch(&mut self, action: Action) -> Vec<Effect> {
         match action {
             Action::Open(files) => {
-                self.playlist = files;
+                self.playlist = Arc::new(files);
                 self.selected = 0;
                 self.loaded = false;
                 self.playlist
@@ -289,10 +289,23 @@ mod tests {
 
         let effects = state.dispatch(Action::Open(tracks.clone()));
 
-        assert_eq!(effects, vec![Effect::LoadPlaylist(tracks.clone())]);
-        assert_eq!(state.playlist, tracks);
+        assert_eq!(effects, vec![Effect::LoadPlaylist(state.playlist.clone())]);
+        assert_eq!(state.playlist.as_ref(), &tracks);
         assert_eq!(state.selected, 0);
         assert!(!state.loaded);
+    }
+
+    #[test]
+    fn opening_a_playlist_shares_the_queue_with_its_engine_effect() {
+        let tracks = vec!["first.flac".into(), "second.flac".into()];
+        let mut state = UiState::default();
+
+        let effects = state.dispatch(Action::Open(tracks));
+        let [Effect::LoadPlaylist(engine_queue)] = effects.as_slice() else {
+            panic!("Opening a nonempty playlist must schedule the queue");
+        };
+
+        assert!(std::sync::Arc::ptr_eq(&state.playlist, engine_queue));
     }
 
     #[test]
@@ -310,7 +323,7 @@ mod tests {
             state.dispatch(Action::Next),
             vec![Effect::PlayPlaylistIndex(1)]
         );
-        assert_eq!(state.playlist, tracks);
+        assert_eq!(state.playlist.as_ref(), &tracks);
         assert_eq!(state.selected, 1);
         assert!(state.loaded);
     }
@@ -325,7 +338,7 @@ mod tests {
             state.dispatch(Action::Select(1)),
             vec![Effect::PlayPlaylistIndex(1)]
         );
-        assert_eq!(state.playlist, tracks);
+        assert_eq!(state.playlist.as_ref(), &tracks);
         assert_eq!(state.selected, 1);
         assert!(!state.loaded);
     }
@@ -339,7 +352,8 @@ mod tests {
 
         assert!(state.dispatch(Action::PlaylistPosition(1)).is_empty());
         assert_eq!(state.selected, 1);
-        assert_eq!(state.playlist, tracks);
+        assert_eq!(state.playlist.as_ref(), &tracks);
         assert!(state.loaded);
     }
 }
+
