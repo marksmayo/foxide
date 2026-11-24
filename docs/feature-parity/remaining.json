@@ -343,7 +343,7 @@
       "name": "Music visualization display",
       "group": "Audio",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #28 at 09d8bc9. The compositor, Code checks, and Windows packaging passed on the preceding head eb73407; the previous CodSpeed report on that head measured a 10.32% aggregate degradation in the two Next dispatch cases. A no-inline playlist-selection experiment is queued for measurement on 09d8bc9; other native playback/helper/UI checks are queued. Physical visual/audible acceptance remains pending; do not close the gap or claim a medal."
+      "acceptance": "Implementation is in draft PR #28 at 46c542b. The prior CodSpeed result on 09d8bc9 remained at 10.32% degradation in two Next dispatch cases after an ineffective no-inline hint; that hint was removed. The current experiment moves visualization cleanup out of the UiState hot selection path into the desktop action adapter, with UI tests for valid and invalid navigation. Windows release packaging passed on 46c542b; Code checks, compositor, Desktop UI, native playback controls, native helper acceptance, and CodSpeed are queued or pending. Physical visual/audible acceptance remains pending; do not close the gap or claim a medal."
     }
   ],
   "baseline_gap_count": 49,
