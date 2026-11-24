@@ -14,7 +14,6 @@ pub enum Action {
     Next,
     Previous,
     Select(usize),
-    PlaylistPosition(usize),
     SeekAbsolute(f64),
     Volume(f64),
     AudioTrack(u32),
@@ -205,6 +204,14 @@ impl UiState {
         };
     }
 
+    pub fn sync_playlist_position(&mut self, index: usize) -> bool {
+        if index >= self.playlist.len() {
+            return false;
+        }
+        self.selected = index;
+        true
+    }
+
     #[inline]
     pub fn dispatch(&mut self, action: Action) -> Vec<Effect> {
         match action {
@@ -238,10 +245,6 @@ impl UiState {
             }
             Action::Previous if self.selected > 0 => self.select(self.selected - 1),
             Action::Select(index) if index < self.playlist.len() => self.select(index),
-            Action::PlaylistPosition(index) if index < self.playlist.len() => {
-                self.selected = index;
-                Vec::new()
-            }
             Action::SeekAbsolute(value) if self.loaded && value.is_finite() => {
                 vec![Effect::SeekAbsolute(value.clamp(0.0, self.duration))]
             }
@@ -388,7 +391,9 @@ mod tests {
         state.dispatch(Action::Open(tracks.clone()));
         state.confirm_loaded(12.0);
 
-        assert!(state.dispatch(Action::PlaylistPosition(1)).is_empty());
+        assert!(state.sync_playlist_position(1));
+        assert_eq!(state.selected, 1);
+        assert!(!state.sync_playlist_position(2));
         assert_eq!(state.selected, 1);
         assert_eq!(state.playlist.as_ref(), &tracks);
         assert!(state.loaded);
