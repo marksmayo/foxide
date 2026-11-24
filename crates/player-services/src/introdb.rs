@@ -251,4 +251,22 @@ mod tests {
                 .is_err());
         }
     }
+
+
+    #[test]
+    #[ignore = "requires one read from the public IntroDB API"]
+    fn live_provider_response_contains_a_known_episode_intro() {
+        let client = crate::CurlClient::system().expect("System curl is installed in CI");
+        let identity = EpisodeIdentity::new("tt0903747", 1, 1).unwrap();
+        let segment = IntroDb::public()
+            .lookup_intro(&client, &identity, &AtomicBool::new(false))
+            .expect("IntroDB returns a valid response")
+            .expect("the documented episode has an intro");
+
+        assert!(segment.start_seconds >= 0.0);
+        assert!(segment.end_seconds > segment.start_seconds);
+        assert!(segment.confidence.is_some_and(|value| (0.0..=1.0).contains(&value)));
+        assert!(segment.submission_count.is_some_and(|value| value > 0));
+    }
+}
 }
