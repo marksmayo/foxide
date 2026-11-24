@@ -343,7 +343,7 @@
       "name": "Music visualization display",
       "group": "Audio",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #28 at 05080fd: an audio-only waveform graph uses libmpv lavfi-complex while preserving normal audio output, and clears/rebinds on disable, stop, or track change. The compositor run measured 6,100 green pixels, 73 unique frames (24.39/s), a 59 ms maximum frame interval, and a 29,592 KiB sampled RSS delta; its 90% renderer coverage gate passed. These are run-specific hosted software-renderer results, not physical display/audio acceptance or a sustained-resource guarantee. Physical visual movement, audible output, and track/stop behavior remain pending; do not close the gap or claim a medal yet."
+      "acceptance": "Implementation is in draft PR #28 at 8f3c7cf: an audio-only waveform graph uses libmpv lavfi-complex while preserving normal audio output, and clears/rebinds on disable, stop, or track change. Current-head Native playback controls run 45390507005 passed the generated audio playback and Slint compositor test, measuring 6,100 green pixels, 70 distinct frames (24.72/s), a 43 ms maximum frame gap, and 33,812 KiB sampled RSS growth; the test passed the 20 Hz, 250 ms, and 64 MiB short-run CI guards. This is software-renderer evidence, not physical display/audio acceptance or a sustained-resource guarantee. The 90% renderer coverage gate and CodSpeed on this head are still pending; prior-head coverage results do not apply to it. Physical visual movement, audible output, and track/stop behavior remain pending; do not close the gap or claim a medal."
     }
   ],
   "baseline_gap_count": 49,
