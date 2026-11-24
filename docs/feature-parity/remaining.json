@@ -21,7 +21,7 @@
       "name": "Gapless audio playback",
       "group": "Audio",
       "stage": "in_progress",
-      "acceptance": "Desktop playback queues selected files in libmpv and enables gapless-audio; unit tests cover queue selection and automatic advance. Native libmpv playback is captured through PCM/WAV output: Windows and hosted Linux native-controls CI both produced 44,100 samples at 44.1 kHz with no measured silent 5 ms window (hosted run 45300167193). This verifies libmpv's queued PCM stream, not the physical audio device. Physical audio-device loopback remains pending; do not count this gap as accepted without that evidence."
+      "acceptance": "Desktop playback queues selected files in libmpv and enables gapless-audio; unit tests cover queue selection and automatic advance. The native PCM/WAV capture passed on Windows and in hosted Linux run 45300167193 (44,100 samples at 44.1 kHz, no silent 5 ms window); the latest hosted writer test produced 176,400 samples. A virtual PulseAudio device-loopback test passed in run 45318644227: 142,223 PCM16 samples at 44.1 kHz contained the expected 440 Hz then 880 Hz tracks, a 3,230 ms active span, and 0 ms measured internal silence. This confirms output through the configured virtual sink; physical receiver/audio-route acceptance remains pending, so the feature is still in progress and no medal is claimed."
     },
     {
       "id": "disc",
