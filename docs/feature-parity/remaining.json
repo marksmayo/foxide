@@ -20,15 +20,15 @@
       "id": "gapless",
       "name": "Gapless audio playback",
       "group": "Audio",
-      "stage": "queued",
-      "acceptance": "Needs queued/preloaded tracks and audio-loopback evidence of gap-free transitions."
+      "stage": "in_progress",
+      "acceptance": "Implementation is in draft PR #26 at 880ffce. The desktop queues adjacent tracks and selects playlist positions without replacing the queue; tests cover navigation and automatic advancement. Native PCM capture passed (44,100 samples with no measured silent 5 ms window), and hosted virtual loopback verified 440 Hz→880 Hz order with 0 ms longest internal silence. Virtual output does not establish physical gapless playback. Physical transitions across multiple boundaries and Previous/Next remain pending; do not close this gap or claim a medal yet."
     },
     {
       "id": "disc",
       "name": "DVD / Blu-ray structure playback",
       "group": "Playback",
-      "stage": "queued",
-      "acceptance": "Needs disc fixtures, optional navigation libraries and packaging/licensing review."
+      "stage": "in_progress",
+      "acceptance": "Implementation is in draft PR #31 at d331ad8: DVD/Blu-ray folder and ISO selection, structure/signature validation, disc-menu navigation actions, and resetting disc state for ordinary media. Desktop state/callback tests pass, and a generated NTSC DVD ISO loaded through libmpv and advanced through a title; all seven current-head CI checks passed. Packaged release playback, Blu-ray media, physical drives, and packaging/licensing review remain pending. Do not count this gap as closed or claim a medal yet."
     },
     {
       "id": "chromecast_output",
@@ -97,8 +97,8 @@
       "id": "system_media_controls",
       "name": "System media-control integration",
       "group": "Interface",
-        "stage": "in_progress",
-        "acceptance": "A shared playwire adapter connects Windows SMTC, macOS Now Playing, and Linux MPRIS. The OS media session attaches as soon as the desktop engine is ready, including before a track loads; transient window readiness retries are rate-limited. Play/pause, previous/next, seek, title/artist/album, playback state, and transport capabilities use the player action path. Unit tests cover event routing, idle attachment retry policy, metadata publication, track identity, and seek behavior. The native libmpv metadata check passed in the hosted Native playback controls run (https://github.com/marksmayo/foxide/actions/runs/45297858782). Platform session interaction and user-visible behavior remain unverified; do not count this gap as closed until that evidence is recorded."
+      "stage": "in_progress",
+      "acceptance": "A shared playwire adapter connects Windows SMTC, macOS Now Playing, and Linux MPRIS. The OS media session attaches as soon as the desktop engine is ready, including before a track loads; transient window readiness retries are rate-limited. Play/pause, previous/next, seek, title/artist/album, playback state, and transport capabilities use the player action path. Unit tests cover event routing, idle attachment retry policy, metadata publication, track identity, and seek behavior. The native libmpv metadata check passed in the hosted Native playback controls run (https://github.com/marksmayo/foxide/actions/runs/45297858782). Platform session interaction and user-visible behavior remain unverified; do not count this gap as closed until that evidence is recorded."
     },
     {
       "id": "compact_music_view",
@@ -181,8 +181,8 @@
       "id": "hd_audio_passthrough",
       "name": "HD audio bitstream passthrough",
       "group": "Audio",
-      "stage": "queued",
-      "acceptance": "Needs a compatible physical receiver and audio route; cannot be certified by hosted null output."
+      "stage": "in_progress",
+      "acceptance": "Implementation is in draft PR #27 at 05891ae: an explicit session-only desktop passthrough control requests AC3, EAC3, DTS, DTS-HD, and TrueHD plus exclusive output, with a control to disable it. State tests and all seven current-head CI checks passed. These checks do not verify bitstream output; a compatible physical receiver/route must identify each claimed format with audible output, and decoded output must still work when passthrough is disabled. Do not close the gap or claim a medal yet."
     },
     {
       "id": "video_360",
@@ -335,15 +335,15 @@
       "id": "skip_intro",
       "name": "Skip detected episode intros",
       "group": "Playback",
-      "stage": "queued",
-      "acceptance": "Needs marker detection/provider integration and seek-boundary acceptance."
+      "stage": "in_progress",
+      "acceptance": "Implementation is in draft PR #29 at 84241db: bounded chapter-title seeking plus an explicit, asynchronous IntroDB lookup using embedded IMDb ID, season, and episode tags only. Provider validation, response limits, stale-result handling, and seek-boundary tests pass; all seven current-head CI checks passed. A real IntroDB response and user-visible desktop playback remain unverified. Do not close the gap or claim a medal yet."
     },
     {
       "id": "audio_visualization",
       "name": "Music visualization display",
       "group": "Audio",
-      "stage": "queued",
-      "acceptance": "Needs an audio-analysis/render pipeline and resource/frame-pacing benchmarks."
+      "stage": "in_progress",
+      "acceptance": "Implementation is in draft PR #28 at 05080fd: an audio-only waveform graph uses libmpv lavfi-complex while preserving normal audio output, and clears/rebinds on disable, stop, or track change. The compositor run measured 6,100 green pixels, 73 unique frames (24.39/s), a 59 ms maximum frame interval, and a 29,592 KiB sampled RSS delta; its 90% renderer coverage gate passed. These are run-specific hosted software-renderer results, not physical display/audio acceptance or a sustained-resource guarantee. Physical visual movement, audible output, and track/stop behavior remain pending; do not close the gap or claim a medal yet."
     }
   ],
   "baseline_gap_count": 49,
