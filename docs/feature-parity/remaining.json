@@ -21,14 +21,14 @@
       "name": "Gapless audio playback",
       "group": "Audio",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #26 at 6a55c2b: queued playlists, automatic advancement, queue retention on Stop, native PCM capture, and hosted virtual PulseAudio loopback are implemented. The latest optional-control dispatch follow-up is on this head to investigate the remaining CodSpeed regressions. The isolated Windows worktree passed desktop tests and a 93.40% workspace coverage gate, but it predates current PR head 612a312; exact-head CI and CodSpeed for 6a55c2b are pending. Virtual loopback is not physical listening evidence. Physical multi-track listening and Previous/Next acceptance remain pending; do not close this gap or claim a medal."
+      "acceptance": "Implementation is in draft PR #26 at 6a55c2b. Queued playlists, automatic advancement, queue retention on Stop, native PCM capture, and hosted virtual PulseAudio loopback are implemented. Current-head Native playback controls run 45502885574 passed; Code checks, Windows packaging, native helper, compositor, Desktop UI, and CodSpeed were queued at last check. The prior CodSpeed report on 612a312 showed 29 improved, 26 regressed, 224 unchanged, including a 24.53% `load_confirmation` regression; performance remains unresolved until current-head CodSpeed run 45502885558 finishes. Physical multi-track listening and Previous/Next acceptance remain pending; do not close this gap or claim a medal."
     },
     {
       "id": "disc",
       "name": "DVD / Blu-ray structure playback",
       "group": "Playback",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #31 at ce45782: DVD/Blu-ray folder and ISO selection, structure/signature validation, disc-menu navigation, and dispatch-path performance follow-up. The earlier NTSC DVD fixture loaded and advanced through a title; e4c270a CodSpeed reported 16 improved, 5 regressed, 258 unchanged and flagged cross-hardware comparisons as provisional. Current-head CI and CodSpeed for ce45782 are queued. Packaged-runtime playback, Blu-ray media, physical drives, and packaging/licensing review remain pending. Do not close this gap or claim a medal."
+      "acceptance": "Implementation is in draft PR #31 at ce45782: DVD/Blu-ray folder and ISO selection, structure/signature validation, disc-menu navigation, and a dispatch-path performance follow-up. Current-head Windows packaging run 45499692483 and Native playback controls run 45499692428 passed; CodSpeed run 45499692481 is in progress, while Code checks, Desktop UI, and native helper were queued at last check. The earlier DVD fixture played through a title; packaged-runtime playback, Blu-ray media, physical drives, and packaging/licensing review remain pending. Do not close this gap or claim a medal."
     },
     {
       "id": "chromecast_output",
@@ -182,7 +182,7 @@
       "name": "HD audio bitstream passthrough",
       "group": "Audio",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #27 at c1869a2: an explicit session-only desktop passthrough control requests AC3, EAC3, DTS, DTS-HD, and TrueHD plus exclusive output, with a control to disable it. State tests, native playback controls, and Windows release packaging passed. CodSpeed completed and reports a 13.95% aggregate improvement versus main. The video compositor and native helper checks are in progress; Code checks and Desktop UI are queued. These checks do not verify bitstream output; a compatible physical receiver/route must identify each claimed format with audible output, and decoded output must still work when passthrough is disabled. Do not close the gap or claim a medal yet."
+      "acceptance": "Implementation is in draft PR #27 at c1869a2: a session-only desktop control requests AC3, EAC3, DTS, DTS-HD, and TrueHD with exclusive output, and can disable passthrough. All seven current-head hosted checks completed successfully; CodSpeed reports a 13.95% aggregate improvement. CI does not verify bitstream output. A compatible physical receiver/route must identify each claimed format with audible output, and decoded output must still work when passthrough is disabled. Do not close this gap or claim a medal."
     },
     {
       "id": "video_360",
@@ -336,14 +336,14 @@
       "name": "Skip detected episode intros",
       "group": "Playback",
       "stage": "in_progress",
-      "acceptance": "Implementation and tests are in draft PR #29 at b02c8c8. Bounded chapter-title seeking and asynchronous IntroDB lookup validate explicit IMDb/season/episode tags, response identity, response size, segment boundaries, confidence, cancellation, stale results, and seek bounds. One ignored live check uses the production CurlClient and parser for a single anonymous read. Native playback controls run 269 passed: the live service returned a valid response for tt0903747 S1E1 with no intro marker; this validates the no-marker path, not a usable skip segment. Physical desktop playback and skip-button behavior remain pending; do not close the gap or claim a medal."
+      "acceptance": "Implementation and tests are in draft PR #29 at 4c26984. Bounded chapter-title seeking and asynchronous IntroDB lookup validate explicit IMDb/season/episode tags, response identity, response size, segment boundaries, confidence, cancellation, stale results, and seek bounds. A new desktop menu regression test verifies that the selected chapter boundary becomes a SeekAbsolute action; this change is limited to the UI callback and desktop test. On 4c26984, Windows packaging run 45504773906 is in progress and the other six hosted checks were queued at last check. Native playback controls run 45476239787 previously validated a live no-marker IntroDB response, not an available skip segment. Physical desktop playback and skip-button behavior remain pending; do not close this gap or claim a medal."
     },
     {
       "id": "audio_visualization",
       "name": "Music visualization display",
       "group": "Audio",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #28 at c5b2be1. The formatter fix is on af93206; Code checks passed on Windows/Linux, Desktop UI passed on Windows/Linux, Windows packaging, compositor, native controls, and native helper on Windows/Linux passed; macOS Code checks/Desktop UI/native helper were still queued at the last check. CodSpeed on c5b2be1 reports 20.42% aggregate improvement, 23 improved, 256 untouched, no regressions, but warns that 23 significant-change benchmarks ran on different hardware. A same-head rerun is in progress; performance evidence is provisional. Physical audio/visual acceptance remains pending; do not close the gap or claim a medal."
+      "acceptance": "Implementation is in draft PR #28 at c5b2be1. All seven current-head hosted checks, including CodSpeed run 45472903860, completed successfully. The available benchmark summary reports 20.42% aggregate improvement (23 improved, 256 unchanged, no regressions), but the report flags 23 significant comparisons across different hardware, so the result is provisional; the completed rerun has not been summarized with new comparable metrics. Physical audio/visual acceptance remains pending; do not close this gap or claim a medal."
     }
   ],
   "baseline_gap_count": 49,
