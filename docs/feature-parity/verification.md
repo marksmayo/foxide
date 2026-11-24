@@ -82,3 +82,8 @@ The Video menu exposes supported side-by-side and over/under source layouts with
 ## 360-degree video implementation checkpoint
 
 The Video menu converts equirectangular panorama sources to a flat 90 by 60 degree view at 1280x720, with front, left, right, rear, up and down presets. Presets replace a labeled filter and Off removes only that filter. Pointer drag and scroll replace that filter with updated yaw/pitch values because the v360 filter does not accept runtime yaw/pitch commands. Software-window tests verify incremental pointer movement and scroll mapping; state tests cover bounds and generated filter graphs; native-control CI checks that libmpv accepts the commands. All six projections pass local FFmpeg smoke checks. A real panoramic sample and physical presentation acceptance remain pending; no feature medal is claimed.
+
+## Audio queue preloading checkpoint
+
+Bounded queues of up to 256 local audio files are appended to libmpv's playlist when opened. Previous/next selection uses the engine playlist, natural end-of-file continues to the next item, and engine path changes keep the visible queue selection synchronized. URLs, mixed media queues, and oversized queues keep the existing replace-load behavior. Focused state tests pass, including queue bounds, remote URL handling, selection synchronization and final-item behavior. Hosted native libmpv validation and real audio-loopback evidence are still required; gapless playback and a feature medal are not claimed.
+

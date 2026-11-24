@@ -526,7 +526,7 @@ impl Engine {
         let diagnostics = Arc::new(Mutex::new(Vec::<String>::new()));
         #[cfg(all(test, feature = "gpu-integration"))]
         let diagnostic_output = diagnostics.clone();
-        let (sender, receiver) = mpsc::sync_channel::<Request>(32);
+        let (sender, receiver) = mpsc::sync_channel::<Request>(512);
         let (client, active, stopped, output) =
             (api.clone(), ready.clone(), stop.clone(), snapshot.clone());
         thread::Builder::new()
@@ -559,8 +559,9 @@ impl Engine {
                             }
                         }
                         Ok(Request::Command(args)) => {
-                            let loading = args.first().is_some_and(|s| s == "loadfile");
-                            if loading {
+                            let replacing = args.first().is_some_and(|s| s == "loadfile")
+                                && args.get(2).map_or(true, |mode| mode == "replace");
+                            if replacing {
                                 file_loaded = false;
                                 ended = false;
                                 requested_path = args
@@ -571,7 +572,7 @@ impl Engine {
                             }
                             command_error.clear();
                             if let Err(e) = client.send(&args) {
-                                if loading {
+                                if replacing {
                                     error = e;
                                 } else {
                                     command_error = e;
@@ -624,6 +625,7 @@ impl Engine {
                             }
                             if (*event).kind == 8 {
                                 file_loaded = true;
+                                ended = false;
                             }
                             if (*event).kind == 8 || ((*event).kind == 22 && (*event).userdata == 1)
                             {
@@ -888,3 +890,4 @@ mod video_site_tests;
 #[cfg(all(test, feature = "live-service-integration"))]
 #[path = "native_live.rs"]
 mod live_services;
+

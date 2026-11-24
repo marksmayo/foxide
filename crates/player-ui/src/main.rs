@@ -181,6 +181,16 @@ fn dispatch(
                     .into_owned(),
                 "replace".into(),
             ],
+            Effect::Append(path) => vec![
+                "loadfile".into(),
+                player_core::external_path(path)
+                    .to_string_lossy()
+                    .into_owned(),
+                "append".into(),
+            ],
+            Effect::PlaylistIndex(index) => {
+                vec!["playlist-play-index".into(), index.to_string()]
+            }
             Effect::Pause(value) => vec![
                 "set".into(),
                 "pause".into(),
@@ -207,7 +217,7 @@ fn dispatch(
                     value.to_string()
                 },
             ],
-            Effect::Stop => vec!["stop".into()],
+            Effect::Stop => vec!["stop".into(), "keep-playlist".into()],
             Effect::Quit => {
                 let _ = slint::quit_event_loop();
                 continue;
@@ -1502,9 +1512,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ui.on_native_snapshot_ready(move || {
             if let Some(ui) = weak.upgrade() {
                 if let Some(snapshot) = status_source.snapshot() {
-                    if snapshot.path != previous.borrow().path {
+                    let path_changed = snapshot.path != previous.borrow().path;
+                    if path_changed {
                         thumbnails.clear();
                         ui.set_thumbnail_available(false);
+                    }
+                    if snapshot.loaded && path_changed {
+                        let started_index = {
+                            let state = controller.borrow();
+                            state.playlist.iter().position(|path| {
+                                player_core::external_path(path.clone()).to_string_lossy()
+                                    == snapshot.path
+                            })
+                        };
+                        if let Some(index) = started_index {
+                            dispatch(
+                                &ui,
+                                &controller,
+                                &media_engine,
+                                Action::PlaylistItemStarted(index),
+                            );
+                        }
                     }
                     let natural_end = snapshot.ended && !previous.borrow().ended;
                     if natural_end {
@@ -1577,3 +1605,4 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(test)]
 #[path = "desktop_tests.rs"]
 mod tests;
+

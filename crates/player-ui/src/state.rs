@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 
+const MAX_PRELOADED_AUDIO_ITEMS: usize = 256;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Action {
     Open(Vec<PathBuf>),
@@ -20,6 +22,7 @@ pub enum Action {
     Stop,
     Quit,
     EndOfFile,
+    PlaylistItemStarted(usize),
     Playback(PlaybackControl),
 }
 
@@ -51,6 +54,8 @@ pub enum Effect {
     SubtitleTrack(u32),
     Stop,
     Quit,
+    Append(PathBuf),
+    PlaylistIndex(usize),
     Engine(Vec<String>),
 }
 
@@ -65,6 +70,8 @@ pub struct UiState {
     pub playlist_visible: bool,
     pub fullscreen: bool,
     pub panorama_angles: Option<(f64, f64)>,
+    /// Whether the current audio queue has been appended to libmpv's playlist.
+    pub preloaded_audio: bool,
 }
 
 impl Action {
@@ -220,6 +227,7 @@ fn panorama_filter_command(yaw: f64, pitch: f64) -> Vec<String> {
         ),
     ]
 }
+
 impl UiState {
     /// Stable queue indices keep filtered selection attached to the original file.
     pub fn filtered_indices(&self, query: &str) -> Vec<usize> {
@@ -255,15 +263,30 @@ impl UiState {
         match action {
             Action::Open(files) => {
                 self.panorama_angles = None;
+                self.preloaded_audio = is_preloadable_audio_queue(&files);
                 self.playlist = files;
                 self.selected = 0;
                 self.loaded = false;
-                self.playlist
-                    .first()
-                    .cloned()
-                    .map(Effect::Load)
-                    .into_iter()
-                    .collect()
+                if self.preloaded_audio {
+                    self.playlist
+                        .iter()
+                        .enumerate()
+                        .map(|(index, path)| {
+                            if index == 0 {
+                                Effect::Load(path.clone())
+                            } else {
+                                Effect::Append(path.clone())
+                            }
+                        })
+                        .collect()
+                } else {
+                    self.playlist
+                        .first()
+                        .cloned()
+                        .map(Effect::Load)
+                        .into_iter()
+                        .collect()
+                }
             }
             Action::TogglePause if self.loaded => vec![Effect::Pause(!self.paused)],
             Action::SetPaused(paused) if self.loaded => {
@@ -305,12 +328,27 @@ impl UiState {
             }
             Action::EndOfFile if self.loaded => {
                 if self.selected + 1 < self.playlist.len() {
-                    self.select(self.selected + 1)
+                    if self.preloaded_audio {
+                        self.panorama_angles = None;
+                        self.selected += 1;
+                        self.loaded = false;
+                        self.paused = false;
+                        Vec::new()
+                    } else {
+                        self.select(self.selected + 1)
+                    }
                 } else {
                     self.loaded = false;
                     self.paused = false;
                     Vec::new()
                 }
+            }
+            Action::PlaylistItemStarted(index)
+                if self.preloaded_audio && index < self.playlist.len() =>
+            {
+                self.selected = index;
+                self.panorama_angles = None;
+                Vec::new()
             }
             Action::Quit => vec![Effect::Quit],
             Action::Playback(
@@ -329,8 +367,13 @@ impl UiState {
         self.panorama_angles = None;
         self.selected = index;
         self.loaded = false;
-        vec![Effect::Load(self.playlist[index].clone())]
+        if self.preloaded_audio {
+            vec![Effect::PlaylistIndex(index)]
+        } else {
+            vec![Effect::Load(self.playlist[index].clone())]
+        }
     }
+
     // Keep the stateful panorama path out of the common playback-action hot path.
     #[inline(never)]
     fn panorama(&mut self, control: PlaybackControl) -> Vec<Effect> {
@@ -372,6 +415,36 @@ impl UiState {
             _ => Vec::new(),
         }
     }
+}
+
+fn is_preloadable_audio_queue(files: &[PathBuf]) -> bool {
+    !files.is_empty()
+        && files.len() <= MAX_PRELOADED_AUDIO_ITEMS
+        && files.iter().all(|path| {
+            let path_text = path.to_string_lossy();
+            !path_text.contains("://")
+                && path
+                    .extension()
+                    .and_then(|extension| extension.to_str())
+                    .is_some_and(|extension| {
+                        matches!(
+                            extension.to_ascii_lowercase().as_str(),
+                            "aac"
+                                | "aif"
+                                | "aiff"
+                                | "alac"
+                                | "ape"
+                                | "flac"
+                                | "m4a"
+                                | "mp3"
+                                | "mka"
+                                | "ogg"
+                                | "opus"
+                                | "wav"
+                                | "wma"
+                        )
+                    })
+        })
 }
 
 #[cfg(test)]
@@ -452,7 +525,7 @@ mod tests {
     }
 
     #[test]
-    fn panorama_360_drag_updates_only_foxides_labeled_projection() {
+    fn panorama_360_drag_updates_the_active_projection_without_replacing_it() {
         let mut state = UiState::default();
         state.confirm_loaded(42.0);
         state.dispatch(Action::control("panorama-360", 1.0).unwrap());
@@ -552,18 +625,19 @@ mod tests {
         state.loaded = false;
         assert!(state.dispatch(Action::SetPaused(false)).is_empty());
     }
+
     #[test]
     fn natural_end_of_track_loads_the_next_queued_item_and_unloads_at_queue_end() {
         let mut state = UiState::default();
         let first = PathBuf::from("first.wav");
         let second = PathBuf::from("second.wav");
-        state.dispatch(Action::Open(vec![first, second.clone()]));
+        assert_eq!(
+            state.dispatch(Action::Open(vec![first.clone(), second.clone()])),
+            vec![Effect::Load(first), Effect::Append(second)]
+        );
         state.confirm_loaded(1.0);
 
-        assert_eq!(
-            state.dispatch(Action::EndOfFile),
-            vec![Effect::Load(second)]
-        );
+        assert!(state.dispatch(Action::EndOfFile).is_empty());
         assert_eq!(state.selected, 1);
         assert!(!state.loaded);
 
@@ -571,4 +645,61 @@ mod tests {
         assert!(state.dispatch(Action::EndOfFile).is_empty());
         assert!(!state.loaded);
     }
+
+    #[test]
+    fn audio_queue_is_preloaded_and_manual_navigation_uses_the_engine_playlist() {
+        let mut state = UiState::default();
+        let first = PathBuf::from("first.wav");
+        let second = PathBuf::from("second.flac");
+        let third = PathBuf::from("third.mp3");
+
+        assert_eq!(
+            state.dispatch(Action::Open(vec![
+                first.clone(),
+                second.clone(),
+                third.clone()
+            ])),
+            vec![
+                Effect::Load(first),
+                Effect::Append(second),
+                Effect::Append(third),
+            ]
+        );
+        state.confirm_loaded(30.0);
+
+        assert_eq!(state.dispatch(Action::Next), vec![Effect::PlaylistIndex(1)]);
+        assert_eq!(state.selected, 1);
+        assert!(!state.loaded);
+    }
+
+    #[test]
+    fn only_bounded_local_audio_queues_are_preloaded_and_engine_track_changes_sync_selection() {
+        let mut state = UiState::default();
+        let remote = PathBuf::from("https://example.invalid/stream.mp3");
+        let local = PathBuf::from("local.mp3");
+
+        assert_eq!(
+            state.dispatch(Action::Open(vec![remote.clone(), local.clone()])),
+            vec![Effect::Load(remote)]
+        );
+        assert!(!state.preloaded_audio);
+
+        let oversized = (0..257)
+            .map(|index| PathBuf::from(format!("track-{index}.flac")))
+            .collect::<Vec<_>>();
+        assert_eq!(
+            state.dispatch(Action::Open(oversized.clone())),
+            vec![Effect::Load(oversized[0].clone())]
+        );
+        assert!(!state.preloaded_audio);
+
+        let files = vec![PathBuf::from("one.wav"), PathBuf::from("two.wav")];
+        state.dispatch(Action::Open(files));
+        assert!(state.preloaded_audio);
+        assert!(state.dispatch(Action::PlaylistItemStarted(1)).is_empty());
+        assert_eq!(state.selected, 1);
+        assert!(state.dispatch(Action::PlaylistItemStarted(2)).is_empty());
+        assert_eq!(state.selected, 1);
+    }
 }
+

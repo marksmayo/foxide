@@ -94,6 +94,19 @@ fn desktop_menu_commands_are_accepted_by_the_native_media_engine() {
             "expected": null
         }));
     }
+    let fixture = PathBuf::from(fixture).to_string_lossy().into_owned();
+    requests.push(json!({
+        "name": "append-audio-queue-entry",
+        "command": ["loadfile", fixture.clone(), "append"],
+        "property": "",
+        "expected": null
+    }));
+    requests.push(json!({
+        "name": "select-preloaded-queue-entry",
+        "command": ["playlist-play-index", "1"],
+        "property": "",
+        "expected": null
+    }));
     let requests_path = probe.directory.join("requests.json");
     let output_path = probe.directory.join("result.json");
     fs::write(&requests_path, serde_json::to_vec(&requests).unwrap()).unwrap();
@@ -163,3 +176,4 @@ fn desktop_menu_commands_are_accepted_by_the_native_media_engine() {
     assert_eq!(result["errors"], json!([]), "{result}\n{log}");
     assert!(status.success(), "{result}\n{log}");
 }
+

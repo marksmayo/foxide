@@ -21,7 +21,7 @@
       "name": "Gapless audio playback",
       "group": "Audio",
       "stage": "in_progress",
-      "acceptance": "Natural end-of-file events advance to the next queued item through the existing playback action path; state tests cover queue advance and final-item completion, and renderer tests distinguish natural EOF from stop/error events. Tracks are not preloaded yet, so gap-free transitions are not claimed. Preloading and audio-loopback evidence remain required before acceptance; no feature medal is claimed."
+      "acceptance": "Natural end-of-file advances the engine's preloaded playlist for bounded queues of up to 256 local audio files; manual previous/next uses the same engine playlist, and engine track changes sync the visible selection. Other queues retain replace-load behavior. State and renderer tests cover queue advance, selection sync, final-item completion, and natural EOF versus stop/error events. Gap-free transitions still require real audio-loopback evidence; no feature medal is claimed."
     },
     {
       "id": "disc",
@@ -356,3 +356,4 @@
     "windows": "https://github.com/marksmayo/foxide/actions/runs/43972156451/job/133666802683"
   }
 }
+
