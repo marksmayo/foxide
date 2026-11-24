@@ -42,6 +42,8 @@ jobs:
           ffmpeg -v error -f lavfi -i testsrc2=size=128x72:rate=30:duration=10 -f lavfi -i sine=frequency=440:duration=10 -metadata title="Foxide system media fixture" -metadata artist="Foxide CI" -metadata album="System media controls" -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest "$FOXIDE_CONTROL_FIXTURE"
           cp "$FOXIDE_CONTROL_FIXTURE" "$FOXIDE_SYSTEM_MEDIA_FIXTURE"
       - name: Generate a playable DVD video ISO
+        env:
+          VIDEO_FORMAT: NTSC
         run: |
           mkdir -p "$FOXIDE_DVD_ROOT"
           ffmpeg -hide_banner -v error -f lavfi -i testsrc2=size=720x480:rate=25:duration=4 -f lavfi -i sine=frequency=440:duration=4 -target ntsc-dvd -aspect 4:3 -c:v mpeg2video -b:v 2500k -c:a ac3 -b:a 192k -shortest -f dvd "$FOXIDE_DVD_VOB"
