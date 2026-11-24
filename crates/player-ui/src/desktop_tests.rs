@@ -1356,4 +1356,3 @@ fn online_intro_marker_requires_matching_episode_identity_and_playback_range() {
     no_identity.imdb_id.clear();
     assert!(introdb_identity(&no_identity).is_none());
 }
-
