@@ -269,4 +269,3 @@ mod tests {
         assert!(segment.submission_count.is_some_and(|value| value > 0));
     }
 }
-}
