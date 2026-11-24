@@ -479,6 +479,10 @@ pub struct Snapshot {
     pub title: String,
     pub artist: String,
     pub album: String,
+    /// Explicit embedded episode identifiers; never inferred from local paths.
+    pub imdb_id: String,
+    pub season: String,
+    pub episode: String,
     pub loaded: bool,
     pub paused: bool,
     pub position: f64,
@@ -708,6 +712,9 @@ impl Engine {
                         title: client.get(c"media-title"),
                         artist: client.get(c"metadata/by-key/artist"),
                         album: client.get(c"metadata/by-key/album"),
+                        imdb_id: metadata_tag(&client, "imdb_id"),
+                        season: metadata_tag(&client, "season"),
+                        episode: metadata_tag(&client, "episode"),
                         paused: client.get(c"pause") == "yes",
                         position: client.number(c"time-pos"),
                         duration: client.number(c"duration"),
@@ -789,6 +796,14 @@ impl Engine {
         self.snapshot.try_lock().ok().map(|s| s.clone())
     }
 }
+
+fn metadata_tag(client: &Api, key: &str) -> String {
+    let value = client.dynamic(&format!("metadata/by-key/{key}"));
+    if !value.is_empty() {
+        return value;
+    }
+    client.dynamic(&format!("metadata/by-key/{}", key.to_ascii_uppercase()))
+}
 impl Drop for Engine {
     fn drop(&mut self) {
         self.stop.store(true, Ordering::Release);
@@ -857,16 +872,25 @@ mod snapshot_allocation_tests {
             if !snapshot.error.is_empty() {
                 panic!("libmpv failed to load metadata fixture: {}", snapshot.error);
             }
-            if snapshot.loaded && !snapshot.artist.is_empty() && !snapshot.album.is_empty() {
+            if snapshot.loaded
+                && !snapshot.artist.is_empty()
+                && !snapshot.album.is_empty()
+                && !snapshot.imdb_id.is_empty()
+                && !snapshot.season.is_empty()
+                && !snapshot.episode.is_empty()
+            {
                 assert_eq!(snapshot.title, "Foxide system media fixture");
                 assert_eq!(snapshot.artist, "Foxide CI");
                 assert_eq!(snapshot.album, "System media controls");
+                assert_eq!(snapshot.imdb_id, "tt0903747");
+                assert_eq!(snapshot.season, "1");
+                assert_eq!(snapshot.episode, "2");
                 engine.command(vec!["stop".into()]).unwrap();
                 return;
             }
             thread::sleep(Duration::from_millis(50));
         }
-        panic!("libmpv snapshot did not expose embedded title, artist, and album metadata");
+        panic!("libmpv snapshot did not expose embedded track and episode identity metadata");
     }
 
     #[test]
@@ -938,3 +962,4 @@ mod video_site_tests;
 #[cfg(all(test, feature = "live-service-integration"))]
 #[path = "native_live.rs"]
 mod live_services;
+

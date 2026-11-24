@@ -97,6 +97,32 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
     )))
     .unwrap();
     let ui = PlayerWindow::new().unwrap();
+    let mut previous = Snapshot::default();
+    let generation = Cell::new(0);
+    let state = Rc::new(RefCell::new(UiState::default()));
+    let path = player_core::external_path(PathBuf::from("episode.mkv"))
+        .to_string_lossy()
+        .into_owned();
+    state
+        .borrow_mut()
+        .playlist
+        .push(PathBuf::from("episode.mkv"));
+    let episode = Snapshot {
+        loaded: true,
+        path,
+        duration: 120.0,
+        imdb_id: "tt0903747".into(),
+        season: "1".into(),
+        episode: "2".into(),
+        ..Snapshot::default()
+    };
+    refresh(&ui, &state, &generation, &episode, &mut previous);
+    assert!(ui.get_introdb_available());
+    assert_eq!(ui.get_current_imdb_id(), "tt0903747");
+    assert_eq!(ui.get_current_season(), 1);
+    assert_eq!(ui.get_current_episode(), 2);
+    assert_eq!(ui.get_media_generation(), 1);
+
     let thumbnails = player_render::ThumbnailController::new();
     let video = Snapshot {
         loaded: true,
@@ -1292,3 +1318,42 @@ fn intro_skip_requires_a_marked_current_chapter_and_a_safe_next_boundary() {
     ordinary.loaded = false;
     assert_eq!(intro_skip_target(&ordinary), None);
 }
+
+#[test]
+fn online_intro_marker_requires_matching_episode_identity_and_playback_range() {
+    let snapshot = Snapshot {
+        loaded: true,
+        position: 20.0,
+        duration: 120.0,
+        imdb_id: "tt0903747".into(),
+        season: "1".into(),
+        episode: "2".into(),
+        ..Snapshot::default()
+    };
+    let identity = introdb_identity(&snapshot).unwrap();
+    assert_eq!(identity.imdb_id(), "tt0903747");
+    assert_eq!(identity.season(), 1);
+    assert_eq!(identity.episode(), 2);
+    assert_eq!(
+        online_intro_skip_target(&snapshot, "tt0903747", 1, 2, 2.5, 58.0),
+        Some(58.0)
+    );
+    assert_eq!(
+        online_intro_skip_target(&snapshot, "tt0903747", 1, 3, 2.5, 58.0),
+        None
+    );
+    assert_eq!(
+        online_intro_skip_target(&snapshot, "tt0903747", 1, 2, 2.5, 130.0),
+        None
+    );
+    let mut outside = snapshot.clone();
+    outside.position = 59.0;
+    assert_eq!(
+        online_intro_skip_target(&outside, "tt0903747", 1, 2, 2.5, 58.0),
+        None
+    );
+    let mut no_identity = snapshot;
+    no_identity.imdb_id.clear();
+    assert!(introdb_identity(&no_identity).is_none());
+}
+
