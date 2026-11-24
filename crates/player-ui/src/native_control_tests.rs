@@ -96,16 +96,22 @@ fn desktop_menu_commands_are_accepted_by_the_native_media_engine() {
     }
     let fixture = PathBuf::from(fixture).to_string_lossy().into_owned();
     requests.push(json!({
-        "name": "append-audio-queue-entry",
+        "name": "append-queue-entry",
         "command": ["loadfile", fixture.clone(), "append"],
-        "property": "",
-        "expected": null
+        "property": "playlist-count",
+        "expected": 2
     }));
     requests.push(json!({
         "name": "select-preloaded-queue-entry",
         "command": ["playlist-play-index", "1"],
-        "property": "",
-        "expected": null
+        "property": "playlist-pos",
+        "expected": 1
+    }));
+    requests.push(json!({
+        "name": "stop-preserves-preloaded-queue",
+        "command": ["stop", "keep-playlist"],
+        "property": "playlist-count",
+        "expected": 2
     }));
     let requests_path = probe.directory.join("requests.json");
     let output_path = probe.directory.join("result.json");
