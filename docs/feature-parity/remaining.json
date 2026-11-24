@@ -336,7 +336,7 @@
       "name": "Skip detected episode intros",
       "group": "Playback",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #29 at 84241db: bounded chapter-title seeking plus an explicit, asynchronous IntroDB lookup using embedded IMDb ID, season, and episode tags only. Provider validation, response limits, stale-result handling, and seek-boundary tests pass; all seven current-head CI checks passed. A real IntroDB response and user-visible desktop playback remain unverified. Do not close the gap or claim a medal yet."
+      "acceptance": "Implementation and tests are in draft PR #29 at 97d8610. Bounded chapter-title seeking and asynchronous IntroDB lookup validate explicit IMDb/season/episode tags, response identity, response size, segment boundaries, confidence, cancellation, stale results, and seek bounds. Added one ignored live test using CurlClient for the API's documented tt0903747 S1E1 record, and wired it into the native playback workflow for a single anonymous read; rustfmt passes. Hosted CI is pending, so real provider data is not yet confirmed. Physical desktop playback and skip-button behavior remain pending; do not close the gap or claim a medal."
     },
     {
       "id": "audio_visualization",
