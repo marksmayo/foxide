@@ -145,12 +145,20 @@ fn dispatch(
     action: Action,
 ) {
     let queue_changed = matches!(action, Action::Open(_));
+    let natural_end = matches!(action, Action::EndOfFile);
     let mut state = state.borrow_mut();
+    let has_next = natural_end && state.selected + 1 < state.playlist.len();
     let effects = state.dispatch(action);
     if queue_changed {
         ui.set_queue_filter("".into());
         update_queue(ui, &state);
         ui.set_status("Opening media…".into());
+    } else if natural_end {
+        ui.set_status(if has_next {
+            "Moving to next item…".into()
+        } else {
+            "Playback finished".into()
+        });
     }
     ui.set_selected_row(state.selected as i32);
     ui.set_queue_visible(state.playlist_visible);
@@ -1497,6 +1505,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     if snapshot.path != previous.borrow().path {
                         thumbnails.clear();
                         ui.set_thumbnail_available(false);
+                    }
+                    let natural_end = snapshot.ended && !previous.borrow().ended;
+                    if natural_end {
+                        dispatch(&ui, &controller, &media_engine, Action::EndOfFile);
                     }
                     refresh(
                         &ui,

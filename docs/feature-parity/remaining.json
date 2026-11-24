@@ -20,8 +20,8 @@
       "id": "gapless",
       "name": "Gapless audio playback",
       "group": "Audio",
-      "stage": "queued",
-      "acceptance": "Needs queued/preloaded tracks and audio-loopback evidence of gap-free transitions."
+      "stage": "in_progress",
+      "acceptance": "Natural end-of-file events advance to the next queued item through the existing playback action path; state tests cover queue advance and final-item completion, and renderer tests distinguish natural EOF from stop/error events. Tracks are not preloaded yet, so gap-free transitions are not claimed. Preloading and audio-loopback evidence remain required before acceptance; no feature medal is claimed."
     },
     {
       "id": "disc",
@@ -97,8 +97,8 @@
       "id": "system_media_controls",
       "name": "System media-control integration",
       "group": "Interface",
-        "stage": "in_progress",
-        "acceptance": "A shared playwire adapter connects Windows SMTC, macOS Now Playing, and Linux MPRIS. The OS media session attaches as soon as the desktop engine is ready, including before a track loads; transient window readiness retries are rate-limited. Play/pause, previous/next, seek, title/artist/album, playback state, and transport capabilities use the player action path. Unit tests cover event routing, idle attachment retry policy, metadata publication, track identity, and seek behavior. A native libmpv metadata check is configured in CI but has not yet passed. Platform session interaction and user-visible behavior remain unverified; do not count this gap as closed until that evidence is recorded."
+      "stage": "in_progress",
+      "acceptance": "A shared playwire adapter connects Windows SMTC, macOS Now Playing, and Linux MPRIS. The OS media session attaches as soon as the desktop engine is ready, including before a track loads; transient window readiness retries are rate-limited. Play/pause, previous/next, seek, title/artist/album, playback state, and transport capabilities use the player action path. Unit tests cover event routing, idle attachment retry policy, metadata publication, track identity, and seek behavior. A native libmpv metadata check is configured in CI but has not yet passed. Platform session interaction and user-visible behavior remain unverified; do not count this gap as closed until that evidence is recorded."
     },
     {
       "id": "compact_music_view",
@@ -189,7 +189,8 @@
       "name": "360-degree panoramic video",
       "group": "Picture",
       "stage": "in_progress",
-      "acceptance": "The Video menu converts equirectangular 360-degree sources to a bounded 1280x720 flat perspective view with front, left, right, rear, up and down presets. Switching presets replaces Foxide's labeled v360 filter; Off removes only that filter. Pointer drag and scroll update yaw/pitch through runtime commands, with tests for incremental movement, yaw wrapping, pitch bounds, and preserved seek/volume behavior when panorama mode is off. FFmpeg smoke checks process each preset. Real panoramic samples and physical visual/presentation acceptance remain pending; no feature medal is claimed."    },
+      "acceptance": "The Video menu converts equirectangular 360-degree sources to a bounded 1280x720 flat perspective view with front, left, right, rear, up and down presets. Switching presets replaces Foxide's labeled v360 filter; Off removes only that filter. Pointer drag and scroll update yaw/pitch through runtime commands, with tests for incremental movement, yaw wrapping, pitch bounds, and preserved seek/volume behavior when panorama mode is off. FFmpeg smoke checks process each preset. Real panoramic samples and physical visual/presentation acceptance remain pending; no feature medal is claimed."
+    },
     {
       "id": "stereo_3d",
       "name": "Stereoscopic 3D video",

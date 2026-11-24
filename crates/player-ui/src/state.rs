@@ -19,6 +19,7 @@ pub enum Action {
     ToggleFullscreen,
     Stop,
     Quit,
+    EndOfFile,
     Playback(PlaybackControl),
 }
 
@@ -298,6 +299,15 @@ impl UiState {
                 self.paused = false;
                 vec![Effect::Stop]
             }
+            Action::EndOfFile if self.loaded => {
+                if self.selected + 1 < self.playlist.len() {
+                    self.select(self.selected + 1)
+                } else {
+                    self.loaded = false;
+                    self.paused = false;
+                    Vec::new()
+                }
+            }
             Action::Quit => vec![Effect::Quit],
             Action::Playback(
                 control @ (PlaybackControl::Panorama360(_)
@@ -375,6 +385,7 @@ impl UiState {
 #[cfg(test)]
 mod tests {
     use super::{Action, Effect, UiState};
+    use std::path::PathBuf;
 
     #[test]
     fn stereo_3d_control_adds_a_labeled_output_filter_without_replacing_user_filters() {
@@ -554,5 +565,24 @@ mod tests {
 
         state.loaded = false;
         assert!(state.dispatch(Action::SetPaused(false)).is_empty());
+    }
+    #[test]
+    fn natural_end_of_track_loads_the_next_queued_item_and_unloads_at_queue_end() {
+        let mut state = UiState::default();
+        let first = PathBuf::from("first.wav");
+        let second = PathBuf::from("second.wav");
+        state.dispatch(Action::Open(vec![first, second.clone()]));
+        state.confirm_loaded(1.0);
+
+        assert_eq!(
+            state.dispatch(Action::EndOfFile),
+            vec![Effect::Load(second)]
+        );
+        assert_eq!(state.selected, 1);
+        assert!(!state.loaded);
+
+        state.confirm_loaded(1.0);
+        assert!(state.dispatch(Action::EndOfFile).is_empty());
+        assert!(!state.loaded);
     }
 }

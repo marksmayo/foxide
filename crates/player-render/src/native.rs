@@ -446,6 +446,10 @@ fn renderer_warning(prefix: &str, level: c_int, text: &str) -> Option<String> {
     ))
 }
 
+fn ended_naturally(reason: i32) -> bool {
+    reason == 0
+}
+
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Track {
     pub id: u32,
@@ -462,6 +466,8 @@ pub struct Snapshot {
     pub artist: String,
     pub album: String,
     pub loaded: bool,
+    /// True only after the current file ends naturally; reset by each loadfile command.
+    pub ended: bool,
     pub paused: bool,
     pub position: f64,
     pub duration: f64,
@@ -533,6 +539,7 @@ impl Engine {
                 let mut last_path = String::new();
                 let mut requested_path: Arc<str> = Arc::from("");
                 let mut file_loaded = false;
+                let mut ended = false;
                 let mut tracks: Arc<[Track]> = Arc::from([]);
                 let mut has_artwork = false;
                 let mut error = String::new();
@@ -555,6 +562,7 @@ impl Engine {
                             let loading = args.first().is_some_and(|s| s == "loadfile");
                             if loading {
                                 file_loaded = false;
+                                ended = false;
                                 requested_path = args
                                     .get(1)
                                     .map_or_else(|| Arc::from(""), |path| Arc::from(path.as_str()));
@@ -623,6 +631,9 @@ impl Engine {
                             }
                             if (*event).kind == 7 && !(*event).data.is_null() {
                                 let end = &*((*event).data.cast::<End>());
+                                if ended_naturally(end.reason) {
+                                    ended = true;
+                                }
                                 if end.reason == 4 {
                                     error = format!(
                                         "Unable to play this media (engine error {})",
@@ -673,6 +684,7 @@ impl Engine {
                             && !path.is_empty()
                             && client.get(c"idle-active") == "no"
                             && error.is_empty(),
+                        ended,
                         path,
                         requested_path: requested_path.clone(),
                         title: client.get(c"media-title"),
@@ -766,6 +778,14 @@ impl Drop for Engine {
 #[cfg(test)]
 mod snapshot_allocation_tests {
     use super::*;
+    #[test]
+    fn only_natural_end_of_file_events_trigger_queue_advance() {
+        assert!(ended_naturally(0));
+        for reason in [1, 2, 3, 4, 5, -1] {
+            assert!(!ended_naturally(reason));
+        }
+    }
+
     #[test]
     fn renderer_warnings_include_render_api_prefixes_and_are_bounded() {
         assert_eq!(
