@@ -21,7 +21,7 @@
       "name": "Gapless audio playback",
       "group": "Audio",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #26 at d05682d. Playlist navigation, automatic advancement, Stop queue retention, native PCM capture, and hosted virtual loopback are covered by tests; hosted loopback measured 0 ms longest internal silence across the 440 Hz→880 Hz transition. A queue-sharing optimization is covered by a new state test; the Windows desktop compile and player-ui test suite pass locally. Current-head CI and CodSpeed are running. Physical listening across multiple track boundaries and Previous/Next remains pending; do not close this gap or claim a medal yet."
+      "acceptance": "Implementation is in draft PR #26 at d05682d. Playlist navigation, automatic advancement, Stop queue retention, native PCM capture, and hosted virtual loopback are covered by tests; hosted loopback measured 0 ms longest internal silence across the 440 Hz→880 Hz transition. A queue-sharing optimization is covered by a new state test; the Windows desktop compile and player-ui test suite pass locally. Current-head Windows release packaging passed; Code checks, Desktop UI, Native playback controls, native helper acceptance, and CodSpeed are queued. Physical listening across multiple track boundaries and Previous/Next remains pending; do not close this gap or claim a medal yet."
     },
     {
       "id": "disc",
@@ -182,7 +182,7 @@
       "name": "HD audio bitstream passthrough",
       "group": "Audio",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #27 at 48937d3: an explicit session-only desktop passthrough control requests AC3, EAC3, DTS, DTS-HD, and TrueHD plus exclusive output, with a control to disable it. State tests pass; current-head Video compositor and Windows release packaging checks passed, and the other five checks are queued or in progress. These checks do not verify bitstream output; a compatible physical receiver/route must identify each claimed format with audible output, and decoded output must still work when passthrough is disabled. Do not close the gap or claim a medal yet."
+      "acceptance": "Implementation is in draft PR #27 at 48937d3: an explicit session-only desktop passthrough control requests AC3, EAC3, DTS, DTS-HD, and TrueHD plus exclusive output, with a control to disable it. State tests pass; current-head Video compositor and Windows release packaging checks passed, Native playback controls passed, and CodSpeed reported a 13.95% aggregate improvement. Code checks, Desktop UI, and Native video-site helper acceptance remain queued. These checks do not verify bitstream output; a compatible physical receiver/route must identify each claimed format with audible output, and decoded output must still work when passthrough is disabled. Do not close the gap or claim a medal yet."
     },
     {
       "id": "video_360",
@@ -343,7 +343,7 @@
       "name": "Music visualization display",
       "group": "Audio",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #28 at 8f3c7cf: an audio-only waveform graph uses libmpv lavfi-complex while preserving normal audio output, and clears/rebinds on disable, stop, or track change. Current-head Native playback controls run 45390507005 passed the generated audio playback and Slint compositor test, measuring 6,100 green pixels, 70 distinct frames (24.72/s), a 43 ms maximum frame gap, and 33,812 KiB sampled RSS growth; the test passed the 20 Hz, 250 ms, and 64 MiB short-run CI guards. This is software-renderer evidence, not physical display/audio acceptance or a sustained-resource guarantee. The 90% renderer coverage gate and CodSpeed on this head are still pending; prior-head coverage results do not apply to it. Physical visual movement, audible output, and track/stop behavior remain pending; do not close the gap or claim a medal."
+      "acceptance": "Implementation is in draft PR #28 at 8f3c7cf. Current-head Native playback controls, Windows release packaging, and Native video-site helper acceptance passed. The compositor smoke test verified 6,100 green pixels across 70 frames (24.72 fps), 43 ms maximum frame gap, and 33,812 KiB sampled RSS growth, within the CI limits. Code checks, CodSpeed, Desktop UI, and Video compositor regression remain queued. The short hosted run is not physical visual/audio acceptance; manual real-media preview and audio checks remain pending, so do not close the gap or claim a medal."
     }
   ],
   "baseline_gap_count": 49,
