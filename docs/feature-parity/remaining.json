@@ -14,21 +14,21 @@
       "name": "Native picture in picture",
       "group": "Interface",
       "stage": "in_progress",
-      "acceptance": "Implementation merged in PR #22: the View action opens a compact always-on-top window while playback continues, with Play/Pause, Return and Close controls; returning restores the previous size, position and window modes. UI and window-state tests plus hosted desktop, compositor, release-package and CodSpeed checks passed. Manual OS-specific focus, window lifecycle and multi-display behavior remain unverified; do not count this gap as closed yet."
+      "acceptance": "Implementation merged in PR #22: the View action opens a compact always-on-top window while playback continues, with Play/Pause, Return and Close controls; returning restores the prior size, position and window modes. UI and window-state tests plus hosted desktop, compositor, release-package and CodSpeed checks passed. Manual OS-specific focus, window lifecycle and multi-display behavior remain unverified; do not count this gap as closed yet."
     },
     {
       "id": "gapless",
       "name": "Gapless audio playback",
       "group": "Audio",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #26 at d05682d. Playlist navigation, automatic advancement, Stop queue retention, native PCM capture, and hosted virtual loopback are covered by tests; hosted loopback measured 0 ms longest internal silence across the 440 Hz→880 Hz transition. A queue-sharing optimization is covered by a new state test; the Windows desktop compile and player-ui test suite pass locally. Current-head Windows release packaging passed; Code checks, Desktop UI, Native playback controls, native helper acceptance, and CodSpeed are queued. Physical listening across multiple track boundaries and Previous/Next remains pending; do not close this gap or claim a medal yet."
+      "acceptance": "Implementation is in draft PR #26 at 712b4cf: queued playlists, automatic advancement, queue retention on Stop, native PCM capture, and hosted virtual PulseAudio loopback are covered; loopback measured 0 ms longest internal silence across the 440 Hz→880 Hz transition. Current-head native playback controls, compositor, and Windows packaging passed. Linux/Windows code checks and Desktop UI passed; macOS portions of code checks, Desktop UI, and native-helper acceptance were queued at the last check. CodSpeed currently reports 3.1% aggregate degradation and flags cross-hardware comparisons. Physical listening across several track boundaries and Previous/Next remains pending; do not close this gap or claim a medal."
     },
     {
       "id": "disc",
       "name": "DVD / Blu-ray structure playback",
       "group": "Playback",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #31 at d331ad8: DVD/Blu-ray folder and ISO selection, structure/signature validation, disc-menu navigation actions, and resetting disc state for ordinary media. Desktop state/callback tests pass, and a generated NTSC DVD ISO loaded through libmpv and advanced through a title; all seven current-head CI checks passed. Packaged release playback, Blu-ray media, physical drives, and packaging/licensing review remain pending. Do not count this gap as closed or claim a medal yet."
+      "acceptance": "Implementation is in draft PR #31 at d331ad8: DVD/Blu-ray folder and ISO selection, structure/signature validation, disc-menu navigation actions, and resetting disc state for ordinary media. Desktop state/callback tests pass, a generated NTSC DVD ISO loaded through libmpv and advanced through a title, and all seven current-head CI checks passed. Packaged release playback, Blu-ray media, physical drives, and packaging/licensing review remain pending. Do not count this gap as closed or claim a medal yet."
     },
     {
       "id": "chromecast_output",
@@ -98,7 +98,7 @@
       "name": "System media-control integration",
       "group": "Interface",
       "stage": "in_progress",
-      "acceptance": "A shared playwire adapter connects Windows SMTC, macOS Now Playing, and Linux MPRIS. The OS media session attaches as soon as the desktop engine is ready, including before a track loads; transient window readiness retries are rate-limited. Play/pause, previous/next, seek, title/artist/album, playback state, and transport capabilities use the player action path. Unit tests cover event routing, idle attachment retry policy, metadata publication, track identity, and seek behavior. The native libmpv metadata check passed in the hosted Native playback controls run (https://github.com/marksmayo/foxide/actions/runs/45297858782). Platform session interaction and user-visible behavior remain unverified; do not count this gap as closed until that evidence is recorded."
+      "acceptance": "A shared playwire adapter connects Windows SMTC, macOS Now Playing, and Linux MPRIS. The OS media session attaches as soon as the desktop engine is ready, including before a track loads; transient window readiness retries are rate-limited. Play/pause, previous/next, seek, title/artist/album, playback state, and transport capabilities use the player action path. Unit tests cover event routing, idle attachment retry policy, metadata publication, track identity, and seek behavior. The native libmpv metadata check passed in hosted Native playback controls run 45297858782. Platform session interaction and user-visible behavior remain unverified; do not count this gap as closed until that evidence is recorded."
     },
     {
       "id": "compact_music_view",
@@ -182,7 +182,7 @@
       "name": "HD audio bitstream passthrough",
       "group": "Audio",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #27 at 48937d3: an explicit session-only desktop passthrough control requests AC3, EAC3, DTS, DTS-HD, and TrueHD plus exclusive output, with a control to disable it. State tests pass; current-head Video compositor and Windows release packaging checks passed, Native playback controls passed, and CodSpeed reported a 13.95% aggregate improvement. Code checks, Desktop UI, and Native video-site helper acceptance remain queued. These checks do not verify bitstream output; a compatible physical receiver/route must identify each claimed format with audible output, and decoded output must still work when passthrough is disabled. Do not close the gap or claim a medal yet."
+      "acceptance": "Implementation is in draft PR #27 at c1869a2: an explicit session-only desktop passthrough control requests AC3, EAC3, DTS, DTS-HD, and TrueHD plus exclusive output, with a control to disable it. State tests, native playback controls, and Windows release packaging passed. The current compositor and CodSpeed checks are in progress; other checks are queued. A prior CodSpeed report on 48937d3 showed a 13.95% aggregate improvement, not a current-head measurement. These checks do not verify bitstream output; a compatible physical receiver/route must identify each claimed format with audible output, and decoded output must still work when passthrough is disabled. Do not close the gap or claim a medal yet."
     },
     {
       "id": "video_360",
@@ -223,8 +223,8 @@
       "id": "audio_transcode",
       "name": "Audio conversion or transcoding",
       "group": "Editing",
-      "stage": "queued",
-      "acceptance": "Needs an export codec/profile API and safe output-file handling."
+      "stage": "in_progress",
+      "acceptance": "Implementation is in draft PR #35 at c65d968: local-file export to WAV PCM16 or FLAC through libmpv, with source/extension validation, temporary output and no-clobber publish while playback remains independent. Native export acceptance passed on an earlier head; the current export acceptance and other hosted checks are queued or in progress. Current-head CodSpeed completed and reports no performance change. Desktop session acceptance remains pending; do not close this gap or claim a medal yet."
     },
     {
       "id": "cd_rip",
@@ -287,7 +287,7 @@
       "name": "Game controller UI navigation",
       "group": "Interface",
       "stage": "in_progress",
-      "acceptance": "The desktop polls standardized gilrs gamepad events and maps D-pad left/up and right/down to backward/forward focus traversal, South to activate, East/Select to back, Start to play/pause, and the left/right shoulders to previous/next. Connection and disconnection events are surfaced in the player status. Automated mapping tests pass; physical-controller hot-plug and focus-order acceptance remain pending, so no feature medal is claimed."
+      "acceptance": "The desktop polls standardized gilrs gamepad events and maps D-pad left/up and right/down to backward/forward focus traversal, South to activate, East/Select to back, Start to play/pause, and the left/right shoulders to previous/next. Connection and disconnection events are surfaced in the player status. Automated mapping tests and hosted platform checks pass; physical-controller hot-plug and focus-order acceptance remain pending, so no feature medal is claimed."
     },
     {
       "id": "webdav_browse",
@@ -343,7 +343,7 @@
       "name": "Music visualization display",
       "group": "Audio",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #28 at 8f3c7cf. Current-head Native playback controls, Windows release packaging, and Native video-site helper acceptance passed. The compositor smoke test verified 6,100 green pixels across 70 frames (24.72 fps), 43 ms maximum frame gap, and 33,812 KiB sampled RSS growth, within the CI limits. Code checks, CodSpeed, Desktop UI, and Video compositor regression remain queued. The short hosted run is not physical visual/audio acceptance; manual real-media preview and audio checks remain pending, so do not close the gap or claim a medal."
+      "acceptance": "Implementation is in draft PR #28 at eb73407. The current compositor run passed. The previous CodSpeed report on dfc50a1 measured an 11.23% aggregate degradation (35 regressed, 5 improved); it followed an #[inline] experiment that has since been removed. The new CodSpeed result and remaining code, Desktop UI, native playback-controls, helper, and packaging checks are pending or queued. Physical visual/audible acceptance remains pending; do not close the gap or claim a medal."
     }
   ],
   "baseline_gap_count": 49,
