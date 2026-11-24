@@ -186,31 +186,16 @@ impl UiState {
     pub fn dispatch(&mut self, action: Action) -> Vec<Effect> {
         match action {
             Action::Open(files) => {
-                if !self.audio_visualization {
-                    self.playlist = files;
-                    self.selected = 0;
-                    self.loaded = false;
-                    return self
-                        .playlist
-                        .first()
-                        .cloned()
-                        .map(Effect::Load)
-                        .into_iter()
-                        .collect();
-                }
                 self.audio_visualization = false;
                 self.playlist = files;
                 self.selected = 0;
                 self.loaded = false;
-                let mut effects = vec![Effect::Engine(vec![
-                    "set".into(),
-                    "lavfi-complex".into(),
-                    String::new(),
-                ])];
-                if let Some(path) = self.playlist.first().cloned() {
-                    effects.push(Effect::Load(path));
-                }
-                effects
+                self.playlist
+                    .first()
+                    .cloned()
+                    .map(Effect::Load)
+                    .into_iter()
+                    .collect()
             }
             Action::TogglePause if self.loaded => vec![Effect::Pause(!self.paused)],
             Action::SetPaused(paused) if self.loaded => {
@@ -251,14 +236,8 @@ impl UiState {
             Action::Stop => {
                 self.loaded = false;
                 self.paused = false;
-                if !self.audio_visualization {
-                    return vec![Effect::Stop];
-                }
                 self.audio_visualization = false;
-                vec![
-                    Effect::Engine(vec!["set".into(), "lavfi-complex".into(), String::new()]),
-                    Effect::Stop,
-                ]
+                vec![Effect::Stop]
             }
             Action::Quit => vec![Effect::Quit],
             Action::Playback(control) if self.loaded => {
@@ -292,18 +271,10 @@ impl UiState {
     }
 
     fn select(&mut self, index: usize) -> Vec<Effect> {
-        if !self.audio_visualization {
-            self.selected = index;
-            self.loaded = false;
-            return vec![Effect::Load(self.playlist[index].clone())];
-        }
         self.audio_visualization = false;
         self.selected = index;
         self.loaded = false;
-        vec![
-            Effect::Engine(vec!["set".into(), "lavfi-complex".into(), String::new()]),
-            Effect::Load(self.playlist[index].clone()),
-        ]
+        vec![Effect::Load(self.playlist[index].clone())]
     }
 }
 
@@ -385,10 +356,7 @@ mod tests {
 
         assert_eq!(
             state.dispatch(Action::Next),
-            [
-                Effect::Engine(vec!["set".into(), "lavfi-complex".into(), "".into()]),
-                Effect::Load("second.flac".into()),
-            ]
+            [Effect::Load("second.flac".into())]
         );
         assert!(!state.audio_visualization);
         assert!(!state.loaded);
