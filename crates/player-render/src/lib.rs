@@ -25,4 +25,3 @@ mod render_contract;
 
 #[cfg(any(feature = "desktop", test))]
 mod dependency_paths;
-
