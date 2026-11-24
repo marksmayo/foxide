@@ -21,7 +21,7 @@
       "name": "Gapless audio playback",
       "group": "Audio",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #26 at 6a55c2b. Queued playlists, automatic advancement, queue retention on Stop, native PCM capture, and hosted virtual PulseAudio loopback are implemented. Current-head Native playback controls run 45502885574 passed; CodSpeed run 45502885558 is in progress. Code checks, Windows packaging, native helper, compositor, and Desktop UI were queued at the latest check. The prior CodSpeed report on 612a312 showed 29 improved, 26 regressed, 224 unchanged, including a 24.53% load_confirmation regression; performance remains unresolved until exact-head CodSpeed completes. Physical multi-track listening and Previous/Next acceptance remain pending; do not close this gap or claim a medal."
+      "acceptance": "Implementation is in draft PR #26 at 6a55c2b. Queued playlists, automatic advancement, queue retention on Stop, native PCM capture, and hosted virtual PulseAudio loopback are implemented. Current-head Native playback controls run 45502885574 passed. CodSpeed run 45502885558 reports 44 improved, 26 regressed, and 209 unchanged; all 70 significant comparisons ran on different hardware, so this result is inconclusive, not a clean performance result. Five optimized-out and two syscall-heavy cases are not useful comparisons. Windows packaging is in progress; Code checks, native helper, compositor, and Desktop UI were queued at the latest check. The prior 612a312 CodSpeed run also reported regressions. Physical multi-track listening and Previous/Next acceptance remain pending; do not close this gap or claim a medal."
     },
     {
       "id": "disc",
