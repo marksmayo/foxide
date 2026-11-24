@@ -22,7 +22,6 @@ pub enum Action {
     ToggleFullscreen,
     Stop,
     Quit,
-    Playback(PlaybackControl),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -86,9 +85,9 @@ impl Default for UiState {
     }
 }
 
-impl Action {
+impl PlaybackControl {
     /// Map only supported desktop controls; no arbitrary engine command input.
-    pub fn control(name: &str, value: f64) -> Option<Self> {
+    pub fn from_ui_action(name: &str, value: f64) -> Option<Self> {
         let control = match name {
             "frame-step" => PlaybackControl::FrameStep(false),
             "frame-back-step" => PlaybackControl::FrameStep(true),
@@ -114,7 +113,7 @@ impl Action {
             }
             _ => return None,
         };
-        Some(Self::Playback(control))
+        Some(control)
     }
 }
 
@@ -267,11 +266,15 @@ impl UiState {
                 vec![Effect::Stop]
             }
             Action::Quit => vec![Effect::Quit],
-            Action::Playback(control) if self.loaded => {
-                control.command().map(Effect::Engine).into_iter().collect()
-            }
             _ => Vec::new(),
         }
+    }
+
+    pub fn dispatch_playback_control(&self, control: PlaybackControl) -> Vec<Effect> {
+        if !self.loaded {
+            return Vec::new();
+        }
+        control.command().map(Effect::Engine).into_iter().collect()
     }
 
     fn select(&mut self, index: usize) -> Vec<Effect> {

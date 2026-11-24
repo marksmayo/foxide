@@ -1,4 +1,4 @@
-use player_ui::{Action, Effect, UiState};
+use player_ui::{Action, Effect, PlaybackControl, UiState};
 
 #[test]
 fn mute_uses_confirmed_state_and_never_assumes_command_success() {
@@ -7,6 +7,21 @@ fn mute_uses_confirmed_state_and_never_assumes_command_success() {
     assert!(!state.muted);
     state.muted = true;
     assert_eq!(state.dispatch(Action::ToggleMute), [Effect::Mute(false)]);
+}
+
+#[test]
+fn optional_renderer_control_dispatches_without_using_the_playback_action_reducer() {
+    let mut state = UiState::default();
+    state.confirm_loaded(10.0);
+
+    assert_eq!(
+        state.dispatch_playback_control(PlaybackControl::Rotation(90)),
+        vec![Effect::Engine(vec![
+            "set".into(),
+            "video-rotate".into(),
+            "90".into(),
+        ])]
+    );
 }
 
 #[test]
@@ -89,18 +104,18 @@ fn queue_navigation_tracks_and_window_commands_share_the_same_dispatch() {
 #[test]
 fn frame_controls_are_available_only_for_loaded_media() {
     let mut state = UiState::default();
-    let step = Action::control("frame-step", 0.0).unwrap();
-    assert!(state.dispatch(step.clone()).is_empty());
+    let step = PlaybackControl::from_ui_action("frame-step", 0.0).unwrap();
+    assert!(state.dispatch_playback_control(step).is_empty());
     state.confirm_loaded(120.0);
     assert_eq!(
-        state.dispatch(step),
+        state.dispatch_playback_control(step),
         [Effect::Engine(vec!["frame-step".into()])]
     );
     assert_eq!(
-        state.dispatch(Action::control("frame-back-step", 0.0).unwrap()),
+        state.dispatch_playback_control(PlaybackControl::from_ui_action("frame-back-step", 0.0).unwrap()),
         [Effect::Engine(vec!["frame-back-step".into()])]
     );
-    assert!(Action::control("unknown", 0.0).is_none());
+    assert!(PlaybackControl::from_ui_action("unknown", 0.0).is_none());
 }
 
 #[test]
@@ -108,7 +123,7 @@ fn secondary_subtitles_select_a_second_track_or_turn_it_off() {
     let mut state = UiState::default();
     state.confirm_loaded(100.0);
     assert_eq!(
-        state.dispatch(Action::control("secondary-subtitle", 2.0).unwrap()),
+        state.dispatch_playback_control(PlaybackControl::from_ui_action("secondary-subtitle", 2.0).unwrap()),
         [Effect::Engine(vec![
             "set".into(),
             "secondary-sid".into(),
@@ -116,7 +131,7 @@ fn secondary_subtitles_select_a_second_track_or_turn_it_off() {
         ])]
     );
     assert_eq!(
-        state.dispatch(Action::control("secondary-subtitle", 0.0).unwrap()),
+        state.dispatch_playback_control(PlaybackControl::from_ui_action("secondary-subtitle", 0.0).unwrap()),
         [Effect::Engine(vec![
             "set".into(),
             "secondary-sid".into(),
@@ -124,7 +139,7 @@ fn secondary_subtitles_select_a_second_track_or_turn_it_off() {
         ])]
     );
     for invalid in [-1.0, 1.5, f64::NAN, f64::INFINITY, u32::MAX as f64 + 1.0] {
-        assert!(Action::control("secondary-subtitle", invalid).is_none());
+        assert!(PlaybackControl::from_ui_action("secondary-subtitle", invalid).is_none());
     }
 }
 
@@ -134,7 +149,7 @@ fn rotation_and_flip_controls_preserve_explicit_opt_in_and_reject_invalid_angles
     state.confirm_loaded(100.0);
     for angle in [0.0, 90.0, 180.0, 270.0] {
         assert_eq!(
-            state.dispatch(Action::control("rotation", angle).unwrap()),
+            state.dispatch_playback_control(PlaybackControl::from_ui_action("rotation", angle).unwrap()),
             [Effect::Engine(vec![
                 "set".into(),
                 "video-rotate".into(),
@@ -143,10 +158,10 @@ fn rotation_and_flip_controls_preserve_explicit_opt_in_and_reject_invalid_angles
         );
     }
     for invalid in [45.0, 360.0, -90.0, f64::NAN] {
-        assert!(Action::control("rotation", invalid).is_none());
+        assert!(PlaybackControl::from_ui_action("rotation", invalid).is_none());
     }
     assert_eq!(
-        state.dispatch(Action::control("flip-vertical", 0.0).unwrap()),
+        state.dispatch_playback_control(PlaybackControl::from_ui_action("flip-vertical", 0.0).unwrap()),
         [Effect::Engine(vec![
             "vf".into(),
             "toggle".into(),
@@ -154,7 +169,7 @@ fn rotation_and_flip_controls_preserve_explicit_opt_in_and_reject_invalid_angles
         ])]
     );
     assert_eq!(
-        state.dispatch(Action::control("flip-horizontal", 0.0).unwrap()),
+        state.dispatch_playback_control(PlaybackControl::from_ui_action("flip-horizontal", 0.0).unwrap()),
         [Effect::Engine(vec![
             "vf".into(),
             "toggle".into(),
@@ -169,7 +184,7 @@ fn replaygain_is_explicit_with_off_track_and_album_modes() {
     state.confirm_loaded(100.0);
     for (value, mode) in [(0.0, "no"), (1.0, "track"), (2.0, "album")] {
         assert_eq!(
-            state.dispatch(Action::control("replaygain", value).unwrap()),
+            state.dispatch_playback_control(PlaybackControl::from_ui_action("replaygain", value).unwrap()),
             [Effect::Engine(vec![
                 "set".into(),
                 "replaygain".into(),
@@ -178,7 +193,7 @@ fn replaygain_is_explicit_with_off_track_and_album_modes() {
         );
     }
     for value in [-1.0, 3.0, 1.5, f64::NAN] {
-        assert!(Action::control("replaygain", value).is_none());
+        assert!(PlaybackControl::from_ui_action("replaygain", value).is_none());
     }
 }
 
@@ -188,7 +203,7 @@ fn debanding_can_be_enabled_and_disabled_without_changing_startup_defaults() {
     state.confirm_loaded(100.0);
     for (value, mode) in [(0.0, "no"), (1.0, "yes")] {
         assert_eq!(
-            state.dispatch(Action::control("deband", value).unwrap()),
+            state.dispatch_playback_control(PlaybackControl::from_ui_action("deband", value).unwrap()),
             [Effect::Engine(vec![
                 "set".into(),
                 "deband".into(),
@@ -196,7 +211,7 @@ fn debanding_can_be_enabled_and_disabled_without_changing_startup_defaults() {
             ])]
         );
     }
-    assert!(Action::control("deband", 0.5).is_none());
+    assert!(PlaybackControl::from_ui_action("deband", 0.5).is_none());
 }
 
 #[test]
@@ -209,7 +224,7 @@ fn equalizer_presets_are_bounded_and_can_be_reset() {
         (2.0, "lavfi=[equalizer=f=3000:t=o:w=2:g=4]"),
     ] {
         assert_eq!(
-            state.dispatch(Action::control("equalizer", value).unwrap()),
+            state.dispatch_playback_control(PlaybackControl::from_ui_action("equalizer", value).unwrap()),
             [Effect::Engine(vec![
                 "af".into(),
                 "set".into(),
@@ -218,7 +233,7 @@ fn equalizer_presets_are_bounded_and_can_be_reset() {
         );
     }
     for value in [-1.0, 3.0, 1.5, f64::NAN] {
-        assert!(Action::control("equalizer", value).is_none());
+        assert!(PlaybackControl::from_ui_action("equalizer", value).is_none());
     }
 }
 
