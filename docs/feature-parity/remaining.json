@@ -21,7 +21,7 @@
       "name": "Gapless audio playback",
       "group": "Audio",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #26 at 712b4cf: queued playlists, automatic advancement, queue retention on Stop, native PCM capture, and hosted virtual PulseAudio loopback are covered; loopback measured 0 ms longest internal silence across the 440 Hz→880 Hz transition. Current-head native playback controls, compositor, and Windows packaging passed. Linux/Windows code checks and Desktop UI passed; macOS portions of code checks, Desktop UI, and native-helper acceptance were queued at the last check. CodSpeed currently reports 3.1% aggregate degradation and flags cross-hardware comparisons. Physical listening across several track boundaries and Previous/Next remains pending; do not close this gap or claim a medal."
+      "acceptance": "Implementation is in draft PR #26 at 612a312: queued playlists, automatic advancement, queue retention on Stop, native PCM capture, and hosted virtual PulseAudio loopback are covered; loopback measured 0 ms longest internal silence across the 440 Hz→880 Hz transition. A CodSpeed rerun on 712b4cf reproduced a 3.1% aggregate degradation. The suspected hot-dispatch arm for snapshot-only playlist-position updates was removed in 612a312, with an explicit state-sync method and valid/invalid-index regression assertions. Current-head Code checks, Desktop UI, native controls, compositor, packaging, helper, and CodSpeed are queued or pending. Physical listening across several track boundaries and Previous/Next remains pending; do not close this gap or claim a medal."
     },
     {
       "id": "disc",
