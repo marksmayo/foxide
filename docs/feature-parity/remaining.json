@@ -343,7 +343,7 @@
       "name": "Music visualization display",
       "group": "Audio",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #28 at af93206. Current-head rustfmt failure was traced to one multiline Effect::Engine vec expression in main.rs; fixed in af93206, and local rustfmt checks pass for state.rs, main.rs, and desktop_tests.rs. Hosted checks and CodSpeed for this head are pending. Last measured CodSpeed result remains 10.32% predicted degradation on two Next dispatch cases; no improvement is claimed until the fresh report is available. Physical visual/audible acceptance remains pending; do not close the gap or claim a medal."
+      "acceptance": "Implementation is in draft PR #28 at af93206. The current-head formatter failure was fixed and local rustfmt checks pass. Desktop UI passed on Windows/Linux, Native playback controls passed, and the current hosted Code checks, release package, Video compositor, native helper, and CodSpeed runs are still running or queued. Latest completed CodSpeed on behavior-identical 46c542b reports 17 improved, 5 regressed, 257 untouched; all five regressions are unloaded SetSpeed dispatch cases at 952 ns base versus 1,118.7 ns head (-14.9%). The report warns that 22 significant changes ran on different hardware, so comparison is inconclusive. Physical visual/audible acceptance remains pending; do not close the gap or claim a medal."
     }
   ],
   "baseline_gap_count": 49,
