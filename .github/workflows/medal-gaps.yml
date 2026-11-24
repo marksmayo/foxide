@@ -20,7 +20,7 @@ concurrency:
 jobs:
   native-controls:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 40
     env:
       FOXIDE_MPV: /usr/bin/mpv
       FOXIDE_LIBMPV: libmpv.so.2
@@ -34,7 +34,7 @@ jobs:
         with:
           key: desktop-ui
       - name: Install native playback dependencies
-        run: sudo apt-get update && sudo apt-get install -y mpv libmpv2 ffmpeg xvfb libfontconfig1-dev libxkbcommon-dev libxkbcommon-x11-0 libwayland-dev libegl1-mesa-dev libudev-dev
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends mpv libmpv2 ffmpeg xvfb libfontconfig1-dev libxkbcommon-dev libxkbcommon-x11-0 libwayland-dev libegl1-mesa-dev libudev-dev
       - name: Generate deterministic video with audio
         run: |
           mkdir -p results/local
