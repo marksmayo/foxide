@@ -195,8 +195,8 @@
       "id": "stereo_3d",
       "name": "Stereoscopic 3D video",
       "group": "Picture",
-      "stage": "queued",
-      "acceptance": "Needs stereoscopic output controls and display-format acceptance."
+      "stage": "in_progress",
+      "acceptance": "The Video menu offers explicit source layout and stereoscopic output conversions using the FFmpeg stereo3d filter, including red/cyan anaglyph, over/under and side-by-side output. A labeled filter lets users replace or clear Foxide's conversion without discarding other video filters. Unit tests cover all exposed mappings and reject invalid modes; FFmpeg smoke checks verify the selected filter graphs process video. Physical display/glasses acceptance and a real stereoscopic sample remain pending; no feature medal is claimed."
     },
     {
       "id": "video_capture",
