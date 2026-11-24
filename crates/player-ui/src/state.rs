@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 pub enum Action {
     Open(Vec<PathBuf>),
     OpenDisc { kind: DiscKind, device: PathBuf },
+    DiscNavigation(DiscNavigationAction),
     Seek(f64),
     TogglePause,
     SetPaused(bool),
@@ -54,6 +55,47 @@ pub enum Effect {
 pub enum DiscKind {
     Dvd,
     BluRay,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DiscNavigationAction {
+    Menu,
+    Popup,
+    Up,
+    Down,
+    Left,
+    Right,
+    Select,
+    Previous,
+}
+
+impl DiscNavigationAction {
+    pub fn from_ui_action(name: &str) -> Option<Self> {
+        Some(match name {
+            "disc-menu" => Self::Menu,
+            "disc-popup" => Self::Popup,
+            "disc-up" => Self::Up,
+            "disc-down" => Self::Down,
+            "disc-left" => Self::Left,
+            "disc-right" => Self::Right,
+            "disc-select" => Self::Select,
+            "disc-back" => Self::Previous,
+            _ => return None,
+        })
+    }
+
+    fn command(self) -> &'static str {
+        match self {
+            Self::Menu => "menu",
+            Self::Popup => "popup",
+            Self::Up => "up",
+            Self::Down => "down",
+            Self::Left => "left",
+            Self::Right => "right",
+            Self::Select => "select",
+            Self::Previous => "prev",
+        }
+    }
 }
 
 impl DiscKind {
@@ -232,8 +274,15 @@ impl UiState {
                         device_option.into(),
                         device.to_string_lossy().into_owned(),
                     ]),
+                    Effect::Engine(vec!["set".into(), "disc-menu".into(), "yes".into()]),
                     Effect::Engine(vec!["loadfile".into(), protocol.into(), "replace".into()]),
                 ]
+            }
+            Action::DiscNavigation(action) if self.loaded => {
+                vec![Effect::Engine(vec![
+                    "discnav".into(),
+                    action.command().into(),
+                ])]
             }
             Action::TogglePause if self.loaded => vec![Effect::Pause(!self.paused)],
             Action::SetPaused(paused) if self.loaded => {
@@ -289,7 +338,7 @@ impl UiState {
 
 #[cfg(test)]
 mod tests {
-    use super::{Action, DiscKind, Effect, UiState};
+    use super::{Action, DiscKind, DiscNavigationAction, Effect, UiState};
     use std::path::PathBuf;
 
     #[test]
@@ -343,6 +392,7 @@ mod tests {
                         option.into(),
                         device.to_string_lossy().into_owned(),
                     ]),
+                    Effect::Engine(vec!["set".into(), "disc-menu".into(), "yes".into()]),
                     Effect::Engine(vec!["loadfile".into(), protocol.into(), "replace".into(),]),
                 ]
             );
@@ -377,5 +427,36 @@ mod tests {
         );
 
         std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn disc_navigation_controls_map_only_to_supported_discnav_commands() {
+        let cases = [
+            (DiscNavigationAction::Menu, "menu", "disc-menu"),
+            (DiscNavigationAction::Popup, "popup", "disc-popup"),
+            (DiscNavigationAction::Up, "up", "disc-up"),
+            (DiscNavigationAction::Down, "down", "disc-down"),
+            (DiscNavigationAction::Left, "left", "disc-left"),
+            (DiscNavigationAction::Right, "right", "disc-right"),
+            (DiscNavigationAction::Select, "select", "disc-select"),
+            (DiscNavigationAction::Previous, "prev", "disc-back"),
+        ];
+
+        let mut state = UiState::default();
+        for (action, command, ui_name) in cases {
+            assert_eq!(DiscNavigationAction::from_ui_action(ui_name), Some(action));
+            state.confirm_loaded(120.0);
+            assert_eq!(
+                state.dispatch(Action::DiscNavigation(action)),
+                vec![Effect::Engine(vec!["discnav".into(), command.into()])]
+            );
+        }
+        state.loaded = false;
+        assert!(
+            state
+                .dispatch(Action::DiscNavigation(DiscNavigationAction::Menu))
+                .is_empty()
+        );
+        assert_eq!(DiscNavigationAction::from_ui_action("disc-exec"), None);
     }
 }

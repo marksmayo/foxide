@@ -28,7 +28,7 @@
       "name": "DVD / Blu-ray structure playback",
       "group": "Playback",
       "stage": "in_progress",
-      "acceptance": "The Media menu exposes DVD-folder and Blu-ray-folder pickers. It rejects folders without VIDEO_TS.IFO or BDMV/index.bdmv, then sets the matching libmpv device option and loads dvd:// or bd://. Red/green state tests cover routing and structure validation; a Slint desktop callback test covers invalid-folder feedback and both picker results. Windows desktop compilation passes. Real disc fixtures, navigation-library availability in release runtimes, ISO handling, packaging/licensing review, and physical-disc playback remain unverified; no feature medal is claimed."
+      "acceptance": "The Media menu exposes DVD-folder and Blu-ray-folder pickers. It rejects folders without VIDEO_TS.IFO or BDMV/index.bdmv, sets the matching libmpv device option, enables disc-menu mode, and loads dvd:// or bd://. The Disc menu maps menu/popup/directional/select/back actions to libmpv discnav commands. Red/green state tests cover routing, navigation commands, and structure validation; a Slint callback test covers invalid-folder feedback, both picker results, and mode reset when opening ordinary media. Windows desktop tests pass. Real disc fixtures, navigation-library availability in release runtimes, ISO handling, packaging/licensing review, and physical-disc playback remain unverified; no feature medal is claimed."
     },
     {
       "id": "chromecast_output",

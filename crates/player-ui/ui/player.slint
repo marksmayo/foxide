@@ -177,6 +177,7 @@ export component PlayerWindow inherits Window {
     in-out property <bool> thumbnail-available: false;
     in-out property <string> thumbnail-label;
     in-out property <bool> loaded: false;
+    in-out property <bool> disc-playback: false;
     in-out property <bool> has-video: false;
     in-out property <bool> has-artwork: false;
     in-out property <string> shader-notice: "Choose only trusted shaders; they run on the GPU. Selection replaces the session stack.";
@@ -231,6 +232,17 @@ export component PlayerWindow inherits Window {
             MenuItem { title: "Open URL…"; activated => { root.panel = "url"; } }
             MenuSeparator {}
             MenuItem { title: "Quit"; activated => { root.action("quit", 0); } }
+        }
+        Menu { title: "Disc";
+            MenuItem { title: "Open disc menu"; enabled: root.loaded && root.disc-playback; activated => { root.action("disc-menu", 0); } }
+            MenuItem { title: "Blu-ray popup menu"; enabled: root.loaded && root.disc-playback; activated => { root.action("disc-popup", 0); } }
+            MenuSeparator {}
+            MenuItem { title: "Up"; enabled: root.loaded && root.disc-playback; activated => { root.action("disc-up", 0); } }
+            MenuItem { title: "Down"; enabled: root.loaded && root.disc-playback; activated => { root.action("disc-down", 0); } }
+            MenuItem { title: "Left"; enabled: root.loaded && root.disc-playback; activated => { root.action("disc-left", 0); } }
+            MenuItem { title: "Right"; enabled: root.loaded && root.disc-playback; activated => { root.action("disc-right", 0); } }
+            MenuItem { title: "Select"; enabled: root.loaded && root.disc-playback; activated => { root.action("disc-select", 0); } }
+            MenuItem { title: "Back"; enabled: root.loaded && root.disc-playback; activated => { root.action("disc-back", 0); } }
         }
         Menu { title: "Playback";
             MenuItem { title: root.paused ? "Play" : "Pause"; enabled: root.loaded; activated => { root.action("pause", 0); } }

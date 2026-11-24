@@ -233,13 +233,27 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
     ui.invoke_disc_picked(false, wrong.to_string_lossy().into_owned().into());
     assert!(state.borrow().playlist.is_empty());
     assert!(ui.get_status().contains("DVD VIDEO_TS.IFO"));
+    assert!(!ui.get_disc_playback());
     ui.invoke_disc_picked(false, dvd.to_string_lossy().into_owned().into());
     assert_eq!(state.borrow().playlist, vec![dvd]);
     assert_eq!(ui.get_queue_count(), 1);
+    assert!(ui.get_disc_playback());
     assert!(ui.get_status().contains("Playback engine unavailable"));
     ui.invoke_disc_picked(true, bluray.to_string_lossy().into_owned().into());
     assert_eq!(state.borrow().playlist, vec![bluray]);
     assert_eq!(ui.get_queue_count(), 1);
+    assert!(ui.get_disc_playback());
+    state.borrow_mut().confirm_loaded(120.0);
+    ui.set_loaded(true);
+    ui.invoke_action("disc-menu".into(), 0.0);
+    assert!(ui.get_status().contains("Playback engine unavailable"));
+    dispatch(
+        &ui,
+        &state,
+        &None,
+        Action::Open(vec![PathBuf::from("movie.mkv")]),
+    );
+    assert!(!ui.get_disc_playback());
     std::fs::remove_dir_all(disc_root).unwrap();
     ui.set_loaded(true);
     ui.set_has_video(true);

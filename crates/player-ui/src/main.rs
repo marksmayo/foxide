@@ -7,7 +7,7 @@ use clap::Parser;
 use player_cast::{CastController, CastEvent, CastOptions, CertificatePin};
 use player_render::{Engine, Snapshot};
 use player_settings::Preferences;
-use player_ui::{Action, DiscKind, Effect, UiState};
+use player_ui::{Action, DiscKind, DiscNavigationAction, Effect, UiState};
 use slint::{ComponentHandle, ModelRc, VecModel};
 use std::{
     cell::{Cell, RefCell},
@@ -144,9 +144,17 @@ fn dispatch(
     engine: &Option<Rc<Engine>>,
     action: Action,
 ) {
+    let disc_playback = match &action {
+        Action::OpenDisc { .. } => Some(true),
+        Action::Open(_) | Action::Select(_) | Action::Stop => Some(false),
+        _ => None,
+    };
     let queue_changed = matches!(action, Action::Open(_) | Action::OpenDisc { .. });
     let mut state = state.borrow_mut();
     let effects = state.dispatch(action);
+    if let Some(disc_playback) = disc_playback {
+        ui.set_disc_playback(disc_playback);
+    }
     if queue_changed {
         ui.set_queue_filter("".into());
         update_queue(ui, &state);
@@ -1146,6 +1154,17 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
         (ui.as_weak(), state.clone(), engine.clone(), pip_mode);
     ui.on_action(move |name, value| {
         let Some(ui) = weak.upgrade() else { return };
+        if let Some(navigation) = DiscNavigationAction::from_ui_action(name.as_str()) {
+            if ui.get_loaded() && ui.get_disc_playback() {
+                dispatch(
+                    &ui,
+                    &controller,
+                    &playback,
+                    Action::DiscNavigation(navigation),
+                );
+            }
+            return;
+        }
         if name == "picture-in-picture" {
             toggle_picture_in_picture(&ui, &pip_mode);
             return;
