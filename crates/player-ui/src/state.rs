@@ -179,13 +179,7 @@ impl PlaybackControl {
                     6 => (0, -45),
                     _ => unreachable!(),
                 };
-                Some(vec![
-                    "vf".into(),
-                    "add".into(),
-                    format!(
-                        "@foxide-panorama360:lavfi=[v360=input=e:output=flat:w=1280:h=720:h_fov=90:v_fov=60:yaw={yaw}:pitch={pitch}]"
-                    ),
-                ])
+                Some(panorama_filter_command(yaw.into(), pitch.into()))
             }
             Self::PanoramaYaw(_) | Self::PanoramaPitch(_) => None,
             Self::Flip(vertical) => Some(vec![
@@ -216,6 +210,16 @@ impl PlaybackControl {
     }
 }
 
+#[inline(never)]
+fn panorama_filter_command(yaw: f64, pitch: f64) -> Vec<String> {
+    vec![
+        "vf".into(),
+        "add".into(),
+        format!(
+            "@foxide-panorama360:lavfi=[v360=input=e:output=flat:w=1280:h=720:h_fov=90:v_fov=60:yaw={yaw}:pitch={pitch}]"
+        ),
+    ]
+}
 impl UiState {
     /// Stable queue indices keep filtered selection attached to the original file.
     pub fn filtered_indices(&self, query: &str) -> Vec<usize> {
@@ -355,13 +359,7 @@ impl UiState {
                 };
                 let yaw = (yaw + delta + 180.0).rem_euclid(360.0) - 180.0;
                 self.panorama_angles = Some((yaw, pitch));
-                vec![Effect::Engine(vec![
-                    "vf-command".into(),
-                    "@foxide-panorama360".into(),
-                    "yaw".into(),
-                    yaw.to_string(),
-                    "v360".into(),
-                ])]
+                vec![Effect::Engine(panorama_filter_command(yaw, pitch))]
             }
             PlaybackControl::PanoramaPitch(delta) => {
                 let Some((yaw, pitch)) = self.panorama_angles else {
@@ -369,13 +367,7 @@ impl UiState {
                 };
                 let pitch = (pitch + delta).clamp(-89.0, 89.0);
                 self.panorama_angles = Some((yaw, pitch));
-                vec![Effect::Engine(vec![
-                    "vf-command".into(),
-                    "@foxide-panorama360".into(),
-                    "pitch".into(),
-                    pitch.to_string(),
-                    "v360".into(),
-                ])]
+                vec![Effect::Engine(panorama_filter_command(yaw, pitch))]
             }
             _ => Vec::new(),
         }
@@ -460,7 +452,7 @@ mod tests {
     }
 
     #[test]
-    fn panorama_360_drag_updates_the_active_projection_without_replacing_it() {
+    fn panorama_360_drag_updates_only_foxides_labeled_projection() {
         let mut state = UiState::default();
         state.confirm_loaded(42.0);
         state.dispatch(Action::control("panorama-360", 1.0).unwrap());
@@ -468,31 +460,25 @@ mod tests {
         assert_eq!(
             state.dispatch(Action::control("panorama-yaw", -12.0).unwrap()),
             vec![Effect::Engine(vec![
-                "vf-command".into(),
-                "@foxide-panorama360".into(),
-                "yaw".into(),
-                "-12".into(),
-                "v360".into(),
+                "vf".into(),
+                "add".into(),
+                "@foxide-panorama360:lavfi=[v360=input=e:output=flat:w=1280:h=720:h_fov=90:v_fov=60:yaw=-12:pitch=0]".into(),
             ])]
         );
         assert_eq!(
             state.dispatch(Action::control("panorama-yaw", 180.0).unwrap()),
             vec![Effect::Engine(vec![
-                "vf-command".into(),
-                "@foxide-panorama360".into(),
-                "yaw".into(),
-                "168".into(),
-                "v360".into(),
+                "vf".into(),
+                "add".into(),
+                "@foxide-panorama360:lavfi=[v360=input=e:output=flat:w=1280:h=720:h_fov=90:v_fov=60:yaw=168:pitch=0]".into(),
             ])]
         );
         assert_eq!(
             state.dispatch(Action::control("panorama-pitch", 120.0).unwrap()),
             vec![Effect::Engine(vec![
-                "vf-command".into(),
-                "@foxide-panorama360".into(),
-                "pitch".into(),
-                "89".into(),
-                "v360".into(),
+                "vf".into(),
+                "add".into(),
+                "@foxide-panorama360:lavfi=[v360=input=e:output=flat:w=1280:h=720:h_fov=90:v_fov=60:yaw=168:pitch=89]".into(),
             ])]
         );
         assert!(Action::control("panorama-yaw", 181.0).is_none());
