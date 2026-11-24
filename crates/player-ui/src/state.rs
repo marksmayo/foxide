@@ -291,7 +291,6 @@ impl UiState {
         }
     }
 
-    #[inline(never)]
     fn select(&mut self, index: usize) -> Vec<Effect> {
         if !self.audio_visualization {
             self.selected = index;
