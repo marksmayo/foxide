@@ -247,6 +247,7 @@ export component PlayerWindow inherits Window {
         }
         Menu { title: "Help";
             MenuItem { title: "Keyboard shortcuts"; activated => { root.panel = "shortcuts"; } }
+            MenuItem { title: "Playback diagnostics…"; activated => { root.panel = "information"; } }
             MenuItem { title: "Software updates…"; activated => { root.panel = "updates"; root.check-updates(); } }
             MenuItem { title: "About Foxide"; activated => { root.panel = "about"; } }
         }
@@ -484,7 +485,7 @@ export component PlayerWindow inherits Window {
                     }
                 }
                 if (root.panel == "shortcuts"): ScrollView { vertical-stretch: 1; Text { text: root.shortcut-help + "\nEscape  —  Close dialog / leave fullscreen"; color: Appearance.secondary; wrap: word-wrap; } }
-                if (root.panel != "url" && root.panel != "preferences" && root.panel != "shortcuts" && root.panel != "radio" && root.panel != "cast" && root.panel != "updates"): Text { text: root.panel == "information" ? root.diagnostics + "\n\nGPU shaders\n" + root.shader-notice + "\n\nDisplay color profile\n" + root.color-profile-notice : root.panel == "shortcuts" ? root.shortcut-help : "A little less between you and your media.\n\nFoxide desktop preview\nBuilt with Rust, Slint, and libmpv.\n\nPlayback and GPU diagnostics are available\nunder View → Playback information."; color: Appearance.secondary; wrap: word-wrap; font-size: 14px; }
+                if (root.panel != "url" && root.panel != "preferences" && root.panel != "shortcuts" && root.panel != "radio" && root.panel != "cast" && root.panel != "updates"): Text { text: root.panel == "information" ? root.diagnostics + "\n\nGPU shaders\n" + root.shader-notice + "\n\nDisplay color profile\n" + root.color-profile-notice : root.panel == "shortcuts" ? root.shortcut-help : "A little less between you and your media.\n\nFoxide desktop preview\nBuilt with Rust, Slint, and libmpv.\n\nPlayback and GPU diagnostics are available\nunder Help → Playback diagnostics."; color: Appearance.secondary; wrap: word-wrap; font-size: 14px; }
                 if (root.panel != "preferences" && root.panel != "shortcuts" && root.panel != "radio"): Rectangle { vertical-stretch: 1; background: transparent; }
             }
         }

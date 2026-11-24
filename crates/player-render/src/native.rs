@@ -77,25 +77,21 @@ pub(crate) struct Api {
 unsafe impl Send for Api {}
 unsafe impl Sync for Api {}
 
-// Windows dependencies may resolve only beside the requested DLL or in trusted
-// system/application directories; LOAD_LIBRARY_SEARCH_DEFAULT_DIRS excludes cwd.
+// Windows dependencies resolve only in trusted system/application directories;
+// LOAD_LIBRARY_SEARCH_DEFAULT_DIRS excludes cwd and works with the local runtime.
 unsafe fn load_library(path: &std::path::Path) -> Result<Library, String> {
     #[cfg(windows)]
     {
         use libloading::os::windows::{
-            LOAD_LIBRARY_SEARCH_DEFAULT_DIRS, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR,
-            Library as WindowsLibrary,
+            LOAD_LIBRARY_SEARCH_DEFAULT_DIRS, Library as WindowsLibrary,
         };
         let path = path.canonicalize().map_err(|error| error.to_string())?;
         // SAFETY: caller retains the library; the absolute path is selected by
         // executable-relative discovery or an explicit FOXIDE_LIBMPV override.
         unsafe {
-            WindowsLibrary::load_with_flags(
-                path,
-                LOAD_LIBRARY_SEARCH_DEFAULT_DIRS | LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR,
-            )
-            .map(Into::into)
-            .map_err(|error| error.to_string())
+            WindowsLibrary::load_with_flags(path, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS)
+                .map(Into::into)
+                .map_err(|error| error.to_string())
         }
     }
     #[cfg(not(windows))]
@@ -107,8 +103,9 @@ unsafe fn load_library(path: &std::path::Path) -> Result<Library, String> {
 
 impl Api {
     fn load(helper: Option<&player_services::VideoSiteTool>) -> Result<Arc<Self>, String> {
-        let candidates: Vec<PathBuf> = if let Some(path) = std::env::var_os("FOXIDE_LIBMPV") {
-            vec![path.into()]
+        let explicit_runtime = std::env::var_os("FOXIDE_LIBMPV").map(PathBuf::from);
+        let candidates: Vec<PathBuf> = if let Some(path) = &explicit_runtime {
+            vec![path.clone()]
         } else if cfg!(windows) {
             crate::dependency_paths::windows_libraries(
                 &std::env::current_exe().map_err(|e| e.to_string())?,
@@ -140,9 +137,10 @@ impl Api {
                 Err(error) => errors.push(error),
             }
         }
-        Err(format!(
-            "Playback engine unavailable: {}",
-            errors.join("; ")
+        Err(playback_engine_load_error(
+            &errors,
+            cfg!(windows),
+            explicit_runtime.is_some(),
         ))
     }
 
@@ -394,6 +392,21 @@ impl Api {
         }
     }
 }
+
+fn playback_engine_load_error(
+    errors: &[String],
+    is_windows: bool,
+    explicit_runtime: bool,
+) -> String {
+    let details = errors.join("; ");
+    if is_windows && !explicit_runtime {
+        format!(
+            "Playback engine unavailable. The Windows release needs a separate playback runtime: run Install-PlaybackRuntime.ps1 beside Foxide.exe (Python 3.11+ and 7-Zip required), then restart Foxide. Details: {details}"
+        )
+    } else {
+        format!("Playback engine unavailable: {details}")
+    }
+}
 impl Drop for Api {
     fn drop(&mut self) {
         if !self.handle.is_null() {
@@ -433,6 +446,8 @@ pub struct Snapshot {
     /// Original user selection, retained across helper redirects without per-tick allocation.
     pub requested_path: Arc<str>,
     pub title: String,
+    pub artist: String,
+    pub album: String,
     pub loaded: bool,
     pub paused: bool,
     pub position: f64,
@@ -636,6 +651,8 @@ impl Engine {
                         path,
                         requested_path: requested_path.clone(),
                         title: client.get(c"media-title"),
+                        artist: client.get(c"metadata/by-key/artist"),
+                        album: client.get(c"metadata/by-key/album"),
                         paused: client.get(c"pause") == "yes",
                         position: client.number(c"time-pos"),
                         duration: client.number(c"duration"),
@@ -725,6 +742,21 @@ impl Drop for Engine {
 mod snapshot_allocation_tests {
     use super::*;
     #[test]
+    fn missing_windows_runtime_error_points_to_the_packaged_setup_script() {
+        let error = playback_engine_load_error(&["DLL not found".into()], true, false);
+        assert!(error.contains("Install-PlaybackRuntime.ps1"));
+        assert!(error.contains("restart Foxide"));
+        assert!(error.contains("DLL not found"));
+
+        let overridden = playback_engine_load_error(&["custom path failed".into()], true, true);
+        assert_eq!(
+            overridden,
+            "Playback engine unavailable: custom path failed"
+        );
+        let non_windows = playback_engine_load_error(&["libmpv missing".into()], false, false);
+        assert_eq!(non_windows, "Playback engine unavailable: libmpv missing");
+    }
+    #[test]
     fn renderer_warnings_include_render_api_prefixes_and_are_bounded() {
         assert_eq!(
             renderer_warning("libmpv_render/opengl", 20, "compile failed\n"),
@@ -756,6 +788,43 @@ mod snapshot_allocation_tests {
             snapshot.tracks.as_ptr(),
             "A position update must not allocate and clone immutable track strings"
         );
+    }
+
+    #[test]
+    #[ignore = "Native libmpv metadata acceptance; requires generated tagged fixture and libmpv"]
+    #[cfg(feature = "system-media-integration")]
+    fn native_snapshot_exposes_embedded_track_metadata() {
+        use std::time::Instant;
+
+        let fixture = std::env::var("FOXIDE_SYSTEM_MEDIA_FIXTURE")
+            .expect("workflow must provide the tagged metadata fixture");
+        let engine = Engine::new().expect("libmpv must be available");
+        for (name, value) in [("vo", "null"), ("ao", "null"), ("pause", "no")] {
+            engine
+                .command(vec!["set".into(), name.into(), value.into()])
+                .unwrap();
+        }
+        engine.ready.store(true, Ordering::Release);
+        engine
+            .command(vec!["loadfile".into(), fixture, "replace".into()])
+            .unwrap();
+
+        let deadline = Instant::now() + Duration::from_secs(15);
+        while Instant::now() < deadline {
+            let snapshot = engine.snapshot().unwrap_or_default();
+            if !snapshot.error.is_empty() {
+                panic!("libmpv failed to load metadata fixture: {}", snapshot.error);
+            }
+            if snapshot.loaded && !snapshot.artist.is_empty() && !snapshot.album.is_empty() {
+                assert_eq!(snapshot.title, "Foxide system media fixture");
+                assert_eq!(snapshot.artist, "Foxide CI");
+                assert_eq!(snapshot.album, "System media controls");
+                engine.command(vec!["stop".into()]).unwrap();
+                return;
+            }
+            thread::sleep(Duration::from_millis(50));
+        }
+        panic!("libmpv snapshot did not expose embedded title, artist, and album metadata");
     }
 }
 

@@ -45,3 +45,24 @@ Internet-radio directory, video-site URL playback with an explicit helper, embed
 ## Manual ICC checkpoint c824368
 
 All checks passed, including CodSpeed, three-platform UI/native profile application/reset, twelve compositor trials and the 90% aggregate gate. Actual pixels changed RGB **128 → 55 → 128**, matching the independent Little CMS fixture. Full desktop/GPU line coverage: **90.59%**, 4,024/4,442 lines. This accepts manual RGB display-profile selection for the session; automatic per-monitor profile discovery/switching and physical calibration remain outside the claim. **8 original gaps accepted; 41 remain.** Exact immutable jobs are recorded in acceptance.json.
+
+## Chromecast physical acceptance checklist
+
+The desktop Cast panel, bounded discovery, explicit certificate review, remembered receiver settings and playback worker have deterministic UI/service coverage. Physical receiver confirmation currently covers silent H.264 video and pause/seek/resume/stop for a 30-second window on two receivers. It does not yet establish physical desktop-panel acceptance, audible audio, or codecs beyond H.264. No Chromecast feature medal is claimed.
+
+For the remaining owner-device check, use a local test file and report each item as pass, fail or blocked:
+
+| Check | Result |
+|---|---|
+| Discover a local receiver in the Cast panel | Pending |
+| Review its certificate pin and explicitly remember it | Pending |
+| Close and reopen the panel; confirm the remembered receiver appears | Pending |
+| Forget the receiver and confirm it is removed | Pending |
+| Start local video and verify moving playback; pause, seek, resume and stop | Pending |
+| Start local audio and verify it is audible; then stop it | Pending |
+
+Report behavior only. Do not include receiver names, addresses, certificate fingerprints, or private media paths in the PR or repository. Update this checklist and `remaining.json` only after the results are reported; a failure should be recorded as a concrete follow-up rather than treated as acceptance.
+
+## System media controls implementation checkpoint
+
+The desktop adapter now connects playwire to the existing player action/state path for Windows SMTC, macOS Now Playing, and Linux MPRIS. It publishes title, artist, album, playback state, seek position and supported transport capabilities; OS callbacks are queued back to the Slint event loop. Local file paths and artwork URLs are withheld from system metadata. Sessions attach once the native engine snapshot is available, including before a track is loaded; transient window readiness retries are rate-limited. Unit tests cover command routing, idempotent play/pause state, idle attachment, metadata, stop clearing, seek limits and per-track identity. The tagged native libmpv metadata probe passed locally on Windows using a generated WAV with embedded title, artist and album. The same probe and fixture generation are wired into the Linux native-controls workflow. Local Windows desktop/UI tests and strict UI clippy pass; hosted cross-platform checks and actual OS session interaction are pending. This remains in progress until hosted OS checks and user-facing interaction are verified.

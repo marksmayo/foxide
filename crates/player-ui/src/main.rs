@@ -1,12 +1,19 @@
 mod profile_ui;
 mod shader_ui;
+mod system_media;
 use clap::Parser;
 use player_cast::{CastController, CastEvent, CastOptions, CertificatePin};
 use player_render::{Engine, Snapshot};
 use player_settings::Preferences;
 use player_ui::{Action, Effect, UiState};
 use slint::{ComponentHandle, ModelRc, VecModel};
-use std::{cell::RefCell, path::PathBuf, rc::Rc, sync::Arc, time::Duration};
+use std::{
+    cell::{Cell, RefCell},
+    path::PathBuf,
+    rc::Rc,
+    sync::Arc,
+    time::Duration,
+};
 // Only pinned Slint compiler output may use its generated vtable unsafe code.
 // Hand-written UI glue remains under deny(unsafe_code); FFI lives in player-render.
 #[allow(unsafe_code)]
@@ -1287,10 +1294,50 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let controller = state.clone();
         let previous = RefCell::new(Snapshot::default());
         let status_source = playback.clone();
+        let media_engine = Some(playback.clone());
+        let media_session = Rc::new(RefCell::new(None));
+        let session_for_refresh = media_session.clone();
+        let media_attempted = Rc::new(Cell::new(false));
+        let attempted_for_refresh = media_attempted.clone();
+        let media_attach_retry = Rc::new(RefCell::new(system_media::AttachRetry::default()));
+        let retry_for_refresh = media_attach_retry.clone();
         ui.on_native_snapshot_ready(move || {
             if let Some(ui) = weak.upgrade() {
                 if let Some(snapshot) = status_source.snapshot() {
                     refresh(&ui, &controller, &snapshot, &mut previous.borrow_mut());
+                    let should_attach = system_media::attachment_due(
+                        Some(&snapshot),
+                        attempted_for_refresh.get(),
+                        &mut retry_for_refresh.borrow_mut(),
+                        std::time::Instant::now(),
+                    );
+                    if should_attach {
+                        match system_media::attach(&ui, &controller, &media_engine) {
+                            Ok(system_media::AttachOutcome::Attached(session)) => {
+                                *session_for_refresh.borrow_mut() = Some(session);
+                                attempted_for_refresh.set(true);
+                            }
+                            Ok(system_media::AttachOutcome::RetryableNotReady) => {}
+                            Err(error) => {
+                                attempted_for_refresh.set(true);
+                                ui.set_status(
+                                    format!("System media controls unavailable: {error}").into(),
+                                );
+                            }
+                        }
+                    }
+                    if let Some(session) = session_for_refresh.borrow_mut().as_mut() {
+                        match session.publish(&snapshot, &controller.borrow()) {
+                            Ok(()) => session.last_error = None,
+                            Err(error) if session.last_error.as_deref() != Some(error.as_str()) => {
+                                session.last_error = Some(error.clone());
+                                ui.set_status(
+                                    format!("System media controls unavailable: {error}").into(),
+                                );
+                            }
+                            Err(_) => {}
+                        }
+                    }
                 } else {
                     // A transient try-lock miss must not lose an idle update.
                     let _ = ui
