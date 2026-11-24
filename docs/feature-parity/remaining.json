@@ -182,7 +182,7 @@
       "name": "HD audio bitstream passthrough",
       "group": "Audio",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #27 at c1869a2: an explicit session-only desktop passthrough control requests AC3, EAC3, DTS, DTS-HD, and TrueHD plus exclusive output, with a control to disable it. State tests, native playback controls, and Windows release packaging passed. The current compositor and CodSpeed checks are in progress; other checks are queued. A prior CodSpeed report on 48937d3 showed a 13.95% aggregate improvement, not a current-head measurement. These checks do not verify bitstream output; a compatible physical receiver/route must identify each claimed format with audible output, and decoded output must still work when passthrough is disabled. Do not close the gap or claim a medal yet."
+      "acceptance": "Implementation is in draft PR #27 at c1869a2: an explicit session-only desktop passthrough control requests AC3, EAC3, DTS, DTS-HD, and TrueHD plus exclusive output, with a control to disable it. State tests, native playback controls, and Windows release packaging passed. CodSpeed completed and reports a 13.95% aggregate improvement versus main. The video compositor and native helper checks are in progress; Code checks and Desktop UI are queued. These checks do not verify bitstream output; a compatible physical receiver/route must identify each claimed format with audible output, and decoded output must still work when passthrough is disabled. Do not close the gap or claim a medal yet."
     },
     {
       "id": "video_360",
@@ -343,7 +343,7 @@
       "name": "Music visualization display",
       "group": "Audio",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #28 at eb73407. The current compositor run passed. The previous CodSpeed report on dfc50a1 measured an 11.23% aggregate degradation (35 regressed, 5 improved); it followed an #[inline] experiment that has since been removed. The new CodSpeed result and remaining code, Desktop UI, native playback-controls, helper, and packaging checks are pending or queued. Physical visual/audible acceptance remains pending; do not close the gap or claim a medal."
+      "acceptance": "Implementation is in draft PR #28 at 09d8bc9. The compositor, Code checks, and Windows packaging passed on the preceding head eb73407; the previous CodSpeed report on that head measured a 10.32% aggregate degradation in the two Next dispatch cases. A no-inline playlist-selection experiment is queued for measurement on 09d8bc9; other native playback/helper/UI checks are queued. Physical visual/audible acceptance remains pending; do not close the gap or claim a medal."
     }
   ],
   "baseline_gap_count": 49,
