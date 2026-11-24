@@ -247,6 +247,7 @@ impl UiState {
         }
     }
 
+    #[cold]
     #[inline(never)]
     fn set_audio_visualization(&mut self, enabled: bool, audio_track_id: u32) -> Vec<Effect> {
         match (enabled, self.loaded, audio_track_id > 0) {
