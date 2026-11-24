@@ -3,8 +3,7 @@ use std::path::{Path, PathBuf};
 #[derive(Debug, Clone, PartialEq)]
 pub enum Action {
     Open(Vec<PathBuf>),
-    OpenDisc { kind: DiscKind, device: PathBuf },
-    DiscNavigation(DiscNavigationAction),
+    Disc(DiscAction),
     Seek(f64),
     TogglePause,
     SetPaused(bool),
@@ -33,6 +32,12 @@ pub enum PlaybackControl {
     Deband(bool),
     Equalizer(u8),
     Flip(bool),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum DiscAction {
+    Open { kind: DiscKind, device: PathBuf },
+    Navigate(DiscNavigationAction),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -297,7 +302,7 @@ impl UiState {
                     .into_iter()
                     .collect()
             }
-            Action::OpenDisc { kind, device } => {
+            Action::Disc(DiscAction::Open { kind, device }) => {
                 self.playlist = vec![device.clone()];
                 self.selected = 0;
                 self.loaded = false;
@@ -315,7 +320,7 @@ impl UiState {
                     Effect::Engine(vec!["loadfile".into(), protocol.into(), "replace".into()]),
                 ]
             }
-            Action::DiscNavigation(action) if self.loaded => {
+            Action::Disc(DiscAction::Navigate(action)) if self.loaded => {
                 vec![Effect::Engine(vec![
                     "discnav".into(),
                     action.command().into(),
@@ -375,7 +380,7 @@ impl UiState {
 
 #[cfg(test)]
 mod tests {
-    use super::{Action, DiscKind, DiscNavigationAction, Effect, UiState};
+    use super::{Action, DiscAction, DiscKind, DiscNavigationAction, Effect, UiState};
     use std::path::PathBuf;
 
     #[test]
@@ -413,10 +418,10 @@ mod tests {
             let mut state = UiState::default();
             state.confirm_loaded(120.0);
 
-            let effects = state.dispatch(Action::OpenDisc {
+            let effects = state.dispatch(Action::Disc(DiscAction::Open {
                 kind,
                 device: device.clone(),
-            });
+            }));
 
             assert_eq!(state.playlist, vec![device.clone()]);
             assert_eq!(state.selected, 0);
@@ -528,16 +533,19 @@ mod tests {
             assert_eq!(DiscNavigationAction::from_ui_action(ui_name), Some(action));
             state.confirm_loaded(120.0);
             assert_eq!(
-                state.dispatch(Action::DiscNavigation(action)),
+                state.dispatch(Action::Disc(DiscAction::Navigate(action))),
                 vec![Effect::Engine(vec!["discnav".into(), command.into()])]
             );
         }
         state.loaded = false;
         assert!(
             state
-                .dispatch(Action::DiscNavigation(DiscNavigationAction::Menu))
+                .dispatch(Action::Disc(DiscAction::Navigate(
+                    DiscNavigationAction::Menu
+                )))
                 .is_empty()
         );
         assert_eq!(DiscNavigationAction::from_ui_action("disc-exec"), None);
     }
 }
+

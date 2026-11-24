@@ -7,7 +7,7 @@ use clap::Parser;
 use player_cast::{CastController, CastEvent, CastOptions, CertificatePin};
 use player_render::{Engine, Snapshot};
 use player_settings::Preferences;
-use player_ui::{Action, DiscKind, DiscNavigationAction, Effect, UiState};
+use player_ui::{Action, DiscAction, DiscKind, DiscNavigationAction, Effect, UiState};
 use slint::{ComponentHandle, ModelRc, VecModel};
 use std::{
     cell::{Cell, RefCell},
@@ -145,11 +145,14 @@ fn dispatch(
     action: Action,
 ) {
     let disc_playback = match &action {
-        Action::OpenDisc { .. } => Some(true),
+        Action::Disc(DiscAction::Open { .. }) => Some(true),
         Action::Open(_) | Action::Select(_) | Action::Stop => Some(false),
         _ => None,
     };
-    let queue_changed = matches!(action, Action::Open(_) | Action::OpenDisc { .. });
+    let queue_changed = matches!(
+        action,
+        Action::Open(_) | Action::Disc(DiscAction::Open { .. })
+    );
     let mut state = state.borrow_mut();
     let effects = state.dispatch(action);
     if let Some(disc_playback) = disc_playback {
@@ -421,7 +424,7 @@ fn refresh(
         || snapshot.error != previous.error
         || ui.get_diagnostics() == "No media loaded"
     {
-        ui.set_diagnostics(format!("Video renderer: shared OpenGL texture\nRequested decoder: auto-safe\nActive decoder: {}\n\nHardware decoding does not by itself certify zero-copy.\nNative GPU/power acceptance remains platform-specific.\n\n{}", if snapshot.hwdec.is_empty() { "not active" } else { &snapshot.hwdec }, snapshot.error).into());
+        ui.set_diagnostics(format!("Video renderer: shared OpenGL texture\r\nRequested decoder: auto-safe\r\nActive decoder: {}\r\n\r\nHardware decoding does not by itself certify zero-copy.\r\nNative GPU/power acceptance remains platform-specific.\r\n\r\n{}", if snapshot.hwdec.is_empty() { "not active" } else { &snapshot.hwdec }, snapshot.error).into());
     }
     *previous = snapshot.clone();
 }
@@ -477,9 +480,9 @@ fn apply_preferences(
         .bindings()
         .map(|(key, action)| format!("{key}  —  {action}"))
         .collect::<Vec<_>>()
-        .join("\n");
+        .join("\r\n");
     shortcut_help.push_str(
-        "\n\nGame controller\nD-pad: move focus · South (A/Cross): select · East/Select: back\nStart: play/pause · Left/right shoulder: previous/next",
+        "\r\n\r\nGame controller\r\nD-pad: move focus · South (A/Cross): select · East/Select: back\r\nStart: play/pause · Left/right shoulder: previous/next",
     );
     ui.set_shortcut_help(shortcut_help.into());
     if ui.get_compact_mode() != preferences.compact() {
@@ -1184,7 +1187,7 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
                     &ui,
                     &controller,
                     &playback,
-                    Action::DiscNavigation(navigation),
+                    Action::Disc(DiscAction::Navigate(navigation)),
                 );
             }
             return;
@@ -1302,7 +1305,7 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
             &ui,
             &controller,
             &playback,
-            Action::OpenDisc { kind, device },
+            Action::Disc(DiscAction::Open { kind, device }),
         );
     });
 }
@@ -1658,3 +1661,4 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(test)]
 #[path = "desktop_tests.rs"]
 mod tests;
+
