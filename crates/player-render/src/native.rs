@@ -541,6 +541,20 @@ impl Engine {
         Self::create_with_options(None, false, &options)
     }
 
+    #[cfg(test)]
+    fn new_audio_device_capture(device: &str) -> Result<Self, String> {
+        let device = CString::new(device).map_err(|_| "Audio device contains a null byte")?;
+        let options = [
+            (c"vo", c"null"),
+            (c"ao", c"pulse"),
+            (c"audio-device", device.as_c_str()),
+            (c"audio-format", c"s16"),
+            (c"audio-samplerate", c"44100"),
+            (c"audio-channels", c"mono"),
+        ];
+        Self::create_with_options(None, false, &options)
+    }
+
     fn create(helper: Option<&std::path::Path>, thumbnail: bool) -> Result<Self, String> {
         Self::create_with_options(helper, thumbnail, &[])
     }
@@ -968,9 +982,157 @@ mod snapshot_allocation_tests {
         thread::sleep(Duration::from_millis(250));
 
         let bytes = std::fs::read(capture).expect("libmpv should write its PCM capture");
+        assert_pcm_wav_has_gapless_boundary(&bytes, "libmpv PCM writer");
+    }
+
+    #[test]
+    #[ignore = "Native PulseAudio loopback acceptance; requires a configured virtual sink and libmpv"]
+    #[cfg(feature = "system-media-integration")]
+    fn native_playlist_audio_device_loopback_has_no_silence_at_track_boundary() {
+        use std::time::Instant;
+        use std::{
+            io::Read,
+            process::{Command, Stdio},
+        };
+
+        let first = std::env::var("FOXIDE_GAPLESS_FIRST")
+            .expect("workflow must provide the first short audio fixture");
+        let second = std::env::var("FOXIDE_GAPLESS_SECOND")
+            .expect("workflow must provide the second short audio fixture");
+        let sink = std::env::var("FOXIDE_GAPLESS_PULSE_SINK")
+            .expect("workflow must provide the virtual PulseAudio sink name");
+        let monitor = format!("{sink}.monitor");
+        let mut recorder = Command::new("parecord")
+            .args(["--raw", "--format=s16le", "--rate=44100", "--channels=1"])
+            .arg(format!("--device={monitor}"))
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null())
+            .spawn()
+            .expect("PulseAudio recorder must be installed in the native acceptance job");
+        let mut output = recorder
+            .stdout
+            .take()
+            .expect("PulseAudio recorder must expose its PCM stream");
+        let capture_reader = thread::spawn(move || {
+            let mut bytes = Vec::new();
+            output
+                .read_to_end(&mut bytes)
+                .expect("read PulseAudio monitor PCM");
+            bytes
+        });
+        thread::sleep(Duration::from_millis(250));
+        assert!(
+            recorder.try_wait().unwrap().is_none(),
+            "PulseAudio loopback recorder exited before playback"
+        );
+
+        let engine = Engine::new_audio_device_capture(&format!("pulse/{sink}"))
+            .expect("libmpv must initialize the PulseAudio sink");
+        engine.ready.store(true, Ordering::Release);
+        engine
+            .command(vec!["loadfile".into(), first, "replace".into()])
+            .unwrap();
+        engine
+            .command(vec!["loadfile".into(), second, "append".into()])
+            .unwrap();
+
+        let deadline = Instant::now() + Duration::from_secs(15);
+        let mut reached_end = false;
+        while Instant::now() < deadline {
+            let snapshot = engine.snapshot().unwrap_or_default();
+            assert!(
+                snapshot.error.is_empty(),
+                "libmpv failed to play through PulseAudio: {}",
+                snapshot.error
+            );
+            if snapshot.loaded
+                && snapshot.playlist_position == 1
+                && snapshot.duration > 0.0
+                && snapshot.position >= snapshot.duration - 0.02
+            {
+                reached_end = true;
+                break;
+            }
+            thread::sleep(Duration::from_millis(20));
+        }
+        engine.command(vec!["stop".into()]).unwrap();
+        assert!(reached_end, "libmpv did not finish the second queued track");
+        drop(engine);
+        recorder.kill().expect("stop PulseAudio loopback recorder");
+        let _ = recorder.wait().expect("wait for PulseAudio recorder");
+
+        let pcm = capture_reader
+            .join()
+            .expect("PulseAudio monitor reader thread must finish");
+        assert_eq!(pcm.len() % 2, 0, "PCM16 capture must contain whole samples");
+        let samples = pcm
+            .chunks_exact(2)
+            .map(|sample| i16::from_le_bytes([sample[0], sample[1]]))
+            .collect::<Vec<_>>();
+        assert_pcm_wav_has_gapless_boundary(&test_pcm_wav(&samples), "PulseAudio device loopback");
+    }
+
+    #[test]
+    #[cfg(feature = "system-media-integration")]
+    fn gapless_loopback_analyzer_ignores_capture_edges_and_rejects_internal_silence() {
+        let first_track = test_tone(440.0, 4_410);
+        let second_track = test_tone(880.0, 4_410);
+        let mut contiguous = vec![0_i16; 441];
+        contiguous.extend_from_slice(&first_track);
+        contiguous.extend(std::iter::repeat_n(0_i16, 220));
+        contiguous.extend_from_slice(&second_track);
+        contiguous.extend(std::iter::repeat_n(0_i16, 441));
+        assert_pcm_wav_has_gapless_boundary(&test_pcm_wav(&contiguous), "synthetic capture");
+
+        let mut with_gap = vec![0_i16; 441];
+        with_gap.extend_from_slice(&first_track);
+        with_gap.extend(std::iter::repeat_n(0_i16, 1_323));
+        with_gap.extend_from_slice(&second_track);
+        with_gap.extend(std::iter::repeat_n(0_i16, 441));
+        assert!(
+            std::panic::catch_unwind(|| {
+                assert_pcm_wav_has_gapless_boundary(&test_pcm_wav(&with_gap), "synthetic capture");
+            })
+            .is_err()
+        );
+    }
+
+    #[cfg(feature = "system-media-integration")]
+    fn test_tone(frequency: f64, sample_count: usize) -> Vec<i16> {
+        (0..sample_count)
+            .map(|sample| {
+                (8_000.0 * (std::f64::consts::TAU * frequency * sample as f64 / 44_100.0).sin())
+                    as i16
+            })
+            .collect()
+    }
+
+    #[cfg(feature = "system-media-integration")]
+    fn test_pcm_wav(samples: &[i16]) -> Vec<u8> {
+        let data_length = (samples.len() * 2) as u32;
+        let mut wav = Vec::with_capacity(44 + data_length as usize);
+        wav.extend_from_slice(b"RIFF");
+        wav.extend_from_slice(&(36 + data_length).to_le_bytes());
+        wav.extend_from_slice(b"WAVEfmt ");
+        wav.extend_from_slice(&16_u32.to_le_bytes());
+        wav.extend_from_slice(&1_u16.to_le_bytes());
+        wav.extend_from_slice(&1_u16.to_le_bytes());
+        wav.extend_from_slice(&44_100_u32.to_le_bytes());
+        wav.extend_from_slice(&88_200_u32.to_le_bytes());
+        wav.extend_from_slice(&2_u16.to_le_bytes());
+        wav.extend_from_slice(&16_u16.to_le_bytes());
+        wav.extend_from_slice(b"data");
+        wav.extend_from_slice(&data_length.to_le_bytes());
+        for sample in samples {
+            wav.extend_from_slice(&sample.to_le_bytes());
+        }
+        wav
+    }
+
+    fn assert_pcm_wav_has_gapless_boundary(bytes: &[u8], capture_kind: &str) {
         assert!(
             bytes.starts_with(b"RIFF"),
-            "PCM capture must include a WAV header"
+            "{capture_kind} must provide a WAV file"
         );
         let mut channels = 0_u16;
         let mut sample_rate = 0_u32;
@@ -983,7 +1145,7 @@ mod snapshot_allocation_tests {
                 u32::from_le_bytes(bytes[offset + 4..offset + 8].try_into().unwrap()) as usize;
             let start = offset + 8;
             let end = start.saturating_add(length);
-            assert!(end <= bytes.len(), "WAV chunk exceeds the capture file");
+            assert!(end <= bytes.len(), "WAV chunk exceeds {capture_kind}");
             if tag == b"fmt " {
                 assert!(length >= 16, "WAV format chunk is incomplete");
                 let format = u16::from_le_bytes(bytes[start..start + 2].try_into().unwrap());
@@ -993,7 +1155,7 @@ mod snapshot_allocation_tests {
                         u32::from_le_bytes(bytes[start + 24..start + 28].try_into().unwrap());
                     assert_eq!(subtype, 1, "WAV extensible subtype should be PCM");
                 } else {
-                    assert_eq!(format, 1, "WAV encoding should be PCM");
+                    assert_eq!(format, 1, "{capture_kind} should use PCM encoding");
                 }
                 channels = u16::from_le_bytes(bytes[start + 2..start + 4].try_into().unwrap());
                 sample_rate = u32::from_le_bytes(bytes[start + 4..start + 8].try_into().unwrap());
@@ -1005,24 +1167,18 @@ mod snapshot_allocation_tests {
             }
             offset = end + (length & 1);
         }
-        assert_eq!(channels, 1, "capture should remain mono");
-        assert_eq!(sample_rate, 44_100, "capture sample rate should be stable");
-        assert_eq!(bits_per_sample, 16, "capture should use PCM16");
-        let samples = data.expect("WAV capture must contain audio samples");
+        assert_eq!(channels, 1, "{capture_kind} should be mono");
         assert_eq!(
-            samples.len() % 2,
-            0,
-            "PCM16 capture must contain whole samples"
+            sample_rate, 44_100,
+            "{capture_kind} sample rate should be stable"
         );
-        let samples = samples
+        assert_eq!(bits_per_sample, 16, "{capture_kind} should use PCM16");
+        let data = data.expect("WAV capture must contain audio samples");
+        assert_eq!(data.len() % 2, 0, "PCM16 must contain whole samples");
+        let samples = data
             .chunks_exact(2)
             .map(|sample| i16::from_le_bytes([sample[0], sample[1]]) as i32)
             .collect::<Vec<_>>();
-        assert!(
-            samples.len() > 44_100 * 9 / 10,
-            "both tracks should be captured"
-        );
-
         let window = sample_rate as usize / 200;
         let quiet_windows = samples
             .chunks(window)
@@ -1035,10 +1191,43 @@ mod snapshot_allocation_tests {
                 mean_square.sqrt() < 1_500.0
             })
             .collect::<Vec<_>>();
+        let first_active = quiet_windows
+            .iter()
+            .position(|quiet| !quiet)
+            .expect("capture must include the first queued track");
+        let last_active = quiet_windows
+            .iter()
+            .rposition(|quiet| !quiet)
+            .expect("capture must include the last queued track");
+        let frequency_window = sample_rate as usize / 10;
+        let first_start = first_active * window;
+        let last_end = ((last_active + 1) * window).min(samples.len());
+        assert!(
+            first_start + frequency_window <= samples.len()
+                && last_end >= frequency_window
+                && last_end - frequency_window >= first_start,
+            "{capture_kind} must include enough samples from both tracks"
+        );
+        let first_frequency = positive_zero_crossing_frequency(
+            &samples[first_start..first_start + frequency_window],
+            sample_rate,
+        );
+        let last_frequency = positive_zero_crossing_frequency(
+            &samples[last_end - frequency_window..last_end],
+            sample_rate,
+        );
+        assert!(
+            (350.0..=550.0).contains(&first_frequency),
+            "{capture_kind}'s first track should be the 440 Hz fixture; measured {first_frequency:.1} Hz"
+        );
+        assert!(
+            (750.0..=1_000.0).contains(&last_frequency),
+            "{capture_kind}'s second track should be the 880 Hz fixture; measured {last_frequency:.1} Hz"
+        );
         let mut longest_silence_windows = 0;
         let mut current_silence_windows = 0;
-        for quiet in quiet_windows {
-            if quiet {
+        for quiet in &quiet_windows[first_active..=last_active] {
+            if *quiet {
                 current_silence_windows += 1;
                 longest_silence_windows = longest_silence_windows.max(current_silence_windows);
             } else {
@@ -1046,15 +1235,23 @@ mod snapshot_allocation_tests {
             }
         }
         println!(
-            "gapless PCM capture sample_rate={sample_rate} sample_count={} longest_silence_ms={}",
+            "gapless {capture_kind} sample_rate={sample_rate} sample_count={} first_track_hz={first_frequency:.1} second_track_hz={last_frequency:.1} longest_internal_silence_ms={}",
             samples.len(),
             longest_silence_windows * 5
         );
         assert!(
             longest_silence_windows <= 4,
-            "queued audio contains a silence gap of {} ms",
+            "{capture_kind} contains a track-boundary silence gap of {} ms",
             longest_silence_windows * 5
         );
+    }
+
+    fn positive_zero_crossing_frequency(samples: &[i32], sample_rate: u32) -> f64 {
+        let crossings = samples
+            .windows(2)
+            .filter(|pair| pair[0] <= 0 && pair[1] > 0)
+            .count();
+        crossings as f64 * f64::from(sample_rate) / samples.len() as f64
     }
 }
 

@@ -28,6 +28,7 @@ jobs:
       FOXIDE_GAPLESS_FIRST: ${{ github.workspace }}/results/local/gapless-first.wav
       FOXIDE_GAPLESS_SECOND: ${{ github.workspace }}/results/local/gapless-second.wav
       FOXIDE_GAPLESS_CAPTURE: ${{ github.workspace }}/results/local/gapless-capture.wav
+      FOXIDE_GAPLESS_PULSE_SINK: foxide_gapless
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
@@ -35,7 +36,7 @@ jobs:
         with:
           key: desktop-ui
       - name: Install native playback dependencies
-        run: sudo apt-get update && sudo apt-get install -y mpv libmpv2 ffmpeg libfontconfig1-dev libxkbcommon-dev libwayland-dev libegl1-mesa-dev libudev-dev
+        run: sudo apt-get update && sudo apt-get install -y mpv libmpv2 ffmpeg pulseaudio pulseaudio-utils libfontconfig1-dev libxkbcommon-dev libwayland-dev libegl1-mesa-dev libudev-dev
       - name: Generate deterministic video with audio
         run: |
           mkdir -p results/local
@@ -43,6 +44,11 @@ jobs:
           cp "$FOXIDE_CONTROL_FIXTURE" "$FOXIDE_SYSTEM_MEDIA_FIXTURE"
           ffmpeg -v error -f lavfi -i sine=frequency=440:duration=0.5 -c:a pcm_s16le "$FOXIDE_GAPLESS_FIRST"
           ffmpeg -v error -f lavfi -i sine=frequency=880:duration=0.5 -c:a pcm_s16le "$FOXIDE_GAPLESS_SECOND"
+      - name: Start isolated PulseAudio loopback sink
+        run: |
+          pulseaudio --start --exit-idle-time=-1 --log-level=error
+          pactl load-module module-null-sink sink_name="$FOXIDE_GAPLESS_PULSE_SINK" rate=44100 channels=1
+          pactl list short sinks
       - name: Verify immutable snapshot sharing
         run: cargo test -p player-render --features desktop --lib --locked cloning_snapshot
       - name: Verify native metadata reaches player snapshots
@@ -51,5 +57,7 @@ jobs:
         run: cargo test -p player-render --features system-media-integration --lib --locked native_playlist_advances_to_the_queued_audio_track -- --ignored --nocapture
       - name: Verify queued audio output has no silent track boundary
         run: cargo test -p player-render --features system-media-integration --lib --locked native_playlist_pcm_capture_has_no_silence_at_track_boundary -- --ignored --nocapture
+      - name: Verify gapless playback through the PulseAudio monitor
+        run: cargo test -p player-render --features system-media-integration --lib --locked native_playlist_audio_device_loopback_has_no_silence_at_track_boundary -- --ignored --nocapture
       - name: Verify desktop menu commands on the native engine
         run: cargo test -p player-ui --features native-controls --lib --locked desktop_menu_commands -- --ignored --nocapture
