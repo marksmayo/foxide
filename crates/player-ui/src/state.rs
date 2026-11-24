@@ -285,6 +285,7 @@ mod tests {
         let mut first = UiState::default();
         let mut second = UiState::default();
 
+        first.dispatch(Action::Open(vec!["track.flac".into()]));
         assert!(first.dispatch(Action::Open(Vec::new())).is_empty());
         assert!(second.dispatch(Action::Open(Vec::new())).is_empty());
         assert!(Arc::ptr_eq(&first.playlist, &second.playlist));
