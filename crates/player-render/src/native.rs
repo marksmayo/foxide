@@ -1038,8 +1038,10 @@ mod snapshot_allocation_tests {
 
         let deadline = Instant::now() + Duration::from_secs(15);
         let mut reached_end = false;
+        let mut last_snapshot = Snapshot::default();
         while Instant::now() < deadline {
             let snapshot = engine.snapshot().unwrap_or_default();
+            last_snapshot = snapshot.clone();
             assert!(
                 snapshot.error.is_empty(),
                 "libmpv failed to play through PulseAudio: {}",
@@ -1056,7 +1058,18 @@ mod snapshot_allocation_tests {
             thread::sleep(Duration::from_millis(20));
         }
         engine.command(vec!["stop".into()]).unwrap();
-        assert!(reached_end, "libmpv did not finish the second queued track");
+        assert!(
+            reached_end,
+            "libmpv did not finish the second queued track: loaded={}, path={:?}, playlist_position={}, position={:.3}, duration={:.3}, paused={}, error={:?}, command_error={:?}",
+            last_snapshot.loaded,
+            last_snapshot.path,
+            last_snapshot.playlist_position,
+            last_snapshot.position,
+            last_snapshot.duration,
+            last_snapshot.paused,
+            last_snapshot.error,
+            last_snapshot.command_error
+        );
         drop(engine);
         recorder.kill().expect("stop PulseAudio loopback recorder");
         let _ = recorder.wait().expect("wait for PulseAudio recorder");
