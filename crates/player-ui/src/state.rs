@@ -236,24 +236,9 @@ impl UiState {
             }
             Action::AudioTrack(id) if self.loaded && id > 0 => vec![Effect::AudioTrack(id)],
             Action::SetAudioVisualization {
-                enabled: true,
+                enabled,
                 audio_track_id,
-            } if self.loaded && audio_track_id > 0 => {
-                self.audio_visualization = true;
-                vec![Effect::Engine(vec![
-                    "set".into(),
-                    "lavfi-complex".into(),
-                    audio_visualization_filter(audio_track_id),
-                ])]
-            }
-            Action::SetAudioVisualization { enabled: false, .. } if self.loaded => {
-                self.audio_visualization = false;
-                vec![Effect::Engine(vec![
-                    "set".into(),
-                    "lavfi-complex".into(),
-                    String::new(),
-                ])]
-            }
+            } => self.set_audio_visualization(enabled, audio_track_id),
             Action::SubtitleTrack(id) if self.loaded => vec![Effect::SubtitleTrack(id)],
             Action::TogglePlaylist => {
                 self.playlist_visible = !self.playlist_visible;
@@ -278,6 +263,29 @@ impl UiState {
             Action::Quit => vec![Effect::Quit],
             Action::Playback(control) if self.loaded => {
                 control.command().map(Effect::Engine).into_iter().collect()
+            }
+            _ => Vec::new(),
+        }
+    }
+
+    #[inline(never)]
+    fn set_audio_visualization(&mut self, enabled: bool, audio_track_id: u32) -> Vec<Effect> {
+        match (enabled, self.loaded, audio_track_id > 0) {
+            (true, true, true) => {
+                self.audio_visualization = true;
+                vec![Effect::Engine(vec![
+                    "set".into(),
+                    "lavfi-complex".into(),
+                    audio_visualization_filter(audio_track_id),
+                ])]
+            }
+            (false, true, _) => {
+                self.audio_visualization = false;
+                vec![Effect::Engine(vec![
+                    "set".into(),
+                    "lavfi-complex".into(),
+                    String::new(),
+                ])]
             }
             _ => Vec::new(),
         }
@@ -409,3 +417,4 @@ mod tests {
         assert!(state.dispatch(Action::SetPaused(false)).is_empty());
     }
 }
+
