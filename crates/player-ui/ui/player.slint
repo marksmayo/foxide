@@ -142,6 +142,7 @@ export component PlayerWindow inherits Window {
     in-out property <color> accent-text: #171a20;
     in-out property <bool> compact-mode: false;
     in-out property <bool> picture-in-picture: false;
+    in-out property <bool> pip-active: false;
     in-out property <string> accent-hex: "#ef955f";
     in-out property <string> binding-key;
     in-out property <string> binding-action: "pause";
@@ -304,7 +305,7 @@ export component PlayerWindow inherits Window {
         }
         Menu { title: "View";
             MenuItem { title: "Compact music view"; checked: root.compact-mode; activated => { root.toggle-compact(); } }
-            MenuItem { title: "Picture in picture"; checked: root.picture-in-picture; enabled: root.loaded && root.has-video; activated => { root.action("picture-in-picture", 0); } }
+            MenuItem { title: root.pip-active ? "Close picture in picture" : "Picture in picture"; checked: root.pip-active; enabled: root.loaded && root.has-video; activated => { root.action("picture-in-picture", 0); } }
             MenuItem { title: "Preferences…"; activated => { root.panel = "preferences"; } }
             MenuItem { title: "Playlist"; checked: root.queue-visible; activated => { root.action("playlist", 0); } }
             MenuItem { title: "Playback information"; activated => { root.open-playback-diagnostics(); } }
