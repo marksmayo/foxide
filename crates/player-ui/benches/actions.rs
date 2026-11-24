@@ -167,4 +167,3 @@ fn playlist_filter<const COUNT: usize>(bencher: Bencher, query: &str) {
     let queue = state(COUNT, true);
     bencher.bench(|| black_box(&queue).filtered_indices(black_box(query)));
 }
-
