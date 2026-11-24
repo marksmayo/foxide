@@ -189,8 +189,7 @@
       "name": "360-degree panoramic video",
       "group": "Picture",
       "stage": "in_progress",
-      "acceptance": "The Video menu converts equirectangular 360° sources to a bounded 1280x720 flat perspective view with front, left, right, rear, up and down presets. Switching presets replaces Foxide's labeled v360 filter; Off removes only that filter. Pointer drag and scroll update yaw/pitch through runtime commands, with tests for incremental movement, yaw wrapping, pitch bounds, and preserved seek/volume behavior when panorama mode is off. FFmpeg smoke checks process each preset. Real panoramic samples and physical visual/presentation acceptance remain pending; no feature medal is claimed."
-    },
+      "acceptance": "The Video menu converts equirectangular 360-degree sources to a bounded 1280x720 flat perspective view with front, left, right, rear, up and down presets. Switching presets replaces Foxide's labeled v360 filter; Off removes only that filter. Pointer drag and scroll update yaw/pitch through runtime commands, with tests for incremental movement, yaw wrapping, pitch bounds, and preserved seek/volume behavior when panorama mode is off. FFmpeg smoke checks process each preset. Real panoramic samples and physical visual/presentation acceptance remain pending; no feature medal is claimed."    },
     {
       "id": "stereo_3d",
       "name": "Stereoscopic 3D video",
