@@ -138,6 +138,32 @@ fn update_queue(ui: &PlayerWindow, state: &UiState) {
     ui.set_queue(ModelRc::new(VecModel::from(rows)));
 }
 
+fn dispatch_action(state: &mut UiState, action: Action) -> Vec<Effect> {
+    let clear_visualization = state.audio_visualization
+        && match &action {
+            Action::Open(_) | Action::Stop => true,
+            Action::Next => state
+                .selected
+                .checked_add(1)
+                .is_some_and(|next| next < state.playlist.len()),
+            Action::Previous => state.selected > 0,
+            Action::Select(index) => *index < state.playlist.len(),
+            _ => false,
+        };
+    let mut effects = state.dispatch(action);
+    if clear_visualization {
+        effects.insert(
+            0,
+            Effect::Engine(vec![
+                "set".into(),
+                "lavfi-complex".into(),
+                String::new(),
+            ]),
+        );
+    }
+    effects
+}
+
 fn dispatch(
     ui: &PlayerWindow,
     state: &Rc<RefCell<UiState>>,
@@ -146,7 +172,7 @@ fn dispatch(
 ) {
     let queue_changed = matches!(action, Action::Open(_));
     let mut state = state.borrow_mut();
-    let effects = state.dispatch(action);
+    let effects = dispatch_action(&mut state, action);
     if queue_changed {
         ui.set_queue_filter("".into());
         update_queue(ui, &state);
