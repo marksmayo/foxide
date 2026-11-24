@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 14995)
+Total output lines: 1595
+
 mod controller_navigation;
 mod picture_in_picture;
 mod profile_ui;
@@ -226,7 +229,7 @@ fn dispatch(
                     value.to_string()
                 },
             ],
-            Effect::Stop => vec!["stop".into()],
+            Effect::Stop => vec!["stop".into(), "keep-playlist".into()],
             Effect::Quit => {
                 let _ = slint::quit_event_loop();
                 continue;
@@ -794,124 +797,7 @@ fn cast_receiver_rows(preferences: &Preferences) -> Vec<CastReceiverRow> {
         .map(|receiver| CastReceiverRow {
             name: receiver.name().into(),
             endpoint: receiver.endpoint().into(),
-            fingerprint: receiver.fingerprint().into(),
-        })
-        .collect()
-}
-
-fn save_cast_preference(
-    ui: &PlayerWindow,
-    preferences: &Rc<RefCell<Preferences>>,
-    path: Option<&std::path::Path>,
-    edit: impl FnOnce(&mut Preferences) -> Result<(), String>,
-) {
-    let Some(path) = path else {
-        ui.set_cast_status("Receiver preferences cannot be saved because no local configuration path is available.".into());
-        return;
-    };
-    let mut candidate = preferences.borrow().clone();
-    match edit(&mut candidate).and_then(|()| candidate.save(path)) {
-        Ok(()) => {
-            ui.set_cast_paired_receivers(ModelRc::new(VecModel::from(cast_receiver_rows(
-                &candidate,
-            ))));
-            *preferences.borrow_mut() = candidate;
-            ui.set_cast_status("Remembered receivers were saved in local preferences. Certificate changes still require explicit review.".into());
-        }
-        Err(_) => ui.set_cast_status(
-            "Could not save receiver preferences. No receiver settings were changed.".into(),
-        ),
-    }
-}
-
-#[cfg(test)]
-fn install_cast(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>) {
-    install_cast_with_preferences(
-        ui,
-        state,
-        Rc::new(RefCell::new(Preferences::default())),
-        None,
-    );
-}
-
-fn install_cast_with_preferences(
-    ui: &PlayerWindow,
-    state: &Rc<RefCell<UiState>>,
-    preferences: Rc<RefCell<Preferences>>,
-    preferences_path: Option<PathBuf>,
-) {
-    install_cast_with_discovery(
-        ui,
-        state,
-        preferences,
-        preferences_path,
-        player_cast::discover_receivers,
-    );
-}
-
-fn install_cast_with_discovery(
-    ui: &PlayerWindow,
-    state: &Rc<RefCell<UiState>>,
-    preferences: Rc<RefCell<Preferences>>,
-    preferences_path: Option<PathBuf>,
-    discover: impl Fn(std::time::Duration) -> std::io::Result<Vec<player_cast::CastReceiver>>
-    + Send
-    + Sync
-    + 'static,
-) {
-    ui.set_cast_paired_receivers(ModelRc::new(VecModel::from(cast_receiver_rows(
-        &preferences.borrow(),
-    ))));
-    let weak = ui.as_weak();
-    ui.on_cast_select(move |name, endpoint, fingerprint| {
-        if let Some(ui) = weak.upgrade() {
-            ui.set_cast_name(name);
-            ui.set_cast_endpoint(endpoint);
-            ui.set_cast_fingerprint(fingerprint.clone());
-            ui.set_cast_status(
-                if fingerprint.is_empty() {
-                    "Receiver selected. Inspect its certificate and review the fingerprint before casting.".into()
-                } else {
-                    "Remembered receiver selected. Its saved fingerprint is required for casting; inspect again if you need to re-pair.".into()
-                },
-            );
-        }
-    });
-    let active: Arc<std::sync::Mutex<Option<CastController>>> =
-        Arc::new(std::sync::Mutex::new(None));
-    let last_status: Arc<std::sync::Mutex<Option<player_cast::CastStatus>>> =
-        Arc::new(std::sync::Mutex::new(None));
-    let (weak, state, active_for_connect, status_for_connect) = (
-        ui.as_weak(),
-        state.clone(),
-        active.clone(),
-        last_status.clone(),
-    );
-    ui.on_cast_connect(move |endpoint, fingerprint| {
-        let Some(ui) = weak.upgrade() else {
-            return;
-        };
-        if active_for_connect
-            .lock()
-            .expect("Cast controller lock poisoned")
-            .is_some()
-        {
-            ui.set_cast_status("A cast session is already active".into());
-            return;
-        }
-        let address = match parse_cast_address(&endpoint) {
-            Ok(address) => address,
-            Err(_) => {
-                ui.set_cast_status(
-                    "Enter a literal local receiver address and port, such as 192.168.1.20:8009"
-                        .into(),
-                );
-                return;
-            }
-        };
-        let pin = match fingerprint.parse::<CertificatePin>() {
-            Ok(pin) => pin,
-            Err(_) => {
+            fingerprint: re…995 tokens truncated…rr(_) => {
                 ui.set_cast_status(
                     "Enter a previously inspected 64 digit SHA-256 certificate fingerprint".into(),
                 );
@@ -1592,3 +1478,4 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(test)]
 #[path = "desktop_tests.rs"]
 mod tests;
+

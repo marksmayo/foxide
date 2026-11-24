@@ -77,6 +77,12 @@ fn desktop_menu_commands_are_accepted_by_the_native_media_engine() {
         requests
             .push(json!({"name":name,"command":command,"property":property,"expected":expected}));
     }
+    requests.push(json!({
+        "name": "stop-preserves-queue",
+        "command": ["stop", "keep-playlist"],
+        "property": "playlist-count",
+        "expected": 1
+    }));
     let requests_path = probe.directory.join("requests.json");
     let output_path = probe.directory.join("result.json");
     fs::write(&requests_path, serde_json::to_vec(&requests).unwrap()).unwrap();
@@ -93,6 +99,7 @@ fn desktop_menu_commands_are_accepted_by_the_native_media_engine() {
             .args([
                 "--no-config",
                 "--load-scripts=no",
+                "--idle=yes",
                 "--vo=null",
                 "--ao=null",
                 "--hwdec=no",
@@ -146,3 +153,4 @@ fn desktop_menu_commands_are_accepted_by_the_native_media_engine() {
     assert_eq!(result["errors"], json!([]), "{result}\n{log}");
     assert!(status.success(), "{result}\n{log}");
 }
+
