@@ -98,7 +98,7 @@
       "name": "System media-control integration",
       "group": "Interface",
       "stage": "in_progress",
-      "acceptance": "A shared playwire adapter connects Windows SMTC, macOS Now Playing, and Linux MPRIS. The OS media session attaches as soon as the desktop engine is ready, including before a track loads; transient window readiness retries are rate-limited. Play/pause, previous/next, seek, title/artist/album, playback state, and transport capabilities use the player action path. Unit tests cover event routing, idle attachment retry policy, metadata publication, track identity, and seek behavior. The native libmpv metadata check passed in hosted Native playback controls run 45297858782. Platform session interaction and user-visible behavior remain unverified; do not count this gap as closed until that evidence is recorded."
+      "acceptance": "The shared playwire adapter connects Windows SMTC, macOS Now Playing, and Linux MPRIS. At merged PR #13 head e403070, all seven hosted checks passed: Code checks, Desktop UI, Windows packaging, native helper, Native playback controls, Video compositor, and CodSpeed. The compositor job's unchanged 90% full desktop/GPU line-coverage gate passed. Current local Windows verification passed all 8 focused system-media tests and the full 31-test player-ui suite; strict UI Clippy passed with the repository's existing legacy-lint exceptions. The local default-workspace coverage report is 93.64% (3,722/3,975 lines), but excludes feature-gated desktop/GPU code and is not a substitute for the hosted combined gate. Platform session interaction and user-visible behavior remain unverified; do not close the gap or claim a medal."
     },
     {
       "id": "compact_music_view",
