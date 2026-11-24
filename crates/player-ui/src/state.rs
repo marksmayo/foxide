@@ -28,6 +28,7 @@ pub enum PlaybackControl {
     SecondarySubtitle(u32),
     Rotation(u16),
     Stereo3d(u8),
+    Panorama360(u8),
     ReplayGain(u8),
     Deband(bool),
     Equalizer(u8),
@@ -83,6 +84,11 @@ impl Action {
                 if value.is_finite() && (0.0..=6.0).contains(&value) && value.fract() == 0.0 =>
             {
                 PlaybackControl::Stereo3d(value as u8)
+            }
+            "panorama-360"
+                if value.is_finite() && (0.0..=6.0).contains(&value) && value.fract() == 0.0 =>
+            {
+                PlaybackControl::Panorama360(value as u8)
             }
             "flip-vertical" => PlaybackControl::Flip(true),
             "flip-horizontal" => PlaybackControl::Flip(false),
@@ -146,6 +152,29 @@ impl PlaybackControl {
                     "vf".into(),
                     "add".into(),
                     format!("@foxide-stereo3d:lavfi=[stereo3d=in={input}:out={output}]"),
+                ])
+            }
+            Self::Panorama360(0) => Some(vec![
+                "vf".into(),
+                "remove".into(),
+                "@foxide-panorama360".into(),
+            ]),
+            Self::Panorama360(mode @ 1..=6) => {
+                let (yaw, pitch) = match mode {
+                    1 => (0, 0),
+                    2 => (-90, 0),
+                    3 => (90, 0),
+                    4 => (180, 0),
+                    5 => (0, 45),
+                    6 => (0, -45),
+                    _ => unreachable!(),
+                };
+                Some(vec![
+                    "vf".into(),
+                    "add".into(),
+                    format!(
+                        "@foxide-panorama360:lavfi=[v360=input=e:output=flat:w=1280:h=720:h_fov=90:v_fov=60:yaw={yaw}:pitch={pitch}]"
+                    ),
                 ])
             }
             Self::Flip(vertical) => Some(vec![
@@ -289,6 +318,63 @@ mod tests {
                 "@foxide-stereo3d:lavfi=[stereo3d=in=sbsl:out=arcd]".into(),
             ])]
         );
+    }
+
+    #[test]
+    fn panorama_360_front_view_adds_a_labeled_equirectangular_projection_filter() {
+        let mut state = UiState::default();
+        state.confirm_loaded(42.0);
+
+        assert_eq!(
+            state.dispatch(Action::control("panorama-360", 1.0).unwrap()),
+            vec![Effect::Engine(vec![
+                "vf".into(),
+                "add".into(),
+                "@foxide-panorama360:lavfi=[v360=input=e:output=flat:w=1280:h=720:h_fov=90:v_fov=60:yaw=0:pitch=0]".into(),
+            ])]
+        );
+    }
+
+    #[test]
+    fn panorama_360_presets_replace_the_view_and_off_removes_only_its_filter() {
+        let mut state = UiState::default();
+        state.confirm_loaded(42.0);
+        let cases = [
+            (2.0, "yaw=-90:pitch=0"),
+            (3.0, "yaw=90:pitch=0"),
+            (4.0, "yaw=180:pitch=0"),
+            (5.0, "yaw=0:pitch=45"),
+            (6.0, "yaw=0:pitch=-45"),
+        ];
+
+        for (preset, rotation) in cases {
+            assert_eq!(
+                state.dispatch(Action::control("panorama-360", preset).unwrap()),
+                vec![Effect::Engine(vec![
+                    "vf".into(),
+                    "add".into(),
+                    format!(
+                        "@foxide-panorama360:lavfi=[v360=input=e:output=flat:w=1280:h=720:h_fov=90:v_fov=60:{rotation}]"
+                    ),
+                ])]
+            );
+        }
+
+        assert_eq!(
+            state.dispatch(Action::control("panorama-360", 0.0).unwrap()),
+            vec![Effect::Engine(vec![
+                "vf".into(),
+                "remove".into(),
+                "@foxide-panorama360".into(),
+            ])]
+        );
+    }
+
+    #[test]
+    fn panorama_360_rejects_non_integer_or_out_of_range_presets() {
+        for preset in [-1.0, 0.5, 1.5, 7.0, f64::NAN, f64::INFINITY] {
+            assert!(Action::control("panorama-360", preset).is_none());
+        }
     }
 
     #[test]

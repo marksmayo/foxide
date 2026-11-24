@@ -294,6 +294,15 @@ export component PlayerWindow inherits Window {
                     MenuItem { title: "Side-by-side output, left eye first"; enabled: root.loaded && root.has-video; activated => { root.action("stereo-3d", 6); } }
                 }
             }
+            Menu { title: "360° panoramic view";
+                MenuItem { title: "Off"; enabled: root.loaded && root.has-video; activated => { root.action("panorama-360", 0); } }
+                MenuItem { title: "Front"; enabled: root.loaded && root.has-video; activated => { root.action("panorama-360", 1); } }
+                MenuItem { title: "Look left"; enabled: root.loaded && root.has-video; activated => { root.action("panorama-360", 2); } }
+                MenuItem { title: "Look right"; enabled: root.loaded && root.has-video; activated => { root.action("panorama-360", 3); } }
+                MenuItem { title: "Look behind"; enabled: root.loaded && root.has-video; activated => { root.action("panorama-360", 4); } }
+                MenuItem { title: "Look up"; enabled: root.loaded && root.has-video; activated => { root.action("panorama-360", 5); } }
+                MenuItem { title: "Look down"; enabled: root.loaded && root.has-video; activated => { root.action("panorama-360", 6); } }
+            }
             Menu { title: "Rotation";
                 MenuItem { title: "Original"; enabled: root.loaded && root.has-video; activated => { root.action("rotation", 0); } }
                 MenuItem { title: "90° clockwise"; enabled: root.loaded && root.has-video; activated => { root.action("rotation", 90); } }

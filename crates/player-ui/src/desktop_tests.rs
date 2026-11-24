@@ -925,6 +925,7 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
         ("subtitle-track", 0.0),
         ("frame-step", 0.0),
         ("stereo-3d", 1.0),
+        ("panorama-360", 1.0),
     ] {
         controls.borrow_mut().confirm_loaded(120.0);
         ui.invoke_action(name.into(), value);

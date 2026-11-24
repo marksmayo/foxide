@@ -38,6 +38,11 @@ jobs:
           for mode in sbsl:arcd sbsl:abl sbsr:arcd sbsr:sbsl abl:arcd abl:sbsl; do
             ffmpeg -v error -f lavfi -i testsrc2=size=160x96:rate=24:duration=0.2 -vf "stereo3d=$mode" -frames:v 2 -f null -
           done
+      - name: Verify 360-degree view presets
+        run: |
+          for view in 'yaw=0:pitch=0' 'yaw=-90:pitch=0' 'yaw=90:pitch=0' 'yaw=180:pitch=0' 'yaw=0:pitch=45' 'yaw=0:pitch=-45'; do
+            ffmpeg -v error -f lavfi -i testsrc2=size=160x96:rate=24:duration=0.2 -vf "v360=input=e:output=flat:w=1280:h=720:h_fov=90:v_fov=60:$view" -frames:v 2 -f null -
+          done
       - name: Generate deterministic video with audio
         run: |
           mkdir -p results/local
