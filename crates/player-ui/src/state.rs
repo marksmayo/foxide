@@ -1,4 +1,7 @@
-use std::{path::PathBuf, sync::{Arc, OnceLock}};
+use std::{
+    path::PathBuf,
+    sync::{Arc, OnceLock},
+};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Action {
@@ -391,4 +394,3 @@ mod tests {
         assert!(state.loaded);
     }
 }
-
