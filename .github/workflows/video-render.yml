@@ -16,6 +16,7 @@ jobs:
       FOXIDE_SHADER_PROOF: ${{ github.workspace }}/results/local/shader-proof.ppm
       FOXIDE_ARTWORK_PROOF: ${{ github.workspace }}/results/local/artwork-proof.ppm
       FOXIDE_RENDER_FIXTURE: ${{ github.workspace }}/results/local/orientation.mkv
+      FOXIDE_AUDIO_VISUALIZATION_FIXTURE: ${{ github.workspace }}/results/local/audio-visualization.wav
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
@@ -49,6 +50,7 @@ jobs:
         run: |
           mkdir -p results/local
           ffmpeg -v error -f lavfi -i "testsrc2=size=320x180:rate=30:duration=10,drawbox=x=0:y=0:w=iw:h=ih/4:color=red:t=fill,drawbox=x=0:y=3*ih/4:w=iw:h=ih/4:color=blue:t=fill" -c:v ffv1 "$FOXIDE_RENDER_FIXTURE"
+          ffmpeg -v error -f lavfi -i "aevalsrc=0.6*sin(2*PI*(220*t+35*t*t)):s=44100:d=5" -c:a pcm_s16le "$FOXIDE_AUDIO_VISUALIZATION_FIXTURE"
       - name: Reset coverage profiles before combining test passes
         run: cargo llvm-cov clean --workspace
       - name: Verify video-site hook through the distribution Lua-enabled engine
