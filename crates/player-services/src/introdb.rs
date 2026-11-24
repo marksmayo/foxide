@@ -252,7 +252,6 @@ mod tests {
         }
     }
 
-
     #[test]
     #[ignore = "requires one read from the public IntroDB API"]
     fn live_provider_response_contains_a_known_episode_intro() {
@@ -265,7 +264,11 @@ mod tests {
 
         assert!(segment.start_seconds >= 0.0);
         assert!(segment.end_seconds > segment.start_seconds);
-        assert!(segment.confidence.is_some_and(|value| (0.0..=1.0).contains(&value)));
+        assert!(
+            segment
+                .confidence
+                .is_some_and(|value| (0.0..=1.0).contains(&value))
+        );
         assert!(segment.submission_count.is_some_and(|value| value > 0));
     }
 }
