@@ -1260,4 +1260,3 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
     }
     assert_eq!(ui.get_update_status(), "Foxide is up to date.");
 }
-
