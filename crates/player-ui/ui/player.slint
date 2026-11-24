@@ -218,12 +218,15 @@ export component PlayerWindow inherits Window {
     callback action(string, float);
     callback open-url(string);
     callback files-picked([string], bool);
+    callback disc-picked(bool, string);
     full-screen: fullscreen-mode;
     forward-focus: keys;
     MenuBar {
         visible: !root.picture-in-picture;
         Menu { title: "Media";
             MenuItem { title: "Open files…"; activated => { root.action("open", 0); } }
+            MenuItem { title: "Open DVD folder…"; activated => { root.action("open-dvd-folder", 0); } }
+            MenuItem { title: "Open Blu-ray folder…"; activated => { root.action("open-bluray-folder", 0); } }
             MenuItem { title: "Internet radio…"; activated => { root.panel = "radio"; } }
             MenuItem { title: "Open URL…"; activated => { root.panel = "url"; } }
             MenuSeparator {}

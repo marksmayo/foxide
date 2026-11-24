@@ -1,8 +1,9 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Action {
     Open(Vec<PathBuf>),
+    OpenDisc { kind: DiscKind, device: PathBuf },
     Seek(f64),
     TogglePause,
     SetPaused(bool),
@@ -47,6 +48,30 @@ pub enum Effect {
     Stop,
     Quit,
     Engine(Vec<String>),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DiscKind {
+    Dvd,
+    BluRay,
+}
+
+impl DiscKind {
+    pub fn validate_folder(self, device: &Path) -> Result<(), &'static str> {
+        if !device.is_dir() {
+            return Err("Choose an existing disc folder");
+        }
+        let has_dvd_video =
+            device.join("VIDEO_TS/VIDEO_TS.IFO").is_file() || device.join("VIDEO_TS.IFO").is_file();
+        let has_bluray_index =
+            device.join("BDMV/index.bdmv").is_file() || device.join("index.bdmv").is_file();
+        match self {
+            Self::Dvd if has_dvd_video => Ok(()),
+            Self::BluRay if has_bluray_index => Ok(()),
+            Self::Dvd => Err("This folder does not contain a DVD VIDEO_TS.IFO structure"),
+            Self::BluRay => Err("This folder does not contain a Blu-ray BDMV/index.bdmv structure"),
+        }
+    }
 }
 
 #[derive(Debug, Default)]
@@ -193,6 +218,23 @@ impl UiState {
                     .into_iter()
                     .collect()
             }
+            Action::OpenDisc { kind, device } => {
+                self.playlist = vec![device.clone()];
+                self.selected = 0;
+                self.loaded = false;
+                let (device_option, protocol) = match kind {
+                    DiscKind::Dvd => ("dvd-device", "dvd://"),
+                    DiscKind::BluRay => ("bluray-device", "bd://"),
+                };
+                vec![
+                    Effect::Engine(vec![
+                        "set".into(),
+                        device_option.into(),
+                        device.to_string_lossy().into_owned(),
+                    ]),
+                    Effect::Engine(vec!["loadfile".into(), protocol.into(), "replace".into()]),
+                ]
+            }
             Action::TogglePause if self.loaded => vec![Effect::Pause(!self.paused)],
             Action::SetPaused(paused) if self.loaded => {
                 vec![Effect::Pause(paused)]
@@ -247,7 +289,8 @@ impl UiState {
 
 #[cfg(test)]
 mod tests {
-    use super::{Action, Effect, UiState};
+    use super::{Action, DiscKind, Effect, UiState};
+    use std::path::PathBuf;
 
     #[test]
     fn system_media_play_and_pause_wait_for_engine_confirmation() {
@@ -270,5 +313,69 @@ mod tests {
 
         state.loaded = false;
         assert!(state.dispatch(Action::SetPaused(false)).is_empty());
+    }
+
+    #[test]
+    fn opening_a_disc_folder_selects_the_device_and_loads_the_disc_protocol() {
+        let cases = [
+            (DiscKind::Dvd, "dvd-device", "dvd://"),
+            (DiscKind::BluRay, "bluray-device", "bd://"),
+        ];
+
+        for (kind, option, protocol) in cases {
+            let device = PathBuf::from("/media/Disc One");
+            let mut state = UiState::default();
+            state.confirm_loaded(120.0);
+
+            let effects = state.dispatch(Action::OpenDisc {
+                kind,
+                device: device.clone(),
+            });
+
+            assert_eq!(state.playlist, vec![device.clone()]);
+            assert_eq!(state.selected, 0);
+            assert!(!state.loaded);
+            assert_eq!(
+                effects,
+                vec![
+                    Effect::Engine(vec![
+                        "set".into(),
+                        option.into(),
+                        device.to_string_lossy().into_owned(),
+                    ]),
+                    Effect::Engine(vec!["loadfile".into(), protocol.into(), "replace".into(),]),
+                ]
+            );
+        }
+    }
+
+    #[test]
+    fn disc_folder_validation_requires_the_matching_structure() {
+        let root = std::env::temp_dir().join(format!(
+            "foxide-disc-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let dvd = root.join("dvd");
+        let bluray = root.join("bluray");
+        std::fs::create_dir_all(dvd.join("VIDEO_TS")).unwrap();
+        std::fs::write(dvd.join("VIDEO_TS/VIDEO_TS.IFO"), b"fixture").unwrap();
+        std::fs::create_dir_all(bluray.join("BDMV")).unwrap();
+        std::fs::write(bluray.join("BDMV/index.bdmv"), b"fixture").unwrap();
+
+        assert!(DiscKind::Dvd.validate_folder(&dvd).is_ok());
+        assert!(DiscKind::BluRay.validate_folder(&bluray).is_ok());
+        assert!(DiscKind::Dvd.validate_folder(&bluray).is_err());
+        assert!(DiscKind::BluRay.validate_folder(&dvd).is_err());
+        assert!(
+            DiscKind::Dvd
+                .validate_folder(&root.join("missing"))
+                .is_err()
+        );
+
+        std::fs::remove_dir_all(root).unwrap();
     }
 }

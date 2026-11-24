@@ -214,6 +214,33 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
     ui.set_panel("".into());
     let state = Rc::new(RefCell::new(UiState::default()));
     install_controls(&ui, &state, &None);
+    let disc_root = std::env::temp_dir().join(format!(
+        "foxide-disc-ui-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let dvd = disc_root.join("dvd");
+    let bluray = disc_root.join("bluray");
+    let wrong = disc_root.join("wrong");
+    std::fs::create_dir_all(dvd.join("VIDEO_TS")).unwrap();
+    std::fs::write(dvd.join("VIDEO_TS/VIDEO_TS.IFO"), b"fixture").unwrap();
+    std::fs::create_dir_all(bluray.join("BDMV")).unwrap();
+    std::fs::write(bluray.join("BDMV/index.bdmv"), b"fixture").unwrap();
+    std::fs::create_dir_all(&wrong).unwrap();
+    ui.invoke_disc_picked(false, wrong.to_string_lossy().into_owned().into());
+    assert!(state.borrow().playlist.is_empty());
+    assert!(ui.get_status().contains("DVD VIDEO_TS.IFO"));
+    ui.invoke_disc_picked(false, dvd.to_string_lossy().into_owned().into());
+    assert_eq!(state.borrow().playlist, vec![dvd]);
+    assert_eq!(ui.get_queue_count(), 1);
+    assert!(ui.get_status().contains("Playback engine unavailable"));
+    ui.invoke_disc_picked(true, bluray.to_string_lossy().into_owned().into());
+    assert_eq!(state.borrow().playlist, vec![bluray]);
+    assert_eq!(ui.get_queue_count(), 1);
+    std::fs::remove_dir_all(disc_root).unwrap();
     ui.set_loaded(true);
     ui.set_has_video(true);
     ui.invoke_action("picture-in-picture".into(), 0.0);

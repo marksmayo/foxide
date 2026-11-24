@@ -7,7 +7,7 @@ use clap::Parser;
 use player_cast::{CastController, CastEvent, CastOptions, CertificatePin};
 use player_render::{Engine, Snapshot};
 use player_settings::Preferences;
-use player_ui::{Action, Effect, UiState};
+use player_ui::{Action, DiscKind, Effect, UiState};
 use slint::{ComponentHandle, ModelRc, VecModel};
 use std::{
     cell::{Cell, RefCell},
@@ -144,7 +144,7 @@ fn dispatch(
     engine: &Option<Rc<Engine>>,
     action: Action,
 ) {
-    let queue_changed = matches!(action, Action::Open(_));
+    let queue_changed = matches!(action, Action::Open(_) | Action::OpenDisc { .. });
     let mut state = state.borrow_mut();
     let effects = state.dispatch(action);
     if queue_changed {
@@ -246,6 +246,27 @@ fn open_dialog(weak: slint::Weak<PlayerWindow>, subtitle: bool) {
                 }
             });
         }
+    });
+}
+
+fn open_disc_dialog(weak: slint::Weak<PlayerWindow>, kind: DiscKind) {
+    std::thread::spawn(move || {
+        let title = match kind {
+            DiscKind::Dvd => "Choose a DVD folder",
+            DiscKind::BluRay => "Choose a Blu-ray folder",
+        };
+        let folder = futures_lite::future::block_on(
+            rfd::AsyncFileDialog::new().set_title(title).pick_folder(),
+        );
+        let Some(folder) = folder else { return };
+        let path = folder.path().to_path_buf();
+        let _ = weak.upgrade_in_event_loop(move |ui| {
+            if let Some(path) = path.to_str() {
+                ui.invoke_disc_picked(matches!(kind, DiscKind::BluRay), path.into());
+            } else {
+                ui.set_status("Disc folder path must be valid Unicode".into());
+            }
+        });
     });
 }
 
@@ -1143,6 +1164,14 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
                 open_dialog(weak.clone(), name == "subtitle-file");
                 return;
             }
+            "open-dvd-folder" => {
+                open_disc_dialog(weak.clone(), DiscKind::Dvd);
+                return;
+            }
+            "open-bluray-folder" => {
+                open_disc_dialog(weak.clone(), DiscKind::BluRay);
+                return;
+            }
             "pause" => Action::TogglePause,
             "stop" => Action::Stop,
             "next" => Action::Next,
@@ -1204,6 +1233,26 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
                 dispatch(&ui, &controller, &playback, Action::Open(paths));
             }
         }
+    });
+    let (weak, controller, playback) = (ui.as_weak(), state.clone(), engine.clone());
+    ui.on_disc_picked(move |is_bluray, path| {
+        let Some(ui) = weak.upgrade() else { return };
+        let kind = if is_bluray {
+            DiscKind::BluRay
+        } else {
+            DiscKind::Dvd
+        };
+        let device = PathBuf::from(path.as_str());
+        if let Err(error) = kind.validate_folder(&device) {
+            ui.set_status(error.into());
+            return;
+        }
+        dispatch(
+            &ui,
+            &controller,
+            &playback,
+            Action::OpenDisc { kind, device },
+        );
     });
 }
 
