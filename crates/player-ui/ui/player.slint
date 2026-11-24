@@ -228,6 +228,8 @@ export component PlayerWindow inherits Window {
             MenuItem { title: "Open files…"; activated => { root.action("open", 0); } }
             MenuItem { title: "Open DVD folder…"; activated => { root.action("open-dvd-folder", 0); } }
             MenuItem { title: "Open Blu-ray folder…"; activated => { root.action("open-bluray-folder", 0); } }
+            MenuItem { title: "Open DVD ISO…"; activated => { root.action("open-dvd-image", 0); } }
+            MenuItem { title: "Open Blu-ray ISO…"; activated => { root.action("open-bluray-image", 0); } }
             MenuItem { title: "Internet radio…"; activated => { root.panel = "radio"; } }
             MenuItem { title: "Open URL…"; activated => { root.panel = "url"; } }
             MenuSeparator {}

@@ -278,6 +278,30 @@ fn open_disc_dialog(weak: slint::Weak<PlayerWindow>, kind: DiscKind) {
     });
 }
 
+fn open_disc_image_dialog(weak: slint::Weak<PlayerWindow>, kind: DiscKind) {
+    std::thread::spawn(move || {
+        let title = match kind {
+            DiscKind::Dvd => "Choose a DVD ISO image",
+            DiscKind::BluRay => "Choose a Blu-ray ISO image",
+        };
+        let file = futures_lite::future::block_on(
+            rfd::AsyncFileDialog::new()
+                .set_title(title)
+                .add_filter("ISO disc image", &["iso"])
+                .pick_file(),
+        );
+        let Some(file) = file else { return };
+        let path = file.path().to_path_buf();
+        let _ = weak.upgrade_in_event_loop(move |ui| {
+            if let Some(path) = path.to_str() {
+                ui.invoke_disc_picked(matches!(kind, DiscKind::BluRay), path.into());
+            } else {
+                ui.set_status("Disc image path must be valid Unicode".into());
+            }
+        });
+    });
+}
+
 fn refresh(
     ui: &PlayerWindow,
     state: &Rc<RefCell<UiState>>,
@@ -1191,6 +1215,14 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
                 open_disc_dialog(weak.clone(), DiscKind::BluRay);
                 return;
             }
+            "open-dvd-image" => {
+                open_disc_image_dialog(weak.clone(), DiscKind::Dvd);
+                return;
+            }
+            "open-bluray-image" => {
+                open_disc_image_dialog(weak.clone(), DiscKind::BluRay);
+                return;
+            }
             "pause" => Action::TogglePause,
             "stop" => Action::Stop,
             "next" => Action::Next,
@@ -1262,7 +1294,7 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
             DiscKind::Dvd
         };
         let device = PathBuf::from(path.as_str());
-        if let Err(error) = kind.validate_folder(&device) {
+        if let Err(error) = kind.validate_source(&device) {
             ui.set_status(error.into());
             return;
         }

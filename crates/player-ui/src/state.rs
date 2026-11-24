@@ -99,6 +99,43 @@ impl DiscNavigationAction {
 }
 
 impl DiscKind {
+    pub fn validate_source(self, source: &Path) -> Result<(), &'static str> {
+        if source.is_dir() {
+            return self.validate_folder(source);
+        }
+        if !source.is_file() {
+            return Err("Choose an existing disc folder or ISO image");
+        }
+        if !source
+            .extension()
+            .is_some_and(|extension| extension.eq_ignore_ascii_case("iso"))
+        {
+            return Err("Choose a DVD or Blu-ray folder or .iso image");
+        }
+
+        use std::io::{Read, Seek, SeekFrom};
+        let mut file = std::fs::File::open(source).map_err(|_| "Could not read the disc image")?;
+        let mut iso9660 = [0_u8; 7];
+        let has_iso9660 = file
+            .seek(SeekFrom::Start(16 * 2_048))
+            .and_then(|_| file.read_exact(&mut iso9660))
+            .is_ok()
+            && iso9660 == [1, b'C', b'D', b'0', b'0', b'1', 1];
+
+        let mut udf_anchor = [0_u8; 16];
+        let has_udf_anchor = file
+            .seek(SeekFrom::Start(256 * 2_048))
+            .and_then(|_| file.read_exact(&mut udf_anchor))
+            .is_ok()
+            && u16::from_le_bytes([udf_anchor[0], udf_anchor[1]]) == 2
+            && u32::from_le_bytes(udf_anchor[12..16].try_into().unwrap()) == 256;
+        if has_iso9660 || has_udf_anchor {
+            Ok(())
+        } else {
+            Err("This .iso file has no supported ISO9660 or UDF volume descriptor")
+        }
+    }
+
     pub fn validate_folder(self, device: &Path) -> Result<(), &'static str> {
         if !device.is_dir() {
             return Err("Choose an existing disc folder");
@@ -423,6 +460,50 @@ mod tests {
         assert!(
             DiscKind::Dvd
                 .validate_folder(&root.join("missing"))
+                .is_err()
+        );
+
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn disc_iso_validation_requires_a_recognized_volume_descriptor() {
+        use std::io::{Seek, SeekFrom, Write};
+
+        let root = std::env::temp_dir().join(format!(
+            "foxide-disc-iso-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&root).unwrap();
+
+        let iso9660 = root.join("dvd.ISO");
+        let mut file = std::fs::File::create(&iso9660).unwrap();
+        file.set_len(16 * 2_048 + 7).unwrap();
+        file.seek(SeekFrom::Start(16 * 2_048)).unwrap();
+        file.write_all(&[1, b'C', b'D', b'0', b'0', b'1', 1])
+            .unwrap();
+        assert!(DiscKind::Dvd.validate_source(&iso9660).is_ok());
+
+        let udf = root.join("bluray.iso");
+        let mut file = std::fs::File::create(&udf).unwrap();
+        file.set_len(256 * 2_048 + 16).unwrap();
+        file.seek(SeekFrom::Start(256 * 2_048)).unwrap();
+        let mut anchor = [0_u8; 16];
+        anchor[0..2].copy_from_slice(&2_u16.to_le_bytes());
+        anchor[12..16].copy_from_slice(&256_u32.to_le_bytes());
+        file.write_all(&anchor).unwrap();
+        assert!(DiscKind::BluRay.validate_source(&udf).is_ok());
+
+        let malformed = root.join("broken.iso");
+        std::fs::write(&malformed, b"not a disc image").unwrap();
+        assert!(DiscKind::Dvd.validate_source(&malformed).is_err());
+        assert!(
+            DiscKind::Dvd
+                .validate_source(&root.join("missing.iso"))
                 .is_err()
         );
 
