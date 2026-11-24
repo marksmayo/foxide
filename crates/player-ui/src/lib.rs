@@ -3,9 +3,7 @@
 use player_core::Command;
 mod state;
 pub mod system_media_controls;
-pub use state::{
-    Action, DiscAction, DiscKind, DiscNavigationAction, Effect, PlaybackControl, UiState,
-};
+pub use state::{Action, DiscKind, DiscNavigationAction, Effect, PlaybackControl, UiState};
 
 /// Initial mpv-compatible shortcut subset. Modifiers and text editing are handled by the UI.
 #[inline]
@@ -26,4 +24,3 @@ pub fn shortcut(key: &str) -> Option<Command> {
 
 #[cfg(all(test, feature = "native-controls"))]
 mod native_control_tests;
-

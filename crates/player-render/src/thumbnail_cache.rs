@@ -240,4 +240,3 @@ mod tests {
         assert_eq!(requests.take_timeout(Duration::ZERO), None);
     }
 }
-

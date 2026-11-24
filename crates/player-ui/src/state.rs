@@ -3,7 +3,6 @@ use std::path::{Path, PathBuf};
 #[derive(Debug, Clone, PartialEq)]
 pub enum Action {
     Open(Vec<PathBuf>),
-    Disc(DiscAction),
     Seek(f64),
     TogglePause,
     SetPaused(bool),
@@ -32,12 +31,6 @@ pub enum PlaybackControl {
     Deband(bool),
     Equalizer(u8),
     Flip(bool),
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum DiscAction {
-    Open { kind: DiscKind, device: PathBuf },
-    Navigate(DiscNavigationAction),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -259,6 +252,35 @@ impl PlaybackControl {
 }
 
 impl UiState {
+    pub fn open_disc(&mut self, kind: DiscKind, device: PathBuf) -> Vec<Effect> {
+        self.playlist = vec![device.clone()];
+        self.selected = 0;
+        self.loaded = false;
+        let (device_option, protocol) = match kind {
+            DiscKind::Dvd => ("dvd-device", "dvd://"),
+            DiscKind::BluRay => ("bluray-device", "bd://"),
+        };
+        vec![
+            Effect::Engine(vec![
+                "set".into(),
+                device_option.into(),
+                device.to_string_lossy().into_owned(),
+            ]),
+            Effect::Engine(vec!["set".into(), "disc-menu".into(), "yes".into()]),
+            Effect::Engine(vec!["loadfile".into(), protocol.into(), "replace".into()]),
+        ]
+    }
+
+    pub fn disc_navigation(&self, action: DiscNavigationAction) -> Vec<Effect> {
+        if !self.loaded {
+            return Vec::new();
+        }
+        vec![Effect::Engine(vec![
+            "discnav".into(),
+            action.command().into(),
+        ])]
+    }
+
     /// Stable queue indices keep filtered selection attached to the original file.
     pub fn filtered_indices(&self, query: &str) -> Vec<usize> {
         let query = query.trim().to_lowercase();
@@ -301,30 +323,6 @@ impl UiState {
                     .map(Effect::Load)
                     .into_iter()
                     .collect()
-            }
-            Action::Disc(DiscAction::Open { kind, device }) => {
-                self.playlist = vec![device.clone()];
-                self.selected = 0;
-                self.loaded = false;
-                let (device_option, protocol) = match kind {
-                    DiscKind::Dvd => ("dvd-device", "dvd://"),
-                    DiscKind::BluRay => ("bluray-device", "bd://"),
-                };
-                vec![
-                    Effect::Engine(vec![
-                        "set".into(),
-                        device_option.into(),
-                        device.to_string_lossy().into_owned(),
-                    ]),
-                    Effect::Engine(vec!["set".into(), "disc-menu".into(), "yes".into()]),
-                    Effect::Engine(vec!["loadfile".into(), protocol.into(), "replace".into()]),
-                ]
-            }
-            Action::Disc(DiscAction::Navigate(action)) if self.loaded => {
-                vec![Effect::Engine(vec![
-                    "discnav".into(),
-                    action.command().into(),
-                ])]
             }
             Action::TogglePause if self.loaded => vec![Effect::Pause(!self.paused)],
             Action::SetPaused(paused) if self.loaded => {
@@ -380,7 +378,7 @@ impl UiState {
 
 #[cfg(test)]
 mod tests {
-    use super::{Action, DiscAction, DiscKind, DiscNavigationAction, Effect, UiState};
+    use super::{Action, DiscKind, DiscNavigationAction, Effect, UiState};
     use std::path::PathBuf;
 
     #[test]
@@ -418,10 +416,7 @@ mod tests {
             let mut state = UiState::default();
             state.confirm_loaded(120.0);
 
-            let effects = state.dispatch(Action::Disc(DiscAction::Open {
-                kind,
-                device: device.clone(),
-            }));
+            let effects = state.open_disc(kind, device.clone());
 
             assert_eq!(state.playlist, vec![device.clone()]);
             assert_eq!(state.selected, 0);
@@ -533,19 +528,12 @@ mod tests {
             assert_eq!(DiscNavigationAction::from_ui_action(ui_name), Some(action));
             state.confirm_loaded(120.0);
             assert_eq!(
-                state.dispatch(Action::Disc(DiscAction::Navigate(action))),
+                state.disc_navigation(action),
                 vec![Effect::Engine(vec!["discnav".into(), command.into()])]
             );
         }
         state.loaded = false;
-        assert!(
-            state
-                .dispatch(Action::Disc(DiscAction::Navigate(
-                    DiscNavigationAction::Menu
-                )))
-                .is_empty()
-        );
+        assert!(state.disc_navigation(DiscNavigationAction::Menu).is_empty());
         assert_eq!(DiscNavigationAction::from_ui_action("disc-exec"), None);
     }
 }
-

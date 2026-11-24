@@ -7,7 +7,7 @@ use clap::Parser;
 use player_cast::{CastController, CastEvent, CastOptions, CertificatePin};
 use player_render::{Engine, Snapshot};
 use player_settings::Preferences;
-use player_ui::{Action, DiscAction, DiscKind, DiscNavigationAction, Effect, UiState};
+use player_ui::{Action, DiscKind, DiscNavigationAction, Effect, UiState};
 use slint::{ComponentHandle, ModelRc, VecModel};
 use std::{
     cell::{Cell, RefCell},
@@ -138,6 +138,54 @@ fn update_queue(ui: &PlayerWindow, state: &UiState) {
     ui.set_queue(ModelRc::new(VecModel::from(rows)));
 }
 
+fn send_disc_commands(ui: &PlayerWindow, engine: &Option<Rc<Engine>>, effects: Vec<Effect>) {
+    for effect in effects {
+        let Effect::Engine(args) = effect else {
+            debug_assert!(false, "disc actions must produce engine commands only");
+            continue;
+        };
+        match engine {
+            Some(engine) => {
+                if let Err(error) = engine.command(args) {
+                    ui.set_status(error.into());
+                }
+            }
+            None => ui.set_status("Playback engine unavailable — see setup instructions".into()),
+        }
+    }
+}
+
+fn dispatch_disc_open(
+    ui: &PlayerWindow,
+    state: &Rc<RefCell<UiState>>,
+    engine: &Option<Rc<Engine>>,
+    kind: DiscKind,
+    device: PathBuf,
+) {
+    let mut state = state.borrow_mut();
+    let effects = state.open_disc(kind, device);
+    ui.set_disc_playback(true);
+    ui.set_queue_filter("".into());
+    update_queue(ui, &state);
+    ui.set_status("Opening media…".into());
+    ui.set_selected_row(state.selected as i32);
+    ui.set_queue_visible(state.playlist_visible);
+    ui.set_fullscreen_mode(state.fullscreen);
+    ui.set_loaded(state.loaded);
+    ui.set_cast_available(false);
+    send_disc_commands(ui, engine, effects);
+}
+
+fn dispatch_disc_navigation(
+    ui: &PlayerWindow,
+    state: &Rc<RefCell<UiState>>,
+    engine: &Option<Rc<Engine>>,
+    action: DiscNavigationAction,
+) {
+    let effects = state.borrow().disc_navigation(action);
+    send_disc_commands(ui, engine, effects);
+}
+
 fn dispatch(
     ui: &PlayerWindow,
     state: &Rc<RefCell<UiState>>,
@@ -145,14 +193,10 @@ fn dispatch(
     action: Action,
 ) {
     let disc_playback = match &action {
-        Action::Disc(DiscAction::Open { .. }) => Some(true),
         Action::Open(_) | Action::Select(_) | Action::Stop => Some(false),
         _ => None,
     };
-    let queue_changed = matches!(
-        action,
-        Action::Open(_) | Action::Disc(DiscAction::Open { .. })
-    );
+    let queue_changed = matches!(action, Action::Open(_));
     let mut state = state.borrow_mut();
     let effects = state.dispatch(action);
     if let Some(disc_playback) = disc_playback {
@@ -1183,12 +1227,7 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
         let Some(ui) = weak.upgrade() else { return };
         if let Some(navigation) = DiscNavigationAction::from_ui_action(name.as_str()) {
             if ui.get_loaded() && ui.get_disc_playback() {
-                dispatch(
-                    &ui,
-                    &controller,
-                    &playback,
-                    Action::Disc(DiscAction::Navigate(navigation)),
-                );
+                dispatch_disc_navigation(&ui, &controller, &playback, navigation);
             }
             return;
         }
@@ -1301,12 +1340,7 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
             ui.set_status(error.into());
             return;
         }
-        dispatch(
-            &ui,
-            &controller,
-            &playback,
-            Action::Disc(DiscAction::Open { kind, device }),
-        );
+        dispatch_disc_open(&ui, &controller, &playback, kind, device);
     });
 }
 
@@ -1661,4 +1695,3 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(test)]
 #[path = "desktop_tests.rs"]
 mod tests;
-
