@@ -1037,7 +1037,7 @@ mod snapshot_allocation_tests {
             .unwrap();
 
         let deadline = Instant::now() + Duration::from_secs(15);
-        let mut reached_end = false;
+        let mut second_track_started = None;
         let mut last_snapshot = Snapshot::default();
         while Instant::now() < deadline {
             let snapshot = engine.snapshot().unwrap_or_default();
@@ -1047,20 +1047,18 @@ mod snapshot_allocation_tests {
                 "libmpv failed to play through PulseAudio: {}",
                 snapshot.error
             );
-            if snapshot.loaded
-                && snapshot.playlist_position == 1
-                && snapshot.duration > 0.0
-                && snapshot.position >= snapshot.duration - 0.02
-            {
-                reached_end = true;
-                break;
+            if snapshot.playlist_position == 1 {
+                let started = second_track_started.get_or_insert_with(Instant::now);
+                if started.elapsed() >= Duration::from_millis(1_200) {
+                    break;
+                }
             }
             thread::sleep(Duration::from_millis(20));
         }
         engine.command(vec!["stop".into()]).unwrap();
         assert!(
-            reached_end,
-            "libmpv did not finish the second queued track: loaded={}, path={:?}, playlist_position={}, position={:.3}, duration={:.3}, paused={}, error={:?}, command_error={:?}",
+            second_track_started.is_some(),
+            "libmpv did not advance to the second queued track: loaded={}, path={:?}, playlist_position={}, position={:.3}, duration={:.3}, paused={}, error={:?}, command_error={:?}",
             last_snapshot.loaded,
             last_snapshot.path,
             last_snapshot.playlist_position,

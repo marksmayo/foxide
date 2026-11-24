@@ -42,8 +42,8 @@ jobs:
           mkdir -p results/local
           ffmpeg -v error -f lavfi -i testsrc2=size=128x72:rate=30:duration=10 -f lavfi -i sine=frequency=440:duration=10 -metadata title="Foxide system media fixture" -metadata artist="Foxide CI" -metadata album="System media controls" -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest "$FOXIDE_CONTROL_FIXTURE"
           cp "$FOXIDE_CONTROL_FIXTURE" "$FOXIDE_SYSTEM_MEDIA_FIXTURE"
-          ffmpeg -v error -f lavfi -i sine=frequency=440:duration=0.5 -c:a pcm_s16le "$FOXIDE_GAPLESS_FIRST"
-          ffmpeg -v error -f lavfi -i sine=frequency=880:duration=0.5 -c:a pcm_s16le "$FOXIDE_GAPLESS_SECOND"
+          ffmpeg -v error -f lavfi -i sine=frequency=440:duration=2 -c:a pcm_s16le "$FOXIDE_GAPLESS_FIRST"
+          ffmpeg -v error -f lavfi -i sine=frequency=880:duration=2 -c:a pcm_s16le "$FOXIDE_GAPLESS_SECOND"
       - name: Start isolated PulseAudio loopback sink
         run: |
           pulseaudio --start --exit-idle-time=-1 --log-level=error
