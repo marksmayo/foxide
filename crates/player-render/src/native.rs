@@ -525,7 +525,7 @@ impl Engine {
         Self::create(None, true)
     }
 
-    #[cfg(test)]
+    #[cfg(all(test, feature = "system-media-integration"))]
     fn new_audio_capture(path: &std::path::Path) -> Result<Self, String> {
         let path = CString::new(path.to_string_lossy().as_bytes())
             .map_err(|_| "PCM capture path contains a null byte")?;
@@ -541,7 +541,7 @@ impl Engine {
         Self::create_with_options(None, false, &options)
     }
 
-    #[cfg(test)]
+    #[cfg(all(test, feature = "system-media-integration"))]
     fn new_audio_device_capture(device: &str) -> Result<Self, String> {
         let device = CString::new(device).map_err(|_| "Audio device contains a null byte")?;
         let options = [
@@ -1152,6 +1152,7 @@ mod snapshot_allocation_tests {
         wav
     }
 
+    #[cfg(feature = "system-media-integration")]
     fn assert_pcm_wav_has_gapless_boundary(bytes: &[u8], capture_kind: &str) -> u64 {
         assert!(
             bytes.starts_with(b"RIFF"),
@@ -1271,6 +1272,7 @@ mod snapshot_allocation_tests {
         active_span_ms
     }
 
+    #[cfg(feature = "system-media-integration")]
     fn positive_zero_crossing_frequency(samples: &[i32], sample_rate: u32) -> f64 {
         let crossings = samples
             .windows(2)
