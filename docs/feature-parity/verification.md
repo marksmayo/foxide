@@ -75,3 +75,17 @@ The desktop video surface maps horizontal trackpad scroll and horizontal pointer
 
 The desktop now polls standardized gamepad events and routes D-pad focus traversal, confirm/back, playback toggle and previous/next through Slint or the shared playback action path. It surfaces controller connection and disconnection events without publishing device names. Mapping tests cover supported and ignored controls. Linux CI explicitly installs libudev development headers for the gilrs backend. This remains in progress until physical hot-plug and focus-order behavior is verified on supported desktop platforms.
 
+## Windows physical interface acceptance checklist
+
+Use a local media file with visible video and, for media-session checks, title and artist metadata. Record each result as pass, fail, or blocked. A failure should include the visible behavior and a diagnostic-log excerpt with private paths removed.
+
+| Feature | Check | Result |
+|---|---|---|
+| Seek thumbnails | Hover at several timeline positions; preview frames match those positions and update as the pointer moves. Hovering does not seek. Clicking a position seeks there. | Pending |
+| Picture in picture | Enter PiP during playback; the separate window stays above other windows, video and audio continue, and returning to the main window restores controls. Closing PiP follows the documented stop/return behavior. | Pending |
+| System media controls | With playback stopped and while playing, confirm the OS session appears and shows title/artist. Test play/pause, previous/next, seek, pause/resume state, track changes, and stopping. | Pending |
+| Trackpad/touch gestures | Verify a short drag does not seek, horizontal movement seeks in both directions, vertical movement changes volume, limits are respected, and gestures do not activate unrelated controls. Repeat on a touchscreen if available. | Pending |
+| Controller navigation | Connect and disconnect a controller during playback; verify status changes, D-pad focus order, confirm/back, play/pause, previous/next, and that unsupported buttons do nothing. | Pending |
+
+Report only behavior and the result for each row. Do not include device names, network addresses, certificate pins, account identifiers, or private media paths. Update the result and tracker only after the physical check is performed; automated tests alone do not close these acceptance items.
+
