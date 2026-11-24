@@ -1049,7 +1049,7 @@ mod snapshot_allocation_tests {
             );
             if snapshot.playlist_position == 1 {
                 let started = second_track_started.get_or_insert_with(Instant::now);
-                if started.elapsed() >= Duration::from_millis(1_200) {
+                if started.elapsed() >= Duration::from_millis(1_500) {
                     break;
                 }
             }
