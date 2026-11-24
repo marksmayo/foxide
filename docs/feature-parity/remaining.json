@@ -343,7 +343,7 @@
       "name": "Music visualization display",
       "group": "Audio",
       "stage": "in_progress",
-      "acceptance": "An Audio menu control routes a selected audio track through libmpv lavfi-complex, splits the original audio to output, and renders a bounded 960x270/24fps waveform through the existing video surface. The UI disables the option for video tracks and updates or clears the filter on track changes. Unit tests cover graph commands and state; Windows desktop compilation passes. Native filter acceptance, visual behavior, resource/frame pacing benchmarks, and physical-device verification remain pending; no feature medal is claimed."
+      "acceptance": "An Audio menu control routes a selected audio track through libmpv lavfi-complex, splits the original audio to output, and renders a bounded 960x270/24fps waveform through the existing video surface. The UI disables the option for video tracks and updates or clears the filter on track changes. Unit tests cover graph commands and state. Native Windows and hosted Linux tests confirm that audio playback advances with the filter active; hosted compositor readback detected 4,925 green waveform pixels and 34 distinct frames at 960x270 in a 3.45-second test (run 45301663407). This proves rendered changing pixels, not sustained frame pacing or resource cost. Resource/frame pacing benchmarks and physical-device visual/audible verification remain pending; no feature medal is claimed."
     }
   ],
   "baseline_gap_count": 49,
