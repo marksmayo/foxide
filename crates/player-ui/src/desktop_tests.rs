@@ -1247,3 +1247,39 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
     }
     assert_eq!(ui.get_update_status(), "Foxide is up to date.");
 }
+
+#[test]
+fn navigation_clears_active_visualization_before_loading_the_next_track() {
+    let mut state = UiState {
+        playlist: vec!["first.flac".into(), "second.flac".into()],
+        loaded: true,
+        audio_visualization: true,
+        ..UiState::default()
+    };
+
+    let effects = dispatch_action(&mut state, Action::Next);
+
+    assert_eq!(
+        effects,
+        [
+            Effect::Engine(vec!["set".into(), "lavfi-complex".into(), String::new()]),
+            Effect::Load("second.flac".into()),
+        ]
+    );
+    assert_eq!(state.selected, 1);
+    assert!(!state.audio_visualization);
+    assert!(!state.loaded);
+}
+
+#[test]
+fn invalid_navigation_does_not_clear_active_visualization() {
+    let mut state = UiState {
+        playlist: vec!["only.flac".into()],
+        audio_visualization: true,
+        ..UiState::default()
+    };
+
+    assert!(dispatch_action(&mut state, Action::Next).is_empty());
+    assert!(state.audio_visualization);
+    assert_eq!(state.selected, 0);
+}
