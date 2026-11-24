@@ -336,7 +336,7 @@
       "name": "Skip detected episode intros",
       "group": "Playback",
       "stage": "in_progress",
-      "acceptance": "Implementation and tests are in draft PR #29 at 4c26984. Bounded chapter-title seeking and asynchronous IntroDB lookup validate explicit IMDb/season/episode tags, response identity, response size, segment boundaries, confidence, cancellation, stale results, and seek bounds. A new desktop menu regression test verifies that the selected chapter boundary becomes a SeekAbsolute action; this change is limited to the UI callback and desktop test. On 4c26984, Windows packaging run 45504773906 is in progress and the other six hosted checks were queued at last check. Native playback controls run 45476239787 previously validated a live no-marker IntroDB response, not an available skip segment. Physical desktop playback and skip-button behavior remain pending; do not close this gap or claim a medal."
+      "acceptance": "Implementation and tests are in draft PR #29 at 4c26984. Bounded chapter-title seeking and asynchronous IntroDB lookup validate explicit IMDb/season/episode tags, response identity, size, marker boundaries, confidence, cancellation, stale results, and seek bounds. The new menu seek helper test is included in the current head. Windows packaging run 45504773906 and Video compositor run 45504773963 passed; Code checks, Desktop UI, Native playback controls, CodSpeed, and native helper were queued at the last check. Native playback controls run 45476239787 previously validated a live no-marker response, not an available skip segment. Physical episode playback and visible skip-button behavior remain pending; do not close this gap or claim a medal."
     },
     {
       "id": "audio_visualization",
