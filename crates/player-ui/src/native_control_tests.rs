@@ -129,6 +129,7 @@ fn desktop_menu_commands_are_accepted_by_the_native_media_engine() {
             .args([
                 "--no-config",
                 "--load-scripts=no",
+                "--idle=yes",
                 "--vo=null",
                 "--ao=null",
                 "--hwdec=no",
