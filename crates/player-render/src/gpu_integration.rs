@@ -667,13 +667,14 @@ fn audio_visualization_renders_changing_waveform_pixels() {
         .map(|pair| pair[1].saturating_sub(pair[0]))
         .max()
         .unwrap_or_default();
+    let rss_delta_kib = rss_peak_kib.get().saturating_sub(rss_baseline_kib.get());
     println!(
         "waveform max_green_pixels={max_green_pixels} max_nonblack_pixels={max_nonblack_pixels} unique_frames={} unique_frame_rate_hz={unique_frame_rate:.2} max_frame_interval_ms={} frame_size={frame_size:?} rss_baseline_kib={} rss_sampled_peak_kib={} rss_sampled_delta_kib={} rendering_setup={rendering_setup} position={} loaded={} command_error={:?} errors={errors:?} diagnostics={diagnostics:?}",
         frames.len(),
         max_frame_interval.as_millis(),
         rss_baseline_kib.get(),
         rss_peak_kib.get(),
-        rss_peak_kib.get().saturating_sub(rss_baseline_kib.get()),
+        rss_delta_kib,
         snapshot.position,
         snapshot.loaded,
         snapshot.command_error
@@ -696,6 +697,21 @@ fn audio_visualization_renders_changing_waveform_pixels() {
         "Waveform was static or never rendered: only {} distinct frames",
         frames.len()
     );
+    assert!(
+        unique_frame_rate >= 20.0,
+        "Waveform frame rate {unique_frame_rate:.2} Hz fell below the 20 Hz CI budget"
+    );
+    assert!(
+        max_frame_interval <= Duration::from_millis(250),
+        "Waveform frame gap {} ms exceeded the 250 ms CI budget",
+        max_frame_interval.as_millis()
+    );
+    if rss_baseline_kib.get() > 0 {
+        assert!(
+            rss_delta_kib <= 64 * 1024,
+            "Waveform RSS growth {rss_delta_kib} KiB exceeded the 65536 KiB CI budget"
+        );
+    }
 }
 
 fn process_rss_kib() -> Option<u64> {
@@ -710,3 +726,4 @@ fn process_rss_kib() -> Option<u64> {
         None
     }
 }
+
