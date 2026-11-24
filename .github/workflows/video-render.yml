@@ -58,13 +58,15 @@ jobs:
           FOXIDE_LIBMPV: /usr/lib/x86_64-linux-gnu/libmpv.so.2
         run: |
           cargo llvm-cov --workspace --features player-ui/desktop,player-render/gpu-integration,player-render/video-site-integration --locked --no-report -- --ignored native:: --nocapture --test-threads=1
+      - name: Verify audio waveform compositor in its own process
+        run: xvfb-run -a -s '-screen 0 1280x720x24' cargo test -p player-render --features gpu-integration --lib --locked audio_visualization_renders_changing_waveform_pixels -- --ignored --nocapture
       - name: Verify compositor with the same features without instrumentation
         shell: bash
         run: |
           set -o pipefail
           set +e
           for trial in {1..12}; do
-            xvfb-run -a -s '-screen 0 1280x720x24' cargo test --workspace --features player-ui/desktop,player-render/gpu-integration --locked -- --ignored --nocapture --test-threads=1 > "results/local/video-normal-$trial.log" 2>&1
+            xvfb-run -a -s '-screen 0 1280x720x24' cargo test --workspace --features player-ui/desktop,player-render/gpu-integration --locked -- --ignored --nocapture --test-threads=1 --skip audio_visualization_renders_changing_waveform_pixels > "results/local/video-normal-$trial.log" 2>&1
             status=$?
             echo "Compositor trial $trial: exit $status"
             cat "results/local/video-normal-$trial.log"
@@ -82,7 +84,9 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          xvfb-run -a -s '-screen 0 1280x720x24' cargo llvm-cov --workspace --features player-ui/desktop,player-render/gpu-integration --locked --no-report -- --ignored --nocapture --test-threads=1 2>&1 | tee results/local/video-regression.log
+          xvfb-run -a -s '-screen 0 1280x720x24' cargo llvm-cov --workspace --features player-ui/desktop,player-render/gpu-integration --locked --no-report -- --ignored --nocapture --test-threads=1 --skip audio_visualization_renders_changing_waveform_pixels 2>&1 | tee results/local/video-regression.log
+      - name: Capture audio waveform compositor coverage in its own process
+        run: xvfb-run -a -s '-screen 0 1280x720x24' cargo llvm-cov -p player-render --features player-render/gpu-integration --lib --locked --no-report -- --ignored --nocapture audio_visualization_renders_changing_waveform_pixels
       - name: Exercise real desktop startup, shutdown and preview entry points under coverage
         shell: bash
         run: |
