@@ -27,11 +27,15 @@ pub enum PlaybackControl {
     FrameStep(bool),
     SecondarySubtitle(u32),
     Rotation(u16),
-    Stereo3d(u8),
     ReplayGain(u8),
     Deband(bool),
     Equalizer(u8),
     Flip(bool),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum VideoControl {
+    Stereo3d(u8),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -79,11 +83,6 @@ impl Action {
             "rotation" if [0.0, 90.0, 180.0, 270.0].contains(&value) => {
                 PlaybackControl::Rotation(value as u16)
             }
-            "stereo-3d"
-                if value.is_finite() && (0.0..=6.0).contains(&value) && value.fract() == 0.0 =>
-            {
-                PlaybackControl::Stereo3d(value as u8)
-            }
             "flip-vertical" => PlaybackControl::Flip(true),
             "flip-horizontal" => PlaybackControl::Flip(false),
             "replaygain" if [0.0, 1.0, 2.0].contains(&value) => {
@@ -96,6 +95,46 @@ impl Action {
             _ => return None,
         };
         Some(Self::Playback(control))
+    }
+}
+
+impl VideoControl {
+    pub fn from_ui_action(name: &str, value: f64) -> Option<Self> {
+        match name {
+            "stereo-3d"
+                if value.is_finite() && (0.0..=6.0).contains(&value) && value.fract() == 0.0 =>
+            {
+                Some(Self::Stereo3d(value as u8))
+            }
+            _ => None,
+        }
+    }
+
+    fn command(self) -> Option<Vec<String>> {
+        match self {
+            Self::Stereo3d(0) => Some(vec![
+                "vf".into(),
+                "remove".into(),
+                "@foxide-stereo3d".into(),
+            ]),
+            Self::Stereo3d(mode @ 1..=6) => {
+                let (input, output) = match mode {
+                    1 => ("sbsl", "arcd"),
+                    2 => ("sbsl", "abl"),
+                    3 => ("sbsr", "arcd"),
+                    4 => ("sbsr", "sbsl"),
+                    5 => ("abl", "arcd"),
+                    6 => ("abl", "sbsl"),
+                    _ => unreachable!(),
+                };
+                Some(vec![
+                    "vf".into(),
+                    "add".into(),
+                    format!("@foxide-stereo3d:lavfi=[stereo3d=in={input}:out={output}]"),
+                ])
+            }
+            Self::Stereo3d(_) => None,
+        }
     }
 }
 
@@ -126,27 +165,6 @@ impl PlaybackControl {
             ]),
             Self::Rotation(angle) if [0, 90, 180, 270].contains(&angle) => {
                 Some(vec!["set".into(), "video-rotate".into(), angle.to_string()])
-            }
-            Self::Stereo3d(0) => Some(vec![
-                "vf".into(),
-                "remove".into(),
-                "@foxide-stereo3d".into(),
-            ]),
-            Self::Stereo3d(mode @ 1..=6) => {
-                let (input, output) = match mode {
-                    1 => ("sbsl", "arcd"),
-                    2 => ("sbsl", "abl"),
-                    3 => ("sbsr", "arcd"),
-                    4 => ("sbsr", "sbsl"),
-                    5 => ("abl", "arcd"),
-                    6 => ("abl", "sbsl"),
-                    _ => unreachable!(),
-                };
-                Some(vec![
-                    "vf".into(),
-                    "add".into(),
-                    format!("@foxide-stereo3d:lavfi=[stereo3d=in={input}:out={output}]"),
-                ])
             }
             Self::Flip(vertical) => Some(vec![
                 "vf".into(),
@@ -265,6 +283,13 @@ impl UiState {
         }
     }
 
+    pub fn dispatch_video_control(&self, control: VideoControl) -> Vec<Effect> {
+        if !self.loaded {
+            return Vec::new();
+        }
+        control.command().map(Effect::Engine).into_iter().collect()
+    }
+
     fn select(&mut self, index: usize) -> Vec<Effect> {
         self.selected = index;
         self.loaded = false;
@@ -274,7 +299,7 @@ impl UiState {
 
 #[cfg(test)]
 mod tests {
-    use super::{Action, Effect, UiState};
+    use super::{Action, Effect, UiState, VideoControl};
 
     #[test]
     fn stereo_3d_control_adds_a_labeled_output_filter_without_replacing_user_filters() {
@@ -282,7 +307,7 @@ mod tests {
         state.confirm_loaded(42.0);
 
         assert_eq!(
-            state.dispatch(Action::control("stereo-3d", 1.0).unwrap()),
+            state.dispatch_video_control(VideoControl::from_ui_action("stereo-3d", 1.0).unwrap()),
             vec![Effect::Engine(vec![
                 "vf".into(),
                 "add".into(),
@@ -305,7 +330,9 @@ mod tests {
 
         for (mode, filter) in cases {
             assert_eq!(
-                state.dispatch(Action::control("stereo-3d", mode).unwrap()),
+                state.dispatch_video_control(
+                    VideoControl::from_ui_action("stereo-3d", mode).unwrap()
+                ),
                 vec![Effect::Engine(vec![
                     "vf".into(),
                     "add".into(),
@@ -315,7 +342,7 @@ mod tests {
         }
 
         assert_eq!(
-            state.dispatch(Action::control("stereo-3d", 0.0).unwrap()),
+            state.dispatch_video_control(VideoControl::from_ui_action("stereo-3d", 0.0).unwrap()),
             vec![Effect::Engine(vec![
                 "vf".into(),
                 "remove".into(),
@@ -327,7 +354,7 @@ mod tests {
     #[test]
     fn stereo_3d_rejects_non_integer_or_out_of_range_modes() {
         for mode in [-1.0, 0.5, 1.5, 7.0, f64::NAN, f64::INFINITY] {
-            assert!(Action::control("stereo-3d", mode).is_none());
+            assert!(VideoControl::from_ui_action("stereo-3d", mode).is_none());
         }
     }
 
