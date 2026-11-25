@@ -503,7 +503,10 @@ mod tests {
             &["'org.mpris.MediaPlayer2.Player'", "'PlaybackStatus'"],
         );
         assert!(playback_status.contains("Playing"));
-        let metadata = call("org.freedesktop.DBus.Properties.Get", &["'org.mpris.MediaPlayer2.Player'", "'Metadata'"]);
+        let metadata = call(
+            "org.freedesktop.DBus.Properties.Get",
+            &["'org.mpris.MediaPlayer2.Player'", "'Metadata'"],
+        );
         for expected in ["MPRIS CI title", "MPRIS CI artist", "MPRIS CI album"] {
             assert!(
                 metadata.contains(expected),
@@ -523,7 +526,10 @@ mod tests {
             "org.freedesktop.DBus.Properties.Get",
             &["'org.mpris.MediaPlayer2.Player'", "'CanGoPrevious'"],
         );
-        let can_seek = call("org.freedesktop.DBus.Properties.Get", &["'org.mpris.MediaPlayer2.Player'", "'CanSeek'"]);
+        let can_seek = call(
+            "org.freedesktop.DBus.Properties.Get",
+            &["'org.mpris.MediaPlayer2.Player'", "'CanSeek'"],
+        );
         assert!(can_go_next.contains("true"));
         assert!(can_go_previous.contains("true"));
         assert!(can_seek.contains("true"));
