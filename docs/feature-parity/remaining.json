@@ -336,7 +336,7 @@
       "name": "Skip detected episode intros",
       "group": "Playback",
       "stage": "in_progress",
-      "acceptance": "Implementation and tests are in draft PR #29 at 4c26984. Bounded chapter-title seeking and asynchronous IntroDB lookup validate explicit IMDb/season/episode tags, response identity, size, marker boundaries, confidence, cancellation, stale results, and seek bounds. All seven current-head hosted checks passed: Code checks (45504773955), Desktop UI (45504773913), Native playback controls (45504774001), CodSpeed (45504774096), Windows packaging (45504773906), Video compositor (45504773963), and native helper (45504774021). The live IntroDB check previously verified a valid no-marker response, not an available skip segment. Physical episode playback and visible Skip Intro interaction remain pending; do not close this gap or claim a medal."
+      "acceptance": "Implementation and tests are in draft PR #29 at 6a75f8b. Bounded chapter-title seeking and asynchronous IntroDB lookup validate explicit IMDb/season/episode tags, response identity, size, marker boundaries, confidence, cancellation, stale results, and seek bounds. A red/green regression now ensures a lookup finishing after playback stops cannot re-enable Skip Intro. The exact-head hosted runs all passed: Code checks (45544045194), Desktop UI (45544045300), Native playback controls (45544045294), CodSpeed (45544045280), Windows packaging (45544045367), Video compositor (45544045297), and native helper (45544045209). The live IntroDB check verified a valid no-marker response, not an available skip segment. Physical episode playback and visible Skip Intro interaction remain pending; do not close this gap or claim a medal."
     },
     {
       "id": "audio_visualization",
