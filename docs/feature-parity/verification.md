@@ -79,3 +79,6 @@ The desktop now polls standardized gamepad events and routes D-pad focus travers
 
 The Video menu exposes supported side-by-side and over/under source layouts with red/cyan, over/under or side-by-side output. A dedicated labeled FFmpeg `stereo3d` filter is replaced when another mode is chosen and removed by “Off”, leaving unrelated video filters intact. State tests verify every exposed mapping and reject invalid mode values. FFmpeg smoke checks process each selected graph. Physical display/glasses acceptance with an actual stereoscopic sample remains pending; no feature medal is claimed.
 
+## 360-degree video implementation checkpoint
+
+The Video menu converts equirectangular panorama sources to a flat 90 by 60 degree view at 1280x720, with front, left, right, rear, up and down presets. Presets replace a labeled filter and Off removes only that filter. Pointer drag and scroll replace that filter with updated yaw/pitch values because the v360 filter does not accept runtime yaw/pitch commands. Software-window tests verify incremental pointer movement and scroll mapping; state tests cover bounds and generated filter graphs; native-control CI checks that libmpv accepts the commands. All six projections pass local FFmpeg smoke checks. A real panoramic sample and physical presentation acceptance remain pending; no feature medal is claimed.

@@ -581,6 +581,63 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
     assert_eq!(actions.borrow().len(), action_count);
     ui.set_loaded(true);
     actions.borrow_mut().clear();
+    ui.set_panorama_active(true);
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerPressed {
+            position: slint::LogicalPosition::new(700.0, 350.0),
+            button: slint::platform::PointerEventButton::Left,
+        });
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerMoved {
+            position: slint::LogicalPosition::new(710.0, 340.0),
+        });
+    assert_eq!(
+        &*actions.borrow(),
+        &[
+            ("panorama-yaw".into(), -5.0),
+            ("panorama-pitch".into(), 5.0)
+        ]
+    );
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerMoved {
+            position: slint::LogicalPosition::new(720.0, 330.0),
+        });
+    assert_eq!(
+        &*actions.borrow(),
+        &[
+            ("panorama-yaw".into(), -5.0),
+            ("panorama-pitch".into(), 5.0),
+            ("panorama-yaw".into(), -5.0),
+            ("panorama-pitch".into(), 5.0),
+        ],
+        "drag navigation updates incrementally while the pointer moves"
+    );
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerReleased {
+            position: slint::LogicalPosition::new(720.0, 330.0),
+            button: slint::platform::PointerEventButton::Left,
+        });
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerScrolled {
+            position: slint::LogicalPosition::new(700.0, 350.0),
+            delta_x: 20.0,
+            delta_y: 10.0,
+        });
+    assert_eq!(
+        &actions.borrow()[4..],
+        &[
+            ("panorama-yaw".into(), -10.0),
+            ("panorama-pitch".into(), -5.0)
+        ]
+    );
+    ui.set_panorama_active(false);
+    actions.borrow_mut().clear();
+    ui.set_panorama_active(true);
+    ui.invoke_open_url("https://example.test/next.mp4".into());
+    assert!(
+        !ui.get_panorama_active(),
+        "opening a new URL exits panorama mode"
+    );
     assert!(ui.invoke_shortcut("k".into(), true, false, false, false));
     assert_eq!(&*actions.borrow(), &[("pause".into(), 0.0)]);
     ui.invoke_save_binding("F2".into(), "next".into());
@@ -925,6 +982,7 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
         ("subtitle-track", 0.0),
         ("frame-step", 0.0),
         ("stereo-3d", 1.0),
+        ("panorama-360", 1.0),
     ] {
         controls.borrow_mut().confirm_loaded(120.0);
         ui.invoke_action(name.into(), value);

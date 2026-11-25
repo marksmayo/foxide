@@ -97,8 +97,8 @@
       "id": "system_media_controls",
       "name": "System media-control integration",
       "group": "Interface",
-        "stage": "in_progress",
-        "acceptance": "A shared playwire adapter connects Windows SMTC, macOS Now Playing, and Linux MPRIS. The OS media session attaches as soon as the desktop engine is ready, including before a track loads; transient window readiness retries are rate-limited. Play/pause, previous/next, seek, title/artist/album, playback state, and transport capabilities use the player action path. Unit tests cover event routing, idle attachment retry policy, metadata publication, track identity, and seek behavior. A native libmpv metadata check is configured in CI but has not yet passed. Platform session interaction and user-visible behavior remain unverified; do not count this gap as closed until that evidence is recorded."
+      "stage": "in_progress",
+      "acceptance": "A shared playwire adapter connects Windows SMTC, macOS Now Playing, and Linux MPRIS. The OS media session attaches as soon as the desktop engine is ready, including before a track loads; transient window readiness retries are rate-limited. Play/pause, previous/next, seek, title/artist/album, playback state, and transport capabilities use the player action path. Unit tests cover event routing, idle attachment retry policy, metadata publication, track identity, and seek behavior. A native libmpv metadata check is configured in CI but has not yet passed. Platform session interaction and user-visible behavior remain unverified; do not count this gap as closed until that evidence is recorded."
     },
     {
       "id": "compact_music_view",
@@ -188,8 +188,8 @@
       "id": "video_360",
       "name": "360-degree panoramic video",
       "group": "Picture",
-      "stage": "queued",
-      "acceptance": "Needs projection controls and visual/presentation fixtures."
+      "stage": "in_progress",
+      "acceptance": "The Video menu converts equirectangular 360-degree sources to a bounded 1280x720 flat perspective view with front, left, right, rear, up and down presets. Switching presets and pointer drag/scroll replace only Foxide's labeled v360 filter with the updated yaw/pitch; Off removes only that filter. Tests cover incremental movement, yaw wrapping, pitch bounds, native libmpv acceptance of all generated commands, and preserved seek/volume behavior when panorama mode is off. FFmpeg smoke checks process each preset. Real panoramic samples and physical visual/presentation acceptance remain pending; no feature medal is claimed."
     },
     {
       "id": "stereo_3d",

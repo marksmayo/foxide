@@ -222,7 +222,7 @@ fn dispatch_video_control(
     engine: &Option<Rc<Engine>>,
     control: VideoControl,
 ) {
-    for effect in state.borrow().dispatch_video_control(control) {
+    for effect in state.borrow_mut().dispatch_video_control(control) {
         let Effect::Engine(args) = effect else {
             continue;
         };
@@ -1154,6 +1154,12 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
             toggle_picture_in_picture(&ui, &pip_mode);
             return;
         }
+        if matches!(
+            name.as_str(),
+            "open" | "next" | "previous" | "select" | "stop"
+        ) {
+            ui.set_panorama_active(false);
+        }
         if matches!(name.as_str(), "frame-step" | "frame-back-step")
             && (!ui.get_loaded() || !ui.get_has_video())
         {
@@ -1197,6 +1203,7 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
                 .iter()
                 .any(|prefix| url.starts_with(prefix))
             {
+                ui.set_panorama_active(false);
                 dispatch(
                     &ui,
                     &controller,

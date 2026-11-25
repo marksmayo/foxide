@@ -27,6 +27,10 @@ pub enum PlaybackControl {
     FrameStep(bool),
     SecondarySubtitle(u32),
     Rotation(u16),
+    Stereo3d(u8),
+    Panorama360(u8),
+    PanoramaYaw(f64),
+    PanoramaPitch(f64),
     ReplayGain(u8),
     Deband(bool),
     Equalizer(u8),
@@ -36,6 +40,9 @@ pub enum PlaybackControl {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum VideoControl {
     Stereo3d(u8),
+    Panorama360(u8),
+    PanoramaYaw(f64),
+    PanoramaPitch(f64),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -64,6 +71,7 @@ pub struct UiState {
     pub selected: usize,
     pub playlist_visible: bool,
     pub fullscreen: bool,
+    pub panorama_angles: Option<(f64, f64)>,
 }
 
 impl Action {
@@ -95,46 +103,6 @@ impl Action {
             _ => return None,
         };
         Some(Self::Playback(control))
-    }
-}
-
-impl VideoControl {
-    pub fn from_ui_action(name: &str, value: f64) -> Option<Self> {
-        match name {
-            "stereo-3d"
-                if value.is_finite() && (0.0..=6.0).contains(&value) && value.fract() == 0.0 =>
-            {
-                Some(Self::Stereo3d(value as u8))
-            }
-            _ => None,
-        }
-    }
-
-    fn command(self) -> Option<Vec<String>> {
-        match self {
-            Self::Stereo3d(0) => Some(vec![
-                "vf".into(),
-                "remove".into(),
-                "@foxide-stereo3d".into(),
-            ]),
-            Self::Stereo3d(mode @ 1..=6) => {
-                let (input, output) = match mode {
-                    1 => ("sbsl", "arcd"),
-                    2 => ("sbsl", "abl"),
-                    3 => ("sbsr", "arcd"),
-                    4 => ("sbsr", "sbsl"),
-                    5 => ("abl", "arcd"),
-                    6 => ("abl", "sbsl"),
-                    _ => unreachable!(),
-                };
-                Some(vec![
-                    "vf".into(),
-                    "add".into(),
-                    format!("@foxide-stereo3d:lavfi=[stereo3d=in={input}:out={output}]"),
-                ])
-            }
-            Self::Stereo3d(_) => None,
-        }
     }
 }
 
@@ -194,6 +162,85 @@ impl PlaybackControl {
     }
 }
 
+impl VideoControl {
+    pub fn from_ui_action(name: &str, value: f64) -> Option<Self> {
+        match name {
+            "stereo-3d"
+                if value.is_finite() && (0.0..=6.0).contains(&value) && value.fract() == 0.0 =>
+            {
+                Some(Self::Stereo3d(value as u8))
+            }
+            "panorama-360"
+                if value.is_finite() && (0.0..=6.0).contains(&value) && value.fract() == 0.0 =>
+            {
+                Some(Self::Panorama360(value as u8))
+            }
+            "panorama-yaw" if value.is_finite() && (-180.0..=180.0).contains(&value) => {
+                Some(Self::PanoramaYaw(value))
+            }
+            "panorama-pitch" if value.is_finite() && (-180.0..=180.0).contains(&value) => {
+                Some(Self::PanoramaPitch(value))
+            }
+            _ => None,
+        }
+    }
+
+    fn command(self) -> Option<Vec<String>> {
+        match self {
+            Self::Stereo3d(0) => Some(vec![
+                "vf".into(),
+                "remove".into(),
+                "@foxide-stereo3d".into(),
+            ]),
+            Self::Stereo3d(mode @ 1..=6) => {
+                let (input, output) = match mode {
+                    1 => ("sbsl", "arcd"),
+                    2 => ("sbsl", "abl"),
+                    3 => ("sbsr", "arcd"),
+                    4 => ("sbsr", "sbsl"),
+                    5 => ("abl", "arcd"),
+                    6 => ("abl", "sbsl"),
+                    _ => unreachable!(),
+                };
+                Some(vec![
+                    "vf".into(),
+                    "add".into(),
+                    format!("@foxide-stereo3d:lavfi=[stereo3d=in={input}:out={output}]"),
+                ])
+            }
+            Self::Panorama360(0) => Some(vec![
+                "vf".into(),
+                "remove".into(),
+                "@foxide-panorama360".into(),
+            ]),
+            Self::Panorama360(mode @ 1..=6) => {
+                let (yaw, pitch) = match mode {
+                    1 => (0, 0),
+                    2 => (-90, 0),
+                    3 => (90, 0),
+                    4 => (180, 0),
+                    5 => (0, 45),
+                    6 => (0, -45),
+                    _ => unreachable!(),
+                };
+                Some(panorama_filter_command(yaw.into(), pitch.into()))
+            }
+            Self::PanoramaYaw(_) | Self::PanoramaPitch(_) => None,
+            _ => None,
+        }
+    }
+}
+
+#[inline(never)]
+fn panorama_filter_command(yaw: f64, pitch: f64) -> Vec<String> {
+    vec![
+        "vf".into(),
+        "add".into(),
+        format!(
+            "@foxide-panorama360:lavfi=[v360=input=e:output=flat:w=1280:h=720:h_fov=90:v_fov=60:yaw={yaw}:pitch={pitch}]"
+        ),
+    ]
+}
 impl UiState {
     /// Stable queue indices keep filtered selection attached to the original file.
     pub fn filtered_indices(&self, query: &str) -> Vec<usize> {
@@ -228,6 +275,7 @@ impl UiState {
     pub fn dispatch(&mut self, action: Action) -> Vec<Effect> {
         match action {
             Action::Open(files) => {
+                self.panorama_angles = None;
                 self.playlist = files;
                 self.selected = 0;
                 self.loaded = false;
@@ -271,6 +319,7 @@ impl UiState {
                 Vec::new()
             }
             Action::Stop => {
+                self.panorama_angles = None;
                 self.loaded = false;
                 self.paused = false;
                 vec![Effect::Stop]
@@ -283,17 +332,64 @@ impl UiState {
         }
     }
 
-    pub fn dispatch_video_control(&self, control: VideoControl) -> Vec<Effect> {
+    pub fn dispatch_video_control(&mut self, control: VideoControl) -> Vec<Effect> {
         if !self.loaded {
             return Vec::new();
         }
-        control.command().map(Effect::Engine).into_iter().collect()
+        match control {
+            VideoControl::Panorama360(_)
+            | VideoControl::PanoramaYaw(_)
+            | VideoControl::PanoramaPitch(_) => self.panorama(control),
+            _ => control.command().map(Effect::Engine).into_iter().collect(),
+        }
     }
 
     fn select(&mut self, index: usize) -> Vec<Effect> {
+        self.panorama_angles = None;
         self.selected = index;
         self.loaded = false;
         vec![Effect::Load(self.playlist[index].clone())]
+    }
+    // Keep the stateful panorama path out of the common playback-action hot path.
+    #[inline(never)]
+    fn panorama(&mut self, control: VideoControl) -> Vec<Effect> {
+        match control {
+            VideoControl::Panorama360(mode) => {
+                let angles = match mode {
+                    0 => None,
+                    1 => Some((0.0, 0.0)),
+                    2 => Some((-90.0, 0.0)),
+                    3 => Some((90.0, 0.0)),
+                    4 => Some((180.0, 0.0)),
+                    5 => Some((0.0, 45.0)),
+                    6 => Some((0.0, -45.0)),
+                    _ => return Vec::new(),
+                };
+                self.panorama_angles = angles;
+                VideoControl::Panorama360(mode)
+                    .command()
+                    .map(Effect::Engine)
+                    .into_iter()
+                    .collect()
+            }
+            VideoControl::PanoramaYaw(delta) => {
+                let Some((yaw, pitch)) = self.panorama_angles else {
+                    return Vec::new();
+                };
+                let yaw = (yaw + delta + 180.0).rem_euclid(360.0) - 180.0;
+                self.panorama_angles = Some((yaw, pitch));
+                vec![Effect::Engine(panorama_filter_command(yaw, pitch))]
+            }
+            VideoControl::PanoramaPitch(delta) => {
+                let Some((yaw, pitch)) = self.panorama_angles else {
+                    return Vec::new();
+                };
+                let pitch = (pitch + delta).clamp(-89.0, 89.0);
+                self.panorama_angles = Some((yaw, pitch));
+                vec![Effect::Engine(panorama_filter_command(yaw, pitch))]
+            }
+            _ => Vec::new(),
+        }
     }
 }
 
@@ -313,6 +409,122 @@ mod tests {
                 "add".into(),
                 "@foxide-stereo3d:lavfi=[stereo3d=in=sbsl:out=arcd]".into(),
             ])]
+        );
+    }
+
+    #[test]
+    fn panorama_controls_use_the_dedicated_video_dispatcher() {
+        let control = VideoControl::from_ui_action("panorama-360", 1.0).unwrap();
+        let mut state = UiState::default();
+        state.confirm_loaded(42.0);
+
+        assert!(Action::control("panorama-360", 1.0).is_none());
+        assert_eq!(
+            state.dispatch_video_control(control),
+            vec![Effect::Engine(vec![
+                "vf".into(),
+                "add".into(),
+                "@foxide-panorama360:lavfi=[v360=input=e:output=flat:w=1280:h=720:h_fov=90:v_fov=60:yaw=0:pitch=0]".into(),
+            ])]
+        );
+    }
+
+    #[test]
+    fn panorama_360_front_view_adds_a_labeled_equirectangular_projection_filter() {
+        let mut state = UiState::default();
+        state.confirm_loaded(42.0);
+
+        assert_eq!(
+            state.dispatch_video_control(VideoControl::from_ui_action("panorama-360", 1.0).unwrap()),
+            vec![Effect::Engine(vec![
+                "vf".into(),
+                "add".into(),
+                "@foxide-panorama360:lavfi=[v360=input=e:output=flat:w=1280:h=720:h_fov=90:v_fov=60:yaw=0:pitch=0]".into(),
+            ])]
+        );
+    }
+
+    #[test]
+    fn panorama_360_presets_replace_the_view_and_off_removes_only_its_filter() {
+        let mut state = UiState::default();
+        state.confirm_loaded(42.0);
+        let cases = [
+            (2.0, "yaw=-90:pitch=0"),
+            (3.0, "yaw=90:pitch=0"),
+            (4.0, "yaw=180:pitch=0"),
+            (5.0, "yaw=0:pitch=45"),
+            (6.0, "yaw=0:pitch=-45"),
+        ];
+
+        for (preset, rotation) in cases {
+            assert_eq!(
+                state.dispatch_video_control(
+                    VideoControl::from_ui_action("panorama-360", preset).unwrap()
+                ),
+                vec![Effect::Engine(vec![
+                    "vf".into(),
+                    "add".into(),
+                    format!(
+                        "@foxide-panorama360:lavfi=[v360=input=e:output=flat:w=1280:h=720:h_fov=90:v_fov=60:{rotation}]"
+                    ),
+                ])]
+            );
+        }
+
+        assert_eq!(
+            state
+                .dispatch_video_control(VideoControl::from_ui_action("panorama-360", 0.0).unwrap()),
+            vec![Effect::Engine(vec![
+                "vf".into(),
+                "remove".into(),
+                "@foxide-panorama360".into(),
+            ])]
+        );
+    }
+
+    #[test]
+    fn panorama_360_rejects_non_integer_or_out_of_range_presets() {
+        for preset in [-1.0, 0.5, 1.5, 7.0, f64::NAN, f64::INFINITY] {
+            assert!(VideoControl::from_ui_action("panorama-360", preset).is_none());
+        }
+    }
+
+    #[test]
+    fn panorama_360_drag_updates_only_foxides_labeled_projection() {
+        let mut state = UiState::default();
+        state.confirm_loaded(42.0);
+        state.dispatch_video_control(VideoControl::from_ui_action("panorama-360", 1.0).unwrap());
+
+        assert_eq!(
+            state.dispatch_video_control(VideoControl::from_ui_action("panorama-yaw", -12.0).unwrap()),
+            vec![Effect::Engine(vec![
+                "vf".into(),
+                "add".into(),
+                "@foxide-panorama360:lavfi=[v360=input=e:output=flat:w=1280:h=720:h_fov=90:v_fov=60:yaw=-12:pitch=0]".into(),
+            ])]
+        );
+        assert_eq!(
+            state.dispatch_video_control(VideoControl::from_ui_action("panorama-yaw", 180.0).unwrap()),
+            vec![Effect::Engine(vec![
+                "vf".into(),
+                "add".into(),
+                "@foxide-panorama360:lavfi=[v360=input=e:output=flat:w=1280:h=720:h_fov=90:v_fov=60:yaw=168:pitch=0]".into(),
+            ])]
+        );
+        assert_eq!(
+            state.dispatch_video_control(VideoControl::from_ui_action("panorama-pitch", 120.0).unwrap()),
+            vec![Effect::Engine(vec![
+                "vf".into(),
+                "add".into(),
+                "@foxide-panorama360:lavfi=[v360=input=e:output=flat:w=1280:h=720:h_fov=90:v_fov=60:yaw=168:pitch=89]".into(),
+            ])]
+        );
+        assert!(VideoControl::from_ui_action("panorama-yaw", 181.0).is_none());
+        state.dispatch_video_control(VideoControl::from_ui_action("panorama-360", 0.0).unwrap());
+        assert!(
+            state
+                .dispatch_video_control(VideoControl::from_ui_action("panorama-yaw", 1.0).unwrap())
+                .is_empty()
         );
     }
 
