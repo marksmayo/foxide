@@ -796,8 +796,11 @@ fn trim_flac_to_duration(file: &mut fs::File, duration: f64) -> Result<(), Strin
 
 #[cfg(test)]
 mod audio_export_trim_tests {
-    use super::{expected_frames, trim_flac_to_duration, trim_wav_to_duration};
-    use std::{fs, io::Write};
+    use super::{
+        AudioExportFormat, expected_frames, trim_flac_to_duration, trim_wav_to_duration,
+        validate_export_paths,
+    };
+    use std::{fs, io::Write, path::Path};
 
     fn wav_fixture(data_size: u32, format_code: u16) -> Vec<u8> {
         let mut bytes = Vec::new();
@@ -822,12 +825,118 @@ mod audio_export_trim_tests {
         bytes
     }
 
+    fn plain_wav(data_size: u32) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        bytes.extend_from_slice(b"RIFF");
+        bytes.extend_from_slice(&0_u32.to_le_bytes());
+        bytes.extend_from_slice(b"WAVEfmt ");
+        bytes.extend_from_slice(&16_u32.to_le_bytes());
+        bytes.extend_from_slice(&1_u16.to_le_bytes());
+        bytes.extend_from_slice(&1_u16.to_le_bytes());
+        bytes.extend_from_slice(&4_u32.to_le_bytes());
+        bytes.extend_from_slice(&8_u32.to_le_bytes());
+        bytes.extend_from_slice(&2_u16.to_le_bytes());
+        bytes.extend_from_slice(&16_u16.to_le_bytes());
+        bytes.extend_from_slice(b"data");
+        bytes.extend_from_slice(&data_size.to_le_bytes());
+        bytes.extend(std::iter::repeat_n(0x2a, data_size as usize));
+        let riff_size = (bytes.len() - 8) as u32;
+        bytes[4..8].copy_from_slice(&riff_size.to_le_bytes());
+        bytes
+    }
+
+    fn flac_fixture(sample_rate: u32, sample_count: u64) -> Vec<u8> {
+        let mut bytes = [0_u8; 42];
+        bytes[..4].copy_from_slice(b"fLaC");
+        bytes[7] = 34;
+        let packed = (u64::from(sample_rate) << 44) | (16_u64 << 36) | sample_count;
+        bytes[18..26].copy_from_slice(&packed.to_be_bytes());
+        bytes.to_vec()
+    }
+
     #[test]
     fn expected_frames_rounds_duration_to_the_nearest_sample() {
         assert_eq!(expected_frames(1.0, 44_100).unwrap(), 44_100);
         assert_eq!(expected_frames(0.375, 8).unwrap(), 3);
         assert!(expected_frames(f64::NAN, 44_100).is_err());
         assert!(expected_frames(0.0, 44_100).is_err());
+        assert!(expected_frames(f64::INFINITY, 44_100).is_err());
+    }
+
+    #[test]
+    fn export_path_validation_rejects_non_files_and_invalid_destinations() {
+        let directory = tempfile::tempdir().unwrap();
+        let source = directory.path().join("source.wav");
+        fs::write(&source, b"source").unwrap();
+        let missing = directory.path().join("missing.wav");
+        let source_directory = directory.path().join("source-folder");
+        fs::create_dir(&source_directory).unwrap();
+
+        assert!(
+            validate_export_paths(
+                &missing,
+                &directory.path().join("out.wav"),
+                AudioExportFormat::WavPcm16
+            )
+            .unwrap_err()
+            .contains("existing local media file")
+        );
+        assert!(
+            validate_export_paths(
+                &source_directory,
+                &directory.path().join("out.wav"),
+                AudioExportFormat::WavPcm16
+            )
+            .unwrap_err()
+            .contains("existing local media file")
+        );
+        assert!(
+            validate_export_paths(
+                &source,
+                &directory.path().join("absent/out.wav"),
+                AudioExportFormat::WavPcm16
+            )
+            .unwrap_err()
+            .contains("existing destination folder")
+        );
+        assert!(
+            validate_export_paths(&source, Path::new(""), AudioExportFormat::WavPcm16)
+                .unwrap_err()
+                .contains("file name")
+        );
+        assert!(
+            validate_export_paths(
+                &source,
+                &directory.path().join("extensionless"),
+                AudioExportFormat::WavPcm16
+            )
+            .unwrap_err()
+            .contains(".wav or .flac")
+        );
+        assert!(
+            validate_export_paths(
+                &source,
+                &directory.path().join("out.flac"),
+                AudioExportFormat::WavPcm16
+            )
+            .unwrap_err()
+            .contains(".wav destination")
+        );
+    }
+
+    #[test]
+    fn export_rejects_the_source_as_its_destination() {
+        let directory = tempfile::tempdir().unwrap();
+        let source = directory.path().join("source.wav");
+        fs::write(&source, b"source").unwrap();
+
+        let error =
+            validate_export_paths(&source, &source, AudioExportFormat::WavPcm16).unwrap_err();
+
+        assert_eq!(
+            error,
+            "The export destination must differ from the source file"
+        );
     }
 
     #[test]
@@ -845,6 +954,67 @@ mod audio_export_trim_tests {
         );
         assert_eq!(u32::from_le_bytes(output[40..44].try_into().unwrap()), 8);
         assert_eq!(&output[52..64], b"JUNK\x04\0\0\0tail");
+    }
+
+    #[test]
+    fn rf64_trimming_repairs_large_container_and_sample_sizes() {
+        let mut bytes = b"RF64\xff\xff\xff\xffWAVEds64\x1c\0\0\0".to_vec();
+        bytes.extend_from_slice(&0_u64.to_le_bytes());
+        bytes.extend_from_slice(&24_u64.to_le_bytes());
+        bytes.extend_from_slice(&12_u64.to_le_bytes());
+        bytes.extend_from_slice(&0_u32.to_le_bytes());
+        bytes.extend_from_slice(b"fmt \x10\0\0\0");
+        bytes.extend_from_slice(&1_u16.to_le_bytes());
+        bytes.extend_from_slice(&1_u16.to_le_bytes());
+        bytes.extend_from_slice(&4_u32.to_le_bytes());
+        bytes.extend_from_slice(&8_u32.to_le_bytes());
+        bytes.extend_from_slice(&2_u16.to_le_bytes());
+        bytes.extend_from_slice(&16_u16.to_le_bytes());
+        bytes.extend_from_slice(b"data\xff\xff\xff\xff");
+        bytes.extend_from_slice(&[0x2a; 24]);
+        let mut fixture = tempfile::NamedTempFile::new().unwrap();
+        fixture.write_all(&bytes).unwrap();
+
+        trim_wav_to_duration(fixture.as_file_mut(), 2.0).unwrap();
+
+        let output = fs::read(fixture.path()).unwrap();
+        assert_eq!(output.len(), 96);
+        assert_eq!(u64::from_le_bytes(output[20..28].try_into().unwrap()), 88);
+        assert_eq!(u64::from_le_bytes(output[28..36].try_into().unwrap()), 16);
+        assert_eq!(u64::from_le_bytes(output[36..44].try_into().unwrap()), 8);
+        assert_eq!(&output[80..96], &[0x2a; 16]);
+    }
+
+    #[test]
+    fn wav_trimming_rejects_missing_rf64_size_and_short_audio() {
+        let mut missing_ds64 = tempfile::NamedTempFile::new().unwrap();
+        missing_ds64
+            .write_all(b"RF64\xff\xff\xff\xffWAVEdata\xff\xff\xff\xff")
+            .unwrap();
+        assert!(
+            trim_wav_to_duration(missing_ds64.as_file_mut(), 1.0)
+                .unwrap_err()
+                .contains("no ds64 size")
+        );
+
+        let mut short = tempfile::NamedTempFile::new().unwrap();
+        short.write_all(&plain_wav(8)).unwrap();
+        assert!(
+            trim_wav_to_duration(short.as_file_mut(), 2.0)
+                .unwrap_err()
+                .contains("ended before the source duration")
+        );
+    }
+
+    #[test]
+    fn wav_trimming_preserves_a_file_already_at_source_duration() {
+        let original = plain_wav(8);
+        let mut fixture = tempfile::NamedTempFile::new().unwrap();
+        fixture.write_all(&original).unwrap();
+
+        trim_wav_to_duration(fixture.as_file_mut(), 1.0).unwrap();
+
+        assert_eq!(fs::read(fixture.path()).unwrap(), original);
     }
 
     #[test]
@@ -867,6 +1037,40 @@ mod audio_export_trim_tests {
     }
 
     #[test]
+    fn wav_trimming_rejects_malformed_containers_and_missing_chunks() {
+        for (bytes, expected) in [
+            (b"not a wav!!!".to_vec(), "unsupported WAV container"),
+            (b"RIFF\x04\0\0\0WAVE".to_vec(), "no format chunk"),
+            (
+                [b"RIFF\x1c\0\0\0WAVEfmt \x08\0\0\0".as_slice(), &[0; 8]].concat(),
+                "format chunk is incomplete",
+            ),
+            (
+                [
+                    b"RIFF\x1c\0\0\0WAVEfmt \x10\0\0\0".as_slice(),
+                    &[1, 0, 1, 0, 4, 0, 0, 0, 8, 0, 0, 0, 2, 0, 16, 0],
+                ]
+                .concat(),
+                "no data chunk",
+            ),
+            (
+                b"RF64\xff\xff\xff\xffWAVEds64\x08\0\0\0\0\0\0\0".to_vec(),
+                "ds64 chunk is incomplete",
+            ),
+        ] {
+            let mut fixture = tempfile::NamedTempFile::new().unwrap();
+            fixture.write_all(&bytes).unwrap();
+
+            let error = trim_wav_to_duration(fixture.as_file_mut(), 1.0).unwrap_err();
+
+            assert!(
+                error.contains(expected),
+                "{error:?} did not contain {expected:?}"
+            );
+        }
+    }
+
+    #[test]
     fn flac_trimming_updates_streaminfo_sample_count() {
         let mut fixture = tempfile::NamedTempFile::new().unwrap();
         let mut bytes = [0_u8; 42];
@@ -882,6 +1086,47 @@ mod audio_export_trim_tests {
         let output = fs::read(fixture.path()).unwrap();
         let adjusted = u64::from_be_bytes(output[18..26].try_into().unwrap());
         assert_eq!(adjusted & ((1_u64 << 36) - 1), 44_100);
+    }
+
+    #[test]
+    fn flac_trimming_rejects_invalid_metadata_and_short_sources() {
+        let mut short_header = tempfile::NamedTempFile::new().unwrap();
+        short_header.write_all(b"fLaC").unwrap();
+        assert!(trim_flac_to_duration(short_header.as_file_mut(), 1.0).is_err());
+
+        let mut unsupported = flac_fixture(44_100, 44_100);
+        unsupported[..4].copy_from_slice(b"nope");
+        let mut incomplete = flac_fixture(44_100, 44_100);
+        incomplete[7] = 33;
+        for (bytes, duration, expected) in [
+            (unsupported, 1.0, "unsupported FLAC stream"),
+            (incomplete, 1.0, "STREAMINFO block is incomplete"),
+            (flac_fixture(0, 44_100), 1.0, "invalid sample rate"),
+            (
+                flac_fixture(44_100, 44_100),
+                2.0,
+                "ended before the source duration",
+            ),
+        ] {
+            let mut fixture = tempfile::NamedTempFile::new().unwrap();
+            fixture.write_all(&bytes).unwrap();
+            let error = trim_flac_to_duration(fixture.as_file_mut(), duration).unwrap_err();
+            assert!(
+                error.contains(expected),
+                "{error:?} did not contain {expected:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn flac_trimming_leaves_an_exact_duration_unchanged() {
+        let bytes = flac_fixture(44_100, 44_100);
+        let mut fixture = tempfile::NamedTempFile::new().unwrap();
+        fixture.write_all(&bytes).unwrap();
+
+        trim_flac_to_duration(fixture.as_file_mut(), 1.0).unwrap();
+
+        assert_eq!(fs::read(fixture.path()).unwrap(), bytes);
     }
 }
 
@@ -917,11 +1162,11 @@ fn validate_export_paths(
         ));
     }
     let destination = parent.join(name);
-    if destination.exists() {
-        return Err("The export destination already exists; choose another file".into());
-    }
     if same_path(&input, &destination) {
         return Err("The export destination must differ from the source file".into());
+    }
+    if destination.exists() {
+        return Err("The export destination already exists; choose another file".into());
     }
     Ok((input, destination, parent))
 }
