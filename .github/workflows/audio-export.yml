@@ -13,18 +13,58 @@ permissions:
   contents: read
 jobs:
   native-encoding:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    name: Native WAV/FLAC encoding (${{ matrix.runtime }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            runtime: linux
+          - os: macos-latest
+            runtime: macos
+          - os: windows-latest
+            runtime: windows
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
         with:
-          key: audio-export
-      - name: Install libmpv and Linux desktop build dependencies
+          key: audio-export-${{ matrix.os }}
+      - name: Install libmpv on Linux
+        if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends mpv libmpv2 ffmpeg libfontconfig1-dev libxkbcommon-dev libwayland-dev libegl1-mesa-dev libudev-dev
+      - name: Select Linux libmpv runtime
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          engine_path=$(find /usr/lib /lib -name 'libmpv.so.2' -print -quit)
+          test -n "$engine_path"
+          echo "FOXIDE_LIBMPV=$engine_path" >> "$GITHUB_ENV"
+      - name: Install libmpv on macOS
+        if: runner.os == 'macOS'
+        run: brew install mpv
+      - name: Select macOS libmpv runtime
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          engine_path=$(find "$(brew --prefix mpv)" -name 'libmpv*.dylib' -print -quit)
+          test -n "$engine_path"
+          echo "FOXIDE_LIBMPV=$engine_path" >> "$GITHUB_ENV"
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        if: runner.os == 'Windows'
+        with:
+          python-version: '3.13'
+      - name: Install pinned Windows libmpv runtime
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          python scripts/install-libmpv.py
+          "FOXIDE_LIBMPV=$env:GITHUB_WORKSPACE\tools\libmpv\libmpv-2.dll" >> $env:GITHUB_ENV
       - name: Verify safe output selection and audio format conversion
         run: |
           cargo test -p player-render --features system-media-integration --test audio_export --locked
           cargo test -p player-render --features system-media-integration --test audio_export --locked native_audio_export_creates_playable_wav_and_flac_files -- --ignored --nocapture
+
 
