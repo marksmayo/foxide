@@ -343,7 +343,7 @@
       "name": "Music visualization display",
       "group": "Audio",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #28 at c5b2be1. All seven current-head hosted checks, including CodSpeed run 45472903860, completed successfully. The available benchmark summary reports 20.42% aggregate improvement (23 improved, 256 unchanged, no regressions), but the report flags 23 significant comparisons across different hardware, so the result is provisional; the completed rerun has not been summarized with new comparable metrics. Physical audio/visual acceptance remains pending; do not close this gap or claim a medal."
+      "acceptance": "Implementation is in draft PR #28 at c5b2be1. All seven exact-head hosted checks passed, including Code, Desktop UI, native controls, helper, compositor, Windows packaging, and CodSpeed. The CodSpeed report shows 23 improved, 256 untouched, and no reported regressions (20.42% predicted aggregate improvement), but all 23 significant comparisons ran on different hardware; five benchmarks were optimized out and three were syscall-dominated. Treat the comparison as provisional, not a measured improvement. Physical visual/audible acceptance and a performance acceptance target remain pending; do not close this gap or claim a medal."
     }
   ],
   "baseline_gap_count": 49,
