@@ -216,11 +216,6 @@ impl UiState {
         match action {
             Action::Open(files) => {
                 if files.is_empty() {
-                    if !self.playlist.is_empty() {
-                        self.playlist = empty_playlist();
-                    }
-                    self.selected = 0;
-                    self.loaded = false;
                     return Vec::new();
                 }
                 self.playlist = Arc::new(files);
@@ -294,10 +289,28 @@ mod tests {
         let mut first = UiState::default();
         let mut second = UiState::default();
 
-        first.dispatch(Action::Open(vec!["track.flac".into()]));
         assert!(first.dispatch(Action::Open(Vec::new())).is_empty());
         assert!(second.dispatch(Action::Open(Vec::new())).is_empty());
         assert!(Arc::ptr_eq(&first.playlist, &second.playlist));
+    }
+
+    #[test]
+    fn opening_an_empty_selection_does_not_discard_the_active_track() {
+        let mut state = UiState::default();
+        state.dispatch(Action::Open(vec!["playing.flac".into()]));
+        state.confirm_loaded(180.0);
+        state.paused = true;
+
+        assert!(state.dispatch(Action::Open(Vec::new())).is_empty());
+
+        assert_eq!(
+            state.playlist.as_ref(),
+            &[std::path::PathBuf::from("playing.flac")]
+        );
+        assert!(state.loaded);
+        assert!(state.paused);
+        assert_eq!(state.duration, 180.0);
+        assert_eq!(state.selected, 0);
     }
     #[test]
     fn system_media_play_and_pause_wait_for_engine_confirmation() {
