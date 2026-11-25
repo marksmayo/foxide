@@ -3862,10 +3862,13 @@ dependencies = [
 name = "player-services"
 version = "0.0.1"
 dependencies = [
+ "percent-encoding",
+ "roxmltree",
  "semver",
  "serde_json",
  "sha2",
  "url",
+ "zeroize",
 ]
 
 [[package]]

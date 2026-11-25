@@ -1246,4 +1246,138 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
         }
     }
     assert_eq!(ui.get_update_status(), "Foxide is up to date.");
+
+    struct WebDavFixture;
+    impl player_services::HttpClient for WebDavFixture {
+        fn get(
+            &self,
+            _: &player_services::Url,
+            _: &std::sync::atomic::AtomicBool,
+        ) -> Result<Vec<u8>, String> {
+            panic!("WebDAV UI must use PROPFIND")
+        }
+
+        fn propfind(
+            &self,
+            _: &player_services::Url,
+            _: &[u8],
+            _: &std::sync::atomic::AtomicBool,
+        ) -> Result<Vec<u8>, String> {
+            Ok(br#"<d:multistatus xmlns:d="DAV:"><d:response>
+              <d:href>/media/Movie.mkv</d:href><d:propstat><d:prop><d:resourcetype/>
+              <d:getcontentlength>4096</d:getcontentlength></d:prop></d:propstat>
+            </d:response></d:multistatus>"#
+                .to_vec())
+        }
+
+        fn propfind_authenticated(
+            &self,
+            url: &player_services::Url,
+            body: &[u8],
+            credentials: Option<&player_services::WebDavCredentials>,
+            cancel: &std::sync::atomic::AtomicBool,
+        ) -> Result<Vec<u8>, String> {
+            let credentials = credentials.expect("UI credentials should reach WebDAV");
+            assert_eq!(credentials.username(), "test-user");
+            assert_eq!(credentials.password(), "test-password");
+            self.propfind(url, body, cancel)
+        }
+    }
+    let _webdav = network_ui::install_webdav_with_client(&ui, Arc::new(WebDavFixture));
+    ui.set_panel("webdav".into());
+    ui.invoke_webdav_browse("not a URL".into());
+    assert!(ui.get_webdav_status().contains("Invalid URL"));
+    assert!(!ui.get_webdav_busy());
+    ui.set_webdav_user("test-user".into());
+    ui.set_webdav_password("test-password".into());
+    ui.invoke_webdav_browse("https://dav.example/media/".into());
+    let deadline = std::time::Instant::now() + Duration::from_secs(2);
+    while ui.get_webdav_busy() && std::time::Instant::now() < deadline {
+        if let Ok(event) = event_receiver.recv_timeout(Duration::from_millis(20)) {
+            event();
+        }
+    }
+    assert!(!ui.get_webdav_busy());
+    assert_eq!(ui.get_webdav_entries().row_count(), 1);
+    assert_eq!(
+        ui.get_webdav_entries().row_data(0).unwrap().name,
+        "Movie.mkv"
+    );
+    ui.set_webdav_user("".into());
+    ui.set_webdav_password("".into());
+    capture_customization(&ui, &rendered_window, "webdav-browser");
+    ui.invoke_webdav_open("https://evil.example/movie.mkv".into());
+    assert!(
+        ui.get_webdav_status()
+            .contains("outside the current collection")
+    );
+    ui.invoke_webdav_open("https://dav.example/media/%2e%2e%2fprivate.mkv".into());
+    assert!(
+        ui.get_webdav_status()
+            .contains("outside the current collection")
+    );
+    ui.invoke_webdav_open("https://dav.example/media/Movie.mkv".into());
+    assert_eq!(ui.get_panel(), "");
+    assert!(
+        ui.get_webdav_password().is_empty(),
+        "closing the panel clears credentials"
+    );
+
+    let request_entered = Arc::new(std::sync::Barrier::new(2));
+    let release_request = Arc::new(std::sync::Barrier::new(2));
+    let request_finished = Arc::new(std::sync::atomic::AtomicBool::new(false));
+    struct SlowWebDav {
+        entered: Arc<std::sync::Barrier>,
+        release: Arc<std::sync::Barrier>,
+        finished: Arc<std::sync::atomic::AtomicBool>,
+    }
+    impl player_services::HttpClient for SlowWebDav {
+        fn get(
+            &self,
+            _: &player_services::Url,
+            _: &std::sync::atomic::AtomicBool,
+        ) -> Result<Vec<u8>, String> {
+            panic!("WebDAV UI must use PROPFIND")
+        }
+
+        fn propfind(
+            &self,
+            _: &player_services::Url,
+            _: &[u8],
+            _: &std::sync::atomic::AtomicBool,
+        ) -> Result<Vec<u8>, String> {
+            self.entered.wait();
+            self.release.wait();
+            self.finished
+                .store(true, std::sync::atomic::Ordering::Release);
+            Ok(br#"<d:multistatus xmlns:d="DAV:"><d:response>
+              <d:href>/media/Stale.mkv</d:href></d:response></d:multistatus>"#
+                .to_vec())
+        }
+    }
+    let _slow_webdav = network_ui::install_webdav_with_client(
+        &ui,
+        Arc::new(SlowWebDav {
+            entered: request_entered.clone(),
+            release: release_request.clone(),
+            finished: request_finished.clone(),
+        }),
+    );
+    ui.set_panel("webdav".into());
+    ui.invoke_webdav_browse("https://dav.example/media/".into());
+    request_entered.wait();
+    ui.invoke_webdav_browse("not a URL".into());
+    release_request.wait();
+    let deadline = std::time::Instant::now() + Duration::from_secs(2);
+    while !request_finished.load(std::sync::atomic::Ordering::Acquire)
+        && std::time::Instant::now() < deadline
+    {
+        std::thread::sleep(Duration::from_millis(5));
+    }
+    assert!(request_finished.load(std::sync::atomic::Ordering::Acquire));
+    event_receiver.recv_timeout(Duration::from_secs(2)).unwrap()();
+    assert!(
+        ui.get_webdav_status().contains("Invalid URL"),
+        "an older result cannot replace the latest input error"
+    );
 }

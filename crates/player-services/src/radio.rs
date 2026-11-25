@@ -5,6 +5,23 @@ pub const RESPONSE_LIMIT: usize = 2 * 1024 * 1024;
 
 pub trait HttpClient: Send + Sync {
     fn get(&self, url: &Url, cancel: &AtomicBool) -> Result<Vec<u8>, String>;
+
+    fn propfind(&self, _: &Url, _: &[u8], _: &AtomicBool) -> Result<Vec<u8>, String> {
+        Err("This HTTP client does not support WebDAV browsing".into())
+    }
+
+    fn propfind_authenticated(
+        &self,
+        url: &Url,
+        body: &[u8],
+        credentials: Option<&crate::webdav::WebDavCredentials>,
+        cancel: &AtomicBool,
+    ) -> Result<Vec<u8>, String> {
+        if credentials.is_some() {
+            return Err("This HTTP client does not support WebDAV authentication".into());
+        }
+        self.propfind(url, body, cancel)
+    }
 }
 
 pub fn public_http_url(text: &str) -> Result<Url, String> {

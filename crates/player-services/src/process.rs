@@ -1,6 +1,7 @@
 use std::{
     ffi::OsString,
     io::Read,
+    io::Write,
     path::{Path, PathBuf},
     process::{Child, Command, Stdio},
     sync::{
@@ -74,17 +75,35 @@ pub fn run_bounded(
     limits: RunLimits,
     cancel: &AtomicBool,
 ) -> Result<ToolOutput, String> {
+    run_bounded_with_input(executable, args, limits, cancel, None)
+}
+
+pub fn run_bounded_with_input(
+    executable: &Path,
+    args: &[OsString],
+    limits: RunLimits,
+    cancel: &AtomicBool,
+    input: Option<&[u8]>,
+) -> Result<ToolOutput, String> {
     if cancel.load(Ordering::Acquire) {
         return Err("Operation cancelled".into());
     }
-    if limits.timeout.is_zero() || limits.stdout > 64 * 1024 * 1024 || limits.stderr > 1024 * 1024 {
+    if limits.timeout.is_zero()
+        || limits.stdout > 64 * 1024 * 1024
+        || limits.stderr > 1024 * 1024
+        || input.is_some_and(|bytes| bytes.len() > 4096)
+    {
         return Err("Invalid process limits".into());
     }
     let executable = trusted_executable(executable)?;
     let mut command = Command::new(executable);
     command
         .args(args)
-        .stdin(Stdio::null())
+        .stdin(if input.is_some() {
+            Stdio::piped()
+        } else {
+            Stdio::null()
+        })
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
     #[cfg(windows)]
@@ -93,6 +112,11 @@ pub fn run_bounded(
         command.creation_flags(0x08000000);
     } // CREATE_NO_WINDOW
     let mut child = OwnedChild(command.spawn().map_err(|e| e.to_string())?);
+    let input_writer = input.map(|input| {
+        let input = input.to_vec();
+        let mut stdin = child.0.stdin.take().expect("Piped stdin is available");
+        std::thread::spawn(move || stdin.write_all(&input))
+    });
     let (sender, receiver) = mpsc::channel();
     let mut readers = Vec::new();
     for (stdout, pipe, limit) in [
@@ -148,6 +172,12 @@ pub fn run_bounded(
                 reader.join().map_err(|_| "Output reader failed")?;
             }
             let (stdout, stderr) = (std::mem::take(stdout), std::mem::take(stderr));
+            if let Some(writer) = input_writer {
+                writer
+                    .join()
+                    .map_err(|_| "Input writer failed")?
+                    .map_err(|error| format!("Could not write tool input: {error}"))?;
+            }
             if !status.success() {
                 return Err(format!(
                     "Tool exited with {status}: {}",

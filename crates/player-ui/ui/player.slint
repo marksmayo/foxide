@@ -1,5 +1,6 @@
 import { Slider, ScrollView, LineEdit, Palette, ComboBox } from "std-widgets.slint";
 export struct RadioRow { id: string, name: string, url: string, detail: string }
+export struct WebDavRow { name: string, href: string, collection: bool, detail: string }
 export struct CastReceiverRow { name: string, endpoint: string, fingerprint: string }
 export struct BindingRow { key: string, action: string }
 export global Appearance {
@@ -118,6 +119,15 @@ export component PlayerWindow inherits Window {
     callback radio-search(string);
     callback radio-play(string, string);
     callback cancel-services();
+    in-out property <string> webdav-url;
+    in-out property <string> webdav-user;
+    in-out property <string> webdav-password;
+    in-out property <bool> webdav-busy: false;
+    in-out property <string> webdav-status;
+    in-out property <[WebDavRow]> webdav-entries;
+    callback webdav-browse(string);
+    callback webdav-cancel();
+    callback webdav-open(string);
     in-out property <string> cast-endpoint;
     in-out property <string> cast-fingerprint;
     in-out property <string> cast-status: "Enter a local receiver, inspect its certificate, then review the fingerprint before casting.";
@@ -136,7 +146,7 @@ export component PlayerWindow inherits Window {
     callback cast-select(string, string, string);
     callback cast-remember(string, string, string);
     callback cast-forget(string);
-    changed panel => { if (root.panel != "radio") { root.cancel-services(); } }
+    changed panel => { if (root.panel != "radio") { root.cancel-services(); } if (root.panel != "webdav") { root.webdav-cancel(); root.webdav-password = ""; } }
     in-out property <bool> light-theme: false;
     in-out property <color> accent-color: #ef955f;
     in-out property <color> accent-text: #171a20;
@@ -225,6 +235,7 @@ export component PlayerWindow inherits Window {
         Menu { title: "Media";
             MenuItem { title: "Open files…"; activated => { root.action("open", 0); } }
             MenuItem { title: "Internet radio…"; activated => { root.panel = "radio"; } }
+            MenuItem { title: "Browse WebDAV…"; activated => { root.panel = "webdav"; } }
             MenuItem { title: "Open URL…"; activated => { root.panel = "url"; } }
             MenuSeparator {}
             MenuItem { title: "Quit"; activated => { root.action("quit", 0); } }
@@ -469,11 +480,11 @@ export component PlayerWindow inherits Window {
     }
     if (root.panel != ""): Rectangle { background: #050a13bb;
         TouchArea { clicked => { root.panel = ""; } }
-        Rectangle { width: min(parent.width - 60px, 550px); height: root.panel == "preferences" || root.panel == "radio" ? min(parent.height - 30px, 620px) : root.panel == "url" ? 300px : root.panel == "cast" ? min(parent.height - 30px, 680px) : 330px; x: (parent.width - self.width) / 2; y: (parent.height - self.height) / 2;
+        Rectangle { width: min(parent.width - 60px, 550px); height: root.panel == "preferences" || root.panel == "radio" || root.panel == "webdav" ? min(parent.height - 30px, 620px) : root.panel == "url" ? 300px : root.panel == "cast" ? min(parent.height - 30px, 680px) : 330px; x: (parent.width - self.width) / 2; y: (parent.height - self.height) / 2;
             background: Appearance.dialog; border-radius: 14px; border-width: 1px; border-color: Appearance.border;
             VerticalLayout { padding: 24px; spacing: 18px;
                 HorizontalLayout {
-                    Text { text: root.panel == "radio" ? "Internet radio" : root.panel == "preferences" ? "Preferences" : root.panel == "url" ? "Open a network stream" : root.panel == "information" ? "Playback information" : root.panel == "shortcuts" ? "Keyboard shortcuts" : root.panel == "cast" ? "Cast to a receiver" : "Foxide"; color: Appearance.text; font-size: 20px; font-weight: 600; vertical-alignment: center; }
+                    Text { text: root.panel == "radio" ? "Internet radio" : root.panel == "webdav" ? "Browse WebDAV" : root.panel == "preferences" ? "Preferences" : root.panel == "url" ? "Open a network stream" : root.panel == "information" ? "Playback information" : root.panel == "shortcuts" ? "Keyboard shortcuts" : root.panel == "cast" ? "Cast to a receiver" : "Foxide"; color: Appearance.text; font-size: 20px; font-weight: 600; vertical-alignment: center; }
                     ToolButton { label: "×"; description: "Close dialog"; clicked => { root.panel = ""; } }
                 }
                 if (root.panel == "url"): VerticalLayout { spacing: 14px;
@@ -535,6 +546,29 @@ export component PlayerWindow inherits Window {
                         }
                     }
                     Text { text: "Directory: Radio Browser · Streams supplied by their broadcasters"; color: Appearance.muted; font-size: 11px; wrap: word-wrap; }
+                }
+                if (root.panel == "webdav"): VerticalLayout { spacing: 10px; vertical-stretch: 1;
+                    HorizontalLayout { spacing: 8px;
+                        LineEdit { text <=> root.webdav-url; placeholder-text: "https://server.example/dav/"; accepted => { if (!root.webdav-busy) { root.webdav-browse(root.webdav-url); } } }
+                        ToolButton { label: "Browse"; width: 80px; available: !root.webdav-busy; clicked => { root.webdav-browse(root.webdav-url); } }
+                    }
+                    HorizontalLayout { spacing: 8px;
+                        LineEdit { text <=> root.webdav-user; placeholder-text: "Username (optional)"; }
+                        LineEdit { text <=> root.webdav-password; input-type: InputType.password; placeholder-text: "Password (optional)"; }
+                    }
+                    Text { text: root.webdav-busy ? "Loading this collection…" : root.webdav-status; color: Appearance.secondary; wrap: word-wrap; }
+                    ScrollView { vertical-stretch: 1;
+                        VerticalLayout { spacing: 6px;
+                            for entry in root.webdav-entries: Rectangle { height: 48px; background: Appearance.sidebar; border-radius: 8px;
+                                HorizontalLayout { padding: 6px; spacing: 8px;
+                                    Text { text: entry.collection ? "📁" : "♪"; width: 24px; color: Appearance.secondary; vertical-alignment: center; }
+                                    VerticalLayout { vertical-stretch: 1; Text { text: entry.name; color: Appearance.text; overflow: elide; } Text { text: entry.detail; color: Appearance.muted; font-size: 11px; overflow: elide; } }
+                                    ToolButton { label: entry.collection ? "Open" : "Play"; width: 65px; primary: !entry.collection; available: !root.webdav-busy; clicked => { if (entry.collection) { root.webdav-browse(entry.href); } else { root.webdav-open(entry.href); } } }
+                                }
+                            }
+                        }
+                    }
+                    Text { text: "Credentials require HTTPS (localhost is allowed); they are not saved. Listings show one folder level."; color: Appearance.muted; font-size: 11px; wrap: word-wrap; }
                 }
                 if (root.panel == "preferences"): ScrollView { vertical-stretch: 1;
                     VerticalLayout { spacing: 12px; padding-right: 12px;

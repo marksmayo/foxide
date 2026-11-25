@@ -2,6 +2,9 @@
 mod radio;
 pub use radio::{HttpClient, RadioDirectory, Station, public_http_url};
 
+mod webdav;
+pub use webdav::{WebDavCredentials, WebDavDirectory, WebDavEntry, parse_webdav_listing};
+
 mod http;
 pub use http::CurlClient;
 pub mod process;

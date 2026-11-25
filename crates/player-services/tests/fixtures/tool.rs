@@ -1,8 +1,14 @@
-use std::{io::Write, time::Duration};
+use std::io::{Read, Write};
+use std::time::Duration;
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     match args[0].as_str() {
         "echo" => println!("{}", args[1]),
+        "stdin" => {
+            let mut bytes = Vec::new();
+            std::io::stdin().read_to_end(&mut bytes).unwrap();
+            std::io::stdout().write_all(&bytes).unwrap();
+        }
         "large" => { std::io::stdout().write_all(&vec![b'x'; 1024 * 1024]).unwrap(); }
         "fail" => { eprintln!("fixture failure"); std::process::exit(7); }
         "sleep" => {
