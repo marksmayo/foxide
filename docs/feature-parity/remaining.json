@@ -28,7 +28,7 @@
       "name": "DVD / Blu-ray structure playback",
       "group": "Playback",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #31 at ce45782: DVD/Blu-ray folder and ISO selection, structure/signature validation, disc-menu navigation, and a dispatch-path performance follow-up. All seven current-head hosted checks passed, including Desktop UI run 45499692703. CodSpeed run 45499692481 showed no measured change across 279 measurable benchmarks; five optimized-out and two system-call-dominated cases were not comparable. A generated DVD fixture played through a title; packaged-runtime playback, Blu-ray media, physical drives, and packaging/licensing review remain pending. Do not close this gap or claim a medal."
+      "acceptance": "Implementation is in draft PR #31 at ce45782: DVD/Blu-ray folder and ISO selection, structure/signature validation, disc-menu navigation, and a dispatch-path performance follow-up. All seven current-head hosted checks passed; CodSpeed reported no measured change in its comparable cases. Hosted tests exercised a generated unencrypted DVD ISO, not commercial discs. The Windows release workflow installs only the libmpv runtime; it does not package libdvdnav, libdvdread, or libbluray. VideoLAN documents libdvdnav/libdvdread as GPL-licensed and libbluray as LGPL; this records upstream licensing information, not a distribution-compliance determination. libbluray alone does not support AACS/BD+ protected commercial discs. Packaged navigation runtime, license/compliance decision, Blu-ray media, physical drives, and real-disc playback remain pending. Do not close this gap or claim a medal."
     },
     {
       "id": "chromecast_output",
