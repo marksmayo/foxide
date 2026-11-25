@@ -196,7 +196,7 @@
       "name": "Stereoscopic 3D video",
       "group": "Picture",
       "stage": "in_progress",
-      "acceptance": "Draft PR #32 at a25b7cb adds opt-in stereoscopic source/output modes with a labeled FFmpeg stereo3d filter. A red/green follow-up isolates Stereo 3D from generic PlaybackControl dispatch: tests first failed because the dedicated VideoControl route did not exist, and another regression caught invalid direct enum values panicking; invalid values now safely emit no effect. The full desktop player-ui suite passed locally (50 tests) and formatting/whitespace checks passed. Hosted Code, Desktop UI, Native controls, native helper, compositor, Windows package, and CodSpeed checks are running or queued. Physical stereoscopic display acceptance remains pending; do not close this gap or claim a medal."
+      "acceptance": "Draft PR #32 at a25b7cb adds opt-in stereoscopic source/output modes with a labeled FFmpeg stereo3d filter. A red/green follow-up routes Stereo 3D through a dedicated VideoControl path instead of generic PlaybackControl dispatch. Tests first failed because that route did not exist; a second regression caught invalid direct enum values panicking, now safely ignored. The full desktop player-ui suite passed locally (50 tests), and formatting/whitespace checks passed. Current CodSpeed run 45517807720 reports no measured change across 279 benchmarks; five optimized-out and two syscall-dominated cases are excluded. Windows packaging passed; Code, Desktop UI, Native controls, native helper, and compositor are queued. Physical stereoscopic display acceptance remains pending; do not close this gap or claim a medal."
     },
     {
       "id": "video_capture",
