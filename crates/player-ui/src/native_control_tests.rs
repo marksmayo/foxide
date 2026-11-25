@@ -1,5 +1,5 @@
 #![cfg(feature = "desktop")]
-use crate::{Action, Effect, UiState};
+use crate::{Action, Effect, UiState, VideoControl};
 use serde_json::json;
 use std::{
     fs,
@@ -83,7 +83,8 @@ fn desktop_menu_commands_are_accepted_by_the_native_media_engine() {
         ("panorama-pitch", 8.0),
         ("panorama-360", 0.0),
     ] {
-        let effects = state.dispatch(Action::control(name, value).unwrap());
+        let effects =
+            state.dispatch_video_control(VideoControl::from_ui_action(name, value).unwrap());
         let [Effect::Engine(command)] = effects.as_slice() else {
             panic!("Panorama control did not reach engine: {name}");
         };

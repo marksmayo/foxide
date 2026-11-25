@@ -37,6 +37,14 @@ pub enum PlaybackControl {
     Flip(bool),
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum VideoControl {
+    Stereo3d(u8),
+    Panorama360(u8),
+    PanoramaYaw(f64),
+    PanoramaPitch(f64),
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Effect {
     Load(PathBuf),
@@ -83,22 +91,6 @@ impl Action {
             "rotation" if [0.0, 90.0, 180.0, 270.0].contains(&value) => {
                 PlaybackControl::Rotation(value as u16)
             }
-            "stereo-3d"
-                if value.is_finite() && (0.0..=6.0).contains(&value) && value.fract() == 0.0 =>
-            {
-                PlaybackControl::Stereo3d(value as u8)
-            }
-            "panorama-360"
-                if value.is_finite() && (0.0..=6.0).contains(&value) && value.fract() == 0.0 =>
-            {
-                PlaybackControl::Panorama360(value as u8)
-            }
-            "panorama-yaw" if value.is_finite() && (-180.0..=180.0).contains(&value) => {
-                PlaybackControl::PanoramaYaw(value)
-            }
-            "panorama-pitch" if value.is_finite() && (-180.0..=180.0).contains(&value) => {
-                PlaybackControl::PanoramaPitch(value)
-            }
             "flip-vertical" => PlaybackControl::Flip(true),
             "flip-horizontal" => PlaybackControl::Flip(false),
             "replaygain" if [0.0, 1.0, 2.0].contains(&value) => {
@@ -142,6 +134,59 @@ impl PlaybackControl {
             Self::Rotation(angle) if [0, 90, 180, 270].contains(&angle) => {
                 Some(vec!["set".into(), "video-rotate".into(), angle.to_string()])
             }
+            Self::Flip(vertical) => Some(vec![
+                "vf".into(),
+                "toggle".into(),
+                if vertical {
+                    "@foxide-vflip:vflip"
+                } else {
+                    "@foxide-hflip:hflip"
+                }
+                .into(),
+            ]),
+            Self::SecondarySubtitle(id) => Some(vec![
+                "set".into(),
+                "secondary-sid".into(),
+                if id == 0 { "no".into() } else { id.to_string() },
+            ]),
+            Self::FrameStep(backward) => Some(vec![
+                if backward {
+                    "frame-back-step"
+                } else {
+                    "frame-step"
+                }
+                .into(),
+            ]),
+            _ => None,
+        }
+    }
+}
+
+impl VideoControl {
+    pub fn from_ui_action(name: &str, value: f64) -> Option<Self> {
+        match name {
+            "stereo-3d"
+                if value.is_finite() && (0.0..=6.0).contains(&value) && value.fract() == 0.0 =>
+            {
+                Some(Self::Stereo3d(value as u8))
+            }
+            "panorama-360"
+                if value.is_finite() && (0.0..=6.0).contains(&value) && value.fract() == 0.0 =>
+            {
+                Some(Self::Panorama360(value as u8))
+            }
+            "panorama-yaw" if value.is_finite() && (-180.0..=180.0).contains(&value) => {
+                Some(Self::PanoramaYaw(value))
+            }
+            "panorama-pitch" if value.is_finite() && (-180.0..=180.0).contains(&value) => {
+                Some(Self::PanoramaPitch(value))
+            }
+            _ => None,
+        }
+    }
+
+    fn command(self) -> Option<Vec<String>> {
+        match self {
             Self::Stereo3d(0) => Some(vec![
                 "vf".into(),
                 "remove".into(),
@@ -181,29 +226,6 @@ impl PlaybackControl {
                 Some(panorama_filter_command(yaw.into(), pitch.into()))
             }
             Self::PanoramaYaw(_) | Self::PanoramaPitch(_) => None,
-            Self::Flip(vertical) => Some(vec![
-                "vf".into(),
-                "toggle".into(),
-                if vertical {
-                    "@foxide-vflip:vflip"
-                } else {
-                    "@foxide-hflip:hflip"
-                }
-                .into(),
-            ]),
-            Self::SecondarySubtitle(id) => Some(vec![
-                "set".into(),
-                "secondary-sid".into(),
-                if id == 0 { "no".into() } else { id.to_string() },
-            ]),
-            Self::FrameStep(backward) => Some(vec![
-                if backward {
-                    "frame-back-step"
-                } else {
-                    "frame-step"
-                }
-                .into(),
-            ]),
             _ => None,
         }
     }
@@ -303,15 +325,22 @@ impl UiState {
                 vec![Effect::Stop]
             }
             Action::Quit => vec![Effect::Quit],
-            Action::Playback(
-                control @ (PlaybackControl::Panorama360(_)
-                | PlaybackControl::PanoramaYaw(_)
-                | PlaybackControl::PanoramaPitch(_)),
-            ) if self.loaded => self.panorama(control),
             Action::Playback(control) if self.loaded => {
                 control.command().map(Effect::Engine).into_iter().collect()
             }
             _ => Vec::new(),
+        }
+    }
+
+    pub fn dispatch_video_control(&mut self, control: VideoControl) -> Vec<Effect> {
+        if !self.loaded {
+            return Vec::new();
+        }
+        match control {
+            VideoControl::Panorama360(_)
+            | VideoControl::PanoramaYaw(_)
+            | VideoControl::PanoramaPitch(_) => self.panorama(control),
+            _ => control.command().map(Effect::Engine).into_iter().collect(),
         }
     }
 
@@ -323,9 +352,9 @@ impl UiState {
     }
     // Keep the stateful panorama path out of the common playback-action hot path.
     #[inline(never)]
-    fn panorama(&mut self, control: PlaybackControl) -> Vec<Effect> {
+    fn panorama(&mut self, control: VideoControl) -> Vec<Effect> {
         match control {
-            PlaybackControl::Panorama360(mode) => {
+            VideoControl::Panorama360(mode) => {
                 let angles = match mode {
                     0 => None,
                     1 => Some((0.0, 0.0)),
@@ -337,13 +366,13 @@ impl UiState {
                     _ => return Vec::new(),
                 };
                 self.panorama_angles = angles;
-                PlaybackControl::Panorama360(mode)
+                VideoControl::Panorama360(mode)
                     .command()
                     .map(Effect::Engine)
                     .into_iter()
                     .collect()
             }
-            PlaybackControl::PanoramaYaw(delta) => {
+            VideoControl::PanoramaYaw(delta) => {
                 let Some((yaw, pitch)) = self.panorama_angles else {
                     return Vec::new();
                 };
@@ -351,7 +380,7 @@ impl UiState {
                 self.panorama_angles = Some((yaw, pitch));
                 vec![Effect::Engine(panorama_filter_command(yaw, pitch))]
             }
-            PlaybackControl::PanoramaPitch(delta) => {
+            VideoControl::PanoramaPitch(delta) => {
                 let Some((yaw, pitch)) = self.panorama_angles else {
                     return Vec::new();
                 };
@@ -366,7 +395,7 @@ impl UiState {
 
 #[cfg(test)]
 mod tests {
-    use super::{Action, Effect, UiState};
+    use super::{Action, Effect, UiState, VideoControl};
 
     #[test]
     fn stereo_3d_control_adds_a_labeled_output_filter_without_replacing_user_filters() {
@@ -374,11 +403,28 @@ mod tests {
         state.confirm_loaded(42.0);
 
         assert_eq!(
-            state.dispatch(Action::control("stereo-3d", 1.0).unwrap()),
+            state.dispatch_video_control(VideoControl::from_ui_action("stereo-3d", 1.0).unwrap()),
             vec![Effect::Engine(vec![
                 "vf".into(),
                 "add".into(),
                 "@foxide-stereo3d:lavfi=[stereo3d=in=sbsl:out=arcd]".into(),
+            ])]
+        );
+    }
+
+    #[test]
+    fn panorama_controls_use_the_dedicated_video_dispatcher() {
+        let control = VideoControl::from_ui_action("panorama-360", 1.0).unwrap();
+        let mut state = UiState::default();
+        state.confirm_loaded(42.0);
+
+        assert!(VideoControl::from_ui_action("panorama-360", 1.0).is_none());
+        assert_eq!(
+            state.dispatch_video_control(control),
+            vec![Effect::Engine(vec![
+                "vf".into(),
+                "add".into(),
+                "@foxide-panorama360:lavfi=[v360=input=e:output=flat:w=1280:h=720:h_fov=90:v_fov=60:yaw=0:pitch=0]".into(),
             ])]
         );
     }
@@ -389,7 +435,7 @@ mod tests {
         state.confirm_loaded(42.0);
 
         assert_eq!(
-            state.dispatch(Action::control("panorama-360", 1.0).unwrap()),
+            state.dispatch_video_control(VideoControl::from_ui_action("panorama-360", 1.0).unwrap()),
             vec![Effect::Engine(vec![
                 "vf".into(),
                 "add".into(),
@@ -412,7 +458,7 @@ mod tests {
 
         for (preset, rotation) in cases {
             assert_eq!(
-                state.dispatch(Action::control("panorama-360", preset).unwrap()),
+                state.dispatch_video_control(VideoControl::from_ui_action("panorama-360", preset).unwrap()),
                 vec![Effect::Engine(vec![
                     "vf".into(),
                     "add".into(),
@@ -424,7 +470,7 @@ mod tests {
         }
 
         assert_eq!(
-            state.dispatch(Action::control("panorama-360", 0.0).unwrap()),
+            state.dispatch_video_control(VideoControl::from_ui_action("panorama-360", 0.0).unwrap()),
             vec![Effect::Engine(vec![
                 "vf".into(),
                 "remove".into(),
@@ -436,7 +482,7 @@ mod tests {
     #[test]
     fn panorama_360_rejects_non_integer_or_out_of_range_presets() {
         for preset in [-1.0, 0.5, 1.5, 7.0, f64::NAN, f64::INFINITY] {
-            assert!(Action::control("panorama-360", preset).is_none());
+            assert!(VideoControl::from_ui_action("panorama-360", preset).is_none());
         }
     }
 
@@ -444,10 +490,10 @@ mod tests {
     fn panorama_360_drag_updates_only_foxides_labeled_projection() {
         let mut state = UiState::default();
         state.confirm_loaded(42.0);
-        state.dispatch(Action::control("panorama-360", 1.0).unwrap());
+        state.dispatch_video_control(VideoControl::from_ui_action("panorama-360", 1.0).unwrap());
 
         assert_eq!(
-            state.dispatch(Action::control("panorama-yaw", -12.0).unwrap()),
+            state.dispatch_video_control(VideoControl::from_ui_action("panorama-yaw", -12.0).unwrap()),
             vec![Effect::Engine(vec![
                 "vf".into(),
                 "add".into(),
@@ -455,7 +501,7 @@ mod tests {
             ])]
         );
         assert_eq!(
-            state.dispatch(Action::control("panorama-yaw", 180.0).unwrap()),
+            state.dispatch_video_control(VideoControl::from_ui_action("panorama-yaw", 180.0).unwrap()),
             vec![Effect::Engine(vec![
                 "vf".into(),
                 "add".into(),
@@ -463,15 +509,15 @@ mod tests {
             ])]
         );
         assert_eq!(
-            state.dispatch(Action::control("panorama-pitch", 120.0).unwrap()),
+            state.dispatch_video_control(VideoControl::from_ui_action("panorama-pitch", 120.0).unwrap()),
             vec![Effect::Engine(vec![
                 "vf".into(),
                 "add".into(),
                 "@foxide-panorama360:lavfi=[v360=input=e:output=flat:w=1280:h=720:h_fov=90:v_fov=60:yaw=168:pitch=89]".into(),
             ])]
         );
-        assert!(Action::control("panorama-yaw", 181.0).is_none());
-        state.dispatch(Action::control("panorama-360", 0.0).unwrap());
+        assert!(VideoControl::from_ui_action("panorama-yaw", 181.0).is_none());
+        state.dispatch_video_control(VideoControl::from_ui_action("panorama-360", 0.0).unwrap());
         assert!(
             state
                 .dispatch(Action::control("panorama-yaw", 1.0).unwrap())
@@ -493,7 +539,7 @@ mod tests {
 
         for (mode, filter) in cases {
             assert_eq!(
-                state.dispatch(Action::control("stereo-3d", mode).unwrap()),
+                state.dispatch_video_control(VideoControl::from_ui_action("stereo-3d", mode).unwrap()),
                 vec![Effect::Engine(vec![
                     "vf".into(),
                     "add".into(),
@@ -503,7 +549,7 @@ mod tests {
         }
 
         assert_eq!(
-            state.dispatch(Action::control("stereo-3d", 0.0).unwrap()),
+            state.dispatch_video_control(VideoControl::from_ui_action("stereo-3d", 0.0).unwrap()),
             vec![Effect::Engine(vec![
                 "vf".into(),
                 "remove".into(),
@@ -515,7 +561,7 @@ mod tests {
     #[test]
     fn stereo_3d_rejects_non_integer_or_out_of_range_modes() {
         for mode in [-1.0, 0.5, 1.5, 7.0, f64::NAN, f64::INFINITY] {
-            assert!(Action::control("stereo-3d", mode).is_none());
+            assert!(VideoControl::from_ui_action("stereo-3d", mode).is_none());
         }
     }
 
