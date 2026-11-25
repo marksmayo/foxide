@@ -241,4 +241,3 @@ fn panorama_view_preset_changes_real_pixels_and_off_restores_the_source_view() {
         (proof.baseline, proof.turned, proof.restored)
     );
 }
-
