@@ -150,7 +150,7 @@ fn optional_playback_controls<const LOADED: bool>(bencher: Bencher, name: &str) 
         "deband" | "equalizer" => 1.0,
         _ => 0.0,
     };
-    let mut check = state(1, LOADED);
+    let check = state(1, LOADED);
     let action = PlaybackControl::from_ui_action(name, value).unwrap();
     assert_eq!(
         check.dispatch_playback_control(action).len(),
