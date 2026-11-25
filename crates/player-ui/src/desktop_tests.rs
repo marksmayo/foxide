@@ -47,8 +47,6 @@ use slint::{
     },
 };
 
-static UI_PLATFORM_TEST_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
-
 struct TestPlatform(
     Rc<MinimalSoftwareWindow>,
     std::sync::mpsc::Sender<Box<dyn FnOnce() + Send>>,
@@ -104,7 +102,6 @@ fn capture_customization(ui: &PlayerWindow, window: &MinimalSoftwareWindow, name
 
 #[test]
 fn software_desktop_ui_covers_diagnostics_controls_and_audio_export() {
-    let _platform_guard = UI_PLATFORM_TEST_LOCK.lock().unwrap();
     let rendered_window = MinimalSoftwareWindow::new(RepaintBufferType::NewBuffer);
     let (event_sender, event_receiver) = std::sync::mpsc::channel();
     slint::platform::set_platform(Box::new(TestPlatform(
