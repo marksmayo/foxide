@@ -5,7 +5,7 @@ mod shader_ui;
 mod system_media;
 use clap::Parser;
 use player_cast::{CastController, CastEvent, CastOptions, CertificatePin};
-use player_render::{Engine, Snapshot};
+use player_render::{AudioExportFormat, Engine, Snapshot};
 use player_settings::Preferences;
 use player_ui::{Action, Effect, UiState};
 use slint::{ComponentHandle, ModelRc, VecModel};
@@ -13,7 +13,10 @@ use std::{
     cell::{Cell, RefCell},
     path::PathBuf,
     rc::Rc,
-    sync::Arc,
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
     time::Duration,
 };
 // Only pinned Slint compiler output may use its generated vtable unsafe code.
@@ -1111,8 +1114,117 @@ fn install_cast_with_discovery(
     });
 }
 
+fn audio_export_format_for_action(action: &str) -> Option<AudioExportFormat> {
+    match action {
+        "export-audio-wav" => Some(AudioExportFormat::WavPcm16),
+        "export-audio-flac" => Some(AudioExportFormat::Flac),
+        _ => None,
+    }
+}
+
+#[derive(Clone)]
+struct AudioExportServices {
+    choose_destination: Arc<dyn Fn(String, String) -> Option<PathBuf> + Send + Sync>,
+    export: Arc<dyn Fn(PathBuf, PathBuf, AudioExportFormat) -> Result<(), String> + Send + Sync>,
+}
+
+fn system_audio_export_services() -> AudioExportServices {
+    AudioExportServices {
+        choose_destination: Arc::new(|name, extension| {
+            let filter = match extension.as_str() {
+                "wav" => "WAV audio",
+                "flac" => "FLAC audio",
+                _ => "Audio",
+            };
+            futures_lite::future::block_on(
+                rfd::AsyncFileDialog::new()
+                    .set_title("Export audio")
+                    .set_file_name(format!("{name}.{extension}"))
+                    .add_filter(filter, &[extension.as_str()])
+                    .save_file(),
+            )
+            .map(|file| file.path().to_path_buf())
+        }),
+        export: Arc::new(|source, destination, format| {
+            player_render::export_audio(&source, &destination, format)
+        }),
+    }
+}
+
+fn begin_audio_export(
+    ui: &PlayerWindow,
+    state: &Rc<RefCell<UiState>>,
+    format: AudioExportFormat,
+    active: Arc<AtomicBool>,
+    services: AudioExportServices,
+) {
+    if active.swap(true, Ordering::AcqRel) {
+        ui.set_status("An audio export is already running".into());
+        return;
+    }
+    let source = {
+        let state = state.borrow();
+        state
+            .loaded
+            .then(|| state.playlist.get(state.selected))
+            .flatten()
+            .filter(|path| path.is_file())
+            .cloned()
+    };
+    let Some(source) = source else {
+        active.store(false, Ordering::Release);
+        ui.set_status("Audio export requires a loaded local media file".into());
+        return;
+    };
+    let extension = match format {
+        AudioExportFormat::WavPcm16 => "wav",
+        AudioExportFormat::Flac => "flac",
+    };
+    let name = source
+        .file_stem()
+        .and_then(|stem| stem.to_str())
+        .unwrap_or("audio-export")
+        .to_owned();
+    let weak = ui.as_weak();
+    ui.set_status(format!("Choose a destination for the {extension} export…").into());
+    std::thread::spawn(move || {
+        let destination = (services.choose_destination)(name, extension.to_owned());
+        let result = match destination {
+            Some(destination) => {
+                let path = destination;
+                let progress_window = weak.clone();
+                let _ = progress_window.upgrade_in_event_loop(move |ui| {
+                    ui.set_status("Exporting audio…".into());
+                });
+                (services.export)(source, path.clone(), format).map(|()| {
+                    path.file_name()
+                        .unwrap_or_default()
+                        .to_string_lossy()
+                        .into_owned()
+                })
+            }
+            None => Err("Audio export cancelled".into()),
+        };
+        active.store(false, Ordering::Release);
+        let _ = weak.upgrade_in_event_loop(move |ui| match result {
+            Ok(name) => ui.set_status(format!("Audio export saved: {name}").into()),
+            Err(error) => ui.set_status(error.into()),
+        });
+    });
+}
+
 fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Option<Rc<Engine>>) {
+    install_controls_with_audio_export_services(ui, state, engine, system_audio_export_services());
+}
+
+fn install_controls_with_audio_export_services(
+    ui: &PlayerWindow,
+    state: &Rc<RefCell<UiState>>,
+    engine: &Option<Rc<Engine>>,
+    audio_export_services: AudioExportServices,
+) {
     let pip_mode = Rc::new(RefCell::new(picture_in_picture::PictureInPictureMode::Main));
+    let export_active = Arc::new(AtomicBool::new(false));
     let filter_state = state.clone();
     let filter_window = ui.as_weak();
     ui.on_filter_queue(move |query| {
@@ -1121,10 +1233,26 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
             update_queue(&ui, &filter_state.borrow());
         }
     });
-    let (weak, controller, playback, pip_mode) =
-        (ui.as_weak(), state.clone(), engine.clone(), pip_mode);
+    let (weak, controller, playback, pip_mode, export_active, audio_export_services) = (
+        ui.as_weak(),
+        state.clone(),
+        engine.clone(),
+        pip_mode,
+        export_active,
+        audio_export_services,
+    );
     ui.on_action(move |name, value| {
         let Some(ui) = weak.upgrade() else { return };
+        if let Some(format) = audio_export_format_for_action(name.as_str()) {
+            begin_audio_export(
+                &ui,
+                &controller,
+                format,
+                export_active.clone(),
+                audio_export_services.clone(),
+            );
+            return;
+        }
         if name == "picture-in-picture" {
             toggle_picture_in_picture(&ui, &pip_mode);
             return;

@@ -223,8 +223,8 @@
       "id": "audio_transcode",
       "name": "Audio conversion or transcoding",
       "group": "Editing",
-      "stage": "queued",
-      "acceptance": "Needs an export codec/profile API and safe output-file handling."
+      "stage": "in_progress",
+      "acceptance": "A draft Audio menu flow is being built for local-file export to WAV PCM16 or FLAC through libmpv encoding, with a save dialog, extension checks, temporary staging, and no-clobber destination creation. Output integrity and destination safety have automated tests; native format conversion still needs the hosted libmpv encoder acceptance run. Streaming sources and formats beyond WAV/FLAC are not claimed."
     },
     {
       "id": "cd_rip",
@@ -356,3 +356,4 @@
     "windows": "https://github.com/marksmayo/foxide/actions/runs/43972156451/job/133666802683"
   }
 }
+

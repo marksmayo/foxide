@@ -138,7 +138,7 @@ fn video_site_hook_uses_only_the_selected_helper_and_preserves_stream_headers() 
         }
     });
     let tool = player_services::VideoSiteTool::new(&helper).unwrap();
-    let api = Api::load(Some(&tool), false).unwrap();
+    let api = Api::load(Some(&tool), false, &[]).unwrap();
     for args in [
         ["set", "vo", "null"],
         ["set", "ao", "null"],

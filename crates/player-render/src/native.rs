@@ -1,7 +1,9 @@
 use libloading::Library;
 use std::{
     ffi::{CStr, CString, c_char, c_int, c_ulong, c_void},
-    path::PathBuf,
+    fs,
+    io::{Read, Seek, SeekFrom, Write},
+    path::{Path, PathBuf},
     sync::{
         Arc, Mutex,
         atomic::{AtomicBool, Ordering},
@@ -105,6 +107,7 @@ impl Api {
     fn load(
         helper: Option<&player_services::VideoSiteTool>,
         thumbnail: bool,
+        extra_options: &[(&CStr, &CStr)],
     ) -> Result<Arc<Self>, String> {
         let candidates: Vec<PathBuf> = if let Some(path) = std::env::var_os("FOXIDE_LIBMPV") {
             vec![path.into()]
@@ -139,7 +142,7 @@ impl Api {
                     continue;
                 }
             };
-            let loaded = unsafe { Self::from_library(library, helper, thumbnail) };
+            let loaded = unsafe { Self::from_library(library, helper, thumbnail, extra_options) };
             match loaded {
                 Ok(api) => return Ok(Arc::new(api)),
                 Err(error) => errors.push(error),
@@ -161,6 +164,7 @@ impl Api {
         library: Library,
         helper: Option<&player_services::VideoSiteTool>,
         thumbnail: bool,
+        extra_options: &[(&CStr, &CStr)],
     ) -> Result<Self, String> {
         // SAFETY: caller supplies an owned libmpv library. All functions are loaded
         // before creating a client so missing symbols cannot leak the client.
@@ -247,6 +251,14 @@ impl Api {
             ] {
                 if option(api.handle, name.as_ptr(), value.as_ptr()) < 0 {
                     return Err("libmpv rejected a required playback option".into());
+                }
+            }
+            for (name, value) in extra_options {
+                if option(api.handle, name.as_ptr(), value.as_ptr()) < 0 {
+                    return Err(format!(
+                        "libmpv rejected the requested encoding option {}",
+                        name.to_string_lossy()
+                    ));
                 }
             }
             let enabled = if helper.is_some() { c"yes" } else { c"no" };
@@ -476,6 +488,700 @@ pub struct Snapshot {
     pub command_error: String,
     pub error: String,
 }
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum AudioExportFormat {
+    WavPcm16,
+    Flac,
+}
+
+impl AudioExportFormat {
+    fn extension(self) -> &'static str {
+        match self {
+            Self::WavPcm16 => "wav",
+            Self::Flac => "flac",
+        }
+    }
+
+    fn container(self) -> &'static CStr {
+        match self {
+            Self::WavPcm16 => c"wav",
+            Self::Flac => c"flac",
+        }
+    }
+
+    fn codec(self) -> &'static CStr {
+        match self {
+            Self::WavPcm16 => c"pcm_s16le",
+            Self::Flac => c"flac",
+        }
+    }
+}
+
+/// Export one local media file's audio stream. The destination is created only
+/// after encoding succeeds, and an existing file is never replaced.
+pub fn export_audio(
+    input: &Path,
+    destination: &Path,
+    format: AudioExportFormat,
+) -> Result<(), String> {
+    let (input, destination, parent) = validate_export_paths(input, destination, format)?;
+    let temp = tempfile::Builder::new()
+        .prefix(".foxide-audio-export-")
+        .suffix(&format!(".{}", format.extension()))
+        .tempfile_in(&parent)
+        .map_err(|error| format!("Could not reserve a temporary export file: {error}"))?;
+    let temp_path = temp.into_temp_path();
+    let output_value = CString::new(temp_path.to_string_lossy().as_bytes())
+        .map_err(|_| "Export path contains a null byte")?;
+    let options = [
+        (c"o", output_value.as_c_str()),
+        (c"of", format.container()),
+        (c"oac", format.codec()),
+        (c"ovc", c"no"),
+        (c"vid", c"no"),
+        (c"keep-open", c"no"),
+    ];
+    let api = Api::load(None, false, &options)?;
+    let input_value = input.to_string_lossy().into_owned();
+    api.send(&["loadfile".into(), input_value, "replace".into()])?;
+
+    let mut file_loaded = false;
+    let mut source_duration = None;
+    loop {
+        // SAFETY: event contents are read before the next wait_event call, which
+        // invalidates the previous event as documented by libmpv.
+        let event = unsafe { (api.wait_event)(api.handle, 0.25) };
+        if event.is_null() {
+            return Err("libmpv stopped while exporting audio".into());
+        }
+        // SAFETY: event is non-null and its payload is inspected before waiting again.
+        let event = unsafe { &*event };
+        match event.kind {
+            0 => continue,
+            8 => {
+                file_loaded = true;
+                source_duration = api
+                    .get(c"duration")
+                    .parse::<f64>()
+                    .ok()
+                    .filter(|duration| duration.is_finite() && *duration > 0.0);
+            }
+            7 => {
+                if event.data.is_null() {
+                    return Err("libmpv ended audio export without a result".into());
+                }
+                // SAFETY: MPV_EVENT_END_FILE carries mpv_event_end_file.
+                let end = unsafe { &*event.data.cast::<End>() };
+                if end.reason != 0 || !file_loaded {
+                    return Err(format!(
+                        "Audio export did not finish successfully (reason {}, error {})",
+                        end.reason, end.error
+                    ));
+                }
+                break;
+            }
+            1 => return Err("libmpv shut down during audio export".into()),
+            _ => {}
+        }
+    }
+    drop(api);
+
+    let source_duration =
+        source_duration.ok_or("Could not determine the source duration for audio export")?;
+    trim_export_to_duration(&temp_path, format, source_duration)?;
+
+    let metadata = fs::metadata(&temp_path)
+        .map_err(|error| format!("libmpv did not produce an audio file: {error}"))?;
+    if metadata.len() < 44 {
+        return Err("The exported audio file is empty or incomplete".into());
+    }
+    temp_path
+        .persist_noclobber(&destination)
+        .map_err(|error| format!("Could not create the export destination: {}", error.error))?;
+    Ok(())
+}
+
+fn trim_export_to_duration(
+    path: &Path,
+    format: AudioExportFormat,
+    duration: f64,
+) -> Result<(), String> {
+    let mut file = fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open(path)
+        .map_err(|error| format!("Could not inspect encoded audio: {error}"))?;
+    match format {
+        AudioExportFormat::WavPcm16 => trim_wav_to_duration(&mut file, duration),
+        AudioExportFormat::Flac => trim_flac_to_duration(&mut file, duration),
+    }
+}
+
+fn expected_frames(duration: f64, sample_rate: u32) -> Result<u64, String> {
+    let frames = duration * f64::from(sample_rate);
+    if !frames.is_finite() || frames <= 0.0 || frames > u64::MAX as f64 {
+        return Err("Source duration is outside the supported export range".into());
+    }
+    Ok(frames.round() as u64)
+}
+
+fn trim_wav_to_duration(file: &mut fs::File, duration: f64) -> Result<(), String> {
+    let file_len = file.metadata().map_err(|error| error.to_string())?.len();
+    let mut header = [0; 12];
+    file.seek(SeekFrom::Start(0))
+        .map_err(|error| error.to_string())?;
+    file.read_exact(&mut header)
+        .map_err(|error| error.to_string())?;
+    let rf64 = &header[..4] == b"RF64";
+    if (!rf64 && &header[..4] != b"RIFF") || &header[8..12] != b"WAVE" {
+        return Err("libmpv produced an unsupported WAV container".into());
+    }
+
+    let mut ds64 = None;
+    let mut format = None;
+    let mut data = None;
+    let mut offset = 12_u64;
+    while offset + 8 <= file_len {
+        file.seek(SeekFrom::Start(offset))
+            .map_err(|error| error.to_string())?;
+        let mut chunk_header = [0; 8];
+        file.read_exact(&mut chunk_header)
+            .map_err(|error| error.to_string())?;
+        let size32 = u32::from_le_bytes(chunk_header[4..8].try_into().unwrap());
+        let payload = offset + 8;
+        let mut size = u64::from(size32);
+        if &chunk_header[..4] == b"ds64" {
+            if size32 < 28 {
+                return Err("WAV RF64 ds64 chunk is incomplete".into());
+            }
+            let mut values = [0; 28];
+            file.read_exact(&mut values)
+                .map_err(|error| error.to_string())?;
+            ds64 = Some((
+                payload,
+                u64::from_le_bytes(values[8..16].try_into().unwrap()),
+            ));
+        } else if &chunk_header[..4] == b"fmt " {
+            if size32 < 16 {
+                return Err("WAV format chunk is incomplete".into());
+            }
+            let mut values = [0; 16];
+            file.read_exact(&mut values)
+                .map_err(|error| error.to_string())?;
+            format = Some((
+                u16::from_le_bytes(values[0..2].try_into().unwrap()),
+                u16::from_le_bytes(values[2..4].try_into().unwrap()),
+                u32::from_le_bytes(values[4..8].try_into().unwrap()),
+                u16::from_le_bytes(values[14..16].try_into().unwrap()),
+            ));
+        } else if &chunk_header[..4] == b"data" {
+            if rf64 && size32 == u32::MAX {
+                size = ds64
+                    .map(|(_, data_size)| data_size)
+                    .ok_or("WAV RF64 data has no ds64 size")?;
+            }
+            data = Some((offset + 4, payload, size));
+        }
+        offset = payload
+            .checked_add(size)
+            .and_then(|end| end.checked_add(size % 2))
+            .ok_or("WAV chunk size overflow")?;
+        if offset > file_len {
+            return Err("WAV chunk extends beyond the output file".into());
+        }
+    }
+
+    let (format_code, channels, sample_rate, bits) =
+        format.ok_or("WAV export has no format chunk")?;
+    if format_code != 1 || channels == 0 || bits != 16 || sample_rate == 0 {
+        return Err("WAV export is not valid PCM16 audio".into());
+    }
+    let (data_size_field, data_start, data_size) = data.ok_or("WAV export has no data chunk")?;
+    let bytes_per_frame = u64::from(channels) * 2;
+    let target_size = expected_frames(duration, sample_rate)?
+        .checked_mul(bytes_per_frame)
+        .ok_or("WAV target size overflow")?;
+    if target_size > data_size || target_size % bytes_per_frame != 0 {
+        return Err("WAV export ended before the source duration".into());
+    }
+    let removed = data_size - target_size;
+    if removed == 0 {
+        return Ok(());
+    }
+
+    let old_data_end = data_start
+        .checked_add(data_size)
+        .filter(|end| *end <= file_len)
+        .ok_or("WAV data extends beyond the output file")?;
+    let new_data_end = data_start
+        .checked_add(target_size)
+        .ok_or("WAV target size overflow")?;
+    let mut read_at = old_data_end;
+    let mut write_at = new_data_end;
+    let mut buffer = [0; 64 * 1024];
+    while read_at < file_len {
+        let count = (file_len - read_at).min(buffer.len() as u64) as usize;
+        file.seek(SeekFrom::Start(read_at))
+            .map_err(|error| error.to_string())?;
+        file.read_exact(&mut buffer[..count])
+            .map_err(|error| error.to_string())?;
+        file.seek(SeekFrom::Start(write_at))
+            .map_err(|error| error.to_string())?;
+        file.write_all(&buffer[..count])
+            .map_err(|error| error.to_string())?;
+        read_at += count as u64;
+        write_at += count as u64;
+    }
+    let new_len = file_len - removed;
+    file.set_len(new_len).map_err(|error| error.to_string())?;
+    if rf64 {
+        let (ds64_offset, _) = ds64.ok_or("WAV RF64 container has no ds64 chunk")?;
+        file.seek(SeekFrom::Start(ds64_offset))
+            .map_err(|error| error.to_string())?;
+        file.write_all(&(new_len - 8).to_le_bytes())
+            .and_then(|_| file.write_all(&target_size.to_le_bytes()))
+            .and_then(|_| file.write_all(&(target_size / bytes_per_frame).to_le_bytes()))
+            .map_err(|error| error.to_string())?;
+    } else {
+        let riff_size =
+            u32::try_from(new_len - 8).map_err(|_| "WAV output exceeds RIFF's size limit")?;
+        let data_size =
+            u32::try_from(target_size).map_err(|_| "WAV data exceeds RIFF's size limit")?;
+        file.seek(SeekFrom::Start(4))
+            .map_err(|error| error.to_string())?;
+        file.write_all(&riff_size.to_le_bytes())
+            .map_err(|error| error.to_string())?;
+        file.seek(SeekFrom::Start(data_size_field))
+            .map_err(|error| error.to_string())?;
+        file.write_all(&data_size.to_le_bytes())
+            .map_err(|error| error.to_string())?;
+    }
+    Ok(())
+}
+
+fn trim_flac_to_duration(file: &mut fs::File, duration: f64) -> Result<(), String> {
+    let mut header = [0; 42];
+    file.seek(SeekFrom::Start(0))
+        .map_err(|error| error.to_string())?;
+    file.read_exact(&mut header)
+        .map_err(|error| error.to_string())?;
+    if &header[..4] != b"fLaC" || header[4] & 0x7f != 0 {
+        return Err("libmpv produced an unsupported FLAC stream".into());
+    }
+    let metadata_size = u32::from_be_bytes([0, header[5], header[6], header[7]]);
+    if metadata_size < 34 {
+        return Err("FLAC STREAMINFO block is incomplete".into());
+    }
+    let packed = u64::from_be_bytes(header[18..26].try_into().unwrap());
+    let sample_rate = ((packed >> 44) & 0x0f_ffff) as u32;
+    if sample_rate == 0 {
+        return Err("FLAC stream has an invalid sample rate".into());
+    }
+    let sample_mask = (1_u64 << 36) - 1;
+    let current_samples = packed & sample_mask;
+    let target_samples = expected_frames(duration, sample_rate)?;
+    if target_samples > current_samples {
+        return Err("FLAC export ended before the source duration".into());
+    }
+    if target_samples == current_samples {
+        return Ok(());
+    }
+    let adjusted = (packed & !sample_mask) | target_samples;
+    file.seek(SeekFrom::Start(18))
+        .map_err(|error| error.to_string())?;
+    file.write_all(&adjusted.to_be_bytes())
+        .map_err(|error| error.to_string())
+}
+
+#[cfg(test)]
+mod audio_export_trim_tests {
+    use super::{
+        AudioExportFormat, expected_frames, trim_flac_to_duration, trim_wav_to_duration,
+        validate_export_paths,
+    };
+    use std::{fs, io::Write, path::Path};
+
+    fn wav_fixture(data_size: u32, format_code: u16) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        bytes.extend_from_slice(b"RIFF");
+        bytes.extend_from_slice(&0_u32.to_le_bytes());
+        bytes.extend_from_slice(b"WAVEfmt ");
+        bytes.extend_from_slice(&16_u32.to_le_bytes());
+        bytes.extend_from_slice(&format_code.to_le_bytes());
+        bytes.extend_from_slice(&1_u16.to_le_bytes());
+        bytes.extend_from_slice(&4_u32.to_le_bytes());
+        bytes.extend_from_slice(&8_u32.to_le_bytes());
+        bytes.extend_from_slice(&2_u16.to_le_bytes());
+        bytes.extend_from_slice(&16_u16.to_le_bytes());
+        bytes.extend_from_slice(b"data");
+        bytes.extend_from_slice(&data_size.to_le_bytes());
+        bytes.extend_from_slice(&[0x2a; 16]);
+        bytes.extend_from_slice(b"JUNK");
+        bytes.extend_from_slice(&4_u32.to_le_bytes());
+        bytes.extend_from_slice(b"tail");
+        let riff_size = (bytes.len() - 8) as u32;
+        bytes[4..8].copy_from_slice(&riff_size.to_le_bytes());
+        bytes
+    }
+
+    fn plain_wav(data_size: u32) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        bytes.extend_from_slice(b"RIFF");
+        bytes.extend_from_slice(&0_u32.to_le_bytes());
+        bytes.extend_from_slice(b"WAVEfmt ");
+        bytes.extend_from_slice(&16_u32.to_le_bytes());
+        bytes.extend_from_slice(&1_u16.to_le_bytes());
+        bytes.extend_from_slice(&1_u16.to_le_bytes());
+        bytes.extend_from_slice(&4_u32.to_le_bytes());
+        bytes.extend_from_slice(&8_u32.to_le_bytes());
+        bytes.extend_from_slice(&2_u16.to_le_bytes());
+        bytes.extend_from_slice(&16_u16.to_le_bytes());
+        bytes.extend_from_slice(b"data");
+        bytes.extend_from_slice(&data_size.to_le_bytes());
+        bytes.extend(std::iter::repeat_n(0x2a, data_size as usize));
+        let riff_size = (bytes.len() - 8) as u32;
+        bytes[4..8].copy_from_slice(&riff_size.to_le_bytes());
+        bytes
+    }
+
+    fn flac_fixture(sample_rate: u32, sample_count: u64) -> Vec<u8> {
+        let mut bytes = [0_u8; 42];
+        bytes[..4].copy_from_slice(b"fLaC");
+        bytes[7] = 34;
+        let packed = (u64::from(sample_rate) << 44) | (16_u64 << 36) | sample_count;
+        bytes[18..26].copy_from_slice(&packed.to_be_bytes());
+        bytes.to_vec()
+    }
+
+    #[test]
+    fn expected_frames_rounds_duration_to_the_nearest_sample() {
+        assert_eq!(expected_frames(1.0, 44_100).unwrap(), 44_100);
+        assert_eq!(expected_frames(0.375, 8).unwrap(), 3);
+        assert!(expected_frames(f64::NAN, 44_100).is_err());
+        assert!(expected_frames(0.0, 44_100).is_err());
+        assert!(expected_frames(f64::INFINITY, 44_100).is_err());
+    }
+
+    #[test]
+    fn export_path_validation_rejects_non_files_and_invalid_destinations() {
+        let directory = tempfile::tempdir().unwrap();
+        let source = directory.path().join("source.wav");
+        fs::write(&source, b"source").unwrap();
+        let missing = directory.path().join("missing.wav");
+        let source_directory = directory.path().join("source-folder");
+        fs::create_dir(&source_directory).unwrap();
+
+        assert!(
+            validate_export_paths(
+                &missing,
+                &directory.path().join("out.wav"),
+                AudioExportFormat::WavPcm16
+            )
+            .unwrap_err()
+            .contains("existing local media file")
+        );
+        assert!(
+            validate_export_paths(
+                &source_directory,
+                &directory.path().join("out.wav"),
+                AudioExportFormat::WavPcm16
+            )
+            .unwrap_err()
+            .contains("existing local media file")
+        );
+        assert!(
+            validate_export_paths(
+                &source,
+                &directory.path().join("absent/out.wav"),
+                AudioExportFormat::WavPcm16
+            )
+            .unwrap_err()
+            .contains("existing destination folder")
+        );
+        assert!(
+            validate_export_paths(&source, Path::new(""), AudioExportFormat::WavPcm16)
+                .unwrap_err()
+                .contains("file name")
+        );
+        assert!(
+            validate_export_paths(
+                &source,
+                &directory.path().join("extensionless"),
+                AudioExportFormat::WavPcm16
+            )
+            .unwrap_err()
+            .contains(".wav or .flac")
+        );
+        assert!(
+            validate_export_paths(
+                &source,
+                &directory.path().join("out.flac"),
+                AudioExportFormat::WavPcm16
+            )
+            .unwrap_err()
+            .contains(".wav destination")
+        );
+    }
+
+    #[test]
+    fn export_rejects_the_source_as_its_destination() {
+        let directory = tempfile::tempdir().unwrap();
+        let source = directory.path().join("source.wav");
+        fs::write(&source, b"source").unwrap();
+
+        let error =
+            validate_export_paths(&source, &source, AudioExportFormat::WavPcm16).unwrap_err();
+
+        assert_eq!(
+            error,
+            "The export destination must differ from the source file"
+        );
+    }
+
+    #[test]
+    fn wav_trimming_preserves_trailing_chunks_and_repairs_sizes() {
+        let mut fixture = tempfile::NamedTempFile::new().unwrap();
+        fixture.write_all(&wav_fixture(16, 1)).unwrap();
+
+        trim_wav_to_duration(fixture.as_file_mut(), 1.0).unwrap();
+
+        let output = fs::read(fixture.path()).unwrap();
+        assert_eq!(&output[0..4], b"RIFF");
+        assert_eq!(
+            u32::from_le_bytes(output[4..8].try_into().unwrap()) as usize,
+            output.len() - 8
+        );
+        assert_eq!(u32::from_le_bytes(output[40..44].try_into().unwrap()), 8);
+        assert_eq!(&output[52..64], b"JUNK\x04\0\0\0tail");
+    }
+
+    #[test]
+    fn rf64_trimming_repairs_large_container_and_sample_sizes() {
+        let mut bytes = b"RF64\xff\xff\xff\xffWAVEds64\x1c\0\0\0".to_vec();
+        bytes.extend_from_slice(&0_u64.to_le_bytes());
+        bytes.extend_from_slice(&24_u64.to_le_bytes());
+        bytes.extend_from_slice(&12_u64.to_le_bytes());
+        bytes.extend_from_slice(&0_u32.to_le_bytes());
+        bytes.extend_from_slice(b"fmt \x10\0\0\0");
+        bytes.extend_from_slice(&1_u16.to_le_bytes());
+        bytes.extend_from_slice(&1_u16.to_le_bytes());
+        bytes.extend_from_slice(&4_u32.to_le_bytes());
+        bytes.extend_from_slice(&8_u32.to_le_bytes());
+        bytes.extend_from_slice(&2_u16.to_le_bytes());
+        bytes.extend_from_slice(&16_u16.to_le_bytes());
+        bytes.extend_from_slice(b"data\xff\xff\xff\xff");
+        bytes.extend_from_slice(&[0x2a; 24]);
+        let mut fixture = tempfile::NamedTempFile::new().unwrap();
+        fixture.write_all(&bytes).unwrap();
+
+        trim_wav_to_duration(fixture.as_file_mut(), 2.0).unwrap();
+
+        let output = fs::read(fixture.path()).unwrap();
+        assert_eq!(output.len(), 96);
+        assert_eq!(u64::from_le_bytes(output[20..28].try_into().unwrap()), 88);
+        assert_eq!(u64::from_le_bytes(output[28..36].try_into().unwrap()), 16);
+        assert_eq!(u64::from_le_bytes(output[36..44].try_into().unwrap()), 8);
+        assert_eq!(&output[80..96], &[0x2a; 16]);
+    }
+
+    #[test]
+    fn wav_trimming_rejects_missing_rf64_size_and_short_audio() {
+        let mut missing_ds64 = tempfile::NamedTempFile::new().unwrap();
+        missing_ds64
+            .write_all(b"RF64\xff\xff\xff\xffWAVEdata\xff\xff\xff\xff")
+            .unwrap();
+        assert!(
+            trim_wav_to_duration(missing_ds64.as_file_mut(), 1.0)
+                .unwrap_err()
+                .contains("no ds64 size")
+        );
+
+        let mut short = tempfile::NamedTempFile::new().unwrap();
+        short.write_all(&plain_wav(8)).unwrap();
+        assert!(
+            trim_wav_to_duration(short.as_file_mut(), 2.0)
+                .unwrap_err()
+                .contains("ended before the source duration")
+        );
+    }
+
+    #[test]
+    fn wav_trimming_preserves_a_file_already_at_source_duration() {
+        let original = plain_wav(8);
+        let mut fixture = tempfile::NamedTempFile::new().unwrap();
+        fixture.write_all(&original).unwrap();
+
+        trim_wav_to_duration(fixture.as_file_mut(), 1.0).unwrap();
+
+        assert_eq!(fs::read(fixture.path()).unwrap(), original);
+    }
+
+    #[test]
+    fn wav_trimming_rejects_non_pcm16_and_out_of_bounds_data() {
+        let mut float_wav = tempfile::NamedTempFile::new().unwrap();
+        float_wav.write_all(&wav_fixture(16, 3)).unwrap();
+        assert!(
+            trim_wav_to_duration(float_wav.as_file_mut(), 1.0)
+                .unwrap_err()
+                .contains("PCM16")
+        );
+
+        let mut truncated = tempfile::NamedTempFile::new().unwrap();
+        truncated.write_all(&wav_fixture(32, 1)).unwrap();
+        assert!(
+            trim_wav_to_duration(truncated.as_file_mut(), 1.0)
+                .unwrap_err()
+                .contains("extends beyond")
+        );
+    }
+
+    #[test]
+    fn wav_trimming_rejects_malformed_containers_and_missing_chunks() {
+        for (bytes, expected) in [
+            (b"not a wav!!!".to_vec(), "unsupported WAV container"),
+            (b"RIFF\x04\0\0\0WAVE".to_vec(), "no format chunk"),
+            (
+                [b"RIFF\x1c\0\0\0WAVEfmt \x08\0\0\0".as_slice(), &[0; 8]].concat(),
+                "format chunk is incomplete",
+            ),
+            (
+                [
+                    b"RIFF\x1c\0\0\0WAVEfmt \x10\0\0\0".as_slice(),
+                    &[1, 0, 1, 0, 4, 0, 0, 0, 8, 0, 0, 0, 2, 0, 16, 0],
+                ]
+                .concat(),
+                "no data chunk",
+            ),
+            (
+                b"RF64\xff\xff\xff\xffWAVEds64\x08\0\0\0\0\0\0\0".to_vec(),
+                "ds64 chunk is incomplete",
+            ),
+        ] {
+            let mut fixture = tempfile::NamedTempFile::new().unwrap();
+            fixture.write_all(&bytes).unwrap();
+
+            let error = trim_wav_to_duration(fixture.as_file_mut(), 1.0).unwrap_err();
+
+            assert!(
+                error.contains(expected),
+                "{error:?} did not contain {expected:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn flac_trimming_updates_streaminfo_sample_count() {
+        let mut fixture = tempfile::NamedTempFile::new().unwrap();
+        let mut bytes = [0_u8; 42];
+        bytes[..4].copy_from_slice(b"fLaC");
+        bytes[4] = 0x00;
+        bytes[7] = 34;
+        let packed = (44_100_u64 << 44) | (16_u64 << 36) | 88_200;
+        bytes[18..26].copy_from_slice(&packed.to_be_bytes());
+        fixture.write_all(&bytes).unwrap();
+
+        trim_flac_to_duration(fixture.as_file_mut(), 1.0).unwrap();
+
+        let output = fs::read(fixture.path()).unwrap();
+        let adjusted = u64::from_be_bytes(output[18..26].try_into().unwrap());
+        assert_eq!(adjusted & ((1_u64 << 36) - 1), 44_100);
+    }
+
+    #[test]
+    fn flac_trimming_rejects_invalid_metadata_and_short_sources() {
+        let mut short_header = tempfile::NamedTempFile::new().unwrap();
+        short_header.write_all(b"fLaC").unwrap();
+        assert!(trim_flac_to_duration(short_header.as_file_mut(), 1.0).is_err());
+
+        let mut unsupported = flac_fixture(44_100, 44_100);
+        unsupported[..4].copy_from_slice(b"nope");
+        let mut incomplete = flac_fixture(44_100, 44_100);
+        incomplete[7] = 33;
+        for (bytes, duration, expected) in [
+            (unsupported, 1.0, "unsupported FLAC stream"),
+            (incomplete, 1.0, "STREAMINFO block is incomplete"),
+            (flac_fixture(0, 44_100), 1.0, "invalid sample rate"),
+            (
+                flac_fixture(44_100, 44_100),
+                2.0,
+                "ended before the source duration",
+            ),
+        ] {
+            let mut fixture = tempfile::NamedTempFile::new().unwrap();
+            fixture.write_all(&bytes).unwrap();
+            let error = trim_flac_to_duration(fixture.as_file_mut(), duration).unwrap_err();
+            assert!(
+                error.contains(expected),
+                "{error:?} did not contain {expected:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn flac_trimming_leaves_an_exact_duration_unchanged() {
+        let bytes = flac_fixture(44_100, 44_100);
+        let mut fixture = tempfile::NamedTempFile::new().unwrap();
+        fixture.write_all(&bytes).unwrap();
+
+        trim_flac_to_duration(fixture.as_file_mut(), 1.0).unwrap();
+
+        assert_eq!(fs::read(fixture.path()).unwrap(), bytes);
+    }
+}
+
+fn validate_export_paths(
+    input: &Path,
+    destination: &Path,
+    format: AudioExportFormat,
+) -> Result<(PathBuf, PathBuf, PathBuf), String> {
+    let input = input
+        .canonicalize()
+        .map_err(|_| "Choose an existing local media file to export")?;
+    if !input.is_file() {
+        return Err("Choose an existing local media file to export".into());
+    }
+    let parent = destination
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+        .unwrap_or_else(|| Path::new("."))
+        .canonicalize()
+        .map_err(|_| "Choose an existing destination folder")?;
+    let name = destination
+        .file_name()
+        .filter(|name| !name.is_empty())
+        .ok_or("Choose a file name for the audio export")?;
+    let extension = destination
+        .extension()
+        .and_then(|extension| extension.to_str())
+        .ok_or("Choose a .wav or .flac destination")?;
+    if !extension.eq_ignore_ascii_case(format.extension()) {
+        return Err(format!(
+            "Choose a .{} destination for this export format",
+            format.extension()
+        ));
+    }
+    let destination = parent.join(name);
+    if same_path(&input, &destination) {
+        return Err("The export destination must differ from the source file".into());
+    }
+    if destination.exists() {
+        return Err("The export destination already exists; choose another file".into());
+    }
+    Ok((input, destination, parent))
+}
+
+#[cfg(windows)]
+fn same_path(left: &Path, right: &Path) -> bool {
+    left.to_string_lossy()
+        .eq_ignore_ascii_case(&right.to_string_lossy())
+}
+
+#[cfg(not(windows))]
+fn same_path(left: &Path, right: &Path) -> bool {
+    left == right
+}
+
 enum Request {
     Command(Vec<String>),
     Shaders(Vec<player_services::ShaderFile>),
@@ -510,7 +1216,7 @@ impl Engine {
         let helper = helper
             .map(player_services::VideoSiteTool::new)
             .transpose()?;
-        let api = Api::load(helper.as_ref(), thumbnail)?;
+        let api = Api::load(helper.as_ref(), thumbnail, &[])?;
         let ready = Arc::new(AtomicBool::new(false));
         let stop = Arc::new(AtomicBool::new(false));
         let snapshot = Arc::new(Mutex::new(Snapshot::default()));
@@ -844,7 +1550,7 @@ mod missing_runtime_tests {
 
     #[test]
     fn absent_installed_runtime_explains_how_to_recover() {
-        let Err(error) = Api::load(None, false) else {
+        let Err(error) = Api::load(None, false, &[]) else {
             // Developer machines may already have the optional runtime installed.
             return;
         };

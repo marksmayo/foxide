@@ -10,7 +10,7 @@ live-service-integration = ["video-site-integration"]
 video-site-integration = ["desktop"]
 system-media-integration = ["desktop"]
 gpu-integration = ["desktop", "slint/backend-winit", "slint/renderer-femtovg", "slint/renderer-software"]
-desktop = ["dep:player-services", "dep:slint", "dep:glow", "dep:libloading", "dep:serde_json"]
+desktop = ["dep:player-services", "dep:slint", "dep:glow", "dep:libloading", "dep:serde_json", "dep:tempfile"]
 
 [dependencies]
 player-services = { path = "../player-services", optional = true }
@@ -18,6 +18,7 @@ slint = { version = "=1.18.1", default-features = false, features = ["std", "com
 glow = { version = "0.16", optional = true }
 libloading = { version = "0.8", optional = true }
 serde_json = { workspace = true, optional = true }
+tempfile = { version = "=3.27.0", optional = true }
 
 [lints.rust]
 unsafe_op_in_unsafe_fn = "deny"
@@ -33,3 +34,4 @@ required-features = ["gpu-integration"]
 [[test]]
 name = "profile_compositor"
 required-features = ["gpu-integration"]
+
