@@ -182,7 +182,7 @@
       "name": "HD audio bitstream passthrough",
       "group": "Audio",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #27 at c1869a2: a session-only desktop control requests AC3, EAC3, DTS, DTS-HD, and TrueHD with exclusive output, and can disable passthrough. All seven current-head hosted checks completed successfully; CodSpeed reports a 13.95% aggregate improvement. CI does not verify bitstream output. A compatible physical receiver/route must identify each claimed format with audible output, and decoded output must still work when passthrough is disabled. Do not close this gap or claim a medal."
+      "acceptance": "Implementation is in draft PR #27 at c1869a2: a session-only desktop control requests AC3, EAC3, DTS, DTS-HD, and TrueHD with exclusive output, and can disable passthrough. All seven current-head hosted checks passed. Exact-head CodSpeed run 45459095782 reports 3 improved and 276 unchanged benchmarks, with no measured regressions; five optimized-out and one syscall-dominated case were excluded. This replaces the earlier 13.95% aggregate improvement claim; no aggregate performance claim is made. CI does not verify bitstream output. A compatible physical receiver/route must identify each claimed format with audible output, and decoded output must still work when passthrough is disabled. Do not close this gap or claim a medal."
     },
     {
       "id": "video_360",
