@@ -49,7 +49,7 @@ jobs:
         if: runner.os == 'macOS'
         shell: bash
         run: |
-          engine_path=$(find "$(brew --prefix mpv)" -name 'libmpv*.dylib' -print -quit)
+          engine_path=$(find -L "$(brew --prefix mpv)" -name 'libmpv*.dylib' -print -quit)
           test -n "$engine_path"
           echo "FOXIDE_LIBMPV=$engine_path" >> "$GITHUB_ENV"
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
