@@ -23,11 +23,13 @@ slint::slint! {
         Rectangle {
             clip: root.clip-video;
             border-radius: 12px;
-            Image { source: root.frame; image-fit: fill; }
+            // Leave the right side uncovered so preview pixels can be
+            // distinguished from the main video beneath them.
+            Image { source: root.frame; width: 180px; height: 180px; image-fit: fill; }
         }
         if (root.thumbnail-available): Image {
             source: root.thumbnail-frame;
-            x: 8px; y: 8px; width: 128px; height: 72px;
+            x: 192px; y: 8px; width: 120px; height: 68px;
             image-fit: contain;
         }
     }
@@ -88,6 +90,7 @@ struct Samples {
     summaries: Vec<String>,
     colors: Vec<[u8; 6]>,
     read_errors: Vec<u32>,
+    thumbnail_pixels: Vec<[u8; 6]>,
     upright: usize,
     inverted: usize,
     frames: HashSet<u64>,
@@ -243,13 +246,13 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
                     );
                     gl.bind_framebuffer(glow::READ_FRAMEBUFFER, previous);
                 }
-                let pixel = |y: u32| {
-                    let i = ((y * size.width + size.width / 2) * 4) as usize;
+                let pixel = |x: u32, y: u32| {
+                    let i = ((y * size.width + x) * 4) as usize;
                     &pixels[i..i + 3]
                 };
                 // OpenGL readback row zero is the bottom of the final window.
-                let top = pixel(size.height * 7 / 8);
-                let bottom = pixel(size.height / 8);
+                let top = pixel(size.width / 4, size.height * 7 / 8);
+                let bottom = pixel(size.width / 4, size.height / 8);
                 let red = |p: &[u8]| p[0] > 150 && p[1] < 80 && p[2] < 80;
                 let blue = |p: &[u8]| p[2] > 150 && p[0] < 80 && p[1] < 80;
                 let mut samples = observations.borrow_mut();
@@ -278,6 +281,23 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
                     samples
                         .colors
                         .push([top[0], top[1], top[2], bottom[0], bottom[1], bottom[2]]);
+                }
+                if w.get_thumbnail_available() {
+                    // The preview sits on the lime background, outside the
+                    // main video rectangle. Red-over-blue pixels prove that
+                    // the decoded frame was uploaded and composited.
+                    let preview_top = pixel(200, size.height - 20);
+                    let preview_bottom = pixel(200, size.height - 67);
+                    if samples.thumbnail_pixels.len() < 8 {
+                        samples.thumbnail_pixels.push([
+                            preview_top[0],
+                            preview_top[1],
+                            preview_top[2],
+                            preview_bottom[0],
+                            preview_bottom[1],
+                            preview_bottom[2],
+                        ]);
+                    }
                 }
                 // SAFETY: the observer still runs with the same GL context current.
                 let read_error = unsafe { gl.get_error() };
@@ -338,6 +358,10 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
         samples.presentations, samples.colors, samples.read_errors
     );
     println!("[video-probe] summaries={:?}", samples.summaries);
+    println!(
+        "[video-probe] thumbnail_pixels={:?}",
+        samples.thumbnail_pixels
+    );
     println!(
         "upright={}, inverted={}, unique_composited_frames={}, errors={:?}",
         samples.upright,
@@ -400,5 +424,16 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
     assert!(
         buckets.contains(&2),
         "second hover preview did not use another cache slot"
+    );
+    assert!(
+        samples.thumbnail_pixels.iter().any(|pixels| {
+            pixels[0] > 150
+                && pixels[1] < 80
+                && pixels[2] < 80
+                && pixels[5] > 150
+                && pixels[3] < 80
+                && pixels[4] < 80
+        }),
+        "the real-media thumbnail did not composite its red-over-blue fixture pixels"
     );
 }
