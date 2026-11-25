@@ -21,14 +21,14 @@
       "name": "Gapless audio playback",
       "group": "Audio",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #26 at ccb4070. Queued playlists, automatic advancement, queue retention on Stop, native PCM capture, and hosted virtual PulseAudio loopback are implemented. The formatter-only follow-up preserves the four files' original line endings and changes only those four Rust files. All seven current-head CI checks are queued or pending. CodSpeed on 6a55c2b reported 44 improved, 26 regressed, and 209 unchanged, but all 70 significant comparisons ran on different hardware, so the result is inconclusive. Five optimized-out and two syscall-heavy cases were not useful comparisons. Physical multi-track listening and Previous/Next acceptance remain pending; do not close this gap or claim a medal."
+      "acceptance": "Implementation is in draft PR #26 at ccb4070. Queued playlists, automatic advancement, queue retention on Stop, native PCM capture, and hosted virtual PulseAudio loopback are implemented. The formatter-only follow-up preserves original line endings and touches four Rust files. Windows packaging (45515189287), CodSpeed (45515189265), Native playback controls (45515189264), and native helper (45515189192) passed. Code checks, Desktop UI, and Video compositor are queued. CodSpeed reported 44 improved, 26 regressed, and 209 unchanged, but all 70 significant comparisons ran on different hardware, so the result is inconclusive. Physical multi-track listening and Previous/Next acceptance remain pending; do not close this gap or claim a medal."
     },
     {
       "id": "disc",
       "name": "DVD / Blu-ray structure playback",
       "group": "Playback",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #31 at ce45782: DVD/Blu-ray folder and ISO selection, structure/signature validation, disc-menu navigation, and a dispatch-path performance follow-up. Current-head CodSpeed run 45499692481 completed with no measured performance change across 279 measurable benchmarks; five optimized-out and two system-call-dominated cases are not comparable. Windows packaging (45499692483), Native playback controls (45499692428), Video compositor (45499692441), native helper (45499692397), and Code checks (45499692519) passed. Desktop UI passed on Linux and macOS; the Windows layout/render check remains in progress in 45499692703. The earlier DVD fixture played through a title; packaged-runtime playback, Blu-ray media, physical drives, and packaging/licensing review remain pending. Do not close this gap or claim a medal."
+      "acceptance": "Implementation is in draft PR #31 at ce45782: DVD/Blu-ray folder and ISO selection, structure/signature validation, disc-menu navigation, and a dispatch-path performance follow-up. All seven current-head hosted checks passed, including Desktop UI run 45499692703. CodSpeed run 45499692481 showed no measured change across 279 measurable benchmarks; five optimized-out and two system-call-dominated cases were not comparable. A generated DVD fixture played through a title; packaged-runtime playback, Blu-ray media, physical drives, and packaging/licensing review remain pending. Do not close this gap or claim a medal."
     },
     {
       "id": "chromecast_output",
@@ -195,8 +195,8 @@
       "id": "stereo_3d",
       "name": "Stereoscopic 3D video",
       "group": "Picture",
-      "stage": "queued",
-      "acceptance": "Needs stereoscopic output controls and display-format acceptance."
+      "stage": "in_progress",
+      "acceptance": "Draft PR #32 at a25b7cb adds opt-in stereoscopic source/output modes with a labeled FFmpeg stereo3d filter. A red/green follow-up isolates Stereo 3D from generic PlaybackControl dispatch: tests first failed because the dedicated VideoControl route did not exist, and another regression caught invalid direct enum values panicking; invalid values now safely emit no effect. The full desktop player-ui suite passed locally (50 tests) and formatting/whitespace checks passed. Hosted Code, Desktop UI, Native controls, native helper, compositor, Windows package, and CodSpeed checks are running or queued. Physical stereoscopic display acceptance remains pending; do not close this gap or claim a medal."
     },
     {
       "id": "video_capture",
@@ -336,7 +336,7 @@
       "name": "Skip detected episode intros",
       "group": "Playback",
       "stage": "in_progress",
-      "acceptance": "Implementation and tests are in draft PR #29 at 4c26984. Bounded chapter-title seeking and asynchronous IntroDB lookup validate explicit IMDb/season/episode tags, response identity, size, marker boundaries, confidence, cancellation, stale results, and seek bounds. The menu seek helper test is included in the current head. Code checks (45504773955), Desktop UI (45504773913), Native playback controls (45504774001), CodSpeed (45504774096), Windows packaging (45504773906), and Video compositor (45504773963) passed. Native helper run 45504774021 has passed on Linux and Windows; macOS is queued. Native playback controls run 45476239787 previously validated a live no-marker response, not an available skip segment. Physical episode playback and visible skip-button behavior remain pending; do not close this gap or claim a medal."
+      "acceptance": "Implementation and tests are in draft PR #29 at 4c26984. Bounded chapter-title seeking and asynchronous IntroDB lookup validate explicit IMDb/season/episode tags, response identity, size, marker boundaries, confidence, cancellation, stale results, and seek bounds. All seven current-head hosted checks passed: Code checks (45504773955), Desktop UI (45504773913), Native playback controls (45504774001), CodSpeed (45504774096), Windows packaging (45504773906), Video compositor (45504773963), and native helper (45504774021). The live IntroDB check previously verified a valid no-marker response, not an available skip segment. Physical episode playback and visible Skip Intro interaction remain pending; do not close this gap or claim a medal."
     },
     {
       "id": "audio_visualization",
