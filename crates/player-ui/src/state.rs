@@ -458,7 +458,9 @@ mod tests {
 
         for (preset, rotation) in cases {
             assert_eq!(
-                state.dispatch_video_control(VideoControl::from_ui_action("panorama-360", preset).unwrap()),
+                state.dispatch_video_control(
+                    VideoControl::from_ui_action("panorama-360", preset).unwrap()
+                ),
                 vec![Effect::Engine(vec![
                     "vf".into(),
                     "add".into(),
@@ -470,7 +472,8 @@ mod tests {
         }
 
         assert_eq!(
-            state.dispatch_video_control(VideoControl::from_ui_action("panorama-360", 0.0).unwrap()),
+            state
+                .dispatch_video_control(VideoControl::from_ui_action("panorama-360", 0.0).unwrap()),
             vec![Effect::Engine(vec![
                 "vf".into(),
                 "remove".into(),
@@ -539,7 +542,9 @@ mod tests {
 
         for (mode, filter) in cases {
             assert_eq!(
-                state.dispatch_video_control(VideoControl::from_ui_action("stereo-3d", mode).unwrap()),
+                state.dispatch_video_control(
+                    VideoControl::from_ui_action("stereo-3d", mode).unwrap()
+                ),
                 vec![Effect::Engine(vec![
                     "vf".into(),
                     "add".into(),
