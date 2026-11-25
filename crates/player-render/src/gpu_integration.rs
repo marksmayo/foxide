@@ -113,6 +113,7 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
     let thumbnails = Arc::new(crate::ThumbnailController::new());
     let samples = Rc::new(RefCell::new(Samples::default()));
     let ready_buckets = Rc::new(RefCell::new(HashSet::<u64>::new()));
+    let displayed_bucket = Rc::new(std::cell::Cell::new(None::<u64>));
     let second_requested = Rc::new(std::cell::Cell::new(false));
     let graphics = Rc::new(RefCell::new(None::<glow::Context>));
     let started = Instant::now();
@@ -125,6 +126,7 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
     let load_engine = engine.clone();
     let observer_thumbnails = thumbnails.clone();
     let observer_buckets = ready_buckets.clone();
+    let observer_displayed_bucket = displayed_bucket.clone();
     let observer_second_requested = second_requested.clone();
     let observer_fixture = fixture.clone();
     attach_inner(
@@ -149,6 +151,7 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
             let weak = ui.as_weak();
             let controller = thumbnails.clone();
             let buckets = ready_buckets.clone();
+            let displayed = displayed_bucket.clone();
             move |frame, available| {
                 if let Some(w) = weak.upgrade() {
                     w.set_thumbnail_frame(frame.clone());
@@ -156,12 +159,16 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
                 }
                 if available {
                     if let Some(request) = controller.current_request() {
-                        buckets
-                            .borrow_mut()
-                            .insert((request.position / 2.0).floor() as u64);
+                        let bucket = (request.position / 2.0).floor() as u64;
+                        displayed.set(Some(bucket));
+                        buckets.borrow_mut().insert(bucket);
+                    } else {
+                        displayed.set(None);
                     }
                     assert_eq!(frame.size().width, 256);
                     assert_eq!(frame.size().height, 144);
+                } else {
+                    displayed.set(None);
                 }
             }
         },
@@ -289,8 +296,7 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
                     // the decoded frame was uploaded and composited.
                     let preview_top = pixel(200, size.height - 20);
                     let preview_bottom = pixel(200, size.height - 67);
-                    if let Some(request) = observer_thumbnails.current_request() {
-                        let bucket = (request.position / 2.0).floor() as u64;
+                    if let Some(bucket) = observer_displayed_bucket.get() {
                         let mut frame_hash = std::hash::DefaultHasher::new();
                         for ui_y in 8..76 {
                             let read_y = size.height - 1 - ui_y;
