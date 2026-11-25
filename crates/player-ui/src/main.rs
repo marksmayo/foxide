@@ -1269,15 +1269,13 @@ fn toggle_picture_in_picture(
             if pip_slot.borrow().is_none() {
                 let pip = PlayerWindow::new().map_err(|error| error.to_string())?;
                 pip.set_picture_in_picture(true);
-                pip.set_loaded(ui.get_loaded());
-                pip.set_has_video(ui.get_has_video());
-                pip.set_video_frame(ui.get_video_frame());
+                copy_picture_in_picture_state(ui, &pip);
                 pip.window().set_size(slint::LogicalSize::new(520.0, 350.0));
 
                 let weak_pip = pip.as_weak();
                 let weak_main = ui.as_weak();
                 let return_mode = mode.clone();
-                pip.on_action(move |name, _| {
+                pip.on_action(move |name, value| {
                     if name == "picture-in-picture" {
                         if let Some(window) = weak_pip.upgrade() {
                             window.hide().ok();
@@ -1286,6 +1284,8 @@ fn toggle_picture_in_picture(
                         if let Some(main) = weak_main.upgrade() {
                             main.set_pip_active(false);
                         }
+                    } else if let Some(main) = weak_main.upgrade() {
+                        main.invoke_action(name, value);
                     }
                 });
                 let close_mode = mode.clone();
@@ -1303,9 +1303,7 @@ fn toggle_picture_in_picture(
             let pip = pip_slot
                 .as_ref()
                 .ok_or_else(|| "Picture-in-picture window was not created".to_owned())?;
-            pip.set_loaded(ui.get_loaded());
-            pip.set_has_video(ui.get_has_video());
-            pip.set_video_frame(ui.get_video_frame());
+            copy_picture_in_picture_state(ui, pip);
             pip.show().map_err(|error| error.to_string())?;
             *mode.borrow_mut() = next_mode;
             ui.set_pip_active(true);
@@ -1322,6 +1320,15 @@ fn toggle_picture_in_picture(
         }
     }
     Ok(())
+}
+
+fn copy_picture_in_picture_state(source: &PlayerWindow, target: &PlayerWindow) {
+    target.set_loaded(source.get_loaded());
+    target.set_has_video(source.get_has_video());
+    target.set_video_frame(source.get_video_frame());
+    target.set_media_title(source.get_media_title());
+    target.set_paused(source.get_paused());
+    target.set_status(source.get_status());
 }
 
 fn publish_frame_to_picture_in_picture(
@@ -1537,8 +1544,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         &mut previous.borrow_mut(),
                     );
                     if let Some(pip) = snapshot_pip.borrow().as_ref() {
-                        pip.set_loaded(ui.get_loaded());
-                        pip.set_has_video(ui.get_has_video());
+                        copy_picture_in_picture_state(&ui, pip);
                         if !ui.get_loaded() || !ui.get_has_video() {
                             pip.set_video_frame(slint::Image::default());
                         }
