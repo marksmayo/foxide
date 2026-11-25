@@ -414,6 +414,7 @@ mod tests {
 
     #[cfg(target_os = "linux")]
     #[test]
+    #[ignore = "requires dbus-run-session"]
     fn mpris_session_publishes_metadata_and_routes_real_dbus_controls() {
         use super::{SystemMediaSession, command_for_event};
         use player_ui::system_media_controls::action_for_command;
