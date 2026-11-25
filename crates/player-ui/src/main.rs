@@ -153,20 +153,36 @@ fn online_intro_skip_target(
     if identity.imdb_id() != imdb_id
         || identity.season() != season
         || identity.episode() != episode
-        || !snapshot.loaded
-        || !snapshot.position.is_finite()
-        || !snapshot.duration.is_finite()
-        || !start.is_finite()
-        || !end.is_finite()
-        || start < 0.0
-        || end <= start
-        || end > snapshot.duration
-        || snapshot.position < start
-        || snapshot.position > end
+        || !intro_segment_is_active(
+            snapshot.loaded,
+            snapshot.position,
+            snapshot.duration,
+            start,
+            end,
+        )
     {
         return None;
     }
     Some(end)
+}
+
+fn intro_segment_is_active(
+    loaded: bool,
+    position: f64,
+    duration: f64,
+    start: f64,
+    end: f64,
+) -> bool {
+    loaded
+        && position.is_finite()
+        && duration.is_finite()
+        && start.is_finite()
+        && end.is_finite()
+        && start >= 0.0
+        && end > start
+        && end <= duration
+        && position >= start
+        && position <= end
 }
 
 fn intro_skip_action(
@@ -1332,13 +1348,13 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
                                 ui.set_online_intro_start(segment.start_seconds as f32);
                                 ui.set_online_intro_end(segment.end_seconds as f32);
                                 ui.set_introdb_status("Intro markers found".into());
-                                let target = segment.end_seconds.is_finite()
-                                    && segment.start_seconds.is_finite()
-                                    && segment.start_seconds >= 0.0
-                                    && segment.end_seconds > segment.start_seconds
-                                    && segment.end_seconds <= f64::from(ui.get_duration())
-                                    && f64::from(ui.get_position()) >= segment.start_seconds
-                                    && f64::from(ui.get_position()) <= segment.end_seconds;
+                                let target = intro_segment_is_active(
+                                    ui.get_loaded(),
+                                    f64::from(ui.get_position()),
+                                    f64::from(ui.get_duration()),
+                                    segment.start_seconds,
+                                    segment.end_seconds,
+                                );
                                 if target {
                                     ui.set_skip_intro_available(true);
                                 }

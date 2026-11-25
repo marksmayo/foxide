@@ -1383,3 +1383,9 @@ fn online_intro_marker_requires_matching_episode_identity_and_playback_range() {
     no_identity.imdb_id.clear();
     assert!(introdb_identity(&no_identity).is_none());
 }
+
+#[test]
+fn introdb_marker_cannot_enable_skip_after_playback_stops() {
+    assert!(intro_segment_is_active(true, 20.0, 120.0, 2.5, 58.0));
+    assert!(!intro_segment_is_active(false, 20.0, 120.0, 2.5, 58.0));
+}
