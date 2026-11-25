@@ -70,7 +70,8 @@ fn desktop_menu_commands_are_accepted_by_the_native_media_engine() {
     ];
     let mut requests = Vec::new();
     for (name, value, property, expected) in scenarios {
-        let effects = state.dispatch_playback_control(PlaybackControl::from_ui_action(name, value).unwrap());
+        let effects =
+            state.dispatch_playback_control(PlaybackControl::from_ui_action(name, value).unwrap());
         let [Effect::Engine(command)] = effects.as_slice() else {
             panic!("Control did not reach engine");
         };

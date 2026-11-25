@@ -1219,7 +1219,7 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
                 };
                 dispatch_playback_control(&ui, &controller, &playback, control);
                 return;
-            },
+            }
         };
         dispatch(&ui, &controller, &playback, action);
     });

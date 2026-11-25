@@ -152,7 +152,10 @@ fn optional_playback_controls<const LOADED: bool>(bencher: Bencher, name: &str) 
     };
     let mut check = state(1, LOADED);
     let action = PlaybackControl::from_ui_action(name, value).unwrap();
-    assert_eq!(check.dispatch_playback_control(action).len(), usize::from(LOADED));
+    assert_eq!(
+        check.dispatch_playback_control(action).len(),
+        usize::from(LOADED)
+    );
     bencher
         .with_inputs(|| state(1, LOADED))
         .bench_local_refs(|state| {
