@@ -418,7 +418,7 @@ mod tests {
         let mut state = UiState::default();
         state.confirm_loaded(42.0);
 
-        assert!(VideoControl::from_ui_action("panorama-360", 1.0).is_none());
+        assert!(Action::control("panorama-360", 1.0).is_none());
         assert_eq!(
             state.dispatch_video_control(control),
             vec![Effect::Engine(vec![
@@ -520,7 +520,7 @@ mod tests {
         state.dispatch_video_control(VideoControl::from_ui_action("panorama-360", 0.0).unwrap());
         assert!(
             state
-                .dispatch(Action::control("panorama-yaw", 1.0).unwrap())
+                .dispatch_video_control(VideoControl::from_ui_action("panorama-yaw", 1.0).unwrap())
                 .is_empty()
         );
     }
