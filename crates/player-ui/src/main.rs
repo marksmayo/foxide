@@ -1,6 +1,7 @@
 mod controller_navigation;
 mod picture_in_picture;
 mod profile_ui;
+mod runtime_setup;
 mod shader_ui;
 mod system_media;
 use clap::Parser;
@@ -1330,6 +1331,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             })
         })
     });
+    #[cfg(windows)]
+    if let Err(error) = runtime_setup::offer_install_if_missing() {
+        diagnostics::record(&format!("Playback runtime installation failed: {error}"));
+        ui.set_status(format!("Playback runtime installation failed: {error}").into());
+        futures_lite::future::block_on(
+            rfd::AsyncMessageDialog::new()
+                .set_level(rfd::MessageLevel::Error)
+                .set_title("Foxide could not install the playback runtime")
+                .set_description(format!(
+                    "The runtime installer did not complete. Install Python 3.11+ and 7-Zip if needed, then retry from Start Menu > Foxide > Install playback runtime or run Install-PlaybackRuntime.ps1 beside Foxide.exe.\n\n{error}"
+                ))
+                .set_buttons(rfd::MessageButtons::Ok)
+                .show(),
+        );
+    }
     let selected_helper = args
         .yt_dlp
         .as_deref()

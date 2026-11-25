@@ -5,16 +5,18 @@ Choose either the Windows setup installer or the ZIP download.
 Setup installer:
 1. Run Foxide-VERSION-windows-x64-setup.exe. It installs for the current user
    under LocalAppData\Programs\Foxide; no administrator rights are required.
-2. Use Start Menu > Foxide > Install playback runtime once.
-3. Launch Foxide from the Start Menu. The installer can optionally create a
+2. Launch Foxide from the Start Menu. If the playback runtime is missing,
+   Foxide offers to install it. The setup needs Python 3.11+ and 7-Zip. You can
+   also run Start Menu > Foxide > Install playback runtime.
+3. The installer can optionally create a
    desktop shortcut and does not change file associations.
 
 ZIP download:
 1. Extract the entire ZIP to a writable folder.
-2. Install Python 3.11+ and 7-Zip if they are not already available.
-3. In PowerShell, run:
+2. Launch Foxide.exe. If the playback runtime is missing, Foxide offers to
+   install it. The setup needs Python 3.11+ and 7-Zip.
+3. You can also install manually in PowerShell with:
    powershell -NoProfile -File .\Install-PlaybackRuntime.ps1
-4. Launch Foxide.exe.
 
 Both downloads install the playback runtime separately. The setup script
 downloads the pinned libmpv development archive, verifies its SHA-256 and

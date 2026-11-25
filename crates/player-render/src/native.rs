@@ -409,6 +409,19 @@ impl Api {
 }
 
 #[cfg(windows)]
+pub fn windows_runtime_missing() -> bool {
+    let explicit_runtime = std::env::var_os("FOXIDE_LIBMPV").map(PathBuf::from);
+    let Ok(executable) = std::env::current_exe() else {
+        return false;
+    };
+    crate::dependency_paths::windows_runtime_missing(
+        &executable,
+        explicit_runtime.as_deref(),
+        |path| path.is_file(),
+    )
+}
+
+#[cfg(windows)]
 fn windows_runtime_error(runtime_file_found: bool, details: &str) -> String {
     if runtime_file_found {
         format!(
@@ -416,7 +429,7 @@ fn windows_runtime_error(runtime_file_found: bool, details: &str) -> String {
         )
     } else {
         format!(
-            "Playback runtime is not installed. Use Start Menu > Foxide > Install playback runtime, then restart Foxide. See Help > Open diagnostic log for details. Details: {details}"
+            "Playback runtime is not installed. Choose Install in the startup prompt, use Start Menu > Foxide > Install playback runtime, or run Install-PlaybackRuntime.ps1 beside Foxide.exe, then restart Foxide. See Help > Open diagnostic log for details. Details: {details}"
         )
     }
 }
@@ -852,11 +865,14 @@ mod missing_runtime_tests {
             error.contains("Install playback runtime"),
             "Missing runtime should give the installed-app recovery step; got: {error}"
         );
+        assert!(error.contains("Install-PlaybackRuntime.ps1"));
     }
 
     #[test]
     fn distinguishes_missing_runtime_from_a_failed_runtime_load() {
-        assert!(windows_runtime_error(false, "not found").contains("is not installed"));
+        let missing = windows_runtime_error(false, "not found");
+        assert!(missing.contains("is not installed"));
+        assert!(missing.contains("startup prompt"));
         assert!(windows_runtime_error(true, "dependency missing").contains("could not initialize"));
     }
 }
