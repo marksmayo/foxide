@@ -216,9 +216,13 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
     );
     ui.set_panel("".into());
     let state = Rc::new(RefCell::new(UiState::default()));
+    state.borrow_mut().loaded = true;
     let pip_window = install_controls(&ui, &state, &None);
     ui.set_loaded(true);
     ui.set_has_video(true);
+    ui.set_media_title("Parallax.mkv".into());
+    ui.set_paused(true);
+    ui.set_status("Paused".into());
     let initial_frame = slint::Image::from_rgba8(slint::SharedPixelBuffer::new(2, 2));
     ui.set_video_frame(initial_frame.clone());
     ui.invoke_action("picture-in-picture".into(), 0.0);
@@ -238,6 +242,30 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
         pip_window.borrow().as_ref().unwrap().get_video_frame(),
         initial_frame
     );
+    {
+        let pip = pip_window.borrow();
+        let pip = pip.as_ref().unwrap();
+        assert_eq!(pip.get_media_title(), "Parallax.mkv");
+        assert!(pip.get_paused());
+        assert_eq!(pip.get_status(), "Paused");
+        pip.invoke_action("pause".into(), 0.0);
+    }
+    assert_ne!(
+        ui.get_status(),
+        "Paused",
+        "PiP pause reaches the main player action handler"
+    );
+    ui.set_media_title("Second track.mkv".into());
+    ui.set_paused(false);
+    ui.set_status("Playing".into());
+    {
+        let pip = pip_window.borrow();
+        let pip = pip.as_ref().unwrap();
+        copy_picture_in_picture_state(&ui, pip);
+        assert_eq!(pip.get_media_title(), "Second track.mkv");
+        assert!(!pip.get_paused());
+        assert_eq!(pip.get_status(), "Playing");
+    }
     let next_frame = slint::Image::from_rgba8(slint::SharedPixelBuffer::new(4, 3));
     publish_frame_to_picture_in_picture(next_frame.clone(), &pip_window);
     assert_eq!(
