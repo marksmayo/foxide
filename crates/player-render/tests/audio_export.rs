@@ -88,6 +88,34 @@ fn native_audio_export_creates_playable_wav_and_flac_files() {
     let flac_bytes = fs::read(flac).unwrap();
     assert_eq!(&flac_bytes[..4], b"fLaC");
     assert!(flac_bytes.len() > 100);
+    let output_samples = (wav_pcm16_samples(&wav_bytes), flac_samples(&flac_bytes));
+    assert_eq!(output_samples, (44_100, 44_100));
+}
+
+fn wav_pcm16_samples(bytes: &[u8]) -> u32 {
+    let mut offset = 12;
+    while offset + 8 <= bytes.len() {
+        let chunk = &bytes[offset..offset + 4];
+        let size = u32::from_le_bytes(bytes[offset + 4..offset + 8].try_into().unwrap());
+        if chunk == b"data" {
+            assert_eq!(size % 2, 0, "PCM16 data must contain complete samples");
+            return size / 2;
+        }
+        offset += 8 + size as usize + (size as usize % 2);
+    }
+    panic!("WAV export has no data chunk");
+}
+
+fn flac_samples(bytes: &[u8]) -> u64 {
+    assert_eq!(&bytes[..4], b"fLaC");
+    assert_eq!(
+        bytes[4] & 0x7f,
+        0,
+        "first FLAC metadata block must be STREAMINFO"
+    );
+    assert_eq!(u32::from_be_bytes([0, bytes[5], bytes[6], bytes[7]]), 34);
+    let stream_info = u64::from_be_bytes(bytes[18..26].try_into().unwrap());
+    stream_info & ((1_u64 << 36) - 1)
 }
 
 fn write_test_wav(path: &std::path::Path) {

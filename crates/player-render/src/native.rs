@@ -2,6 +2,7 @@ use libloading::Library;
 use std::{
     ffi::{CStr, CString, c_char, c_int, c_ulong, c_void},
     fs,
+    io::{Read, Seek, SeekFrom, Write},
     path::{Path, PathBuf},
     sync::{
         Arc, Mutex,
@@ -546,6 +547,7 @@ pub fn export_audio(
     api.send(&["loadfile".into(), input_value, "replace".into()])?;
 
     let mut file_loaded = false;
+    let mut source_duration = None;
     loop {
         // SAFETY: event contents are read before the next wait_event call, which
         // invalidates the previous event as documented by libmpv.
@@ -557,7 +559,14 @@ pub fn export_audio(
         let event = unsafe { &*event };
         match event.kind {
             0 => continue,
-            8 => file_loaded = true,
+            8 => {
+                file_loaded = true;
+                source_duration = api
+                    .get(c"duration")
+                    .parse::<f64>()
+                    .ok()
+                    .filter(|duration| duration.is_finite() && *duration > 0.0);
+            }
             7 => {
                 if event.data.is_null() {
                     return Err("libmpv ended audio export without a result".into());
@@ -578,6 +587,10 @@ pub fn export_audio(
     }
     drop(api);
 
+    let source_duration =
+        source_duration.ok_or("Could not determine the source duration for audio export")?;
+    trim_export_to_duration(&temp_path, format, source_duration)?;
+
     let metadata = fs::metadata(&temp_path)
         .map_err(|error| format!("libmpv did not produce an audio file: {error}"))?;
     if metadata.len() < 44 {
@@ -587,6 +600,289 @@ pub fn export_audio(
         .persist_noclobber(&destination)
         .map_err(|error| format!("Could not create the export destination: {}", error.error))?;
     Ok(())
+}
+
+fn trim_export_to_duration(
+    path: &Path,
+    format: AudioExportFormat,
+    duration: f64,
+) -> Result<(), String> {
+    let mut file = fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open(path)
+        .map_err(|error| format!("Could not inspect encoded audio: {error}"))?;
+    match format {
+        AudioExportFormat::WavPcm16 => trim_wav_to_duration(&mut file, duration),
+        AudioExportFormat::Flac => trim_flac_to_duration(&mut file, duration),
+    }
+}
+
+fn expected_frames(duration: f64, sample_rate: u32) -> Result<u64, String> {
+    let frames = duration * f64::from(sample_rate);
+    if !frames.is_finite() || frames <= 0.0 || frames > u64::MAX as f64 {
+        return Err("Source duration is outside the supported export range".into());
+    }
+    Ok(frames.round() as u64)
+}
+
+fn trim_wav_to_duration(file: &mut fs::File, duration: f64) -> Result<(), String> {
+    let file_len = file.metadata().map_err(|error| error.to_string())?.len();
+    let mut header = [0; 12];
+    file.seek(SeekFrom::Start(0))
+        .map_err(|error| error.to_string())?;
+    file.read_exact(&mut header)
+        .map_err(|error| error.to_string())?;
+    let rf64 = &header[..4] == b"RF64";
+    if (!rf64 && &header[..4] != b"RIFF") || &header[8..12] != b"WAVE" {
+        return Err("libmpv produced an unsupported WAV container".into());
+    }
+
+    let mut ds64 = None;
+    let mut format = None;
+    let mut data = None;
+    let mut offset = 12_u64;
+    while offset + 8 <= file_len {
+        file.seek(SeekFrom::Start(offset))
+            .map_err(|error| error.to_string())?;
+        let mut chunk_header = [0; 8];
+        file.read_exact(&mut chunk_header)
+            .map_err(|error| error.to_string())?;
+        let size32 = u32::from_le_bytes(chunk_header[4..8].try_into().unwrap());
+        let payload = offset + 8;
+        let mut size = u64::from(size32);
+        if &chunk_header[..4] == b"ds64" {
+            if size32 < 28 {
+                return Err("WAV RF64 ds64 chunk is incomplete".into());
+            }
+            let mut values = [0; 28];
+            file.read_exact(&mut values)
+                .map_err(|error| error.to_string())?;
+            ds64 = Some((
+                payload,
+                u64::from_le_bytes(values[8..16].try_into().unwrap()),
+            ));
+        } else if &chunk_header[..4] == b"fmt " {
+            if size32 < 16 {
+                return Err("WAV format chunk is incomplete".into());
+            }
+            let mut values = [0; 16];
+            file.read_exact(&mut values)
+                .map_err(|error| error.to_string())?;
+            format = Some((
+                u16::from_le_bytes(values[0..2].try_into().unwrap()),
+                u16::from_le_bytes(values[2..4].try_into().unwrap()),
+                u32::from_le_bytes(values[4..8].try_into().unwrap()),
+                u16::from_le_bytes(values[14..16].try_into().unwrap()),
+            ));
+        } else if &chunk_header[..4] == b"data" {
+            if rf64 && size32 == u32::MAX {
+                size = ds64
+                    .map(|(_, data_size)| data_size)
+                    .ok_or("WAV RF64 data has no ds64 size")?;
+            }
+            data = Some((offset + 4, payload, size));
+        }
+        offset = payload
+            .checked_add(size)
+            .and_then(|end| end.checked_add(size % 2))
+            .ok_or("WAV chunk size overflow")?;
+        if offset > file_len {
+            return Err("WAV chunk extends beyond the output file".into());
+        }
+    }
+
+    let (format_code, channels, sample_rate, bits) =
+        format.ok_or("WAV export has no format chunk")?;
+    if format_code != 1 || channels == 0 || bits != 16 || sample_rate == 0 {
+        return Err("WAV export is not valid PCM16 audio".into());
+    }
+    let (data_size_field, data_start, data_size) = data.ok_or("WAV export has no data chunk")?;
+    let bytes_per_frame = u64::from(channels) * 2;
+    let target_size = expected_frames(duration, sample_rate)?
+        .checked_mul(bytes_per_frame)
+        .ok_or("WAV target size overflow")?;
+    if target_size > data_size || target_size % bytes_per_frame != 0 {
+        return Err("WAV export ended before the source duration".into());
+    }
+    let removed = data_size - target_size;
+    if removed == 0 {
+        return Ok(());
+    }
+
+    let old_data_end = data_start
+        .checked_add(data_size)
+        .filter(|end| *end <= file_len)
+        .ok_or("WAV data extends beyond the output file")?;
+    let new_data_end = data_start
+        .checked_add(target_size)
+        .ok_or("WAV target size overflow")?;
+    let mut read_at = old_data_end;
+    let mut write_at = new_data_end;
+    let mut buffer = [0; 64 * 1024];
+    while read_at < file_len {
+        let count = (file_len - read_at).min(buffer.len() as u64) as usize;
+        file.seek(SeekFrom::Start(read_at))
+            .map_err(|error| error.to_string())?;
+        file.read_exact(&mut buffer[..count])
+            .map_err(|error| error.to_string())?;
+        file.seek(SeekFrom::Start(write_at))
+            .map_err(|error| error.to_string())?;
+        file.write_all(&buffer[..count])
+            .map_err(|error| error.to_string())?;
+        read_at += count as u64;
+        write_at += count as u64;
+    }
+    let new_len = file_len - removed;
+    file.set_len(new_len).map_err(|error| error.to_string())?;
+    if rf64 {
+        let (ds64_offset, _) = ds64.ok_or("WAV RF64 container has no ds64 chunk")?;
+        file.seek(SeekFrom::Start(ds64_offset))
+            .map_err(|error| error.to_string())?;
+        file.write_all(&(new_len - 8).to_le_bytes())
+            .and_then(|_| file.write_all(&target_size.to_le_bytes()))
+            .and_then(|_| file.write_all(&(target_size / bytes_per_frame).to_le_bytes()))
+            .map_err(|error| error.to_string())?;
+    } else {
+        let riff_size =
+            u32::try_from(new_len - 8).map_err(|_| "WAV output exceeds RIFF's size limit")?;
+        let data_size =
+            u32::try_from(target_size).map_err(|_| "WAV data exceeds RIFF's size limit")?;
+        file.seek(SeekFrom::Start(4))
+            .map_err(|error| error.to_string())?;
+        file.write_all(&riff_size.to_le_bytes())
+            .map_err(|error| error.to_string())?;
+        file.seek(SeekFrom::Start(data_size_field))
+            .map_err(|error| error.to_string())?;
+        file.write_all(&data_size.to_le_bytes())
+            .map_err(|error| error.to_string())?;
+    }
+    Ok(())
+}
+
+fn trim_flac_to_duration(file: &mut fs::File, duration: f64) -> Result<(), String> {
+    let mut header = [0; 42];
+    file.seek(SeekFrom::Start(0))
+        .map_err(|error| error.to_string())?;
+    file.read_exact(&mut header)
+        .map_err(|error| error.to_string())?;
+    if &header[..4] != b"fLaC" || header[4] & 0x7f != 0 {
+        return Err("libmpv produced an unsupported FLAC stream".into());
+    }
+    let metadata_size = u32::from_be_bytes([0, header[5], header[6], header[7]]);
+    if metadata_size < 34 {
+        return Err("FLAC STREAMINFO block is incomplete".into());
+    }
+    let packed = u64::from_be_bytes(header[18..26].try_into().unwrap());
+    let sample_rate = ((packed >> 44) & 0x0f_ffff) as u32;
+    if sample_rate == 0 {
+        return Err("FLAC stream has an invalid sample rate".into());
+    }
+    let sample_mask = (1_u64 << 36) - 1;
+    let current_samples = packed & sample_mask;
+    let target_samples = expected_frames(duration, sample_rate)?;
+    if target_samples > current_samples {
+        return Err("FLAC export ended before the source duration".into());
+    }
+    if target_samples == current_samples {
+        return Ok(());
+    }
+    let adjusted = (packed & !sample_mask) | target_samples;
+    file.seek(SeekFrom::Start(18))
+        .map_err(|error| error.to_string())?;
+    file.write_all(&adjusted.to_be_bytes())
+        .map_err(|error| error.to_string())
+}
+
+#[cfg(test)]
+mod audio_export_trim_tests {
+    use super::{expected_frames, trim_flac_to_duration, trim_wav_to_duration};
+    use std::{fs, io::Write};
+
+    fn wav_fixture(data_size: u32, format_code: u16) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        bytes.extend_from_slice(b"RIFF");
+        bytes.extend_from_slice(&0_u32.to_le_bytes());
+        bytes.extend_from_slice(b"WAVEfmt ");
+        bytes.extend_from_slice(&16_u32.to_le_bytes());
+        bytes.extend_from_slice(&format_code.to_le_bytes());
+        bytes.extend_from_slice(&1_u16.to_le_bytes());
+        bytes.extend_from_slice(&4_u32.to_le_bytes());
+        bytes.extend_from_slice(&8_u32.to_le_bytes());
+        bytes.extend_from_slice(&2_u16.to_le_bytes());
+        bytes.extend_from_slice(&16_u16.to_le_bytes());
+        bytes.extend_from_slice(b"data");
+        bytes.extend_from_slice(&data_size.to_le_bytes());
+        bytes.extend_from_slice(&[0x2a; 16]);
+        bytes.extend_from_slice(b"JUNK");
+        bytes.extend_from_slice(&4_u32.to_le_bytes());
+        bytes.extend_from_slice(b"tail");
+        let riff_size = (bytes.len() - 8) as u32;
+        bytes[4..8].copy_from_slice(&riff_size.to_le_bytes());
+        bytes
+    }
+
+    #[test]
+    fn expected_frames_rounds_duration_to_the_nearest_sample() {
+        assert_eq!(expected_frames(1.0, 44_100).unwrap(), 44_100);
+        assert_eq!(expected_frames(0.375, 8).unwrap(), 3);
+        assert!(expected_frames(f64::NAN, 44_100).is_err());
+        assert!(expected_frames(0.0, 44_100).is_err());
+    }
+
+    #[test]
+    fn wav_trimming_preserves_trailing_chunks_and_repairs_sizes() {
+        let mut fixture = tempfile::NamedTempFile::new().unwrap();
+        fixture.write_all(&wav_fixture(16, 1)).unwrap();
+
+        trim_wav_to_duration(fixture.as_file_mut(), 1.0).unwrap();
+
+        let output = fs::read(fixture.path()).unwrap();
+        assert_eq!(&output[0..4], b"RIFF");
+        assert_eq!(
+            u32::from_le_bytes(output[4..8].try_into().unwrap()) as usize,
+            output.len() - 8
+        );
+        assert_eq!(u32::from_le_bytes(output[40..44].try_into().unwrap()), 8);
+        assert_eq!(&output[52..64], b"JUNK\x04\0\0\0tail");
+    }
+
+    #[test]
+    fn wav_trimming_rejects_non_pcm16_and_out_of_bounds_data() {
+        let mut float_wav = tempfile::NamedTempFile::new().unwrap();
+        float_wav.write_all(&wav_fixture(16, 3)).unwrap();
+        assert!(
+            trim_wav_to_duration(float_wav.as_file_mut(), 1.0)
+                .unwrap_err()
+                .contains("PCM16")
+        );
+
+        let mut truncated = tempfile::NamedTempFile::new().unwrap();
+        truncated.write_all(&wav_fixture(32, 1)).unwrap();
+        assert!(
+            trim_wav_to_duration(truncated.as_file_mut(), 1.0)
+                .unwrap_err()
+                .contains("extends beyond")
+        );
+    }
+
+    #[test]
+    fn flac_trimming_updates_streaminfo_sample_count() {
+        let mut fixture = tempfile::NamedTempFile::new().unwrap();
+        let mut bytes = [0_u8; 42];
+        bytes[..4].copy_from_slice(b"fLaC");
+        bytes[4] = 0x00;
+        bytes[7] = 34;
+        let packed = (44_100_u64 << 44) | (16_u64 << 36) | 88_200;
+        bytes[18..26].copy_from_slice(&packed.to_be_bytes());
+        fixture.write_all(&bytes).unwrap();
+
+        trim_flac_to_duration(fixture.as_file_mut(), 1.0).unwrap();
+
+        let output = fs::read(fixture.path()).unwrap();
+        let adjusted = u64::from_be_bytes(output[18..26].try_into().unwrap());
+        assert_eq!(adjusted & ((1_u64 << 36) - 1), 44_100);
+    }
 }
 
 fn validate_export_paths(
