@@ -7,7 +7,7 @@ use cadence_window::CadenceWindow;
 use slint::ComponentHandle;
 use std::{
     cell::RefCell,
-    collections::HashSet,
+    collections::{HashMap, HashSet},
     hash::{Hash, Hasher},
     rc::Rc,
     time::{Duration, Instant},
@@ -90,6 +90,7 @@ struct Samples {
     summaries: Vec<String>,
     colors: Vec<[u8; 6]>,
     read_errors: Vec<u32>,
+    thumbnail_frames: HashMap<u64, u64>,
     thumbnail_pixels: Vec<[u8; 6]>,
     upright: usize,
     inverted: usize,
@@ -288,6 +289,21 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
                     // the decoded frame was uploaded and composited.
                     let preview_top = pixel(200, size.height - 20);
                     let preview_bottom = pixel(200, size.height - 67);
+                    if let Some(request) = observer_thumbnails.current_request() {
+                        let bucket = (request.position / 2.0).floor() as u64;
+                        let mut frame_hash = std::hash::DefaultHasher::new();
+                        for ui_y in 8..76 {
+                            let read_y = size.height - 1 - ui_y;
+                            for x in 192..312 {
+                                let i = ((read_y * size.width + x) * 4) as usize;
+                                pixels[i..i + 3].hash(&mut frame_hash);
+                            }
+                        }
+                        samples
+                            .thumbnail_frames
+                            .entry(bucket)
+                            .or_insert_with(|| frame_hash.finish());
+                    }
                     if samples.thumbnail_pixels.len() < 8 {
                         samples.thumbnail_pixels.push([
                             preview_top[0],
@@ -358,6 +374,10 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
         samples.presentations, samples.colors, samples.read_errors
     );
     println!("[video-probe] summaries={:?}", samples.summaries);
+    println!(
+        "[video-probe] thumbnail_frames={:?}",
+        samples.thumbnail_frames
+    );
     println!(
         "[video-probe] thumbnail_pixels={:?}",
         samples.thumbnail_pixels
@@ -435,5 +455,14 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
                 && pixels[4] < 80
         }),
         "the real-media thumbnail did not composite its red-over-blue fixture pixels"
+    );
+    assert!(
+        samples.thumbnail_frames.contains_key(&1) && samples.thumbnail_frames.contains_key(&2),
+        "real-media pixels were not captured for both requested time buckets"
+    );
+    assert_ne!(
+        samples.thumbnail_frames.get(&1),
+        samples.thumbnail_frames.get(&2),
+        "hovering at different time buckets reused the same composited thumbnail frame"
     );
 }
