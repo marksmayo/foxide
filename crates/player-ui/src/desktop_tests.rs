@@ -47,6 +47,8 @@ use slint::{
     },
 };
 
+static UI_PLATFORM_TEST_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 struct TestPlatform(
     Rc<MinimalSoftwareWindow>,
     std::sync::mpsc::Sender<Box<dyn FnOnce() + Send>>,
@@ -101,7 +103,8 @@ fn capture_customization(ui: &PlayerWindow, window: &MinimalSoftwareWindow, name
 }
 
 #[test]
-fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
+fn software_desktop_ui_covers_diagnostics_controls_and_audio_export() {
+    let _platform_guard = UI_PLATFORM_TEST_LOCK.lock().unwrap();
     let rendered_window = MinimalSoftwareWindow::new(RepaintBufferType::NewBuffer);
     let (event_sender, event_receiver) = std::sync::mpsc::channel();
     slint::platform::set_platform(Box::new(TestPlatform(
@@ -905,8 +908,33 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
         "Paused · 1.50×",
         "A newly loaded file replaces the opening status even when pause and speed are unchanged"
     );
+    let audio_scratch = std::env::temp_dir().join(format!(
+        "foxide-audio-export-ui-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    std::fs::create_dir(&audio_scratch).unwrap();
+    let audio_source = audio_scratch.join("source.wav");
+    let audio_destination = audio_scratch.join("saved.wav");
+    std::fs::write(&audio_source, b"source media").unwrap();
+    let selected_audio_destination = audio_destination.clone();
+    let audio_export_services = AudioExportServices {
+        choose_destination: Arc::new(move |name, extension| {
+            assert_eq!(name, "source");
+            assert_eq!(extension, "wav");
+            Some(selected_audio_destination.clone())
+        }),
+        export: Arc::new(|source, destination, format| {
+            assert_eq!(format, AudioExportFormat::WavPcm16);
+            assert_eq!(std::fs::read(source).unwrap(), b"source media");
+            std::fs::write(destination, b"encoded WAV").map_err(|error| error.to_string())
+        }),
+    };
     let controls = Rc::new(RefCell::new(UiState::default()));
-    install_controls(&ui, &controls, &None);
+    install_controls_with_audio_export_services(&ui, &controls, &None, audio_export_services);
     ui.invoke_open_url("file:///not-an-online-stream".into());
     assert!(ui.get_status().contains("HTTP"));
     ui.invoke_open_url("https://example.org/movie.mp4".into());
@@ -1259,4 +1287,24 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
         }
     }
     assert_eq!(ui.get_update_status(), "Foxide is up to date.");
+    {
+        let mut state = controls.borrow_mut();
+        state.playlist = vec![audio_source.clone()];
+        state.selected = 0;
+        state.confirm_loaded(1.0);
+    }
+    ui.set_loaded(true);
+    ui.invoke_action("export-audio-wav".into(), 0.0);
+
+    let deadline = std::time::Instant::now() + Duration::from_secs(5);
+    while ui.get_status() != "Audio export saved: saved.wav" && std::time::Instant::now() < deadline
+    {
+        if let Ok(event) = event_receiver.recv_timeout(Duration::from_millis(20)) {
+            event();
+        }
+    }
+
+    assert_eq!(ui.get_status(), "Audio export saved: saved.wav");
+    assert_eq!(std::fs::read(&audio_destination).unwrap(), b"encoded WAV");
+    std::fs::remove_dir_all(audio_scratch).unwrap();
 }

@@ -1122,11 +1122,41 @@ fn audio_export_format_for_action(action: &str) -> Option<AudioExportFormat> {
     }
 }
 
+#[derive(Clone)]
+struct AudioExportServices {
+    choose_destination: Arc<dyn Fn(String, String) -> Option<PathBuf> + Send + Sync>,
+    export: Arc<dyn Fn(PathBuf, PathBuf, AudioExportFormat) -> Result<(), String> + Send + Sync>,
+}
+
+fn system_audio_export_services() -> AudioExportServices {
+    AudioExportServices {
+        choose_destination: Arc::new(|name, extension| {
+            let filter = match extension.as_str() {
+                "wav" => "WAV audio",
+                "flac" => "FLAC audio",
+                _ => "Audio",
+            };
+            futures_lite::future::block_on(
+                rfd::AsyncFileDialog::new()
+                    .set_title("Export audio")
+                    .set_file_name(format!("{name}.{extension}"))
+                    .add_filter(filter, &[extension.as_str()])
+                    .save_file(),
+            )
+            .map(|file| file.path().to_path_buf())
+        }),
+        export: Arc::new(|source, destination, format| {
+            player_render::export_audio(&source, &destination, format)
+        }),
+    }
+}
+
 fn begin_audio_export(
     ui: &PlayerWindow,
     state: &Rc<RefCell<UiState>>,
     format: AudioExportFormat,
     active: Arc<AtomicBool>,
+    services: AudioExportServices,
 ) {
     if active.swap(true, Ordering::AcqRel) {
         ui.set_status("An audio export is already running".into());
@@ -1158,27 +1188,15 @@ fn begin_audio_export(
     let weak = ui.as_weak();
     ui.set_status(format!("Choose a destination for the {extension} export…").into());
     std::thread::spawn(move || {
-        let destination = futures_lite::future::block_on(
-            rfd::AsyncFileDialog::new()
-                .set_title("Export audio")
-                .set_file_name(format!("{name}.{extension}"))
-                .add_filter(
-                    match format {
-                        AudioExportFormat::WavPcm16 => "WAV audio",
-                        AudioExportFormat::Flac => "FLAC audio",
-                    },
-                    &[extension],
-                )
-                .save_file(),
-        );
+        let destination = (services.choose_destination)(name, extension.to_owned());
         let result = match destination {
             Some(destination) => {
-                let path = destination.path().to_path_buf();
+                let path = destination;
                 let progress_window = weak.clone();
                 let _ = progress_window.upgrade_in_event_loop(move |ui| {
                     ui.set_status("Exporting audio…".into());
                 });
-                player_render::export_audio(&source, &path, format).map(|()| {
+                (services.export)(source, path.clone(), format).map(|()| {
                     path.file_name()
                         .unwrap_or_default()
                         .to_string_lossy()
@@ -1196,6 +1214,15 @@ fn begin_audio_export(
 }
 
 fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Option<Rc<Engine>>) {
+    install_controls_with_audio_export_services(ui, state, engine, system_audio_export_services());
+}
+
+fn install_controls_with_audio_export_services(
+    ui: &PlayerWindow,
+    state: &Rc<RefCell<UiState>>,
+    engine: &Option<Rc<Engine>>,
+    audio_export_services: AudioExportServices,
+) {
     let pip_mode = Rc::new(RefCell::new(picture_in_picture::PictureInPictureMode::Main));
     let export_active = Arc::new(AtomicBool::new(false));
     let filter_state = state.clone();
@@ -1206,17 +1233,24 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
             update_queue(&ui, &filter_state.borrow());
         }
     });
-    let (weak, controller, playback, pip_mode, export_active) = (
+    let (weak, controller, playback, pip_mode, export_active, audio_export_services) = (
         ui.as_weak(),
         state.clone(),
         engine.clone(),
         pip_mode,
         export_active,
+        audio_export_services,
     );
     ui.on_action(move |name, value| {
         let Some(ui) = weak.upgrade() else { return };
         if let Some(format) = audio_export_format_for_action(name.as_str()) {
-            begin_audio_export(&ui, &controller, format, export_active.clone());
+            begin_audio_export(
+                &ui,
+                &controller,
+                format,
+                export_active.clone(),
+                audio_export_services.clone(),
+            );
             return;
         }
         if name == "picture-in-picture" {
