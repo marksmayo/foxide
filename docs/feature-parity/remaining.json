@@ -7,7 +7,7 @@
       "name": "Seekbar thumbnail previews",
       "group": "Interface",
       "stage": "in_progress",
-      "acceptance": "Implementation merged in PR #23: hover-only previews use a separate paused libmpv client, a 16 MiB bounded GPU LRU cache, coalesced requests, keyboard support and accessibility. Slint hover/eligibility tests and hosted desktop, compositor, and CodSpeed checks passed. Manual desktop hover positioning and real-media preview behavior remain unverified; do not count this gap as closed yet."
+      "acceptance": "Implementation merged in PR #23: hover-only previews use a separate paused libmpv client, a 16 MiB bounded GPU LRU cache, coalesced requests, keyboard support and accessibility. Slint hover/eligibility tests and hosted desktop, compositor, and CodSpeed checks passed. Draft acceptance PR #37 (head 748ca7d) adds real compositor pixel checks for a generated red/blue media fixture and distinct preview images for two hover buckets. Its first hosted compositor attempt exposed a probe race: after requesting the second hover, the test labeled the still-displayed first image with the latest request. The probe now records the bucket when publishing each image; the corrected compositor run is in progress. The GPU integration test compiles locally and 18 runnable renderer tests pass (one ignored locally for missing Linux/Xvfb/libmpv). Manual desktop hover positioning and hosted real-media evidence remain pending; do not close this gap or claim a medal yet."
     },
     {
       "id": "pip",
@@ -21,7 +21,7 @@
       "name": "Gapless audio playback",
       "group": "Audio",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #26 at ccb4070. Queued playlists, automatic advancement, queue retention on Stop, native PCM capture, and hosted virtual PulseAudio loopback are implemented. The formatter-only follow-up preserves original line endings and touches four Rust files. Windows packaging (45515189287), CodSpeed (45515189265), Native playback controls (45515189264), and native helper (45515189192) passed. Code checks, Desktop UI, and Video compositor are queued. CodSpeed reported 44 improved, 26 regressed, and 209 unchanged, but all 70 significant comparisons ran on different hardware, so the result is inconclusive. Physical multi-track listening and Previous/Next acceptance remain pending; do not close this gap or claim a medal."
+      "acceptance": "Implementation is in draft PR #26 at current head 3926354. Queued playlists, automatic advancement, queue retention on Stop, native PCM capture, and hosted virtual PulseAudio loopback are implemented. All seven exact-head hosted checks passed: Code, Desktop UI, native helper, Windows packaging, Native playback controls, Video compositor, and CodSpeed. CodSpeed completed but its current comparative summary is not exposed; earlier comparisons used different hardware and remain inconclusive. A same-machine Windows Divan diagnostic compared main 2a51a80 with PR head 3926354: on the second run, load_confirmation medians were 3.207–3.574 ns on main and 2.476–2.684 ns on the PR across six inputs. Other dispatch results varied by action. This focused local measurement is not CodSpeed and does not establish an overall performance change. Physical multi-track listening and Previous/Next acceptance remain pending; do not close this gap or claim a medal."
     },
     {
       "id": "disc",
