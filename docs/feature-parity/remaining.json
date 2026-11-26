@@ -55,8 +55,8 @@
       "id": "online_subtitles",
       "name": "Search and download subtitles",
       "group": "Subtitles",
-      "stage": "queued",
-      "acceptance": "Needs provider credentials, account/rate-limit handling and subtitle download validation."
+      "stage": "in_progress",
+      "acceptance": "Draft implementation uses the official OpenSubtitles REST API with a user-entered per-session application key, language-filtered search, bounded results, actionable authentication/rate-limit errors, HTTPS-only file downloads, text-format validation, and save-and-add playback behavior. Deterministic service and desktop callback tests cover search through the visible result list to subtitle activation. Real provider credentials, current provider account/rate behavior, and visible playback on a real media file remain unverified; no medal is claimed."
     },
     {
       "id": "youtube_urls",
@@ -356,3 +356,4 @@
     "windows": "https://github.com/marksmayo/foxide/actions/runs/43972156451/job/133666802683"
   }
 }
+
