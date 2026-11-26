@@ -89,3 +89,7 @@ Use a local media file with visible video and, for media-session checks, title a
 
 Report only behavior and the result for each row. Do not include device names, network addresses, certificate pins, account identifiers, or private media paths. Update the result and tracker only after the physical check is performed; automated tests alone do not close these acceptance items.
 
+
+## Windows desktop gesture smoke (2026-11-26)
+
+On the Windows development build, the generated H.264 fixture loaded and rendered. With playback paused at 0 seconds, a 40-pixel horizontal drag moved the position to 2 seconds. A 40-pixel downward drag changed volume from 100 to 95. Injected horizontal scrolling moved position from about 2.97 to 1.97 seconds, and injected vertical scrolling changed volume from 95 to 97.5. These checks exercise the desktop mouse/scroll event path only; they do not verify a physical trackpad, touchscreen, or controller. The physical acceptance checklist above remains pending, and no feature medal is claimed.
