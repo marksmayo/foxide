@@ -6,7 +6,7 @@ use std::{
 use url::Url;
 
 const SEARCH_RESPONSE_LIMIT: usize = 2 * 1024 * 1024;
-const SUBTITLE_RESPONSE_LIMIT: usize = 5 * 1024 * 1024;
+const SUBTITLE_RESPONSE_LIMIT: usize = 1024 * 1024;
 const RESULT_LIMIT: usize = 20;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -143,7 +143,19 @@ impl SubtitleProvider {
         if download_url.scheme() != "https" {
             return Err("Subtitle download links must use HTTPS".into());
         }
-        let bytes = client.get(&download_url, cancel).map_err(provider_error)?;
+        let bytes = client
+            .get_bounded(&download_url, SUBTITLE_RESPONSE_LIMIT, cancel)
+            .map_err(|error| {
+                let lower = error.to_ascii_lowercase();
+                if lower.contains("exceeded its limit")
+                    || lower.contains("exceeded its size limit")
+                    || lower.contains("maximum file size")
+                {
+                    "Downloaded subtitle exceeds the 1 MiB per-file limit".into()
+                } else {
+                    provider_error(error)
+                }
+            })?;
         check_cancelled(cancel)?;
         if bytes.is_empty() || bytes.len() > SUBTITLE_RESPONSE_LIMIT {
             return Err("Downloaded subtitle size is invalid".into());
@@ -524,6 +536,58 @@ mod tests {
         );
         std::fs::remove_dir_all(directory).unwrap();
         assert!(saved.ends_with("Film.vtt"));
+    }
+
+    #[test]
+    fn download_rejects_oversized_subtitle_files_without_writing_them() {
+        let provider = SubtitleProvider::opensubtitles();
+        let cancel = AtomicBool::new(false);
+        let directory = std::env::temp_dir().join(format!(
+            "foxide-subtitles-size-limit-{}",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_dir_all(&directory);
+        std::fs::create_dir_all(&directory).unwrap();
+        let mut oversized = b"WEBVTT\n".to_vec();
+        oversized.resize(1024 * 1024 + 1, b' ');
+        let large = FixedHttp {
+            get_bytes: oversized,
+            post_bytes: br#"{"link":"https://cdn.example/sub.vtt"}"#.to_vec(),
+        };
+
+        let error = provider
+            .download_to(
+                &large,
+                "key",
+                &subtitle("123", "Film.vtt"),
+                &directory,
+                &cancel,
+            )
+            .unwrap_err();
+
+        assert_eq!(
+            error,
+            "Downloaded subtitle exceeds the 1 MiB per-file limit"
+        );
+        assert_eq!(std::fs::read_dir(&directory).unwrap().count(), 0);
+
+        let mut at_limit = b"WEBVTT\n".to_vec();
+        at_limit.resize(1024 * 1024, b' ');
+        let exact_limit = FixedHttp {
+            get_bytes: at_limit,
+            post_bytes: br#"{"link":"https://cdn.example/sub.vtt"}"#.to_vec(),
+        };
+        let saved = provider
+            .download_to(
+                &exact_limit,
+                "key",
+                &subtitle("123", "Film.vtt"),
+                &directory,
+                &cancel,
+            )
+            .unwrap();
+        assert_eq!(std::fs::metadata(&saved).unwrap().len(), 1024 * 1024);
+        std::fs::remove_dir_all(directory).unwrap();
     }
 
     #[test]

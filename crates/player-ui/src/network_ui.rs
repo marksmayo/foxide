@@ -22,6 +22,15 @@ impl HttpClient for SystemHttp {
         CurlClient::system()?.get(url, cancel)
     }
 
+    fn get_bounded(
+        &self,
+        url: &player_services::Url,
+        max_bytes: usize,
+        cancel: &AtomicBool,
+    ) -> Result<Vec<u8>, String> {
+        CurlClient::system()?.get_bounded(url, max_bytes, cancel)
+    }
+
     fn get_with_headers(
         &self,
         url: &player_services::Url,

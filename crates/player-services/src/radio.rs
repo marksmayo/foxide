@@ -6,6 +6,22 @@ pub const RESPONSE_LIMIT: usize = 2 * 1024 * 1024;
 pub trait HttpClient: Send + Sync {
     fn get(&self, url: &Url, cancel: &AtomicBool) -> Result<Vec<u8>, String>;
 
+    fn get_bounded(
+        &self,
+        url: &Url,
+        max_bytes: usize,
+        cancel: &AtomicBool,
+    ) -> Result<Vec<u8>, String> {
+        if max_bytes == 0 || max_bytes > RESPONSE_LIMIT {
+            return Err("HTTP response size limit is invalid".into());
+        }
+        let response = self.get(url, cancel)?;
+        if response.len() > max_bytes {
+            return Err("HTTP response exceeded its size limit".into());
+        }
+        Ok(response)
+    }
+
     fn get_with_headers(
         &self,
         _url: &Url,
