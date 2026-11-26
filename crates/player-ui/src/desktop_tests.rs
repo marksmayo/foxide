@@ -756,13 +756,24 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
             .unwrap()
             .starts_with("WEBVTT")
     );
-    ui.set_panel("".into());
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::KeyPressed {
+            text: slint::platform::Key::Escape.into(),
+        });
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::KeyReleased {
+            text: slint::platform::Key::Escape.into(),
+        });
     ui.window().request_redraw();
     rendered_window.draw_if_needed(|renderer| {
         let size = ui.window().size();
         let mut pixels = vec![slint::Rgb8Pixel::default(); (size.width * size.height) as usize];
         renderer.render(&mut pixels, size.width as usize);
     });
+    assert!(
+        ui.get_panel().is_empty(),
+        "Escape must close the subtitle panel"
+    );
     assert!(
         ui.get_subtitle_api_key().is_empty(),
         "Closing the panel must clear the session key"

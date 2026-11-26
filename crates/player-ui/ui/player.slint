@@ -147,9 +147,19 @@ export component PlayerWindow inherits Window {
     callback cast-select(string, string, string);
     callback cast-remember(string, string, string);
     callback cast-forget(string);
+    function close-panel() {
+        if (root.panel == "subtitles") {
+            root.subtitle-api-key = "";
+            root.cancel-subtitle-jobs();
+        }
+        root.panel = "";
+    }
     changed panel => {
         if (root.panel != "radio") { root.cancel-services(); }
-        if (root.panel != "subtitles") { root.cancel-subtitle-jobs(); root.subtitle-api-key = ""; }
+        if (root.panel != "subtitles" && (root.subtitle-api-key != "" || root.subtitle-busy || root.subtitle-results.length > 0)) {
+            root.cancel-subtitle-jobs();
+            root.subtitle-api-key = "";
+        }
     }
     in-out property <bool> light-theme: false;
     in-out property <color> accent-color: #ef955f;
@@ -334,7 +344,7 @@ export component PlayerWindow inherits Window {
         }
     }
     keys := FocusScope { width: parent.width; height: parent.height; key-pressed(event) => {
-        if (event.text == Key.Escape && root.panel != "") { root.panel = ""; return accept; }
+        if (event.text == Key.Escape && root.panel != "") { root.close-panel(); return accept; }
         if (event.text == Key.Escape && root.picture-in-picture) { root.action("picture-in-picture", 0); return accept; }
         if (root.panel != "") { return reject; }
         if (event.text == Key.Escape && root.fullscreen-mode) { root.action("fullscreen", 0); return accept; }
@@ -484,17 +494,17 @@ export component PlayerWindow inherits Window {
         }
     }
     if (root.panel != ""): Rectangle { background: #050a13bb;
-        TouchArea { clicked => { root.panel = ""; } }
+        TouchArea { clicked => { root.close-panel(); } }
         Rectangle { width: min(parent.width - 60px, 550px); height: root.panel == "preferences" || root.panel == "radio" || root.panel == "subtitles" ? min(parent.height - 30px, 620px) : root.panel == "url" ? 300px : root.panel == "cast" ? min(parent.height - 30px, 680px) : 330px; x: (parent.width - self.width) / 2; y: (parent.height - self.height) / 2;
             background: Appearance.dialog; border-radius: 14px; border-width: 1px; border-color: Appearance.border;
             VerticalLayout { padding: 24px; spacing: 18px;
                 HorizontalLayout {
                     Text { text: root.panel == "radio" ? "Internet radio" : root.panel == "subtitles" ? "Search online subtitles" : root.panel == "preferences" ? "Preferences" : root.panel == "url" ? "Open a network stream" : root.panel == "information" ? "Playback information" : root.panel == "shortcuts" ? "Keyboard shortcuts" : root.panel == "cast" ? "Cast to a receiver" : "Foxide"; color: Appearance.text; font-size: 20px; font-weight: 600; vertical-alignment: center; }
-                    ToolButton { label: "×"; description: "Close dialog"; clicked => { root.panel = ""; } }
+                    ToolButton { label: "×"; description: "Close dialog"; clicked => { root.close-panel(); } }
                 }
                 if (root.panel == "url"): VerticalLayout { spacing: 14px;
-                    LineEdit { text <=> root.url; placeholder-text: "https://… or rtsp://…"; accepted => { root.open-url(root.url); root.panel = ""; } }
-                    ToolButton { label: "Open stream"; width: 130px; primary: true; clicked => { root.open-url(root.url); root.panel = ""; } }
+                    LineEdit { text <=> root.url; placeholder-text: "https://… or rtsp://…"; accepted => { root.open-url(root.url); root.close-panel(); } }
+                    ToolButton { label: "Open stream"; width: 130px; primary: true; clicked => { root.open-url(root.url); root.close-panel(); } }
                 }
                 if (root.panel == "updates"): VerticalLayout { spacing: 14px;
                     Text { text: root.staged-update-version == "" ? root.update-status : "Version " + root.staged-update-version + " is downloaded and checksum-checked. Restart Foxide to install it."; color: Appearance.secondary; wrap: word-wrap; }
