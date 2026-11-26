@@ -223,7 +223,11 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
     ui.set_media_title("Parallax.mkv".into());
     ui.set_paused(true);
     ui.set_status("Paused".into());
-    let initial_frame = slint::Image::from_rgba8(slint::SharedPixelBuffer::new(2, 2));
+    let mut initial_pixels = slint::SharedPixelBuffer::<slint::Rgb8Pixel>::new(8, 8);
+    initial_pixels
+        .make_mut_slice()
+        .fill(slint::Rgb8Pixel { r: 255, g: 0, b: 0 });
+    let initial_frame = slint::Image::from_rgb8(initial_pixels);
     ui.set_video_frame(initial_frame.clone());
     ui.invoke_action("picture-in-picture".into(), 0.0);
     assert!(
@@ -238,10 +242,28 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
             .as_ref()
             .is_some_and(PlayerWindow::get_picture_in_picture)
     );
-    assert_eq!(
-        pip_window.borrow().as_ref().unwrap().get_video_frame(),
-        initial_frame
-    );
+    publish_frame_to_picture_in_picture(initial_frame.clone(), &pip_window);
+    {
+        let pip_guard = pip_window.borrow();
+        let pip = pip_guard.as_ref().unwrap();
+        assert_eq!(pip.get_video_frame(), initial_frame);
+        let pip_rendered_window = rendered_windows.borrow()[1].clone();
+        let pip_size = pip.window().size();
+        let mut pip_pixels =
+            vec![slint::Rgb8Pixel::default(); (pip_size.width * pip_size.height) as usize];
+        pip.window().request_redraw();
+        pip_rendered_window.draw_if_needed(|renderer| {
+            renderer.render(&mut pip_pixels, pip_size.width as usize);
+        });
+        let pip_red_pixels = pip_pixels
+            .iter()
+            .filter(|pixel| pixel.r > 240 && pixel.g < 10 && pixel.b < 10)
+            .count();
+        assert!(
+            pip_red_pixels > 20_000,
+            "Separate-window PiP must composite its copied video frame: {pip_red_pixels} red pixels"
+        );
+    }
     {
         let pip = pip_window.borrow();
         let pip = pip.as_ref().unwrap();
@@ -1325,3 +1347,4 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
     }
     assert_eq!(ui.get_update_status(), "Foxide is up to date.");
 }
+
