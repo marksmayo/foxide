@@ -918,8 +918,67 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
         "Paused · 1.50×",
         "A newly loaded file replaces the opening status even when pause and speed are unchanged"
     );
+    snapshot.imdb_id = "tt0903747".into();
+    snapshot.season = "1".into();
+    snapshot.episode = "2".into();
+    snapshot.position = 20.0;
+    refresh(&ui, &state, &preview_generation, &snapshot, &mut previous);
     let controls = Rc::new(RefCell::new(UiState::default()));
-    install_controls(&ui, &controls, &None, Rc::new(RefCell::new(None)));
+    let (lookup_sender, lookup_receiver) = std::sync::mpsc::channel();
+    install_controls_with_intro_lookup(
+        &ui,
+        &controls,
+        &None,
+        Rc::new(RefCell::new(None)),
+        Arc::new(move |identity, cancellation| {
+            lookup_sender
+                .send((
+                    identity.imdb_id().to_owned(),
+                    identity.season(),
+                    identity.episode(),
+                    cancellation.load(std::sync::atomic::Ordering::Acquire),
+                ))
+                .unwrap();
+            Ok(Some(player_services::IntroSegment {
+                start_seconds: 2.5,
+                end_seconds: 58.0,
+                confidence: Some(0.99),
+                submission_count: Some(8),
+            }))
+        }),
+    );
+    ui.invoke_action("lookup-intro".into(), 0.0);
+    assert!(ui.get_introdb_busy());
+    assert!(ui.get_introdb_status().contains("Looking up"));
+    assert_eq!(
+        lookup_receiver
+            .recv_timeout(Duration::from_secs(2))
+            .unwrap(),
+        ("tt0903747".to_owned(), 1, 2, false)
+    );
+    let lookup_deadline = std::time::Instant::now() + Duration::from_secs(2);
+    while ui.get_introdb_busy() && std::time::Instant::now() < lookup_deadline {
+        if let Ok(event) = event_receiver.recv_timeout(Duration::from_millis(20)) {
+            event();
+        }
+    }
+    assert!(!ui.get_introdb_busy());
+    assert_eq!(ui.get_introdb_status(), "Intro markers found");
+    assert!(ui.get_skip_intro_available());
+    assert_eq!(ui.get_introdb_imdb_id(), "tt0903747");
+    assert_eq!(ui.get_online_intro_start(), 2.5);
+    assert_eq!(ui.get_online_intro_end(), 58.0);
+    assert_eq!(
+        intro_skip_action(
+            Some(&snapshot),
+            ui.get_introdb_imdb_id().as_str(),
+            ui.get_introdb_season().max(0) as u32,
+            ui.get_introdb_episode().max(0) as u32,
+            f64::from(ui.get_online_intro_start()),
+            f64::from(ui.get_online_intro_end()),
+        ),
+        Some(Action::SeekAbsolute(58.0))
+    );
     ui.invoke_open_url("file:///not-an-online-stream".into());
     assert!(ui.get_status().contains("HTTP"));
     ui.invoke_open_url("https://example.org/movie.mp4".into());
@@ -1456,3 +1515,4 @@ fn introdb_marker_cannot_enable_skip_after_playback_stops() {
     assert!(intro_segment_is_active(true, 20.0, 120.0, 2.5, 58.0));
     assert!(!intro_segment_is_active(false, 20.0, 120.0, 2.5, 58.0));
 }
+
