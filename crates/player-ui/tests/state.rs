@@ -1,4 +1,33 @@
-use player_ui::{Action, Effect, UiState};
+use player_ui::{Action, Effect, UiState, VideoControl};
+
+#[test]
+fn stereo_3d_control_uses_the_dedicated_video_route() {
+    let mut state = UiState::default();
+    state.confirm_loaded(42.0);
+
+    assert!(Action::control("stereo-3d", 1.0).is_none());
+    let control = VideoControl::from_ui_action("stereo-3d", 1.0).unwrap();
+    assert_eq!(
+        state.dispatch_video_control(control),
+        [Effect::Engine(vec![
+            "vf".into(),
+            "add".into(),
+            "@foxide-stereo3d:lavfi=[stereo3d=in=sbsl:out=arcd]".into(),
+        ])]
+    );
+}
+
+#[test]
+fn invalid_public_video_control_is_ignored_safely() {
+    let mut state = UiState::default();
+    state.confirm_loaded(42.0);
+
+    assert!(
+        state
+            .dispatch_video_control(VideoControl::Stereo3d(7))
+            .is_empty()
+    );
+}
 
 #[test]
 fn mute_uses_confirmed_state_and_never_assumes_command_success() {

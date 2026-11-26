@@ -75,3 +75,7 @@ The desktop video surface maps horizontal trackpad scroll and horizontal pointer
 
 The desktop now polls standardized gamepad events and routes D-pad focus traversal, confirm/back, playback toggle and previous/next through Slint or the shared playback action path. It surfaces controller connection and disconnection events without publishing device names. Mapping tests cover supported and ignored controls. Linux CI explicitly installs libudev development headers for the gilrs backend. This remains in progress until physical hot-plug and focus-order behavior is verified on supported desktop platforms.
 
+## Stereoscopic 3D implementation checkpoint
+
+The Video menu exposes supported side-by-side and over/under source layouts with red/cyan, over/under or side-by-side output. A dedicated labeled FFmpeg `stereo3d` filter is replaced when another mode is chosen and removed by “Off”, leaving unrelated video filters intact. State tests verify every exposed mapping and reject invalid mode values. FFmpeg smoke checks process each selected graph. Physical display/glasses acceptance with an actual stereoscopic sample remains pending; no feature medal is claimed.
+

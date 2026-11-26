@@ -279,6 +279,21 @@ export component PlayerWindow inherits Window {
                 MenuItem { title: "Load trusted shaders…"; activated => { root.panel = "information"; root.choose-shaders(); } }
                 MenuItem { title: "Clear shader stack"; activated => { root.panel = "information"; root.clear-shaders(); } }
             }
+            Menu { title: "Stereoscopic 3D";
+                MenuItem { title: "Off"; enabled: root.loaded && root.has-video; activated => { root.action("stereo-3d", 0); } }
+                Menu { title: "Source: side-by-side, left eye first";
+                    MenuItem { title: "Red/cyan glasses"; enabled: root.loaded && root.has-video; activated => { root.action("stereo-3d", 1); } }
+                    MenuItem { title: "Over/under output"; enabled: root.loaded && root.has-video; activated => { root.action("stereo-3d", 2); } }
+                }
+                Menu { title: "Source: side-by-side, right eye first";
+                    MenuItem { title: "Red/cyan glasses"; enabled: root.loaded && root.has-video; activated => { root.action("stereo-3d", 3); } }
+                    MenuItem { title: "Side-by-side output, left eye first"; enabled: root.loaded && root.has-video; activated => { root.action("stereo-3d", 4); } }
+                }
+                Menu { title: "Source: over/under, left eye first";
+                    MenuItem { title: "Red/cyan glasses"; enabled: root.loaded && root.has-video; activated => { root.action("stereo-3d", 5); } }
+                    MenuItem { title: "Side-by-side output, left eye first"; enabled: root.loaded && root.has-video; activated => { root.action("stereo-3d", 6); } }
+                }
+            }
             Menu { title: "Rotation";
                 MenuItem { title: "Original"; enabled: root.loaded && root.has-video; activated => { root.action("rotation", 0); } }
                 MenuItem { title: "90° clockwise"; enabled: root.loaded && root.has-video; activated => { root.action("rotation", 90); } }

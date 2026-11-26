@@ -33,6 +33,11 @@ jobs:
           key: desktop-ui
       - name: Install native playback dependencies
         run: sudo apt-get update && sudo apt-get install -y mpv libmpv2 ffmpeg libfontconfig1-dev libxkbcommon-dev libwayland-dev libegl1-mesa-dev libudev-dev
+      - name: Verify stereoscopic source and output conversions
+        run: |
+          for mode in sbsl:arcd sbsl:abl sbsr:arcd sbsr:sbsl abl:arcd abl:sbsl; do
+            ffmpeg -v error -f lavfi -i testsrc2=size=160x96:rate=24:duration=0.2 -vf "stereo3d=$mode" -frames:v 2 -f null -
+          done
       - name: Generate deterministic video with audio
         run: |
           mkdir -p results/local
