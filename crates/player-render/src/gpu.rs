@@ -95,6 +95,7 @@ struct Renderer {
     texture: glow::Texture,
     framebuffer: glow::Framebuffer,
     size: (u32, u32),
+    picture_in_picture_target: Option<GpuTarget>,
     thumbnail_targets: Vec<Option<GpuTarget>>,
     thumbnail_cache: ThumbnailCache,
     _resolver: Arc<Resolver>,
@@ -209,6 +210,7 @@ impl Renderer {
             texture,
             framebuffer,
             size: (0, 0),
+            picture_in_picture_target: None,
             thumbnail_targets: (0..extra_thumbnail_slots).map(|_| None).collect(),
             thumbnail_cache,
             _resolver: resolver,
@@ -231,9 +233,7 @@ impl Renderer {
 
     fn raster_frame(&self) -> Result<slint::Image, String> {
         let (width, height) = self.size;
-        let byte_len = (width as usize)
-            .checked_mul(height as usize)
-            .and_then(|pixels| pixels.checked_mul(4))
+        let byte_len = picture_in_picture_readback_len(width, height)
             .ok_or_else(|| "Picture-in-picture frame is too large".to_owned())?;
         let mut rgba = vec![0_u8; byte_len];
         // SAFETY: The current window's OpenGL context is active in BeforeRendering,
@@ -262,6 +262,42 @@ impl Renderer {
         }
         raster_image_from_gl_readback_rgba(width, height, PIP_WIDTH, PIP_HEIGHT, &rgba)
             .ok_or_else(|| "Could not copy the current frame for the PiP window".to_owned())
+    }
+
+    fn picture_in_picture_frame(&mut self) -> Result<slint::Image, String> {
+        if self.picture_in_picture_target.is_none() {
+            let texture = unsafe { self.gl.create_texture() }.map_err(|error| error.to_string())?;
+            let framebuffer = match unsafe { self.gl.create_framebuffer() } {
+                Ok(framebuffer) => framebuffer,
+                Err(error) => {
+                    unsafe { self.gl.delete_texture(texture) };
+                    return Err(error.to_string());
+                }
+            };
+            self.picture_in_picture_target = Some(GpuTarget {
+                texture,
+                framebuffer,
+                size: (0, 0),
+            });
+        }
+
+        let mut target = self.picture_in_picture_target.take().unwrap();
+        std::mem::swap(&mut self.texture, &mut target.texture);
+        std::mem::swap(&mut self.framebuffer, &mut target.framebuffer);
+        std::mem::swap(&mut self.size, &mut target.size);
+        let result = self
+            .frame_with_force(PIP_WIDTH, PIP_HEIGHT, true)
+            .and_then(|frame| {
+                frame
+                    .map(|_| ())
+                    .ok_or_else(|| "No video frame is available for picture-in-picture".to_owned())
+            })
+            .and_then(|()| self.raster_frame());
+        std::mem::swap(&mut self.texture, &mut target.texture);
+        std::mem::swap(&mut self.framebuffer, &mut target.framebuffer);
+        std::mem::swap(&mut self.size, &mut target.size);
+        self.picture_in_picture_target = Some(target);
+        result
     }
 
     fn frame_with_force(
@@ -520,6 +556,10 @@ impl Drop for Renderer {
                 self.gl.delete_framebuffer(target.framebuffer);
                 self.gl.delete_texture(target.texture);
             }
+            if let Some(target) = &self.picture_in_picture_target {
+                self.gl.delete_framebuffer(target.framebuffer);
+                self.gl.delete_texture(target.texture);
+            }
         }
     }
 }
@@ -651,7 +691,7 @@ fn attach_inner(
                             match frame_result {
                                 Ok(Some(frame)) => {
                                     let pip_frame = if pip_active {
-                                        match renderer.raster_frame() {
+                                        match renderer.picture_in_picture_frame() {
                                             Ok(frame) => Some(frame),
                                             Err(message) => {
                                                 error(message);
@@ -782,6 +822,15 @@ fn raster_image_from_gl_readback_rgba(
     Some(slint::Image::from_rgba8(pixels))
 }
 
+fn picture_in_picture_readback_len(width: u32, height: u32) -> Option<usize> {
+    if width == 0 || height == 0 || width > PIP_WIDTH || height > PIP_HEIGHT {
+        return None;
+    }
+    (width as usize)
+        .checked_mul(height as usize)?
+        .checked_mul(4)
+}
+
 fn publish_thumbnail_frame(frame: slint::Image, image: &impl Fn(slint::Image, bool)) {
     image(slint::Image::default(), false);
     image(frame, true);
@@ -789,7 +838,7 @@ fn publish_thumbnail_frame(frame: slint::Image, image: &impl Fn(slint::Image, bo
 
 #[cfg(test)]
 mod picture_in_picture_frame_tests {
-    use super::raster_image_from_gl_readback_rgba;
+    use super::{picture_in_picture_readback_len, raster_image_from_gl_readback_rgba};
     use slint::{Rgba8Pixel, SharedPixelBuffer};
 
     #[test]
@@ -843,6 +892,16 @@ mod picture_in_picture_frame_tests {
     }
 
     #[test]
+    fn picture_in_picture_cpu_readback_is_limited_to_the_raster_target() {
+        assert_eq!(
+            picture_in_picture_readback_len(520, 294),
+            Some(520 * 294 * 4)
+        );
+        assert!(picture_in_picture_readback_len(521, 294).is_none());
+        assert!(picture_in_picture_readback_len(u32::MAX, u32::MAX).is_none());
+    }
+
+    #[test]
     fn separate_window_frame_downsamples_large_frames_to_the_bounded_target() {
         let source: Vec<u8> = (0..4 * 4)
             .flat_map(|pixel| [pixel as u8, 0, 0, 255])
@@ -868,4 +927,3 @@ mod picture_in_picture_frame_tests {
 #[cfg(all(test, feature = "gpu-integration"))]
 #[path = "gpu_integration.rs"]
 mod integration;
-
