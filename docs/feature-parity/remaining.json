@@ -6,8 +6,8 @@
       "id": "thumbnails",
       "name": "Seekbar thumbnail previews",
       "group": "Interface",
-      "stage": "in_progress",
-      "acceptance": "Implementation merged in PR #23: hover-only previews use a separate paused libmpv client, a 16 MiB bounded GPU LRU cache, coalesced requests, keyboard support and accessibility. Slint hover/eligibility tests and hosted desktop, compositor, and CodSpeed checks passed. Draft compositor acceptance PR #37 (head 748ca7d) adds real compositor pixel checks for a generated red/blue media fixture and distinct preview images for two hover buckets. Its first hosted compositor attempt exposed a probe race: after requesting the second hover, the test labeled the still-displayed first image with the latest request. The probe now records the bucket when publishing each image. All seven hosted workflows passed on 748ca7d, including the corrected real-media compositor test. Manual desktop hover positioning remains pending; do not close this gap or claim a medal yet."
+      "stage": "accepted",
+      "acceptance": "Accepted after a Windows desktop UI smoke on 2026-11-26 using a generated local AVC clip in PR #37's exact build (head 748ca7d). Pointer hover at two timeline positions displayed distinct preview frames labeled 00:01 and 00:02 while playback stayed paused at 00:03. A left click then sought to 00:02.13. The smoke verified preview positioning, pointer updates, no seek on hover, and seek on click in the actual desktop frontend. PR #23 implementation uses a separate paused libmpv client, 16 MiB bounded GPU LRU cache, coalesced requests, keyboard support and accessibility. Slint eligibility tests, real-media compositor pixel/bucket checks, and all seven exact-head hosted workflows passed. This acceptance covers Windows desktop behavior; hosted cross-platform tests cover the other builds."
     },
     {
       "id": "pip",
@@ -347,8 +347,8 @@
     }
   ],
   "baseline_gap_count": 49,
-  "accepted_count": 8,
-  "remaining_count": 41,
+  "accepted_count": 9,
+  "remaining_count": 40,
   "implementation_commit": "f957f4da08af3a4a1171f3ac5f5475068ba6d887",
   "acceptance_jobs": {
     "linux": "https://github.com/marksmayo/foxide/actions/runs/43972156451/job/133666803073",
