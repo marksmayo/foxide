@@ -776,6 +776,28 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
         !ui.get_has_video(),
         "Audio-only playback must not enable frame/video controls"
     );
+    let mut visualization = slint::SharedPixelBuffer::<slint::Rgb8Pixel>::new(8, 8);
+    visualization
+        .make_mut_slice()
+        .fill(slint::Rgb8Pixel { r: 255, g: 0, b: 0 });
+    ui.set_video_frame(slint::Image::from_rgb8(visualization));
+    ui.set_audio_visualization(true);
+    let size = ui.window().size();
+    let mut visualization_pixels =
+        vec![slint::Rgb8Pixel::default(); (size.width * size.height) as usize];
+    ui.window().request_redraw();
+    rendered_window.draw_if_needed(|renderer| {
+        renderer.render(&mut visualization_pixels, size.width as usize);
+    });
+    let visualization_pixels = visualization_pixels
+        .iter()
+        .filter(|pixel| pixel.r > 240 && pixel.g < 10 && pixel.b < 10)
+        .count();
+    assert!(
+        visualization_pixels > 2500,
+        "Audio visualization frames must be visible without a source video track: {visualization_pixels} red pixels"
+    );
+    ui.set_audio_visualization(false);
     snapshot.command_error = "Unsupported optional renderer control".into();
     refresh(&ui, &state, &preview_generation, &snapshot, &mut previous);
     assert!(ui.get_loaded() && state.borrow().loaded);
@@ -1246,4 +1268,40 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
         }
     }
     assert_eq!(ui.get_update_status(), "Foxide is up to date.");
+}
+
+#[test]
+fn navigation_clears_active_visualization_before_loading_the_next_track() {
+    let mut state = UiState {
+        playlist: vec!["first.flac".into(), "second.flac".into()],
+        loaded: true,
+        audio_visualization: true,
+        ..UiState::default()
+    };
+
+    let effects = dispatch_action(&mut state, Action::Next);
+
+    assert_eq!(
+        effects,
+        [
+            Effect::Engine(vec!["set".into(), "lavfi-complex".into(), String::new()]),
+            Effect::Load("second.flac".into()),
+        ]
+    );
+    assert_eq!(state.selected, 1);
+    assert!(!state.audio_visualization);
+    assert!(!state.loaded);
+}
+
+#[test]
+fn invalid_navigation_does_not_clear_active_visualization() {
+    let mut state = UiState {
+        playlist: vec!["only.flac".into()],
+        audio_visualization: true,
+        ..UiState::default()
+    };
+
+    assert!(dispatch_action(&mut state, Action::Next).is_empty());
+    assert!(state.audio_visualization);
+    assert_eq!(state.selected, 0);
 }

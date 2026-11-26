@@ -1,3 +1,4 @@
+use player_render::audio_visualization_filter;
 use std::path::PathBuf;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -14,6 +15,7 @@ pub enum Action {
     SeekAbsolute(f64),
     Volume(f64),
     AudioTrack(u32),
+    SetAudioVisualization { enabled: bool, audio_track_id: u32 },
     SubtitleTrack(u32),
     TogglePlaylist,
     ToggleFullscreen,
@@ -55,6 +57,7 @@ pub struct UiState {
     pub loaded: bool,
     pub paused: bool,
     pub muted: bool,
+    pub audio_visualization: bool,
     pub duration: f64,
     pub selected: usize,
     pub playlist_visible: bool,
@@ -183,6 +186,7 @@ impl UiState {
     pub fn dispatch(&mut self, action: Action) -> Vec<Effect> {
         match action {
             Action::Open(files) => {
+                self.audio_visualization = false;
                 self.playlist = files;
                 self.selected = 0;
                 self.loaded = false;
@@ -216,6 +220,10 @@ impl UiState {
                 vec![Effect::Volume(value)]
             }
             Action::AudioTrack(id) if self.loaded && id > 0 => vec![Effect::AudioTrack(id)],
+            Action::SetAudioVisualization {
+                enabled,
+                audio_track_id,
+            } => self.set_audio_visualization(enabled, audio_track_id),
             Action::SubtitleTrack(id) if self.loaded => vec![Effect::SubtitleTrack(id)],
             Action::TogglePlaylist => {
                 self.playlist_visible = !self.playlist_visible;
@@ -228,6 +236,7 @@ impl UiState {
             Action::Stop => {
                 self.loaded = false;
                 self.paused = false;
+                self.audio_visualization = false;
                 vec![Effect::Stop]
             }
             Action::Quit => vec![Effect::Quit],
@@ -238,7 +247,32 @@ impl UiState {
         }
     }
 
+    #[cold]
+    #[inline(never)]
+    fn set_audio_visualization(&mut self, enabled: bool, audio_track_id: u32) -> Vec<Effect> {
+        match (enabled, self.loaded, audio_track_id > 0) {
+            (true, true, true) => {
+                self.audio_visualization = true;
+                vec![Effect::Engine(vec![
+                    "set".into(),
+                    "lavfi-complex".into(),
+                    audio_visualization_filter(audio_track_id),
+                ])]
+            }
+            (false, true, _) => {
+                self.audio_visualization = false;
+                vec![Effect::Engine(vec![
+                    "set".into(),
+                    "lavfi-complex".into(),
+                    String::new(),
+                ])]
+            }
+            _ => Vec::new(),
+        }
+    }
+
     fn select(&mut self, index: usize) -> Vec<Effect> {
+        self.audio_visualization = false;
         self.selected = index;
         self.loaded = false;
         vec![Effect::Load(self.playlist[index].clone())]
@@ -248,6 +282,86 @@ impl UiState {
 #[cfg(test)]
 mod tests {
     use super::{Action, Effect, UiState};
+    use std::path::PathBuf;
+
+    #[test]
+    fn inactive_visualization_keeps_open_select_and_stop_actions_on_their_normal_path() {
+        let first = PathBuf::from("first.flac");
+        let second = PathBuf::from("second.flac");
+        let mut state = UiState::default();
+
+        assert_eq!(
+            state.dispatch(Action::Open(vec![first.clone(), second.clone()])),
+            vec![Effect::Load(first)]
+        );
+        state.confirm_loaded(60.0);
+        assert_eq!(
+            state.dispatch(Action::Select(1)),
+            vec![Effect::Load(second)]
+        );
+        state.confirm_loaded(60.0);
+        assert_eq!(state.dispatch(Action::Stop), vec![Effect::Stop]);
+        assert!(!state.audio_visualization);
+    }
+
+    #[test]
+    fn music_visualization_splits_audio_to_output_and_rendered_waveform() {
+        let mut state = UiState::default();
+        assert!(
+            state
+                .dispatch(Action::SetAudioVisualization {
+                    enabled: true,
+                    audio_track_id: 7,
+                })
+                .is_empty()
+        );
+
+        state.confirm_loaded(12.0);
+        assert_eq!(
+            state.dispatch(Action::SetAudioVisualization {
+                enabled: true,
+                audio_track_id: 7,
+            }),
+            [Effect::Engine(vec![
+                "set".into(),
+                "lavfi-complex".into(),
+                "[aid7] asplit [foxide-viz] [ao] ; [foxide-viz] showwaves=s=960x270:mode=cline:rate=24:colors=0x87e64b [vo]".into(),
+            ])]
+        );
+        assert!(state.audio_visualization);
+        assert_eq!(
+            state.dispatch(Action::SetAudioVisualization {
+                enabled: false,
+                audio_track_id: 0,
+            }),
+            [Effect::Engine(vec![
+                "set".into(),
+                "lavfi-complex".into(),
+                "".into(),
+            ])]
+        );
+        assert!(!state.audio_visualization);
+    }
+
+    #[test]
+    fn navigating_to_another_item_clears_the_visualization_filter() {
+        let mut state = UiState {
+            playlist: vec!["first.flac".into(), "second.flac".into()],
+            ..UiState::default()
+        };
+        state.confirm_loaded(12.0);
+        state.dispatch(Action::SetAudioVisualization {
+            enabled: true,
+            audio_track_id: 1,
+        });
+
+        assert_eq!(
+            state.dispatch(Action::Next),
+            [Effect::Load("second.flac".into())]
+        );
+        assert!(!state.audio_visualization);
+        assert!(!state.loaded);
+    }
 
     #[test]
     fn system_media_play_and_pause_wait_for_engine_confirmation() {

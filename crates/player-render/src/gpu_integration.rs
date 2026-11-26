@@ -31,6 +31,11 @@ slint::slint! {
             image-fit: contain;
         }
     }
+    export component AudioProbe inherits Window {
+        width: 960px; height: 270px; background: black;
+        in property <image> frame;
+        Image { source: root.frame; width: 100%; height: 100%; image-fit: fill; }
+    }
 }
 
 #[test]
@@ -401,4 +406,323 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
         buckets.contains(&2),
         "second hover preview did not use another cache slot"
     );
+}
+
+#[test]
+#[ignore = "Requires Xvfb/OpenGL, libmpv and FOXIDE_AUDIO_VISUALIZATION_FIXTURE"]
+fn audio_visualization_renders_changing_waveform_pixels() {
+    use std::cell::Cell;
+
+    let fixture = std::env::var("FOXIDE_AUDIO_VISUALIZATION_FIXTURE")
+        .expect("Set FOXIDE_AUDIO_VISUALIZATION_FIXTURE to a frequency-sweep WAV");
+    slint::BackendSelector::new()
+        .backend_name("winit".into())
+        .renderer_name("femtovg".into())
+        .select()
+        .unwrap();
+    let ui = AudioProbe::new().unwrap();
+    let engine = Rc::new(Engine::new().unwrap());
+    let started = Instant::now();
+    let graphics = Rc::new(RefCell::new(None::<glow::Context>));
+    let graph_sent = Rc::new(Cell::new(false));
+    let start_position = Rc::new(Cell::new(0.0));
+    let graph_started = Rc::new(Cell::new(None::<Instant>));
+    let frame_times = Rc::new(RefCell::new(Vec::<Duration>::new()));
+    let rss_baseline_kib = Rc::new(Cell::new(0_u64));
+    let rss_peak_kib = Rc::new(Cell::new(0_u64));
+    let samples = Rc::new(RefCell::new((
+        0_usize,
+        HashSet::<u64>::new(),
+        Vec::new(),
+        0_usize,
+        (0_u32, 0_u32),
+        false,
+    )));
+
+    let weak_size = ui.as_weak();
+    let weak_image = ui.as_weak();
+    let weak_wakeup = ui.as_weak();
+    let weak_readback = ui.as_weak();
+    let image_samples = samples.clone();
+    let rendered_graph_started = graph_started.clone();
+    let rendered_frame_times = frame_times.clone();
+    let wakeup = Arc::new(move || {
+        let weak = weak_wakeup.clone();
+        let _ = slint::invoke_from_event_loop(move || {
+            if let Some(window) = weak.upgrade() {
+                window.window().request_redraw();
+            }
+        });
+    });
+
+    let errors = samples.clone();
+    let observed_samples = samples.clone();
+    let observed_graph_sent = graph_sent.clone();
+    let observed_graphics = graphics.clone();
+    attach_inner(
+        ui.window(),
+        &engine,
+        None,
+        move || {
+            weak_size
+                .upgrade()
+                .map(|window| {
+                    let size = window.window().size();
+                    (size.width, size.height)
+                })
+                .unwrap_or((1, 1))
+        },
+        move |frame| {
+            if let Some(window) = weak_image.upgrade() {
+                let size = frame.size();
+                image_samples.borrow_mut().4 = (size.width, size.height);
+                window.set_frame(frame);
+            }
+        },
+        |_, _| {},
+        move |error| errors.borrow_mut().2.push(error),
+        wakeup,
+        move |state, api| {
+            if matches!(state, slint::RenderingState::RenderingSetup) {
+                if let slint::GraphicsAPI::NativeOpenGL { get_proc_address } = api {
+                    observed_samples.borrow_mut().5 = true;
+                    // SAFETY: setup observer runs with the compositor context current.
+                    let gl = unsafe {
+                        glow::Context::from_loader_function(|name| {
+                            get_proc_address(&CString::new(name).unwrap())
+                        })
+                    };
+                    *observed_graphics.borrow_mut() = Some(gl);
+                } else {
+                    observed_samples
+                        .borrow_mut()
+                        .2
+                        .push("Slint did not provide a native OpenGL context".into());
+                }
+            } else if matches!(state, slint::RenderingState::AfterRendering)
+                && observed_graph_sent.get()
+            {
+                let Some(window) = weak_readback.upgrade() else {
+                    return;
+                };
+                let size = window.window().size();
+                let graphics = observed_graphics.borrow();
+                let Some(gl) = graphics.as_ref() else {
+                    return;
+                };
+                if size.width == 0 || size.height == 0 {
+                    return;
+                }
+                let mut pixels = vec![0_u8; size.width as usize * size.height as usize * 4];
+                // SAFETY: readback covers the full completed window buffer.
+                unsafe {
+                    let previous = gl.get_parameter_framebuffer(glow::READ_FRAMEBUFFER_BINDING);
+                    gl.bind_framebuffer(glow::READ_FRAMEBUFFER, None);
+                    gl.read_pixels(
+                        0,
+                        0,
+                        size.width as i32,
+                        size.height as i32,
+                        glow::RGBA,
+                        glow::UNSIGNED_BYTE,
+                        glow::PixelPackData::Slice(Some(&mut pixels)),
+                    );
+                    gl.bind_framebuffer(glow::READ_FRAMEBUFFER, previous);
+                }
+                let green_pixels = pixels
+                    .as_chunks::<4>()
+                    .0
+                    .iter()
+                    .filter(|pixel| {
+                        u16::from(pixel[1]) > u16::from(pixel[0]) + 8
+                            && u16::from(pixel[1]) > u16::from(pixel[2]) + 12
+                    })
+                    .count();
+                let nonblack_pixels = pixels
+                    .as_chunks::<4>()
+                    .0
+                    .iter()
+                    .filter(|pixel| pixel[0] > 10 || pixel[1] > 10 || pixel[2] > 10)
+                    .count();
+                let mut samples = observed_samples.borrow_mut();
+                samples.3 = samples.3.max(nonblack_pixels);
+                if green_pixels > 0 {
+                    let mut hash = std::hash::DefaultHasher::new();
+                    pixels.hash(&mut hash);
+                    samples.0 = samples.0.max(green_pixels);
+                    if samples.1.insert(hash.finish())
+                        && let Some(graph_started) = rendered_graph_started.get()
+                    {
+                        rendered_frame_times
+                            .borrow_mut()
+                            .push(graph_started.elapsed());
+                    }
+                }
+            }
+        },
+    )
+    .unwrap();
+
+    engine
+        .command(vec!["set".into(), "ao".into(), "null".into()])
+        .unwrap();
+    engine
+        .command(vec!["loadfile".into(), fixture, "replace".into()])
+        .unwrap();
+    let timer_engine = engine.clone();
+    let timer_graph_sent = graph_sent.clone();
+    let timer_start_position = start_position.clone();
+    let timer_graph_started = graph_started.clone();
+    let timer_rss_baseline = rss_baseline_kib.clone();
+    let timer_rss_peak = rss_peak_kib.clone();
+    let timer_samples = samples.clone();
+    let timer = slint::Timer::default();
+    timer.start(
+        slint::TimerMode::Repeated,
+        Duration::from_millis(20),
+        move || {
+            let snapshot = timer_engine.snapshot().unwrap_or_default();
+            if !snapshot.error.is_empty() {
+                timer_samples.borrow_mut().2.push(snapshot.error);
+                slint::quit_event_loop().unwrap();
+                return;
+            }
+            if timer_graph_sent.get() && !snapshot.command_error.is_empty() {
+                timer_samples.borrow_mut().2.push(snapshot.command_error);
+                slint::quit_event_loop().unwrap();
+                return;
+            }
+            if !timer_graph_sent.get()
+                && snapshot.loaded
+                && let Some(track) = snapshot
+                    .tracks
+                    .iter()
+                    .find(|track| track.kind == "audio" && track.selected)
+            {
+                let command = crate::audio_visualization_filter(track.id);
+                if let Err(error) =
+                    timer_engine.command(vec!["set".into(), "lavfi-complex".into(), command])
+                {
+                    timer_samples.borrow_mut().2.push(error);
+                    slint::quit_event_loop().unwrap();
+                    return;
+                }
+                timer_start_position.set(snapshot.position);
+                timer_graph_sent.set(true);
+                let now = Instant::now();
+                timer_graph_started.set(Some(now));
+                if let Some(rss) = process_rss_kib() {
+                    timer_rss_baseline.set(rss);
+                    timer_rss_peak.set(rss);
+                }
+            }
+            if let Some(graph_started) = timer_graph_started.get() {
+                if let Some(rss) = process_rss_kib() {
+                    timer_rss_peak.set(timer_rss_peak.get().max(rss));
+                }
+                if graph_started.elapsed() >= Duration::from_secs(3) {
+                    slint::quit_event_loop().unwrap();
+                }
+            } else if started.elapsed() >= Duration::from_secs(20) {
+                timer_samples
+                    .borrow_mut()
+                    .2
+                    .push("Timed out waiting for the audio waveform graph".into());
+                slint::quit_event_loop().unwrap();
+            }
+        },
+    );
+    ui.run().unwrap();
+    let snapshot = engine.snapshot().unwrap_or_default();
+    let captured = samples.borrow();
+    let (max_green_pixels, frames, errors, max_nonblack_pixels, frame_size, rendering_setup) =
+        &*captured;
+    let diagnostics = engine
+        .diagnostics
+        .lock()
+        .map(|logs| {
+            logs.iter()
+                .filter(|line| {
+                    line.contains("lavfi")
+                        || line.contains("AVFilter")
+                        || line.contains("showwaves")
+                })
+                .cloned()
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+    let observed_frame_times = frame_times.borrow();
+    let frame_span = observed_frame_times
+        .first()
+        .zip(observed_frame_times.last())
+        .map(|(first, last)| last.saturating_sub(*first))
+        .unwrap_or_default();
+    let unique_frame_rate = if frame_span.is_zero() {
+        0.0
+    } else {
+        observed_frame_times.len().saturating_sub(1) as f64 / frame_span.as_secs_f64()
+    };
+    let max_frame_interval = observed_frame_times
+        .windows(2)
+        .map(|pair| pair[1].saturating_sub(pair[0]))
+        .max()
+        .unwrap_or_default();
+    let rss_delta_kib = rss_peak_kib.get().saturating_sub(rss_baseline_kib.get());
+    println!(
+        "waveform max_green_pixels={max_green_pixels} max_nonblack_pixels={max_nonblack_pixels} unique_frames={} unique_frame_rate_hz={unique_frame_rate:.2} max_frame_interval_ms={} frame_size={frame_size:?} rss_baseline_kib={} rss_sampled_peak_kib={} rss_sampled_delta_kib={} rendering_setup={rendering_setup} position={} loaded={} command_error={:?} errors={errors:?} diagnostics={diagnostics:?}",
+        frames.len(),
+        max_frame_interval.as_millis(),
+        rss_baseline_kib.get(),
+        rss_peak_kib.get(),
+        rss_delta_kib,
+        snapshot.position,
+        snapshot.loaded,
+        snapshot.command_error
+    );
+    assert!(errors.is_empty(), "Native renderer errors: {errors:?}");
+    assert!(
+        graph_sent.get(),
+        "Audio visualization graph was not submitted"
+    );
+    assert!(
+        snapshot.position > start_position.get() + 0.1,
+        "Audio did not continue with the visualization graph active"
+    );
+    assert!(
+        *max_green_pixels >= 10,
+        "No visible green waveform pixels reached the desktop compositor"
+    );
+    assert!(
+        frames.len() >= 5,
+        "Waveform was static or never rendered: only {} distinct frames",
+        frames.len()
+    );
+    assert!(
+        unique_frame_rate >= 20.0,
+        "Waveform frame rate {unique_frame_rate:.2} Hz fell below the 20 Hz CI budget"
+    );
+    assert!(
+        max_frame_interval <= Duration::from_millis(250),
+        "Waveform frame gap {} ms exceeded the 250 ms CI budget",
+        max_frame_interval.as_millis()
+    );
+    if rss_baseline_kib.get() > 0 {
+        assert!(
+            rss_delta_kib <= 64 * 1024,
+            "Waveform RSS growth {rss_delta_kib} KiB exceeded the 65536 KiB CI budget"
+        );
+    }
+}
+
+fn process_rss_kib() -> Option<u64> {
+    #[cfg(target_os = "linux")]
+    {
+        let status = std::fs::read_to_string("/proc/self/status").ok()?;
+        let resident = status.lines().find(|line| line.starts_with("VmRSS:"))?;
+        return resident.split_whitespace().nth(1)?.parse().ok();
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        None
+    }
 }

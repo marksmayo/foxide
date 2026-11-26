@@ -16,6 +16,7 @@ jobs:
       FOXIDE_SHADER_PROOF: ${{ github.workspace }}/results/local/shader-proof.ppm
       FOXIDE_ARTWORK_PROOF: ${{ github.workspace }}/results/local/artwork-proof.ppm
       FOXIDE_RENDER_FIXTURE: ${{ github.workspace }}/results/local/orientation.mkv
+      FOXIDE_AUDIO_VISUALIZATION_FIXTURE: ${{ github.workspace }}/results/local/audio-visualization.wav
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
@@ -49,6 +50,7 @@ jobs:
         run: |
           mkdir -p results/local
           ffmpeg -v error -f lavfi -i "testsrc2=size=320x180:rate=30:duration=10,drawbox=x=0:y=0:w=iw:h=ih/4:color=red:t=fill,drawbox=x=0:y=3*ih/4:w=iw:h=ih/4:color=blue:t=fill" -c:v ffv1 "$FOXIDE_RENDER_FIXTURE"
+          ffmpeg -v error -f lavfi -i "aevalsrc=0.6*sin(2*PI*(220*t+35*t*t)):s=44100:d=5" -c:a pcm_s16le "$FOXIDE_AUDIO_VISUALIZATION_FIXTURE"
       - name: Reset coverage profiles before combining test passes
         run: cargo llvm-cov clean --workspace
       - name: Verify video-site hook through the distribution Lua-enabled engine
@@ -56,13 +58,15 @@ jobs:
           FOXIDE_LIBMPV: /usr/lib/x86_64-linux-gnu/libmpv.so.2
         run: |
           cargo llvm-cov --workspace --features player-ui/desktop,player-render/gpu-integration,player-render/video-site-integration --locked --no-report -- --ignored native:: --nocapture --test-threads=1
+      - name: Verify audio waveform compositor in its own process
+        run: xvfb-run -a -s '-screen 0 1280x720x24' cargo test -p player-render --features gpu-integration --lib --locked audio_visualization_renders_changing_waveform_pixels -- --ignored --nocapture
       - name: Verify compositor with the same features without instrumentation
         shell: bash
         run: |
           set -o pipefail
           set +e
           for trial in {1..12}; do
-            xvfb-run -a -s '-screen 0 1280x720x24' cargo test --workspace --features player-ui/desktop,player-render/gpu-integration --locked -- --ignored --nocapture --test-threads=1 > "results/local/video-normal-$trial.log" 2>&1
+            xvfb-run -a -s '-screen 0 1280x720x24' cargo test --workspace --features player-ui/desktop,player-render/gpu-integration --locked -- --ignored --nocapture --test-threads=1 --skip audio_visualization_renders_changing_waveform_pixels > "results/local/video-normal-$trial.log" 2>&1
             status=$?
             echo "Compositor trial $trial: exit $status"
             cat "results/local/video-normal-$trial.log"
@@ -80,7 +84,9 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          xvfb-run -a -s '-screen 0 1280x720x24' cargo llvm-cov --workspace --features player-ui/desktop,player-render/gpu-integration --locked --no-report -- --ignored --nocapture --test-threads=1 2>&1 | tee results/local/video-regression.log
+          xvfb-run -a -s '-screen 0 1280x720x24' cargo llvm-cov --workspace --features player-ui/desktop,player-render/gpu-integration --locked --no-report -- --ignored --nocapture --test-threads=1 --skip audio_visualization_renders_changing_waveform_pixels 2>&1 | tee results/local/video-regression.log
+      - name: Capture audio waveform compositor coverage in its own process
+        run: xvfb-run -a -s '-screen 0 1280x720x24' cargo llvm-cov -p player-render --features player-render/gpu-integration --lib --locked --no-report -- --ignored --nocapture audio_visualization_renders_changing_waveform_pixels
       - name: Exercise real desktop startup, shutdown and preview entry points under coverage
         shell: bash
         run: |
