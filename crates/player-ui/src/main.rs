@@ -1483,6 +1483,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let session_for_refresh = media_session.clone();
         let media_attach_retry = Rc::new(RefCell::new(system_media::AttachRetry::default()));
         let retry_for_refresh = media_attach_retry.clone();
+        let media_attach_error = Rc::new(RefCell::new(None::<String>));
+        let error_for_refresh = media_attach_error.clone();
         let generation_for_refresh = preview_generation.clone();
         ui.on_native_snapshot_ready(move || {
             if let Some(ui) = weak.upgrade() {
@@ -1506,13 +1508,37 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             Ok(system_media::AttachOutcome::Attached(session)) => {
                                 *session_for_refresh.borrow_mut() = Some(session);
                                 retry_for_refresh.borrow_mut().finish();
+                                error_for_refresh.borrow_mut().take();
                             }
                             Ok(system_media::AttachOutcome::RetryableNotReady) => {}
+                            Ok(system_media::AttachOutcome::RetryableFailure(error)) => {
+                                let mut last_error = error_for_refresh.borrow_mut();
+                                if last_error.as_deref() != Some(error.as_str()) {
+                                    ui.set_status(
+                                        format!("System media controls unavailable: {error}").into(),
+                                    );
+                                    *last_error = Some(error);
+                                }
+                            }
+                            Ok(system_media::AttachOutcome::PermanentFailure(error)) => {
+                                retry_for_refresh.borrow_mut().finish();
+                                let mut last_error = error_for_refresh.borrow_mut();
+                                if last_error.as_deref() != Some(error.as_str()) {
+                                    ui.set_status(
+                                        format!("System media controls unavailable: {error}").into(),
+                                    );
+                                    *last_error = Some(error);
+                                }
+                            }
                             Err(error) => {
                                 retry_for_refresh.borrow_mut().finish();
-                                ui.set_status(
-                                    format!("System media controls unavailable: {error}").into(),
-                                );
+                                let mut last_error = error_for_refresh.borrow_mut();
+                                if last_error.as_deref() != Some(error.as_str()) {
+                                    ui.set_status(
+                                        format!("System media controls unavailable: {error}").into(),
+                                    );
+                                    *last_error = Some(error);
+                                }
                             }
                         }
                     }
