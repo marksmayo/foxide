@@ -7,7 +7,7 @@ use cadence_window::CadenceWindow;
 use slint::ComponentHandle;
 use std::{
     cell::RefCell,
-    collections::HashSet,
+    collections::{HashMap, HashSet},
     hash::{Hash, Hasher},
     rc::Rc,
     time::{Duration, Instant},
@@ -23,11 +23,13 @@ slint::slint! {
         Rectangle {
             clip: root.clip-video;
             border-radius: 12px;
-            Image { source: root.frame; image-fit: fill; }
+            // Leave the right side uncovered so preview pixels can be
+            // distinguished from the main video beneath them.
+            Image { source: root.frame; width: 180px; height: 180px; image-fit: fill; }
         }
         if (root.thumbnail-available): Image {
             source: root.thumbnail-frame;
-            x: 8px; y: 8px; width: 128px; height: 72px;
+            x: 192px; y: 8px; width: 120px; height: 68px;
             image-fit: contain;
         }
     }
@@ -88,6 +90,8 @@ struct Samples {
     summaries: Vec<String>,
     colors: Vec<[u8; 6]>,
     read_errors: Vec<u32>,
+    thumbnail_frames: HashMap<u64, u64>,
+    thumbnail_pixels: Vec<[u8; 6]>,
     upright: usize,
     inverted: usize,
     frames: HashSet<u64>,
@@ -109,6 +113,7 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
     let thumbnails = Arc::new(crate::ThumbnailController::new());
     let samples = Rc::new(RefCell::new(Samples::default()));
     let ready_buckets = Rc::new(RefCell::new(HashSet::<u64>::new()));
+    let displayed_bucket = Rc::new(std::cell::Cell::new(None::<u64>));
     let second_requested = Rc::new(std::cell::Cell::new(false));
     let graphics = Rc::new(RefCell::new(None::<glow::Context>));
     let started = Instant::now();
@@ -121,6 +126,7 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
     let load_engine = engine.clone();
     let observer_thumbnails = thumbnails.clone();
     let observer_buckets = ready_buckets.clone();
+    let observer_displayed_bucket = displayed_bucket.clone();
     let observer_second_requested = second_requested.clone();
     let observer_fixture = fixture.clone();
     attach_inner(
@@ -145,6 +151,7 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
             let weak = ui.as_weak();
             let controller = thumbnails.clone();
             let buckets = ready_buckets.clone();
+            let displayed = displayed_bucket.clone();
             move |frame, available| {
                 if let Some(w) = weak.upgrade() {
                     w.set_thumbnail_frame(frame.clone());
@@ -152,12 +159,16 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
                 }
                 if available {
                     if let Some(request) = controller.current_request() {
-                        buckets
-                            .borrow_mut()
-                            .insert((request.position / 2.0).floor() as u64);
+                        let bucket = (request.position / 2.0).floor() as u64;
+                        displayed.set(Some(bucket));
+                        buckets.borrow_mut().insert(bucket);
+                    } else {
+                        displayed.set(None);
                     }
                     assert_eq!(frame.size().width, 256);
                     assert_eq!(frame.size().height, 144);
+                } else {
+                    displayed.set(None);
                 }
             }
         },
@@ -243,13 +254,13 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
                     );
                     gl.bind_framebuffer(glow::READ_FRAMEBUFFER, previous);
                 }
-                let pixel = |y: u32| {
-                    let i = ((y * size.width + size.width / 2) * 4) as usize;
+                let pixel = |x: u32, y: u32| {
+                    let i = ((y * size.width + x) * 4) as usize;
                     &pixels[i..i + 3]
                 };
                 // OpenGL readback row zero is the bottom of the final window.
-                let top = pixel(size.height * 7 / 8);
-                let bottom = pixel(size.height / 8);
+                let top = pixel(size.width / 4, size.height * 7 / 8);
+                let bottom = pixel(size.width / 4, size.height / 8);
                 let red = |p: &[u8]| p[0] > 150 && p[1] < 80 && p[2] < 80;
                 let blue = |p: &[u8]| p[2] > 150 && p[0] < 80 && p[1] < 80;
                 let mut samples = observations.borrow_mut();
@@ -278,6 +289,37 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
                     samples
                         .colors
                         .push([top[0], top[1], top[2], bottom[0], bottom[1], bottom[2]]);
+                }
+                if w.get_thumbnail_available() {
+                    // The preview sits on the lime background, outside the
+                    // main video rectangle. Red-over-blue pixels prove that
+                    // the decoded frame was uploaded and composited.
+                    let preview_top = pixel(200, size.height - 20);
+                    let preview_bottom = pixel(200, size.height - 67);
+                    if let Some(bucket) = observer_displayed_bucket.get() {
+                        let mut frame_hash = std::hash::DefaultHasher::new();
+                        for ui_y in 8..76 {
+                            let read_y = size.height - 1 - ui_y;
+                            for x in 192..312 {
+                                let i = ((read_y * size.width + x) * 4) as usize;
+                                pixels[i..i + 3].hash(&mut frame_hash);
+                            }
+                        }
+                        samples
+                            .thumbnail_frames
+                            .entry(bucket)
+                            .or_insert_with(|| frame_hash.finish());
+                    }
+                    if samples.thumbnail_pixels.len() < 8 {
+                        samples.thumbnail_pixels.push([
+                            preview_top[0],
+                            preview_top[1],
+                            preview_top[2],
+                            preview_bottom[0],
+                            preview_bottom[1],
+                            preview_bottom[2],
+                        ]);
+                    }
                 }
                 // SAFETY: the observer still runs with the same GL context current.
                 let read_error = unsafe { gl.get_error() };
@@ -338,6 +380,14 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
         samples.presentations, samples.colors, samples.read_errors
     );
     println!("[video-probe] summaries={:?}", samples.summaries);
+    println!(
+        "[video-probe] thumbnail_frames={:?}",
+        samples.thumbnail_frames
+    );
+    println!(
+        "[video-probe] thumbnail_pixels={:?}",
+        samples.thumbnail_pixels
+    );
     println!(
         "upright={}, inverted={}, unique_composited_frames={}, errors={:?}",
         samples.upright,
@@ -400,5 +450,25 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
     assert!(
         buckets.contains(&2),
         "second hover preview did not use another cache slot"
+    );
+    assert!(
+        samples.thumbnail_pixels.iter().any(|pixels| {
+            pixels[0] > 150
+                && pixels[1] < 80
+                && pixels[2] < 80
+                && pixels[5] > 150
+                && pixels[3] < 80
+                && pixels[4] < 80
+        }),
+        "the real-media thumbnail did not composite its red-over-blue fixture pixels"
+    );
+    assert!(
+        samples.thumbnail_frames.contains_key(&1) && samples.thumbnail_frames.contains_key(&2),
+        "real-media pixels were not captured for both requested time buckets"
+    );
+    assert_ne!(
+        samples.thumbnail_frames.get(&1),
+        samples.thumbnail_frames.get(&2),
+        "hovering at different time buckets reused the same composited thumbnail frame"
     );
 }
