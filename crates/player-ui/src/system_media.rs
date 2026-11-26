@@ -257,7 +257,9 @@ mod tests {
     #[test]
     fn unavailable_media_service_is_retryable_but_invalid_configuration_is_not() {
         assert!(matches!(
-            super::classify_attach_error(playwire::Error::Unavailable("session bus not ready".into())),
+            super::classify_attach_error(playwire::Error::Unavailable(
+                "session bus not ready".into()
+            )),
             super::AttachFailure::Retryable(_)
         ));
         assert!(matches!(
