@@ -1,6 +1,6 @@
 use crate::{
     HttpClient,
-    process::{RunLimits, run_bounded, trusted_executable},
+    process::{RunLimits, run_bounded, run_bounded_with_input, trusted_executable},
     public_http_url,
 };
 use std::{
@@ -180,4 +180,108 @@ impl HttpClient for CurlClient {
         run_bounded(&self.executable, &args, RunLimits::default(), cancel)
             .map(|result| result.stdout)
     }
+
+    fn get_with_headers(
+        &self,
+        url: &Url,
+        headers: &[(&str, &str)],
+        cancel: &AtomicBool,
+    ) -> Result<Vec<u8>, String> {
+        authenticated_request(self, url, headers, None, cancel)
+    }
+
+    fn post_json(
+        &self,
+        url: &Url,
+        headers: &[(&str, &str)],
+        body: &[u8],
+        cancel: &AtomicBool,
+    ) -> Result<Vec<u8>, String> {
+        if body.is_empty() || body.len() > 64 * 1024 || !std::str::from_utf8(body).is_ok() {
+            return Err("Invalid JSON request body".into());
+        }
+        authenticated_request(self, url, headers, Some(body), cancel)
+    }
 }
+
+fn authenticated_request(
+    client: &CurlClient,
+    url: &Url,
+    headers: &[(&str, &str)],
+    body: Option<&[u8]>,
+    cancel: &AtomicBool,
+) -> Result<Vec<u8>, String> {
+    if url.scheme() != "https"
+        || url.host_str().is_none()
+        || !url.username().is_empty()
+        || url.password().is_some()
+        || headers.len() > 8
+    {
+        return Err("Authenticated subtitle requests require a credential-free HTTPS URL".into());
+    }
+    let mut config = String::new();
+    for (name, value) in headers {
+        if name.is_empty()
+            || name.len() > 64
+            || value.len() > 512
+            || !name
+                .bytes()
+                .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
+            || value.bytes().any(|byte| byte.is_ascii_control())
+        {
+            return Err("Invalid HTTP header".into());
+        }
+        let escaped = value.replace('\\', "\\\\").replace('"', "\\\"");
+        config.push_str(&format!("header = \"{name}: {escaped}\"\n"));
+    }
+    let mut args: Vec<std::ffi::OsString> = [
+        "--disable",
+        "--silent",
+        "--show-error",
+        "--fail",
+        "--globoff",
+        "--location",
+        "--max-redirs",
+        "3",
+        "--proto",
+        "=https",
+        "--proto-redir",
+        "=https",
+        "--tlsv1.2",
+        "--connect-timeout",
+        "5",
+        "--max-time",
+        "20",
+        "--max-filesize",
+        "2097152",
+        "--user-agent",
+        "Foxide/0.0.1",
+        "--config",
+        "-",
+        "--output",
+        "-",
+    ]
+    .into_iter()
+    .map(Into::into)
+    .collect();
+    if let Some(body) = body {
+        args.push("--data-binary".into());
+        args.push(std::ffi::OsString::from(
+            String::from_utf8_lossy(body).into_owned(),
+        ));
+    }
+    args.extend(["--url".into(), url.as_str().into()]);
+    run_bounded_with_input(
+        &client.executable,
+        &args,
+        RunLimits {
+            timeout: std::time::Duration::from_secs(25),
+            stdout: 2 * 1024 * 1024,
+            stderr: 8192,
+        },
+        cancel,
+        Some(config.as_bytes()),
+    )
+    .map(|result| result.stdout)
+}
+
