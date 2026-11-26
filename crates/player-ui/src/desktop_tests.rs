@@ -35,7 +35,7 @@ use slint::{
 };
 
 struct TestPlatform(
-    Rc<MinimalSoftwareWindow>,
+    Rc<RefCell<Vec<Rc<MinimalSoftwareWindow>>>>,
     std::sync::mpsc::Sender<Box<dyn FnOnce() + Send>>,
 );
 struct TestProxy(std::sync::mpsc::Sender<Box<dyn FnOnce() + Send>>);
@@ -57,7 +57,9 @@ impl Platform for TestPlatform {
         Some(Box::new(TestProxy(self.1.clone())))
     }
     fn create_window_adapter(&self) -> Result<Rc<dyn WindowAdapter>, slint::PlatformError> {
-        Ok(self.0.clone())
+        let window = MinimalSoftwareWindow::new(RepaintBufferType::NewBuffer);
+        self.0.borrow_mut().push(window.clone());
+        Ok(window)
     }
 }
 
@@ -89,14 +91,15 @@ fn capture_customization(ui: &PlayerWindow, window: &MinimalSoftwareWindow, name
 
 #[test]
 fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
-    let rendered_window = MinimalSoftwareWindow::new(RepaintBufferType::NewBuffer);
+    let rendered_windows = Rc::new(RefCell::new(Vec::new()));
     let (event_sender, event_receiver) = std::sync::mpsc::channel();
     slint::platform::set_platform(Box::new(TestPlatform(
-        rendered_window.clone(),
+        rendered_windows.clone(),
         event_sender,
     )))
     .unwrap();
     let ui = PlayerWindow::new().unwrap();
+    let rendered_window = rendered_windows.borrow()[0].clone();
     let thumbnails = player_render::ThumbnailController::new();
     let video = Snapshot {
         loaded: true,
@@ -213,14 +216,111 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
     );
     ui.set_panel("".into());
     let state = Rc::new(RefCell::new(UiState::default()));
-    install_controls(&ui, &state, &None);
+    state.borrow_mut().loaded = true;
+    let pip_window = install_controls(&ui, &state, &None);
     ui.set_loaded(true);
     ui.set_has_video(true);
+    ui.set_media_title("Parallax.mkv".into());
+    ui.set_paused(true);
+    ui.set_status("Paused".into());
+    let mut initial_pixels = slint::SharedPixelBuffer::<slint::Rgb8Pixel>::new(8, 8);
+    initial_pixels
+        .make_mut_slice()
+        .fill(slint::Rgb8Pixel { r: 255, g: 0, b: 0 });
+    let initial_frame = slint::Image::from_rgb8(initial_pixels);
+    ui.set_video_frame(initial_frame.clone());
     ui.invoke_action("picture-in-picture".into(), 0.0);
-    assert!(ui.get_picture_in_picture());
-    assert_eq!(ui.window().size(), slint::PhysicalSize::new(520, 350));
+    assert!(
+        !ui.get_picture_in_picture(),
+        "The main window remains in normal mode"
+    );
+    assert_eq!(ui.window().size(), slint::PhysicalSize::new(1180, 770));
+    assert!(ui.get_pip_active());
+    assert!(
+        pip_window
+            .borrow()
+            .as_ref()
+            .is_some_and(PlayerWindow::get_picture_in_picture)
+    );
+    publish_frame_to_picture_in_picture(initial_frame.clone(), &pip_window);
+    {
+        let pip_guard = pip_window.borrow();
+        let pip = pip_guard.as_ref().unwrap();
+        assert_eq!(pip.get_video_frame(), initial_frame);
+        let pip_rendered_window = rendered_windows.borrow()[1].clone();
+        let pip_size = pip.window().size();
+        let mut pip_pixels =
+            vec![slint::Rgb8Pixel::default(); (pip_size.width * pip_size.height) as usize];
+        pip.window().request_redraw();
+        pip_rendered_window.draw_if_needed(|renderer| {
+            renderer.render(&mut pip_pixels, pip_size.width as usize);
+        });
+        let pip_red_pixels = pip_pixels
+            .iter()
+            .filter(|pixel| pixel.r > 240 && pixel.g < 10 && pixel.b < 10)
+            .count();
+        assert!(
+            pip_red_pixels > 20_000,
+            "Separate-window PiP must composite its copied video frame: {pip_red_pixels} red pixels"
+        );
+    }
+    {
+        let pip = pip_window.borrow();
+        let pip = pip.as_ref().unwrap();
+        assert_eq!(pip.get_media_title(), "Parallax.mkv");
+        assert!(pip.get_paused());
+        assert_eq!(pip.get_status(), "Paused");
+        pip.invoke_action("pause".into(), 0.0);
+    }
+    assert_ne!(
+        ui.get_status(),
+        "Paused",
+        "PiP pause reaches the main player action handler"
+    );
+    ui.set_media_title("Second track.mkv".into());
+    ui.set_paused(false);
+    ui.set_status("Playing".into());
+    {
+        let pip = pip_window.borrow();
+        let pip = pip.as_ref().unwrap();
+        copy_picture_in_picture_state(&ui, pip);
+        assert_eq!(pip.get_media_title(), "Second track.mkv");
+        assert!(!pip.get_paused());
+        assert_eq!(pip.get_status(), "Playing");
+    }
+    let next_frame = slint::Image::from_rgba8(slint::SharedPixelBuffer::new(4, 3));
+    publish_frame_to_picture_in_picture(next_frame.clone(), &pip_window);
+    assert_eq!(
+        pip_window.borrow().as_ref().unwrap().get_video_frame(),
+        next_frame
+    );
     ui.invoke_action("picture-in-picture".into(), 0.0);
-    assert!(!ui.get_picture_in_picture());
+    assert!(!ui.get_pip_active());
+    assert!(
+        pip_window
+            .borrow()
+            .as_ref()
+            .is_some_and(|pip| !pip.window().is_visible())
+    );
+    ui.invoke_action("picture-in-picture".into(), 0.0);
+    assert!(
+        pip_window
+            .borrow()
+            .as_ref()
+            .is_some_and(|pip| pip.window().is_visible())
+    );
+    pip_window
+        .borrow()
+        .as_ref()
+        .unwrap()
+        .invoke_action("picture-in-picture".into(), 0.0);
+    assert!(!ui.get_pip_active());
+    assert!(
+        pip_window
+            .borrow()
+            .as_ref()
+            .is_some_and(|pip| !pip.window().is_visible())
+    );
     assert_eq!(ui.window().size(), slint::PhysicalSize::new(1180, 770));
     ui.set_loaded(false);
     ui.set_has_video(false);
