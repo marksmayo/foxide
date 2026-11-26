@@ -91,7 +91,7 @@
       "name": "Touch or trackpad playback gestures",
       "group": "Interface",
       "stage": "in_progress",
-      "acceptance": "The desktop video surface maps horizontal trackpad scrolling and horizontal touch drags to bounded relative seeks, and vertical scrolling/drags to volume. The software-window UI test covers 31px/32px drag thresholds, seek direction and ±15s clamps, volume 0–100 clamps, trackpad scrolling, and disabled playback state. Physical trackpad/touchscreen validation remains before acceptance; no feature medal is claimed."
+      "acceptance": "The desktop video surface maps horizontal trackpad scrolling and horizontal touch drags to bounded relative seeks, and vertical scrolling/drags to volume. The software-window UI test covers 31px/32px drag thresholds, seek direction and ±15s clamps, volume 0–100 clamps, trackpad scrolling, and disabled playback state. Physical trackpad/touchscreen validation remains before acceptance; no feature medal is claimed. A Windows development-build smoke on 2026-11-26 loaded a generated H.264 clip: a 40 px horizontal drag from 0 s moved playback to 2 s; a 40 px downward drag changed volume 100→95; injected horizontal scrolling moved 2.97→1.97 s, and vertical scrolling changed volume 95→97.5. These were software mouse/scroll injections, not physical trackpad or touchscreen tests; those remain pending."
     },
     {
       "id": "system_media_controls",
