@@ -240,12 +240,7 @@ fn authenticated_request(
         "--show-error",
         "--fail",
         "--globoff",
-        "--location",
-        "--max-redirs",
-        "3",
         "--proto",
-        "=https",
-        "--proto-redir",
         "=https",
         "--tlsv1.2",
         "--connect-timeout",
@@ -283,5 +278,60 @@ fn authenticated_request(
         Some(config.as_bytes()),
     )
     .map(|result| result.stdout)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::CurlClient;
+    use crate::HttpClient;
+    use std::{path::PathBuf, sync::atomic::AtomicBool};
+
+    struct Scratch(PathBuf);
+
+    impl Drop for Scratch {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
+    #[test]
+    fn authenticated_redirect_does_not_forward_api_key() {
+        let root = std::env::temp_dir().join(format!(
+            "foxide-auth-redirect-test-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir(&root).unwrap();
+        let _scratch = Scratch(root.clone());
+        let executable = root.join(if cfg!(windows) {
+            "curl-fixture.exe"
+        } else {
+            "curl-fixture"
+        });
+        let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures/authenticated_redirect_curl.rs");
+        let compiled =
+            std::process::Command::new(std::env::var_os("RUSTC").unwrap_or_else(|| "rustc".into()))
+                .arg(fixture)
+                .arg("-o")
+                .arg(&executable)
+                .status()
+                .unwrap();
+        assert!(compiled.success());
+
+        let key = "secret-test-api-key";
+        let url = url::Url::parse("https://api.example.test/search?case=redirect-test").unwrap();
+        let client = CurlClient::new(&executable).unwrap();
+        let result = client.get_with_headers(&url, &[("Api-Key", key)], &AtomicBool::new(false));
+
+        assert!(result.is_err(), "a redirect response must be rejected");
+        assert!(
+            !result.unwrap_err().contains(key),
+            "the API key must not be forwarded to a redirected host"
+        );
+    }
 }
 
