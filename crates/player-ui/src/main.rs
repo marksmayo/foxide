@@ -139,25 +139,7 @@ fn update_queue(ui: &PlayerWindow, state: &UiState) {
 }
 
 fn dispatch_action(state: &mut UiState, action: Action) -> Vec<Effect> {
-    let clear_visualization = state.audio_visualization
-        && match &action {
-            Action::Open(_) | Action::Stop => true,
-            Action::Next => state
-                .selected
-                .checked_add(1)
-                .is_some_and(|next| next < state.playlist.len()),
-            Action::Previous => state.selected > 0,
-            Action::Select(index) => *index < state.playlist.len(),
-            _ => false,
-        };
-    let mut effects = state.dispatch(action);
-    if clear_visualization {
-        effects.insert(
-            0,
-            Effect::Engine(vec!["set".into(), "lavfi-complex".into(), String::new()]),
-        );
-    }
-    effects
+    state.dispatch(action)
 }
 
 fn dispatch(

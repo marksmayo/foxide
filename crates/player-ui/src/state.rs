@@ -186,16 +186,23 @@ impl UiState {
     pub fn dispatch(&mut self, action: Action) -> Vec<Effect> {
         match action {
             Action::Open(files) => {
+                let clear_visualization = self.audio_visualization;
                 self.audio_visualization = false;
                 self.playlist = files;
                 self.selected = 0;
                 self.loaded = false;
-                self.playlist
-                    .first()
-                    .cloned()
-                    .map(Effect::Load)
-                    .into_iter()
+                let load = self.playlist.first().cloned().map(Effect::Load).into_iter();
+                if clear_visualization {
+                    std::iter::once(Effect::Engine(vec![
+                        "set".into(),
+                        "lavfi-complex".into(),
+                        String::new(),
+                    ]))
+                    .chain(load)
                     .collect()
+                } else {
+                    load.collect()
+                }
             }
             Action::TogglePause if self.loaded => vec![Effect::Pause(!self.paused)],
             Action::SetPaused(paused) if self.loaded => {
@@ -236,8 +243,15 @@ impl UiState {
             Action::Stop => {
                 self.loaded = false;
                 self.paused = false;
-                self.audio_visualization = false;
-                vec![Effect::Stop]
+                if self.audio_visualization {
+                    self.audio_visualization = false;
+                    vec![
+                        Effect::Engine(vec!["set".into(), "lavfi-complex".into(), "".into()]),
+                        Effect::Stop,
+                    ]
+                } else {
+                    vec![Effect::Stop]
+                }
             }
             Action::Quit => vec![Effect::Quit],
             Action::Playback(control) if self.loaded => {
@@ -272,10 +286,18 @@ impl UiState {
     }
 
     fn select(&mut self, index: usize) -> Vec<Effect> {
+        let clear_visualization = self.audio_visualization;
         self.audio_visualization = false;
         self.selected = index;
         self.loaded = false;
-        vec![Effect::Load(self.playlist[index].clone())]
+        if clear_visualization {
+            vec![
+                Effect::Engine(vec!["set".into(), "lavfi-complex".into(), "".into()]),
+                Effect::Load(self.playlist[index].clone()),
+            ]
+        } else {
+            vec![Effect::Load(self.playlist[index].clone())]
+        }
     }
 }
 
@@ -357,7 +379,50 @@ mod tests {
 
         assert_eq!(
             state.dispatch(Action::Next),
-            [Effect::Load("second.flac".into())]
+            [
+                Effect::Engine(vec!["set".into(), "lavfi-complex".into(), "".into()]),
+                Effect::Load("second.flac".into()),
+            ]
+        );
+        assert!(!state.audio_visualization);
+        assert!(!state.loaded);
+    }
+
+    #[test]
+    fn stopping_clears_the_active_visualization_filter_before_stopping() {
+        let mut state = UiState::default();
+        state.confirm_loaded(12.0);
+        state.dispatch(Action::SetAudioVisualization {
+            enabled: true,
+            audio_track_id: 1,
+        });
+
+        assert_eq!(
+            state.dispatch(Action::Stop),
+            [
+                Effect::Engine(vec!["set".into(), "lavfi-complex".into(), "".into()]),
+                Effect::Stop,
+            ]
+        );
+        assert!(!state.audio_visualization);
+        assert!(!state.loaded);
+    }
+
+    #[test]
+    fn opening_a_new_queue_clears_the_active_visualization_filter_before_loading() {
+        let mut state = UiState::default();
+        state.confirm_loaded(12.0);
+        state.dispatch(Action::SetAudioVisualization {
+            enabled: true,
+            audio_track_id: 1,
+        });
+
+        assert_eq!(
+            state.dispatch(Action::Open(vec!["replacement.flac".into()])),
+            [
+                Effect::Engine(vec!["set".into(), "lavfi-complex".into(), "".into()]),
+                Effect::Load("replacement.flac".into()),
+            ]
         );
         assert!(!state.audio_visualization);
         assert!(!state.loaded);
