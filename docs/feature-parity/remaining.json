@@ -56,7 +56,7 @@
       "name": "Search and download subtitles",
       "group": "Subtitles",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #41 at head 6799258: a desktop Subtitles dialog searches OpenSubtitles by language, downloads validated SRT/ASS/SSA/WebVTT beside the current local media, and adds it to playback. The API key stays in session memory; provider requests and downloads are bounded, cancellable, HTTPS-only, and validate result IDs, filenames, and content. Red/green provider tests and a desktop search→download→playback callback test passed locally; subtitle-module coverage is 96.54% lines and 100% functions, and strict workspace Clippy passed. Exact-head hosted checks are running. Live account/provider behavior and visible playback against a real media file remain pending; no medal is claimed."
+      "acceptance": "Implementation is in draft PR #41 at head 146ff10: a desktop Subtitles dialog searches OpenSubtitles by language, downloads validated SRT/ASS/SSA/WebVTT beside the current local media, and adds it to playback. The API key stays in session memory; provider requests and downloads are bounded, cancellable, and HTTPS-only. Authenticated curl calls no longer follow redirects, and the regression test proved RED with redirect-following enabled and GREEN after removal, preventing API-key forwarding; unauthenticated subtitle-file downloads retain redirect handling. Provider and desktop callback tests, 96.54% subtitle-module line coverage, 100% function coverage, and strict workspace Clippy passed locally. Exact-head hosted checks are queued/running. Live account/provider behavior and visible playback against a real media file remain pending; no medal is claimed."
     },
     {
       "id": "youtube_urls",
