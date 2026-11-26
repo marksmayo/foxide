@@ -10,6 +10,9 @@ serde_json.workspace = true
 semver.workspace = true
 sha2.workspace = true
 url = "=2.5.8"
+roxmltree = "=0.21.2"
+percent-encoding = "=2.3.2"
+zeroize = "=1.9.1"
 
 [lints]
 workspace = true

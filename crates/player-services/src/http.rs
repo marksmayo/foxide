@@ -1,6 +1,6 @@
 use crate::{
-    HttpClient,
-    process::{RunLimits, run_bounded, trusted_executable},
+    HttpClient, WebDavCredentials,
+    process::{RunLimits, run_bounded, run_bounded_with_input, trusted_executable},
     public_http_url,
 };
 use std::{
@@ -179,5 +179,110 @@ impl HttpClient for CurlClient {
         args.extend(["--url".into(), url.as_str().into()]);
         run_bounded(&self.executable, &args, RunLimits::default(), cancel)
             .map(|result| result.stdout)
+    }
+
+    fn propfind(&self, url: &Url, body: &[u8], cancel: &AtomicBool) -> Result<Vec<u8>, String> {
+        self.propfind_authenticated(url, body, None, cancel)
+    }
+
+    fn propfind_authenticated(
+        &self,
+        url: &Url,
+        body: &[u8],
+        credentials: Option<&WebDavCredentials>,
+        cancel: &AtomicBool,
+    ) -> Result<Vec<u8>, String> {
+        public_http_url(url.as_str())?;
+        if credentials.is_some() && url.scheme() != "https" && !is_loopback(url) {
+            return Err("Use HTTPS before sending WebDAV credentials".into());
+        }
+        if body.len() > 4096 {
+            return Err("WebDAV request is too large".into());
+        }
+        let body = std::str::from_utf8(body).map_err(|_| "WebDAV request must be UTF-8")?;
+        let mut args: Vec<std::ffi::OsString> = [
+            "--disable",
+            "--silent",
+            "--show-error",
+            "--fail",
+            "--globoff",
+            "--location",
+            "--max-redirs",
+            "3",
+            "--proto",
+            "=http,https",
+            "--proto-redir",
+            "=https",
+            "--tlsv1.2",
+            "--connect-timeout",
+            "5",
+            "--max-time",
+            "15",
+            "--max-filesize",
+            "2097152",
+            "--user-agent",
+            "Foxide/0.0.1",
+            "--config",
+            "-",
+            "--request",
+            "PROPFIND",
+            "--header",
+            "Depth: 1",
+            "--header",
+            "Content-Type: application/xml; charset=utf-8",
+        ]
+        .into_iter()
+        .map(Into::into)
+        .collect();
+        args.extend([
+            "--data-binary".into(),
+            std::ffi::OsString::from(body),
+            "--output".into(),
+            "-".into(),
+            "--url".into(),
+            url.as_str().into(),
+        ]);
+        let config = credentials.map(curl_credentials_config).unwrap_or_default();
+        let input = (!config.is_empty()).then_some(config.as_bytes());
+        if is_loopback(url) {
+            args.extend(["--noproxy".into(), "*".into()]);
+        }
+        run_bounded_with_input(&self.executable, &args, RunLimits::default(), cancel, input)
+            .map(|result| result.stdout)
+    }
+}
+
+fn is_loopback(url: &Url) -> bool {
+    match url.host() {
+        Some(url::Host::Domain("localhost")) => true,
+        Some(url::Host::Ipv4(ip)) => ip.is_loopback(),
+        Some(url::Host::Ipv6(ip)) => ip.is_loopback(),
+        _ => false,
+    }
+}
+
+fn curl_credentials_config(credentials: &WebDavCredentials) -> String {
+    fn quote(value: &str) -> String {
+        value.replace('\\', "\\\\").replace('"', "\\\"")
+    }
+    format!(
+        "user = \"{}:{}\"\n",
+        quote(credentials.username()),
+        quote(credentials.password())
+    )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::curl_credentials_config;
+    use crate::WebDavCredentials;
+
+    #[test]
+    fn curl_auth_config_escapes_quotes_and_backslashes() {
+        let credentials = WebDavCredentials::new("media\"user", "back\\slash\"pass").unwrap();
+        assert_eq!(
+            curl_credentials_config(&credentials),
+            "user = \"media\\\"user:back\\\\slash\\\"pass\"\n"
+        );
     }
 }

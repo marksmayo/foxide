@@ -293,8 +293,8 @@
       "id": "webdav_browse",
       "name": "Browse WebDAV media shares",
       "group": "Network",
-      "stage": "queued",
-      "acceptance": "Needs a credentialed WebDAV client, safe XML/path handling and server fixtures."
+      "stage": "in_progress",
+      "acceptance": "A desktop Browse WebDAV panel accepts one collection URL, optionally uses ephemeral credentials, lists direct children asynchronously, and opens selected media through the existing player path. The bounded Depth: 1 PROPFIND client and namespace-aware multistatus parser reject cross-origin, parent, nested, credential-bearing and encoded-separator links. Credentials are passed through a bounded stdin config, zeroized on drop, cleared when the panel closes, and refused over remote plain HTTP. Service tests use a local authenticated server fixture; a software-rendered UI test verifies listing, invalid URL feedback, playback selection and out-of-collection rejection. Hosted cross-platform checks and real WebDAV-server interaction are pending; no feature medal is claimed."
     },
     {
       "id": "nfs_browse",

@@ -1,4 +1,4 @@
-use player_services::{CurlClient, HttpClient};
+use player_services::{CurlClient, HttpClient, Url, WebDavCredentials};
 use std::{
     io::{Read, Write},
     net::TcpListener,
@@ -131,4 +131,90 @@ fn system_http_client_downloads_a_bounded_file_and_cleans_up_oversized_responses
     assert!(large_result.is_err());
     assert!(!large.exists());
     std::fs::remove_dir_all(directory).unwrap();
+}
+
+#[test]
+fn webdav_authentication_uses_stdin_config_and_sends_a_bounded_propfind() {
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    listener.set_nonblocking(true).unwrap();
+    let address = listener.local_addr().unwrap();
+    let worker = std::thread::spawn(move || {
+        let deadline = Instant::now() + Duration::from_secs(10);
+        loop {
+            assert!(Instant::now() < deadline, "curl did not connect");
+            if let Ok((mut stream, _)) = listener.accept() {
+                stream.set_nonblocking(false).unwrap();
+                stream
+                    .set_read_timeout(Some(Duration::from_secs(5)))
+                    .unwrap();
+                stream
+                    .set_write_timeout(Some(Duration::from_secs(5)))
+                    .unwrap();
+                let mut request = Vec::new();
+                let mut chunk = [0; 512];
+                while !request.windows(4).any(|window| window == b"\r\n\r\n") {
+                    let count = stream.read(&mut chunk).unwrap();
+                    assert!(count > 0, "curl closed before sending headers");
+                    request.extend_from_slice(&chunk[..count]);
+                }
+                let headers_end = request
+                    .windows(4)
+                    .position(|window| window == b"\r\n\r\n")
+                    .unwrap()
+                    + 4;
+                let headers = String::from_utf8_lossy(&request[..headers_end]);
+                assert!(headers.starts_with("PROPFIND /dav/ HTTP/"));
+                assert!(headers.to_ascii_lowercase().contains("depth: 1"));
+                assert!(headers.contains("Authorization: Basic "));
+                let content_length = headers
+                    .lines()
+                    .find_map(|line| {
+                        let (name, value) = line.split_once(':')?;
+                        name.eq_ignore_ascii_case("content-length")
+                            .then(|| value.trim().parse::<usize>().unwrap())
+                    })
+                    .unwrap();
+                while request.len() < headers_end + content_length {
+                    let count = stream.read(&mut chunk).unwrap();
+                    assert!(count > 0, "curl closed before sending the XML body");
+                    request.extend_from_slice(&chunk[..count]);
+                }
+                let body =
+                    String::from_utf8_lossy(&request[headers_end..headers_end + content_length]);
+                assert!(body.contains("<d:propfind"));
+                stream
+                    .write_all(b"HTTP/1.1 207 Multi-Status\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
+                    .unwrap();
+                return;
+            }
+            std::thread::sleep(Duration::from_millis(5));
+        }
+    });
+    let client = CurlClient::system().unwrap();
+    let url = Url::parse(&format!("http://{address}/dav/")).unwrap();
+    let credentials = WebDavCredentials::new("media-user", "secret with spaces").unwrap();
+    let result = client.propfind_authenticated(
+        &url,
+        b"<d:propfind xmlns:d=\"DAV:\"/>",
+        Some(&credentials),
+        &AtomicBool::new(false),
+    );
+    worker.join().unwrap();
+    assert_eq!(result.unwrap(), b"");
+}
+
+#[test]
+fn webdav_client_refuses_to_send_credentials_to_remote_http_hosts() {
+    let client = CurlClient::system().unwrap();
+    let url = Url::parse("http://dav.example.test/dav/").unwrap();
+    let credentials = WebDavCredentials::new("user", "secret").unwrap();
+    let error = client
+        .propfind_authenticated(
+            &url,
+            b"<d:propfind xmlns:d=\"DAV:\"/>",
+            Some(&credentials),
+            &AtomicBool::new(false),
+        )
+        .unwrap_err();
+    assert!(error.contains("Use HTTPS"));
 }

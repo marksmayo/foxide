@@ -1,4 +1,6 @@
-use player_services::process::{RunLimits, run_bounded, trusted_executable};
+use player_services::process::{
+    RunLimits, run_bounded, run_bounded_with_input, trusted_executable,
+};
 use std::{
     ffi::OsString,
     path::PathBuf,
@@ -54,6 +56,16 @@ fn helper_execution_preserves_arguments_and_enforces_failure_limits_and_cancella
     )
     .unwrap();
     assert_eq!(String::from_utf8(output.stdout).unwrap().trim(), literal);
+    let private_config = b"user = \"user:password with spaces\"\n";
+    let output = run_bounded_with_input(
+        &executable,
+        &["stdin".into()],
+        limits,
+        &cancel,
+        Some(private_config),
+    )
+    .unwrap();
+    assert_eq!(output.stdout, private_config);
     let overflow = run_bounded(&executable, &["large".into()], limits, &cancel)
         .err()
         .unwrap();

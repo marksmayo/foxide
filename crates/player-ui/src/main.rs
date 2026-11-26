@@ -1357,6 +1357,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .transpose()?
         .unwrap_or_else(player_services::RadioDirectory::public);
     let _radio = network_ui::install_radio(&ui, Arc::new(network_ui::SystemHttp), radio_api);
+    let _webdav = network_ui::install_webdav(&ui);
     updates_ui::install(&ui);
     let state = Rc::new(RefCell::new(UiState::default()));
     let preview_generation = Rc::new(Cell::new(0));
