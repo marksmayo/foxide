@@ -1305,6 +1305,7 @@ fn toggle_picture_in_picture(
                 .ok_or_else(|| "Picture-in-picture window was not created".to_owned())?;
             copy_picture_in_picture_state(ui, pip);
             pip.show().map_err(|error| error.to_string())?;
+            ui.window().request_redraw();
             *mode.borrow_mut() = next_mode;
             ui.set_pip_active(true);
         }
@@ -1325,7 +1326,6 @@ fn toggle_picture_in_picture(
 fn copy_picture_in_picture_state(source: &PlayerWindow, target: &PlayerWindow) {
     target.set_loaded(source.get_loaded());
     target.set_has_video(source.get_has_video());
-    target.set_video_frame(source.get_video_frame());
     target.set_media_title(source.get_media_title());
     target.set_paused(source.get_paused());
     target.set_status(source.get_status());
@@ -1432,6 +1432,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let weak_size = ui.as_weak();
         let weak_frame = ui.as_weak();
         let frame_pip = pip_window.clone();
+        let pip_enabled = pip_window.clone();
         let weak_error = ui.as_weak();
         let weak_wake = ui.as_weak();
         player_render::attach_with_thumbnails(
@@ -1450,11 +1451,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     })
                     .unwrap_or((1, 1))
             },
-            move |frame| {
+            move || {
+                pip_enabled
+                    .borrow()
+                    .as_ref()
+                    .is_some_and(PlayerWindow::get_picture_in_picture)
+            },
+            move |frame, pip_frame| {
                 if let Some(ui) = weak_frame.upgrade() {
                     ui.set_video_frame(frame.clone());
                 }
-                publish_frame_to_picture_in_picture(frame, &frame_pip);
+                if let Some(frame) = pip_frame {
+                    publish_frame_to_picture_in_picture(frame, &frame_pip);
+                }
             },
             {
                 let weak = ui.as_weak();
@@ -1609,3 +1618,4 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(test)]
 #[path = "desktop_tests.rs"]
 mod tests;
+
