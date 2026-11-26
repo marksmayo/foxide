@@ -1328,7 +1328,7 @@ fn changing_episode_identity_cancels_intro_lookup_but_identical_snapshots_keep_i
     };
     let active = begin_intro_lookup(&slot);
 
-    assert!(!cancel_intro_lookup_if_media_changed(
+    assert!(!cancel_intro_lookup_if_context_invalidated(
         &previous, &previous, &slot
     ));
     assert!(!active.load(std::sync::atomic::Ordering::Acquire));
@@ -1337,10 +1337,33 @@ fn changing_episode_identity_cancels_intro_lookup_but_identical_snapshots_keep_i
         episode: "3".into(),
         ..previous.clone()
     };
-    assert!(cancel_intro_lookup_if_media_changed(
+    assert!(cancel_intro_lookup_if_context_invalidated(
         &next_episode,
         &previous,
         &slot
+    ));
+    assert!(active.load(std::sync::atomic::Ordering::Acquire));
+}
+
+#[test]
+fn stopping_playback_cancels_an_intro_lookup_for_the_stopped_episode() {
+    let slot = RefCell::new(None);
+    let previous = Snapshot {
+        loaded: true,
+        path: "episode.mkv".into(),
+        imdb_id: "tt0903747".into(),
+        season: "1".into(),
+        episode: "2".into(),
+        ..Snapshot::default()
+    };
+    let stopped = Snapshot {
+        loaded: false,
+        ..previous.clone()
+    };
+    let active = begin_intro_lookup(&slot);
+
+    assert!(cancel_intro_lookup_if_context_invalidated(
+        &stopped, &previous, &slot
     ));
     assert!(active.load(std::sync::atomic::Ordering::Acquire));
 }

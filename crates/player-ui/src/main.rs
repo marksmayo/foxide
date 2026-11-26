@@ -215,12 +215,13 @@ fn cancel_intro_lookup(slot: &RefCell<Option<Arc<AtomicBool>>>) {
     }
 }
 
-fn cancel_intro_lookup_if_media_changed(
+fn cancel_intro_lookup_if_context_invalidated(
     snapshot: &Snapshot,
     previous: &Snapshot,
     slot: &RefCell<Option<Arc<AtomicBool>>>,
 ) -> bool {
-    let changed = snapshot.path != previous.path
+    let changed = (previous.loaded && !snapshot.loaded)
+        || snapshot.path != previous.path
         || snapshot.imdb_id != previous.imdb_id
         || snapshot.season != previous.season
         || snapshot.episode != previous.episode;
@@ -406,7 +407,7 @@ fn refresh_inner(
         return;
     }
     let media_changed = intro_lookup_cancel
-        .map(|slot| cancel_intro_lookup_if_media_changed(snapshot, previous, slot))
+        .map(|slot| cancel_intro_lookup_if_context_invalidated(snapshot, previous, slot))
         .unwrap_or_else(|| {
             snapshot.path != previous.path
                 || snapshot.imdb_id != previous.imdb_id
