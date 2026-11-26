@@ -376,8 +376,8 @@ export component PlayerWindow inherits Window {
             Rectangle { visible: !root.compact-mode; background: Appearance.canvas;
                 VerticalLayout { padding: root.fullscreen-mode || root.picture-in-picture ? 0px : 20px; spacing: 0px;
                     screen := Rectangle { background: root.loaded ? #080e17 : Appearance.screen; border-radius: 12px; clip: true; vertical-stretch: 1;
-                        Image { source: root.video-frame; width: parent.width; height: parent.height; image-fit: contain; visible: root.loaded && (root.has-video || root.has-artwork); }
-                        if (root.loaded && !root.has-video && !root.has-artwork): VerticalLayout { alignment: center; spacing: 16px;
+                        Image { source: root.video-frame; width: parent.width; height: parent.height; image-fit: contain; visible: root.loaded && (root.has-video || root.has-artwork || root.audio-visualization); }
+                        if (root.loaded && !root.has-video && !root.has-artwork && !root.audio-visualization): VerticalLayout { alignment: center; spacing: 16px;
                             FoxMark { width: 72px; height: 72px; horizontal-stretch: 0; }
                             Text { text: root.media-title == "" ? "Audio playback" : root.media-title; color: Appearance.text; font-size: 20px; horizontal-alignment: center; overflow: elide; }
                         }
@@ -578,3 +578,4 @@ export component PlayerWindow inherits Window {
     }
     }
 }
+
