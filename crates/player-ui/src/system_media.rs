@@ -411,4 +411,140 @@ mod tests {
             ]
         );
     }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    #[ignore = "requires dbus-run-session"]
+    fn mpris_session_publishes_metadata_and_routes_real_dbus_controls() {
+        use super::{SystemMediaSession, command_for_event};
+        use player_ui::system_media_controls::action_for_command;
+        use playwire::{MediaControls, PlayerConfig};
+        use std::{
+            process::Command,
+            sync::mpsc::{Receiver, channel},
+        };
+
+        const BUS: &str = "org.mpris.MediaPlayer2.FoxideMprisCi";
+        const OBJECT: &str = "/org/mpris/MediaPlayer2";
+        const PLAYER: &str = "org.mpris.MediaPlayer2.Player";
+
+        fn call(method: &str, args: &[&str]) -> String {
+            let output = Command::new("gdbus")
+                .args([
+                    "call",
+                    "--session",
+                    "--dest",
+                    BUS,
+                    "--object-path",
+                    OBJECT,
+                    "--method",
+                    method,
+                ])
+                .args(args)
+                .output()
+                .expect("gdbus must be installed by the native-controls workflow");
+            assert!(
+                output.status.success(),
+                "gdbus {method} failed: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+            String::from_utf8_lossy(&output.stdout).into_owned()
+        }
+
+        fn next_action(receiver: &Receiver<Action>) -> Action {
+            receiver
+                .recv_timeout(Duration::from_secs(2))
+                .expect("MPRIS command should reach the Foxide action path")
+        }
+
+        let (action_sender, action_receiver) = channel();
+        let controls = MediaControls::new(PlayerConfig::new("FoxideMprisCi"), move |event| {
+            if let Some(command) = command_for_event(event)
+                && let Some(action) = action_for_command(command)
+            {
+                let _ = action_sender.send(action);
+            }
+        })
+        .expect("the private D-Bus session should allow MPRIS registration");
+
+        let mut state = UiState {
+            playlist: vec![
+                PathBuf::from("first.mp3"),
+                PathBuf::from("private/current.mp3"),
+                PathBuf::from("next.mp3"),
+            ],
+            selected: 1,
+            ..UiState::default()
+        };
+        state.confirm_loaded(90.0);
+        let snapshot = Snapshot {
+            path: "C:/private/current.mp3".into(),
+            title: "MPRIS CI title".into(),
+            artist: "MPRIS CI artist".into(),
+            album: "MPRIS CI album".into(),
+            loaded: true,
+            paused: false,
+            position: 13.5,
+            duration: 90.0,
+            ..Snapshot::default()
+        };
+        let mut session = SystemMediaSession {
+            controls,
+            identity: TrackIdentity::default(),
+            last_error: None,
+            _command_timer: slint::Timer::default(),
+        };
+        session
+            .publish(&snapshot, &state)
+            .expect("current track metadata should publish to MPRIS");
+
+        let playback_status = call(
+            "org.freedesktop.DBus.Properties.Get",
+            &["'org.mpris.MediaPlayer2.Player'", "'PlaybackStatus'"],
+        );
+        assert!(playback_status.contains("Playing"));
+        let metadata = call(
+            "org.freedesktop.DBus.Properties.Get",
+            &["'org.mpris.MediaPlayer2.Player'", "'Metadata'"],
+        );
+        for expected in ["MPRIS CI title", "MPRIS CI artist", "MPRIS CI album"] {
+            assert!(
+                metadata.contains(expected),
+                "missing {expected}: {metadata}"
+            );
+        }
+        assert!(
+            !metadata.contains("private"),
+            "local media paths stay private"
+        );
+
+        let can_go_next = call(
+            "org.freedesktop.DBus.Properties.Get",
+            &["'org.mpris.MediaPlayer2.Player'", "'CanGoNext'"],
+        );
+        let can_go_previous = call(
+            "org.freedesktop.DBus.Properties.Get",
+            &["'org.mpris.MediaPlayer2.Player'", "'CanGoPrevious'"],
+        );
+        let can_seek = call(
+            "org.freedesktop.DBus.Properties.Get",
+            &["'org.mpris.MediaPlayer2.Player'", "'CanSeek'"],
+        );
+        assert!(can_go_next.contains("true"));
+        assert!(can_go_previous.contains("true"));
+        assert!(can_seek.contains("true"));
+
+        for (method, expected) in [
+            ("Play", Action::SetPaused(false)),
+            ("Pause", Action::SetPaused(true)),
+            ("PlayPause", Action::TogglePause),
+            ("Next", Action::Next),
+            ("Previous", Action::Previous),
+        ] {
+            call(&format!("{PLAYER}.{method}"), &[]);
+            assert_eq!(next_action(&action_receiver), expected, "{method}");
+        }
+        call(&format!("{PLAYER}.Seek"), &["5000000"]);
+        assert_eq!(next_action(&action_receiver), Action::Seek(5.0));
+    }
 }
