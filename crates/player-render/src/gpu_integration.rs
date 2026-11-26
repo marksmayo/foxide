@@ -493,4 +493,3 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
         "hovering at different time buckets reused the same composited thumbnail frame"
     );
 }
-
