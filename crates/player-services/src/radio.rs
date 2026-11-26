@@ -295,4 +295,3 @@ impl RadioDirectory {
         client.get(&url, cancel).map(|_| ())
     }
 }
-

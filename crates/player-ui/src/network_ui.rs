@@ -443,4 +443,3 @@ pub fn install_subtitles<C: HttpClient + 'static>(
     });
     SubtitleController { active, jobs }
 }
-

@@ -115,4 +115,3 @@ fn invalid_inputs_and_cancelled_requests_never_reach_provider() {
     );
     assert!(http.requests.lock().unwrap().is_empty());
 }
-
