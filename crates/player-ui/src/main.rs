@@ -1551,8 +1551,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             Err(error) if session.last_error.as_deref() != Some(error.as_str()) => {
                                 session.last_error = Some(error.clone());
                                 ui.set_status(
-                                    format!("System media controls unavailable: {error}")
-                                        .into(),
+                                    format!("System media controls unavailable: {error}").into(),
                                 );
                             }
                             Err(_) => {}
