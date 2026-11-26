@@ -81,13 +81,13 @@ Use a local media file with visible video and, for media-session checks, title a
 
 | Feature | Check | Result |
 |---|---|---|
-| Seek thumbnails | Hover at several timeline positions; preview frames match those positions and update as the pointer moves. Hovering does not seek. Clicking a position seeks there. | Pending |
+| Seek thumbnails | Hover at several timeline positions; preview frames match those positions and update as the pointer moves. Hovering does not seek. Clicking a position seeks there. | Pass — Windows desktop UI smoke (automated pointer input), 2026-11-26; generated local AVC clip; previews labeled 00:01/00:02, playhead held at 00:03 until click |
 | Picture in picture | Enter PiP during playback; the separate window stays above other windows, video and audio continue, and returning to the main window restores controls. Closing PiP follows the documented stop/return behavior. | Pending |
 | System media controls | With playback stopped and while playing, confirm the OS session appears and shows title/artist. Test play/pause, previous/next, seek, pause/resume state, track changes, and stopping. | Pending |
 | Trackpad/touch gestures | Verify a short drag does not seek, horizontal movement seeks in both directions, vertical movement changes volume, limits are respected, and gestures do not activate unrelated controls. Repeat on a touchscreen if available. | Pending |
 | Controller navigation | Connect and disconnect a controller during playback; verify status changes, D-pad focus order, confirm/back, play/pause, previous/next, and that unsupported buttons do nothing. | Pending |
 
-Report only behavior and the result for each row. Do not include device names, network addresses, certificate pins, account identifiers, or private media paths. Update the result and tracker only after the physical check is performed; automated tests alone do not close these acceptance items.
+Report only behavior and the result for each row. Do not include device names, network addresses, certificate pins, account identifiers, or private media paths. Record whether each result came from a desktop UI smoke or a physical-device check; protocol and unit tests alone do not establish visible frontend behavior.
 
 
 ## Windows desktop gesture smoke (2026-11-26)
