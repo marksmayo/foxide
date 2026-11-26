@@ -1,6 +1,8 @@
 //! Optional network and media tools, separate from playback policy.
 mod radio;
 pub use radio::{HttpClient, RadioDirectory, Station, public_http_url};
+mod subtitles;
+pub use subtitles::{SubtitleProvider, SubtitleResult};
 
 mod http;
 pub use http::CurlClient;
@@ -25,3 +27,4 @@ pub use updates::{
 
 /// Transport-independent Cast protocol framing.
 pub mod cast_wire;
+
