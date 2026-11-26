@@ -564,9 +564,9 @@ export component PlayerWindow inherits Window {
                 }
                 if (root.panel == "subtitles"): VerticalLayout { spacing: 10px; vertical-stretch: 1;
                     Text { text: "Search subtitles for the current file. A free OpenSubtitles application API key is required; it is used for this session only."; color: Appearance.secondary; wrap: word-wrap; font-size: 12px; }
-                    LineEdit { text <=> root.subtitle-api-key; input-type: password; placeholder-text: "OpenSubtitles application API key"; }
+                    LineEdit { text <=> root.subtitle-api-key; input-type: password; placeholder-text: "OpenSubtitles application API key"; key-pressed(event) => { if (event.text == Key.Escape) { root.close-panel(); return accept; } return reject; } }
                     HorizontalLayout { spacing: 8px;
-                        LineEdit { text <=> root.subtitle-query; placeholder-text: "Title or release name"; accepted => { if (!root.subtitle-busy) { root.subtitle-search(root.subtitle-query, root.subtitle-language, root.subtitle-api-key); } } }
+                        LineEdit { text <=> root.subtitle-query; placeholder-text: "Title or release name"; accepted => { if (!root.subtitle-busy) { root.subtitle-search(root.subtitle-query, root.subtitle-language, root.subtitle-api-key); } } key-pressed(event) => { if (event.text == Key.Escape) { root.close-panel(); return accept; } return reject; } }
                         ComboBox { model: ["en", "es", "fr", "de", "it", "ja", "ko", "pt", "ru", "zh"]; current-value <=> root.subtitle-language; }
                     }
                     HorizontalLayout { spacing: 8px;

@@ -756,6 +756,31 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
             .unwrap()
             .starts_with("WEBVTT")
     );
+    ui.window().request_redraw();
+    rendered_window.draw_if_needed(|renderer| {
+        let size = ui.window().size();
+        let mut pixels = vec![slint::Rgb8Pixel::default(); (size.width * size.height) as usize];
+        renderer.render(&mut pixels, size.width as usize);
+    });
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerPressed {
+            position: slint::LogicalPosition::new(500.0, 215.0),
+            button: slint::platform::PointerEventButton::Left,
+        });
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerReleased {
+            position: slint::LogicalPosition::new(500.0, 215.0),
+            button: slint::platform::PointerEventButton::Left,
+        });
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::KeyPressed { text: "x".into() });
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::KeyReleased { text: "x".into() });
+    assert_eq!(
+        ui.get_subtitle_api_key(),
+        "test-keyx",
+        "The regression must focus the subtitle API-key field"
+    );
     ui.window()
         .dispatch_event(slint::platform::WindowEvent::KeyPressed {
             text: slint::platform::Key::Escape.into(),
