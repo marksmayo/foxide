@@ -52,7 +52,7 @@ fn publishing_a_new_frame_invalidates_layers_even_when_texture_identity_is_reuse
     slint::platform::set_platform(Box::new(TestPlatform)).unwrap();
     let ui = VideoProbe::new().unwrap();
     let frame = slint::Image::from_rgba8(slint::SharedPixelBuffer::new(8, 8));
-    publish_frame(frame.clone(), &|image| ui.set_frame(image));
+    publish_frame(frame.clone(), None, &|image, _| ui.set_frame(image));
     // Use the same dependency tracker as Slint's rounded-layer cache. This
     // checks invalidation itself, without needing a native window or GPU.
     let source = Box::pin(slint::private_unstable_api::re_exports::Property::<
@@ -71,7 +71,7 @@ fn publishing_a_new_frame_invalidates_layers_even_when_texture_identity_is_reuse
         "The initial layer must be clean before the next frame"
     );
     // GPU pixels can change while texture id, dimensions and origin stay equal.
-    publish_frame(frame.clone(), &|image| ui.set_frame(image));
+    publish_frame(frame.clone(), None, &|image, _| ui.set_frame(image));
     assert!(
         tracker.is_dirty(),
         "A new frame with reused image identity did not invalidate the cached video layer"
@@ -142,7 +142,8 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
                 })
                 .unwrap_or((1, 1))
         },
-        move |frame| {
+        || false,
+        move |frame, _pip_frame| {
             if let Some(w) = weak_image.upgrade() {
                 w.set_frame(frame);
             }
