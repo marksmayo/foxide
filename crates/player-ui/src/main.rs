@@ -1541,6 +1541,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let _ = weak.upgrade_in_event_loop(|ui| ui.invoke_native_snapshot_ready());
         }));
     }
+    let _subtitles =
+        network_ui::install_subtitles(&ui, Arc::new(network_ui::SystemHttp), state.clone());
+    let subtitle_engine = engine.clone();
+    let weak_subtitles = ui.as_weak();
+    ui.on_subtitle_added(move |path| {
+        let result = subtitle_engine
+            .as_ref()
+            .ok_or_else(|| "Playback engine unavailable".to_string())
+            .and_then(|engine| {
+                engine.command(vec!["sub-add".into(), path.to_string(), "select".into()])
+            });
+        if let Err(error) = result {
+            if let Some(ui) = weak_subtitles.upgrade() {
+                ui.set_subtitle_error(
+                    format!("Subtitle downloaded but could not be added: {error}").into(),
+                );
+            }
+        }
+    });
     let exit_timer = slint::Timer::default();
     if let Some(seconds) = args.quit_after {
         exit_timer.start(
@@ -1558,3 +1577,4 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(test)]
 #[path = "desktop_tests.rs"]
 mod tests;
+
