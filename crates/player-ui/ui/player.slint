@@ -193,6 +193,19 @@ export component PlayerWindow inherits Window {
     in-out property <bool> queue-visible: false;
     in-out property <bool> fullscreen-mode: false;
     in-out property <bool> muted: false;
+    in-out property <bool> skip-intro-available: false;
+    in-out property <bool> introdb-available: false;
+    in-out property <bool> introdb-busy: false;
+    in-out property <string> introdb-status;
+    in-out property <string> introdb-imdb-id;
+    in-out property <int> introdb-season: 0;
+    in-out property <int> introdb-episode: 0;
+    in-out property <string> current-imdb-id;
+    in-out property <int> current-season: 0;
+    in-out property <int> current-episode: 0;
+    in-out property <float> online-intro-start: -1;
+    in-out property <float> online-intro-end: -1;
+    in-out property <int> media-generation: 0;
     in-out property <float> position: 0;
     in-out property <float> duration: 0;
     in-out property <float> volume: 80;
@@ -231,6 +244,8 @@ export component PlayerWindow inherits Window {
         }
         Menu { title: "Playback";
             MenuItem { title: root.paused ? "Play" : "Pause"; enabled: root.loaded; activated => { root.action("pause", 0); } }
+            MenuItem { title: "Skip intro"; enabled: root.skip-intro-available; activated => { root.action("skip-intro", 0); } }
+            MenuItem { title: root.introdb-busy ? "Checking IntroDB…" : root.introdb-status != "" ? root.introdb-status : root.introdb-available ? "Check IntroDB for markers…" : "IntroDB lookup needs IMDb ID, season and episode tags"; enabled: root.introdb-available && root.loaded && !root.introdb-busy; activated => { root.action("lookup-intro", 0); } }
             MenuItem { title: "Next frame"; enabled: root.loaded && root.has-video; activated => { root.action("frame-step", 0); } }
             MenuItem { title: "Previous frame"; enabled: root.loaded && root.has-video; activated => { root.action("frame-back-step", 0); } }
             MenuItem { title: "Stop"; enabled: root.loaded; activated => { root.action("stop", 0); } }
@@ -576,3 +591,4 @@ export component PlayerWindow inherits Window {
     }
     }
 }
+

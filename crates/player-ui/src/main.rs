@@ -111,6 +111,109 @@ fn clock(seconds: f64) -> String {
     }
 }
 
+fn intro_skip_target(snapshot: &Snapshot) -> Option<f64> {
+    if !snapshot.loaded
+        || !snapshot.position.is_finite()
+        || !snapshot.duration.is_finite()
+        || snapshot.position < 0.0
+        || snapshot.duration <= 0.0
+    {
+        return None;
+    }
+    let current = snapshot.chapters.get(snapshot.chapter_index)?;
+    let next = snapshot.chapters.get(snapshot.chapter_index + 1)?;
+    if !is_intro_marker(&current.title)
+        || !current.start.is_finite()
+        || !next.start.is_finite()
+        || snapshot.position < current.start
+        || next.start <= snapshot.position
+        || next.start <= current.start
+        || next.start > snapshot.duration
+    {
+        return None;
+    }
+    Some(next.start)
+}
+
+fn introdb_identity(snapshot: &Snapshot) -> Option<player_services::EpisodeIdentity> {
+    let season = snapshot.season.trim().parse::<u32>().ok()?;
+    let episode = snapshot.episode.trim().parse::<u32>().ok()?;
+    player_services::EpisodeIdentity::new(snapshot.imdb_id.trim(), season, episode).ok()
+}
+
+fn online_intro_skip_target(
+    snapshot: &Snapshot,
+    imdb_id: &str,
+    season: u32,
+    episode: u32,
+    start: f64,
+    end: f64,
+) -> Option<f64> {
+    let identity = introdb_identity(snapshot)?;
+    if identity.imdb_id() != imdb_id
+        || identity.season() != season
+        || identity.episode() != episode
+        || !intro_segment_is_active(
+            snapshot.loaded,
+            snapshot.position,
+            snapshot.duration,
+            start,
+            end,
+        )
+    {
+        return None;
+    }
+    Some(end)
+}
+
+fn intro_segment_is_active(
+    loaded: bool,
+    position: f64,
+    duration: f64,
+    start: f64,
+    end: f64,
+) -> bool {
+    loaded
+        && position.is_finite()
+        && duration.is_finite()
+        && start.is_finite()
+        && end.is_finite()
+        && start >= 0.0
+        && end > start
+        && end <= duration
+        && position >= start
+        && position <= end
+}
+
+fn intro_skip_action(
+    snapshot: Option<&Snapshot>,
+    imdb_id: &str,
+    season: u32,
+    episode: u32,
+    start: f64,
+    end: f64,
+) -> Option<Action> {
+    let snapshot = snapshot?;
+    let target = intro_skip_target(snapshot)
+        .or_else(|| online_intro_skip_target(snapshot, imdb_id, season, episode, start, end))?;
+    Some(Action::SeekAbsolute(target))
+}
+
+fn is_intro_marker(title: &str) -> bool {
+    let mut previous = "";
+    for word in title.split(|character: char| !character.is_alphanumeric()) {
+        if word.eq_ignore_ascii_case("intro")
+            || word.eq_ignore_ascii_case("recap")
+            || (previous.eq_ignore_ascii_case("opening") && word.eq_ignore_ascii_case("credits"))
+            || (previous.eq_ignore_ascii_case("previously") && word.eq_ignore_ascii_case("on"))
+        {
+            return true;
+        }
+        previous = word;
+    }
+    false
+}
+
 fn update_queue(ui: &PlayerWindow, state: &UiState) {
     let rows = state
         .filtered_indices(ui.get_queue_filter().as_str())
@@ -259,6 +362,37 @@ fn refresh(
     if snapshot == previous {
         return;
     }
+    if snapshot.path != previous.path
+        || snapshot.imdb_id != previous.imdb_id
+        || snapshot.season != previous.season
+        || snapshot.episode != previous.episode
+    {
+        ui.set_media_generation(ui.get_media_generation().wrapping_add(1));
+        ui.set_introdb_imdb_id("".into());
+        ui.set_introdb_season(0);
+        ui.set_introdb_episode(0);
+        ui.set_introdb_busy(false);
+        ui.set_online_intro_start(-1.0);
+        ui.set_online_intro_end(-1.0);
+        ui.set_introdb_status("".into());
+    }
+    let identity = introdb_identity(snapshot);
+    ui.set_introdb_available(snapshot.loaded && identity.is_some());
+    ui.set_current_imdb_id(identity.as_ref().map_or("", |value| value.imdb_id()).into());
+    ui.set_current_season(identity.as_ref().map_or(0, |value| value.season() as i32));
+    ui.set_current_episode(identity.as_ref().map_or(0, |value| value.episode() as i32));
+    ui.set_skip_intro_available(
+        intro_skip_target(snapshot).is_some()
+            || online_intro_skip_target(
+                snapshot,
+                ui.get_introdb_imdb_id().as_str(),
+                ui.get_introdb_season().max(0) as u32,
+                ui.get_introdb_episode().max(0) as u32,
+                f64::from(ui.get_online_intro_start()),
+                f64::from(ui.get_online_intro_end()),
+            )
+            .is_some(),
+    );
     let expected = state
         .borrow()
         .playlist
@@ -1150,6 +1284,88 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
             "seek-relative" => Action::Seek(value as f64),
             "seek" => Action::SeekAbsolute(value as f64),
             "speed" => Action::SetSpeed(value as f64),
+            "skip-intro" => {
+                let snapshot = playback.as_ref().and_then(|engine| engine.snapshot());
+                let action = intro_skip_action(
+                    snapshot.as_ref(),
+                    ui.get_introdb_imdb_id().as_str(),
+                    ui.get_introdb_season().max(0) as u32,
+                    ui.get_introdb_episode().max(0) as u32,
+                    f64::from(ui.get_online_intro_start()),
+                    f64::from(ui.get_online_intro_end()),
+                );
+                let Some(action) = action else {
+                    ui.set_skip_intro_available(false);
+                    return;
+                };
+                action
+            }
+            "lookup-intro" => {
+                if ui.get_introdb_busy() {
+                    return;
+                }
+                let Some(snapshot) = playback.as_ref().and_then(|engine| engine.snapshot()) else {
+                    ui.set_introdb_status("No episode is loaded".into());
+                    return;
+                };
+                let Some(identity) = introdb_identity(&snapshot) else {
+                    ui.set_introdb_status(
+                        "Add IMDb ID, season and episode tags to look up markers".into(),
+                    );
+                    return;
+                };
+                let (imdb_id, season, episode, generation) = (
+                    identity.imdb_id().to_owned(),
+                    identity.season(),
+                    identity.episode(),
+                    ui.get_media_generation(),
+                );
+                let weak = weak.clone();
+                ui.set_introdb_busy(true);
+                ui.set_introdb_status("Looking up episode markers…".into());
+                std::thread::spawn(move || {
+                    let result = player_services::CurlClient::system().and_then(|client| {
+                        player_services::IntroDb::public().lookup_intro(
+                            &client,
+                            &player_services::EpisodeIdentity::new(&imdb_id, season, episode)?,
+                            &std::sync::atomic::AtomicBool::new(false),
+                        )
+                    });
+                    let _ = weak.upgrade_in_event_loop(move |ui| {
+                        if ui.get_media_generation() != generation
+                            || ui.get_current_imdb_id().as_str() != imdb_id
+                            || ui.get_current_season().max(0) as u32 != season
+                            || ui.get_current_episode().max(0) as u32 != episode
+                        {
+                            return;
+                        }
+                        ui.set_introdb_busy(false);
+                        match result {
+                            Ok(Some(segment)) => {
+                                ui.set_introdb_imdb_id(imdb_id.into());
+                                ui.set_introdb_season(season as i32);
+                                ui.set_introdb_episode(episode as i32);
+                                ui.set_online_intro_start(segment.start_seconds as f32);
+                                ui.set_online_intro_end(segment.end_seconds as f32);
+                                ui.set_introdb_status("Intro markers found".into());
+                                let target = intro_segment_is_active(
+                                    ui.get_loaded(),
+                                    f64::from(ui.get_position()),
+                                    f64::from(ui.get_duration()),
+                                    segment.start_seconds,
+                                    segment.end_seconds,
+                                );
+                                if target {
+                                    ui.set_skip_intro_available(true);
+                                }
+                            }
+                            Ok(None) => ui.set_introdb_status("No intro marker found".into()),
+                            Err(_) => ui.set_introdb_status("IntroDB lookup failed".into()),
+                        }
+                    });
+                });
+                return;
+            }
             "volume" => Action::Volume(value as f64),
             "select" if value >= 0.0 => Action::Select(value as usize),
             "audio-track" if value > 0.0 => Action::AudioTrack(value as u32),

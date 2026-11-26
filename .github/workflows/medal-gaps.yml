@@ -20,11 +20,12 @@ concurrency:
 jobs:
   native-controls:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 40
     env:
       FOXIDE_MPV: /usr/bin/mpv
       FOXIDE_CONTROL_FIXTURE: ${{ github.workspace }}/results/local/control-probe.mp4
-      FOXIDE_SYSTEM_MEDIA_FIXTURE: ${{ github.workspace }}/results/local/system-media-metadata.mp4
+      FOXIDE_SYSTEM_MEDIA_FIXTURE: ${{ github.workspace }}/results/local/system-media-metadata.mkv
+      FOXIDE_INTRO_FIXTURE: ${{ github.workspace }}/results/local/intro-chaptered.mp4
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
@@ -32,15 +33,34 @@ jobs:
         with:
           key: desktop-ui
       - name: Install native playback dependencies
-        run: sudo apt-get update && sudo apt-get install -y mpv libmpv2 ffmpeg libfontconfig1-dev libxkbcommon-dev libwayland-dev libegl1-mesa-dev libudev-dev
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends mpv libmpv2 ffmpeg libfontconfig1-dev libxkbcommon-dev libwayland-dev libegl1-mesa-dev libudev-dev
       - name: Generate deterministic video with audio
         run: |
           mkdir -p results/local
           ffmpeg -v error -f lavfi -i testsrc2=size=128x72:rate=30:duration=10 -f lavfi -i sine=frequency=440:duration=10 -metadata title="Foxide system media fixture" -metadata artist="Foxide CI" -metadata album="System media controls" -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest "$FOXIDE_CONTROL_FIXTURE"
-          cp "$FOXIDE_CONTROL_FIXTURE" "$FOXIDE_SYSTEM_MEDIA_FIXTURE"
+          ffmpeg -v error -i "$FOXIDE_CONTROL_FIXTURE" -map 0 -metadata imdb_id=tt0903747 -metadata season=1 -metadata episode=2 -c copy "$FOXIDE_SYSTEM_MEDIA_FIXTURE"
+          cat > results/local/intro-chapters.ffmeta <<'EOF'
+          ;FFMETADATA1
+          [CHAPTER]
+          TIMEBASE=1/1000
+          START=0
+          END=3000
+          title=Previously On
+          [CHAPTER]
+          TIMEBASE=1/1000
+          START=3000
+          END=10000
+          title=Episode
+          EOF
+          ffmpeg -v error -f lavfi -i testsrc2=size=128x72:rate=15:duration=10 -f lavfi -i sine=frequency=440:duration=10 -f ffmetadata -i results/local/intro-chapters.ffmeta -map_metadata 2 -map_chapters 2 -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest "$FOXIDE_INTRO_FIXTURE"
       - name: Verify immutable snapshot sharing
         run: cargo test -p player-render --features desktop --lib --locked cloning_snapshot
       - name: Verify native metadata reaches player snapshots
         run: cargo test -p player-render --features system-media-integration --lib --locked native_snapshot_exposes_embedded_track_metadata -- --ignored --nocapture
+      - name: Verify native intro markers reach player snapshots
+        run: cargo test -p player-render --features system-media-integration --lib --locked native_snapshot_exposes_embedded_intro_chapter_markers -- --ignored --nocapture
+      - name: Verify a live IntroDB episode response
+        run: cargo test -p player-services --lib --locked introdb::tests::live_provider_response_matches_the_requested_episode -- --ignored --exact --nocapture
       - name: Verify desktop menu commands on the native engine
         run: cargo test -p player-ui --features native-controls --lib --locked desktop_menu_commands -- --ignored --nocapture
+

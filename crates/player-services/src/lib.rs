@@ -23,5 +23,8 @@ pub use updates::{
     verify_windows_package,
 };
 
+mod introdb;
+pub use introdb::{EpisodeIdentity, IntroDb, IntroSegment};
+
 /// Transport-independent Cast protocol framing.
 pub mod cast_wire;

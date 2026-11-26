@@ -389,6 +389,19 @@ impl Api {
             .filter(|v| v.is_finite())
             .unwrap_or(0.0)
     }
+    fn dynamic(&self, name: &str) -> String {
+        CString::new(name)
+            .ok()
+            .map(|name| self.get(&name))
+            .unwrap_or_default()
+    }
+    fn dynamic_number(&self, name: &str) -> f64 {
+        self.dynamic(name)
+            .parse::<f64>()
+            .ok()
+            .filter(|value| value.is_finite())
+            .unwrap_or(0.0)
+    }
     fn send(&self, args: &[String]) -> Result<(), String> {
         let strings = args
             .iter()
@@ -454,6 +467,11 @@ pub struct Track {
     pub selected: bool,
 }
 #[derive(Clone, Debug, Default, PartialEq)]
+pub struct Chapter {
+    pub title: String,
+    pub start: f64,
+}
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct Snapshot {
     pub path: String,
     /// Original user selection, retained across helper redirects without per-tick allocation.
@@ -461,10 +479,16 @@ pub struct Snapshot {
     pub title: String,
     pub artist: String,
     pub album: String,
+    /// Explicit embedded episode identifiers; never inferred from local paths.
+    pub imdb_id: String,
+    pub season: String,
+    pub episode: String,
     pub loaded: bool,
     pub paused: bool,
     pub position: f64,
     pub duration: f64,
+    pub chapter_index: usize,
+    pub chapters: Arc<[Chapter]>,
     pub speed: f64,
     pub volume: f64,
     pub muted: bool,
@@ -534,6 +558,7 @@ impl Engine {
                 let mut requested_path: Arc<str> = Arc::from("");
                 let mut file_loaded = false;
                 let mut tracks: Arc<[Track]> = Arc::from([]);
+                let mut chapters: Arc<[Chapter]> = Arc::from([]);
                 let mut has_artwork = false;
                 let mut error = String::new();
                 let mut command_error = String::new();
@@ -635,6 +660,15 @@ impl Engine {
                     let path = client.get(c"path");
                     if path != last_path || tracks.is_empty() {
                         let mut next_tracks = Vec::new();
+                        let chapter_count =
+                            client.number(c"chapter-list/count").clamp(0.0, 256.0) as usize;
+                        chapters = (0..chapter_count)
+                            .map(|index| Chapter {
+                                title: client.dynamic(&format!("chapter-list/{index}/title")),
+                                start: client.dynamic_number(&format!("chapter-list/{index}/time")),
+                            })
+                            .collect::<Vec<_>>()
+                            .into();
                         has_artwork = false;
                         let count = client.number(c"track-list/count").clamp(0.0, 256.0) as u32;
                         for i in 0..count {
@@ -678,9 +712,14 @@ impl Engine {
                         title: client.get(c"media-title"),
                         artist: client.get(c"metadata/by-key/artist"),
                         album: client.get(c"metadata/by-key/album"),
+                        imdb_id: metadata_tag(&client, "imdb_id"),
+                        season: metadata_tag(&client, "season"),
+                        episode: metadata_tag(&client, "episode"),
                         paused: client.get(c"pause") == "yes",
                         position: client.number(c"time-pos"),
                         duration: client.number(c"duration"),
+                        chapter_index: client.number(c"chapter").max(0.0) as usize,
+                        chapters: chapters.clone(),
                         speed: client.number(c"speed"),
                         volume: client.number(c"volume"),
                         muted: client.get(c"mute") == "yes",
@@ -757,6 +796,14 @@ impl Engine {
         self.snapshot.try_lock().ok().map(|s| s.clone())
     }
 }
+
+fn metadata_tag(client: &Api, key: &str) -> String {
+    let value = client.dynamic(&format!("metadata/by-key/{key}"));
+    if !value.is_empty() {
+        return value;
+    }
+    client.dynamic(&format!("metadata/by-key/{}", key.to_ascii_uppercase()))
+}
 impl Drop for Engine {
     fn drop(&mut self) {
         self.stop.store(true, Ordering::Release);
@@ -825,16 +872,63 @@ mod snapshot_allocation_tests {
             if !snapshot.error.is_empty() {
                 panic!("libmpv failed to load metadata fixture: {}", snapshot.error);
             }
-            if snapshot.loaded && !snapshot.artist.is_empty() && !snapshot.album.is_empty() {
+            if snapshot.loaded
+                && !snapshot.artist.is_empty()
+                && !snapshot.album.is_empty()
+                && !snapshot.imdb_id.is_empty()
+                && !snapshot.season.is_empty()
+                && !snapshot.episode.is_empty()
+            {
                 assert_eq!(snapshot.title, "Foxide system media fixture");
                 assert_eq!(snapshot.artist, "Foxide CI");
                 assert_eq!(snapshot.album, "System media controls");
+                assert_eq!(snapshot.imdb_id, "tt0903747");
+                assert_eq!(snapshot.season, "1");
+                assert_eq!(snapshot.episode, "2");
                 engine.command(vec!["stop".into()]).unwrap();
                 return;
             }
             thread::sleep(Duration::from_millis(50));
         }
-        panic!("libmpv snapshot did not expose embedded title, artist, and album metadata");
+        panic!("libmpv snapshot did not expose embedded track and episode identity metadata");
+    }
+
+    #[test]
+    #[ignore = "Native chapter metadata acceptance; requires a generated chaptered fixture and libmpv"]
+    #[cfg(feature = "system-media-integration")]
+    fn native_snapshot_exposes_embedded_intro_chapter_markers() {
+        use std::time::Instant;
+
+        let fixture = std::env::var("FOXIDE_INTRO_FIXTURE")
+            .expect("workflow must provide a chaptered intro-marker fixture");
+        let engine = Engine::new().expect("libmpv must be available");
+        for (name, value) in [("vo", "null"), ("ao", "null"), ("pause", "no")] {
+            engine
+                .command(vec!["set".into(), name.into(), value.into()])
+                .unwrap();
+        }
+        engine.ready.store(true, Ordering::Release);
+        engine
+            .command(vec!["loadfile".into(), fixture, "replace".into()])
+            .unwrap();
+
+        let deadline = Instant::now() + Duration::from_secs(15);
+        while Instant::now() < deadline {
+            let snapshot = engine.snapshot().unwrap_or_default();
+            if !snapshot.error.is_empty() {
+                panic!("libmpv failed to load chapter fixture: {}", snapshot.error);
+            }
+            if snapshot.loaded && snapshot.chapters.len() >= 2 {
+                assert_eq!(snapshot.chapters[0].title, "Previously On");
+                assert_eq!(snapshot.chapters[0].start, 0.0);
+                assert_eq!(snapshot.chapters[1].title, "Episode");
+                assert_eq!(snapshot.chapters[1].start, 3.0);
+                engine.command(vec!["stop".into()]).unwrap();
+                return;
+            }
+            thread::sleep(Duration::from_millis(50));
+        }
+        panic!("libmpv snapshot did not expose the embedded intro marker chapters");
     }
 }
 

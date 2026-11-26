@@ -227,7 +227,12 @@ fn load_fixture(engine: &Engine, name: &str) -> Snapshot {
     let deadline = Instant::now() + Duration::from_secs(10);
     let mut snapshot = Snapshot::default();
     while Instant::now() < deadline {
-        snapshot = engine.snapshot().unwrap();
+        // `snapshot()` intentionally uses `try_lock()` so playback callbacks never
+        // block behind UI readers. A temporary lock conflict is just a missed poll;
+        // let the existing deadline retry instead of panicking the native test.
+        if let Some(current) = engine.snapshot() {
+            snapshot = current;
+        }
         if !snapshot.error.is_empty()
             || (snapshot.loaded
                 && snapshot.path.ends_with(name)
@@ -377,22 +382,38 @@ fn selected_shader_paths_are_not_split_and_can_be_cleared() {
     let expected = shader.path().to_string_lossy().into_owned();
     engine.set_shaders(vec![shader]).unwrap();
     let deadline = Instant::now() + Duration::from_secs(5);
-    while Instant::now() < deadline && engine.snapshot().unwrap().shader_count != 1 {
+    while Instant::now() < deadline
+        && engine
+            .snapshot()
+            .is_none_or(|snapshot| snapshot.shader_count != 1)
+    {
         thread::sleep(Duration::from_millis(20));
     }
-    assert_eq!(engine.snapshot().unwrap().shader_count, 1);
+    assert_eq!(
+        engine.snapshot().map(|snapshot| snapshot.shader_count),
+        Some(1),
+        "timed out waiting for the selected shader to reach the snapshot"
+    );
     assert_eq!(
         native_string_list(&engine.api, c"glsl-shaders"),
         vec![expected]
     );
     engine.set_shaders(vec![]).unwrap();
     let deadline = Instant::now() + Duration::from_secs(5);
-    while Instant::now() < deadline && engine.snapshot().unwrap().shader_count != 0 {
+    while Instant::now() < deadline
+        && engine
+            .snapshot()
+            .is_none_or(|snapshot| snapshot.shader_count != 0)
+    {
         thread::sleep(Duration::from_millis(20));
     }
-    assert_eq!(engine.snapshot().unwrap().shader_count, 0);
+    assert_eq!(
+        engine.snapshot().map(|snapshot| snapshot.shader_count),
+        Some(0),
+        "timed out waiting for the cleared shader to reach the snapshot"
+    );
     assert!(native_string_list(&engine.api, c"glsl-shaders").is_empty());
-    assert!(engine.snapshot().unwrap().loaded);
+    assert!(engine.snapshot().is_some_and(|snapshot| snapshot.loaded));
 }
 
 fn native_string_list(api: &Api, name: &std::ffi::CStr) -> Vec<String> {

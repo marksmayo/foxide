@@ -335,8 +335,8 @@
       "id": "skip_intro",
       "name": "Skip detected episode intros",
       "group": "Playback",
-      "stage": "queued",
-      "acceptance": "Needs marker detection/provider integration and seek-boundary acceptance."
+      "stage": "in_progress",
+      "acceptance": "The Playback menu exposes Skip intro when embedded chapter metadata marks an intro, recap, opening credits, or previously on segment, or after a user-triggered IntroDB lookup based on explicit embedded IMDb ID, season, and episode tags. Online lookups send only those identifiers, run off the UI thread, are bounded by the system HTTP client's response/time limits, validate episode identity and timestamp boundaries, ignore results after the media item changes, and cannot re-enable the control after playback stops. Unit tests cover marker recognition, identity validation, provider response validation, matching episodes, safe in-duration seek boundaries and the stop-during-lookup regression. Hosted native metadata integration verifies tagged episode IDs; native chapter and desktop-menu integration passed in run 45307106505. Online provider access and user-visible Windows playback acceptance remain to be verified; no feature medal is claimed."
     },
     {
       "id": "audio_visualization",
@@ -356,3 +356,4 @@
     "windows": "https://github.com/marksmayo/foxide/actions/runs/43972156451/job/133666802683"
   }
 }
+

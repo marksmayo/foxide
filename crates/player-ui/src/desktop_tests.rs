@@ -97,6 +97,32 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
     )))
     .unwrap();
     let ui = PlayerWindow::new().unwrap();
+    let mut previous = Snapshot::default();
+    let generation = Cell::new(0);
+    let state = Rc::new(RefCell::new(UiState::default()));
+    let path = player_core::external_path(PathBuf::from("episode.mkv"))
+        .to_string_lossy()
+        .into_owned();
+    state
+        .borrow_mut()
+        .playlist
+        .push(PathBuf::from("episode.mkv"));
+    let episode = Snapshot {
+        loaded: true,
+        path,
+        duration: 120.0,
+        imdb_id: "tt0903747".into(),
+        season: "1".into(),
+        episode: "2".into(),
+        ..Snapshot::default()
+    };
+    refresh(&ui, &state, &generation, &episode, &mut previous);
+    assert!(ui.get_introdb_available());
+    assert_eq!(ui.get_current_imdb_id(), "tt0903747");
+    assert_eq!(ui.get_current_season(), 1);
+    assert_eq!(ui.get_current_episode(), 2);
+    assert_eq!(ui.get_media_generation(), 1);
+
     let thumbnails = player_render::ThumbnailController::new();
     let video = Snapshot {
         loaded: true,
@@ -1246,4 +1272,120 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
         }
     }
     assert_eq!(ui.get_update_status(), "Foxide is up to date.");
+}
+
+#[test]
+fn skip_intro_menu_action_seeks_to_the_next_chapter_boundary() {
+    let snapshot = Snapshot {
+        loaded: true,
+        position: 12.0,
+        duration: 180.0,
+        chapter_index: 0,
+        chapters: vec![
+            player_render::Chapter {
+                title: "Previously On".into(),
+                start: 0.0,
+            },
+            player_render::Chapter {
+                title: "Episode".into(),
+                start: 48.0,
+            },
+        ]
+        .into(),
+        ..Snapshot::default()
+    };
+
+    assert_eq!(
+        intro_skip_action(Some(&snapshot), "", 0, 0, -1.0, -1.0),
+        Some(Action::SeekAbsolute(48.0))
+    );
+}
+
+#[test]
+fn intro_skip_requires_a_marked_current_chapter_and_a_safe_next_boundary() {
+    let snapshot = Snapshot {
+        loaded: true,
+        position: 12.0,
+        duration: 180.0,
+        chapter_index: 0,
+        chapters: vec![
+            player_render::Chapter {
+                title: "Previously On".into(),
+                start: 0.0,
+            },
+            player_render::Chapter {
+                title: "Episode".into(),
+                start: 48.0,
+            },
+        ]
+        .into(),
+        ..Snapshot::default()
+    };
+    assert_eq!(intro_skip_target(&snapshot), Some(48.0));
+
+    let mut ordinary = snapshot.clone();
+    Arc::make_mut(&mut ordinary.chapters)[0].title = "Scene One".into();
+    assert_eq!(intro_skip_target(&ordinary), None);
+
+    ordinary.chapter_index = 1;
+    assert_eq!(intro_skip_target(&ordinary), None);
+    ordinary.chapter_index = 0;
+    ordinary.position = 48.0;
+    assert_eq!(intro_skip_target(&ordinary), None);
+
+    ordinary = snapshot.clone();
+    Arc::make_mut(&mut ordinary.chapters)[0].title = "Opening Credits".into();
+    assert_eq!(intro_skip_target(&ordinary), Some(48.0));
+    Arc::make_mut(&mut ordinary.chapters)[0].title = "Recap".into();
+    assert_eq!(intro_skip_target(&ordinary), Some(48.0));
+
+    ordinary.duration = 47.0;
+    assert_eq!(intro_skip_target(&ordinary), None);
+    ordinary.duration = 180.0;
+    ordinary.loaded = false;
+    assert_eq!(intro_skip_target(&ordinary), None);
+}
+
+#[test]
+fn online_intro_marker_requires_matching_episode_identity_and_playback_range() {
+    let snapshot = Snapshot {
+        loaded: true,
+        position: 20.0,
+        duration: 120.0,
+        imdb_id: "tt0903747".into(),
+        season: "1".into(),
+        episode: "2".into(),
+        ..Snapshot::default()
+    };
+    let identity = introdb_identity(&snapshot).unwrap();
+    assert_eq!(identity.imdb_id(), "tt0903747");
+    assert_eq!(identity.season(), 1);
+    assert_eq!(identity.episode(), 2);
+    assert_eq!(
+        online_intro_skip_target(&snapshot, "tt0903747", 1, 2, 2.5, 58.0),
+        Some(58.0)
+    );
+    assert_eq!(
+        online_intro_skip_target(&snapshot, "tt0903747", 1, 3, 2.5, 58.0),
+        None
+    );
+    assert_eq!(
+        online_intro_skip_target(&snapshot, "tt0903747", 1, 2, 2.5, 130.0),
+        None
+    );
+    let mut outside = snapshot.clone();
+    outside.position = 59.0;
+    assert_eq!(
+        online_intro_skip_target(&outside, "tt0903747", 1, 2, 2.5, 58.0),
+        None
+    );
+    let mut no_identity = snapshot;
+    no_identity.imdb_id.clear();
+    assert!(introdb_identity(&no_identity).is_none());
+}
+
+#[test]
+fn introdb_marker_cannot_enable_skip_after_playback_stops() {
+    assert!(intro_segment_is_active(true, 20.0, 120.0, 2.5, 58.0));
+    assert!(!intro_segment_is_active(false, 20.0, 120.0, 2.5, 58.0));
 }
