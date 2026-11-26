@@ -5,6 +5,25 @@ pub const RESPONSE_LIMIT: usize = 2 * 1024 * 1024;
 
 pub trait HttpClient: Send + Sync {
     fn get(&self, url: &Url, cancel: &AtomicBool) -> Result<Vec<u8>, String>;
+
+    fn get_with_headers(
+        &self,
+        _url: &Url,
+        _headers: &[(&str, &str)],
+        _cancel: &AtomicBool,
+    ) -> Result<Vec<u8>, String> {
+        Err("This HTTP client does not support authenticated requests".into())
+    }
+
+    fn post_json(
+        &self,
+        _url: &Url,
+        _headers: &[(&str, &str)],
+        _body: &[u8],
+        _cancel: &AtomicBool,
+    ) -> Result<Vec<u8>, String> {
+        Err("This HTTP client does not support JSON POST requests".into())
+    }
 }
 
 pub fn public_http_url(text: &str) -> Result<Url, String> {
@@ -276,3 +295,4 @@ impl RadioDirectory {
         client.get(&url, cancel).map(|_| ())
     }
 }
+
