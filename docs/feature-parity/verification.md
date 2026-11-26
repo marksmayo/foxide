@@ -6,6 +6,8 @@ The draft desktop workflow uses the official [OpenSubtitles REST API](https://op
 
 Implementation source: f957f4da08af3a4a1171f3ac5f5475068ba6d887.
 
+Implementation source: f957f4da08af3a4a1171f3ac5f5475068ba6d887.
+
 [Three-platform desktop acceptance](https://github.com/marksmayo/foxide/actions/runs/43972156451), [platform checks and coverage gates](https://github.com/marksmayo/foxide/actions/runs/43972156649), [native playback controls](https://github.com/marksmayo/foxide/actions/runs/43972156518), [compositor regression](https://github.com/marksmayo/foxide/actions/runs/43972156442), Windows packaging and [CodSpeed](https://github.com/marksmayo/foxide/actions/runs/43972156363) pass for the implementation source.
 
 | Coverage scope | Measured line coverage |
@@ -78,5 +80,4 @@ The desktop video surface maps horizontal trackpad scroll and horizontal pointer
 ## Game controller navigation implementation checkpoint
 
 The desktop now polls standardized gamepad events and routes D-pad focus traversal, confirm/back, playback toggle and previous/next through Slint or the shared playback action path. It surfaces controller connection and disconnection events without publishing device names. Mapping tests cover supported and ignored controls. Linux CI explicitly installs libudev development headers for the gilrs backend. This remains in progress until physical hot-plug and focus-order behavior is verified on supported desktop platforms.
-
 
