@@ -165,7 +165,7 @@ fn dispatch(
     engine: &Option<Rc<Engine>>,
     action: Action,
 ) {
-    let queue_changed = matches!(action, Action::Open(_));
+    let queue_changed = matches!(&action, Action::Open(files) if !files.is_empty());
     let mut state = state.borrow_mut();
     let effects = state.dispatch(action);
     if queue_changed {

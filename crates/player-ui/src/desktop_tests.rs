@@ -911,6 +911,30 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
         false,
     );
     assert_eq!(controls.borrow().playlist.len(), 2);
+    controls.borrow_mut().confirm_loaded(120.0);
+    ui.set_loaded(true);
+    ui.set_status("Playing current item".into());
+    ui.invoke_filter_queue("two".into());
+    ui.invoke_files_picked(
+        slint::ModelRc::new(slint::VecModel::from(Vec::<slint::SharedString>::new())),
+        false,
+    );
+    assert!(
+        controls.borrow().loaded,
+        "an empty open keeps current playback loaded"
+    );
+    assert!(ui.get_loaded(), "the frontend remains in its loaded state");
+    assert_eq!(
+        ui.get_queue_filter(),
+        "two",
+        "an empty open keeps the active queue filter"
+    );
+    assert_eq!(
+        ui.get_status(),
+        "Playing current item",
+        "an empty open does not claim that playback is opening"
+    );
+    ui.invoke_filter_queue("".into());
     for (name, value) in [
         ("pause", 0.0),
         ("mute", 0.0),
