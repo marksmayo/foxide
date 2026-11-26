@@ -1305,4 +1305,3 @@ fn invalid_navigation_does_not_clear_active_visualization() {
     assert!(state.audio_visualization);
     assert_eq!(state.selected, 0);
 }
-
