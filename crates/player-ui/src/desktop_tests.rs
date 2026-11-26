@@ -239,7 +239,7 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
     );
     ui.set_panel("".into());
     let state = Rc::new(RefCell::new(UiState::default()));
-    install_controls(&ui, &state, &None);
+    install_controls(&ui, &state, &None, Rc::new(RefCell::new(None)));
     ui.set_loaded(true);
     ui.set_has_video(true);
     ui.invoke_action("picture-in-picture".into(), 0.0);
@@ -919,7 +919,7 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
         "A newly loaded file replaces the opening status even when pause and speed are unchanged"
     );
     let controls = Rc::new(RefCell::new(UiState::default()));
-    install_controls(&ui, &controls, &None);
+    install_controls(&ui, &controls, &None, Rc::new(RefCell::new(None)));
     ui.invoke_open_url("file:///not-an-online-stream".into());
     assert!(ui.get_status().contains("HTTP"));
     ui.invoke_open_url("https://example.org/movie.mp4".into());
@@ -1299,6 +1299,50 @@ fn skip_intro_menu_action_seeks_to_the_next_chapter_boundary() {
         intro_skip_action(Some(&snapshot), "", 0, 0, -1.0, -1.0),
         Some(Action::SeekAbsolute(48.0))
     );
+}
+
+#[test]
+fn replacing_or_cancelling_intro_lookup_stops_the_previous_request() {
+    let slot = RefCell::new(None);
+    let first = begin_intro_lookup(&slot);
+    assert!(!first.load(std::sync::atomic::Ordering::Acquire));
+
+    let second = begin_intro_lookup(&slot);
+    assert!(first.load(std::sync::atomic::Ordering::Acquire));
+    assert!(!second.load(std::sync::atomic::Ordering::Acquire));
+
+    cancel_intro_lookup(&slot);
+    assert!(second.load(std::sync::atomic::Ordering::Acquire));
+    assert!(slot.borrow().is_none());
+}
+
+#[test]
+fn changing_episode_identity_cancels_intro_lookup_but_identical_snapshots_keep_it() {
+    let slot = RefCell::new(None);
+    let previous = Snapshot {
+        path: "episode-one.mkv".into(),
+        imdb_id: "tt0903747".into(),
+        season: "1".into(),
+        episode: "2".into(),
+        ..Snapshot::default()
+    };
+    let active = begin_intro_lookup(&slot);
+
+    assert!(!cancel_intro_lookup_if_media_changed(
+        &previous, &previous, &slot
+    ));
+    assert!(!active.load(std::sync::atomic::Ordering::Acquire));
+
+    let next_episode = Snapshot {
+        episode: "3".into(),
+        ..previous.clone()
+    };
+    assert!(cancel_intro_lookup_if_media_changed(
+        &next_episode,
+        &previous,
+        &slot
+    ));
+    assert!(active.load(std::sync::atomic::Ordering::Acquire));
 }
 
 #[test]
