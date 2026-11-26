@@ -1,6 +1,6 @@
 //! UI policy CPU benchmarks. No Slint window, compositor or presentation timing.
 use divan::{Bencher, black_box};
-use player_ui::{Action, Effect, UiState, shortcut};
+use player_ui::{Action, Effect, PlaybackControl, UiState, shortcut};
 use std::path::PathBuf;
 
 fn main() {
@@ -15,7 +15,7 @@ fn playlist(count: usize) -> Vec<PathBuf> {
 
 fn state(count: usize, loaded: bool) -> UiState {
     let mut state = UiState {
-        playlist: playlist(count),
+        playlist: std::sync::Arc::new(playlist(count)),
         selected: count / 2,
         ..Default::default()
     };
@@ -102,7 +102,7 @@ fn playlist_navigation<const OP: u8>(bencher: Bencher, count: usize) {
     assert!(
         effects
             .iter()
-            .all(|effect| matches!(effect, Effect::Load(_)))
+            .all(|effect| matches!(effect, Effect::PlayPlaylistIndex(_)))
     );
     bencher
         .with_inputs(|| state(count, true))
@@ -150,14 +150,17 @@ fn optional_playback_controls<const LOADED: bool>(bencher: Bencher, name: &str) 
         "deband" | "equalizer" => 1.0,
         _ => 0.0,
     };
-    let mut check = state(1, LOADED);
-    let action = Action::control(name, value).unwrap();
-    assert_eq!(check.dispatch(action.clone()).len(), usize::from(LOADED));
+    let check = state(1, LOADED);
+    let action = PlaybackControl::from_ui_action(name, value).unwrap();
+    assert_eq!(
+        check.dispatch_playback_control(action).len(),
+        usize::from(LOADED)
+    );
     bencher
         .with_inputs(|| state(1, LOADED))
         .bench_local_refs(|state| {
-            state.dispatch(black_box(
-                Action::control(black_box(name), black_box(value)).unwrap(),
+            state.dispatch_playback_control(black_box(
+                PlaybackControl::from_ui_action(black_box(name), black_box(value)).unwrap(),
             ))
         });
 }

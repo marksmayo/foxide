@@ -106,6 +106,14 @@ impl Api {
         helper: Option<&player_services::VideoSiteTool>,
         thumbnail: bool,
     ) -> Result<Arc<Self>, String> {
+        Self::load_with_options(helper, thumbnail, &[])
+    }
+
+    fn load_with_options(
+        helper: Option<&player_services::VideoSiteTool>,
+        thumbnail: bool,
+        extra_options: &[(&CStr, &CStr)],
+    ) -> Result<Arc<Self>, String> {
         let candidates: Vec<PathBuf> = if let Some(path) = std::env::var_os("FOXIDE_LIBMPV") {
             vec![path.into()]
         } else if cfg!(windows) {
@@ -139,7 +147,7 @@ impl Api {
                     continue;
                 }
             };
-            let loaded = unsafe { Self::from_library(library, helper, thumbnail) };
+            let loaded = unsafe { Self::from_library(library, helper, thumbnail, extra_options) };
             match loaded {
                 Ok(api) => return Ok(Arc::new(api)),
                 Err(error) => errors.push(error),
@@ -161,6 +169,7 @@ impl Api {
         library: Library,
         helper: Option<&player_services::VideoSiteTool>,
         thumbnail: bool,
+        extra_options: &[(&CStr, &CStr)],
     ) -> Result<Self, String> {
         // SAFETY: caller supplies an owned libmpv library. All functions are loaded
         // before creating a client so missing symbols cannot leak the client.
@@ -244,9 +253,18 @@ impl Api {
                 (c"terminal", c"no"),
                 (c"input-default-bindings", c"no"),
                 (c"audio", if thumbnail { c"no" } else { c"auto" }),
+                (c"gapless-audio", if thumbnail { c"no" } else { c"yes" }),
             ] {
                 if option(api.handle, name.as_ptr(), value.as_ptr()) < 0 {
                     return Err("libmpv rejected a required playback option".into());
+                }
+            }
+            for (name, value) in extra_options {
+                if option(api.handle, name.as_ptr(), value.as_ptr()) < 0 {
+                    return Err(format!(
+                        "libmpv rejected the requested output option {}",
+                        name.to_string_lossy()
+                    ));
                 }
             }
             let enabled = if helper.is_some() { c"yes" } else { c"no" };
@@ -465,6 +483,7 @@ pub struct Snapshot {
     pub paused: bool,
     pub position: f64,
     pub duration: f64,
+    pub playlist_position: usize,
     pub speed: f64,
     pub volume: f64,
     pub muted: bool,
@@ -506,11 +525,49 @@ impl Engine {
         Self::create(None, true)
     }
 
+    #[cfg(all(test, feature = "system-media-integration"))]
+    fn new_audio_capture(path: &std::path::Path) -> Result<Self, String> {
+        let path = CString::new(path.to_string_lossy().as_bytes())
+            .map_err(|_| "PCM capture path contains a null byte")?;
+        let options = [
+            (c"vo", c"null"),
+            (c"ao", c"pcm"),
+            (c"ao-pcm-file", path.as_c_str()),
+            (c"ao-pcm-waveheader", c"yes"),
+            (c"audio-format", c"s16"),
+            (c"audio-samplerate", c"44100"),
+            (c"audio-channels", c"mono"),
+        ];
+        Self::create_with_options(None, false, &options)
+    }
+
+    #[cfg(all(test, feature = "system-media-integration"))]
+    fn new_audio_device_capture(device: &str) -> Result<Self, String> {
+        let device = CString::new(device).map_err(|_| "Audio device contains a null byte")?;
+        let options = [
+            (c"vo", c"null"),
+            (c"ao", c"pulse"),
+            (c"audio-device", device.as_c_str()),
+            (c"audio-format", c"s16"),
+            (c"audio-samplerate", c"44100"),
+            (c"audio-channels", c"mono"),
+        ];
+        Self::create_with_options(None, false, &options)
+    }
+
     fn create(helper: Option<&std::path::Path>, thumbnail: bool) -> Result<Self, String> {
+        Self::create_with_options(helper, thumbnail, &[])
+    }
+
+    fn create_with_options(
+        helper: Option<&std::path::Path>,
+        thumbnail: bool,
+        extra_options: &[(&CStr, &CStr)],
+    ) -> Result<Self, String> {
         let helper = helper
             .map(player_services::VideoSiteTool::new)
             .transpose()?;
-        let api = Api::load(helper.as_ref(), thumbnail)?;
+        let api = Api::load_with_options(helper.as_ref(), thumbnail, extra_options)?;
         let ready = Arc::new(AtomicBool::new(false));
         let stop = Arc::new(AtomicBool::new(false));
         let snapshot = Arc::new(Mutex::new(Snapshot::default()));
@@ -681,6 +738,7 @@ impl Engine {
                         paused: client.get(c"pause") == "yes",
                         position: client.number(c"time-pos"),
                         duration: client.number(c"duration"),
+                        playlist_position: client.number(c"playlist-pos").max(0.0) as usize,
                         speed: client.number(c"speed"),
                         volume: client.number(c"volume"),
                         muted: client.get(c"mute") == "yes",
@@ -835,6 +893,392 @@ mod snapshot_allocation_tests {
             thread::sleep(Duration::from_millis(50));
         }
         panic!("libmpv snapshot did not expose embedded title, artist, and album metadata");
+    }
+
+    #[test]
+    #[ignore = "Native playlist acceptance; requires generated short audio fixtures and libmpv"]
+    #[cfg(feature = "system-media-integration")]
+    fn native_playlist_advances_to_the_queued_audio_track() {
+        use std::time::Instant;
+
+        let first = std::env::var("FOXIDE_GAPLESS_FIRST")
+            .expect("workflow must provide the first short audio fixture");
+        let second = std::env::var("FOXIDE_GAPLESS_SECOND")
+            .expect("workflow must provide the second short audio fixture");
+        let engine = Engine::new().expect("libmpv must be available");
+        for (name, value) in [("vo", "null"), ("ao", "null"), ("pause", "no")] {
+            engine
+                .command(vec!["set".into(), name.into(), value.into()])
+                .unwrap();
+        }
+        engine.ready.store(true, Ordering::Release);
+        engine
+            .command(vec!["loadfile".into(), first, "replace".into()])
+            .unwrap();
+        engine
+            .command(vec!["loadfile".into(), second, "append".into()])
+            .unwrap();
+
+        let deadline = Instant::now() + Duration::from_secs(15);
+        while Instant::now() < deadline {
+            let snapshot = engine.snapshot().unwrap_or_default();
+            if !snapshot.error.is_empty() {
+                panic!("libmpv failed to play queued audio: {}", snapshot.error);
+            }
+            if snapshot.loaded && snapshot.playlist_position == 1 {
+                engine.command(vec!["stop".into()]).unwrap();
+                return;
+            }
+            thread::sleep(Duration::from_millis(20));
+        }
+        panic!("libmpv did not automatically advance to the queued audio track");
+    }
+
+    #[test]
+    #[ignore = "Native gapless audio acceptance; requires generated WAV fixtures and libmpv"]
+    #[cfg(feature = "system-media-integration")]
+    fn native_playlist_pcm_capture_has_no_silence_at_track_boundary() {
+        use std::time::Instant;
+
+        let first = std::env::var("FOXIDE_GAPLESS_FIRST")
+            .expect("workflow must provide the first short audio fixture");
+        let second = std::env::var("FOXIDE_GAPLESS_SECOND")
+            .expect("workflow must provide the second short audio fixture");
+        let capture = std::env::var("FOXIDE_GAPLESS_CAPTURE")
+            .expect("workflow must provide a PCM capture path");
+        let engine = Engine::new_audio_capture(std::path::Path::new(&capture))
+            .expect("libmpv must initialize the PCM capture output");
+        engine.ready.store(true, Ordering::Release);
+        engine
+            .command(vec!["loadfile".into(), first, "replace".into()])
+            .unwrap();
+        engine
+            .command(vec!["loadfile".into(), second, "append".into()])
+            .unwrap();
+
+        let deadline = Instant::now() + Duration::from_secs(15);
+        while Instant::now() < deadline {
+            let snapshot = engine.snapshot().unwrap_or_default();
+            assert!(
+                snapshot.error.is_empty(),
+                "libmpv failed to capture queued audio: {}",
+                snapshot.error
+            );
+            if snapshot.loaded
+                && snapshot.playlist_position == 1
+                && snapshot.duration > 0.0
+                && snapshot.position >= snapshot.duration - 0.02
+            {
+                engine.command(vec!["stop".into()]).unwrap();
+                break;
+            }
+            thread::sleep(Duration::from_millis(20));
+        }
+        assert!(
+            Instant::now() < deadline,
+            "libmpv did not finish the second queued audio track"
+        );
+        drop(engine);
+        thread::sleep(Duration::from_millis(250));
+
+        let bytes = std::fs::read(capture).expect("libmpv should write its PCM capture");
+        assert_pcm_wav_has_gapless_boundary(&bytes, "libmpv PCM writer");
+    }
+
+    #[test]
+    #[ignore = "Native PulseAudio loopback acceptance; requires a configured virtual sink and libmpv"]
+    #[cfg(feature = "system-media-integration")]
+    fn native_playlist_audio_device_loopback_has_no_silence_at_track_boundary() {
+        use std::time::Instant;
+        use std::{
+            io::Read,
+            process::{Command, Stdio},
+        };
+
+        let first = std::env::var("FOXIDE_GAPLESS_FIRST")
+            .expect("workflow must provide the first short audio fixture");
+        let second = std::env::var("FOXIDE_GAPLESS_SECOND")
+            .expect("workflow must provide the second short audio fixture");
+        let sink = std::env::var("FOXIDE_GAPLESS_PULSE_SINK")
+            .expect("workflow must provide the virtual PulseAudio sink name");
+        let monitor = format!("{sink}.monitor");
+        let mut recorder = Command::new("parecord")
+            .args(["--raw", "--format=s16le", "--rate=44100", "--channels=1"])
+            .arg(format!("--device={monitor}"))
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null())
+            .spawn()
+            .expect("PulseAudio recorder must be installed in the native acceptance job");
+        let mut output = recorder
+            .stdout
+            .take()
+            .expect("PulseAudio recorder must expose its PCM stream");
+        let capture_reader = thread::spawn(move || {
+            let mut bytes = Vec::new();
+            output
+                .read_to_end(&mut bytes)
+                .expect("read PulseAudio monitor PCM");
+            bytes
+        });
+        thread::sleep(Duration::from_millis(250));
+        assert!(
+            recorder.try_wait().unwrap().is_none(),
+            "PulseAudio loopback recorder exited before playback"
+        );
+
+        let engine = Engine::new_audio_device_capture(&format!("pulse/{sink}"))
+            .expect("libmpv must initialize the PulseAudio sink");
+        engine.ready.store(true, Ordering::Release);
+        engine
+            .command(vec!["loadfile".into(), first, "replace".into()])
+            .unwrap();
+        engine
+            .command(vec!["loadfile".into(), second, "append".into()])
+            .unwrap();
+
+        let deadline = Instant::now() + Duration::from_secs(15);
+        let mut second_track_started = None;
+        let mut last_snapshot = Snapshot::default();
+        while Instant::now() < deadline {
+            let snapshot = engine.snapshot().unwrap_or_default();
+            last_snapshot = snapshot.clone();
+            assert!(
+                snapshot.error.is_empty(),
+                "libmpv failed to play through PulseAudio: {}",
+                snapshot.error
+            );
+            if snapshot.playlist_position == 1 {
+                let started = second_track_started.get_or_insert_with(Instant::now);
+                if started.elapsed() >= Duration::from_millis(1_500) {
+                    break;
+                }
+            }
+            thread::sleep(Duration::from_millis(20));
+        }
+        engine.command(vec!["stop".into()]).unwrap();
+        assert!(
+            second_track_started.is_some(),
+            "libmpv did not advance to the second queued track: loaded={}, path={:?}, playlist_position={}, position={:.3}, duration={:.3}, paused={}, error={:?}, command_error={:?}",
+            last_snapshot.loaded,
+            last_snapshot.path,
+            last_snapshot.playlist_position,
+            last_snapshot.position,
+            last_snapshot.duration,
+            last_snapshot.paused,
+            last_snapshot.error,
+            last_snapshot.command_error
+        );
+        drop(engine);
+        recorder.kill().expect("stop PulseAudio loopback recorder");
+        let _ = recorder.wait().expect("wait for PulseAudio recorder");
+
+        let pcm = capture_reader
+            .join()
+            .expect("PulseAudio monitor reader thread must finish");
+        assert_eq!(pcm.len() % 2, 0, "PCM16 capture must contain whole samples");
+        let samples = pcm
+            .chunks_exact(2)
+            .map(|sample| i16::from_le_bytes([sample[0], sample[1]]))
+            .collect::<Vec<_>>();
+        let active_span_ms = assert_pcm_wav_has_gapless_boundary(
+            &test_pcm_wav(&samples),
+            "PulseAudio device loopback",
+        );
+        assert!(
+            active_span_ms >= 3_000,
+            "PulseAudio loopback captured only {active_span_ms} ms of active audio; expected both 2-second tracks and a sustained second track"
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "system-media-integration")]
+    fn gapless_loopback_analyzer_ignores_capture_edges_and_rejects_internal_silence() {
+        let first_track = test_tone(440.0, 4_410);
+        let second_track = test_tone(880.0, 4_410);
+        let mut contiguous = vec![0_i16; 441];
+        contiguous.extend_from_slice(&first_track);
+        contiguous.extend(std::iter::repeat_n(0_i16, 220));
+        contiguous.extend_from_slice(&second_track);
+        contiguous.extend(std::iter::repeat_n(0_i16, 441));
+        let active_span_ms =
+            assert_pcm_wav_has_gapless_boundary(&test_pcm_wav(&contiguous), "synthetic capture");
+        assert!(
+            active_span_ms >= 190,
+            "synthetic capture should retain the active audio span, got {active_span_ms} ms"
+        );
+
+        let mut with_gap = vec![0_i16; 441];
+        with_gap.extend_from_slice(&first_track);
+        with_gap.extend(std::iter::repeat_n(0_i16, 1_323));
+        with_gap.extend_from_slice(&second_track);
+        with_gap.extend(std::iter::repeat_n(0_i16, 441));
+        assert!(
+            std::panic::catch_unwind(|| {
+                assert_pcm_wav_has_gapless_boundary(&test_pcm_wav(&with_gap), "synthetic capture");
+            })
+            .is_err()
+        );
+    }
+
+    #[cfg(feature = "system-media-integration")]
+    fn test_tone(frequency: f64, sample_count: usize) -> Vec<i16> {
+        (0..sample_count)
+            .map(|sample| {
+                (8_000.0 * (std::f64::consts::TAU * frequency * sample as f64 / 44_100.0).sin())
+                    as i16
+            })
+            .collect()
+    }
+
+    #[cfg(feature = "system-media-integration")]
+    fn test_pcm_wav(samples: &[i16]) -> Vec<u8> {
+        let data_length = (samples.len() * 2) as u32;
+        let mut wav = Vec::with_capacity(44 + data_length as usize);
+        wav.extend_from_slice(b"RIFF");
+        wav.extend_from_slice(&(36 + data_length).to_le_bytes());
+        wav.extend_from_slice(b"WAVEfmt ");
+        wav.extend_from_slice(&16_u32.to_le_bytes());
+        wav.extend_from_slice(&1_u16.to_le_bytes());
+        wav.extend_from_slice(&1_u16.to_le_bytes());
+        wav.extend_from_slice(&44_100_u32.to_le_bytes());
+        wav.extend_from_slice(&88_200_u32.to_le_bytes());
+        wav.extend_from_slice(&2_u16.to_le_bytes());
+        wav.extend_from_slice(&16_u16.to_le_bytes());
+        wav.extend_from_slice(b"data");
+        wav.extend_from_slice(&data_length.to_le_bytes());
+        for sample in samples {
+            wav.extend_from_slice(&sample.to_le_bytes());
+        }
+        wav
+    }
+
+    #[cfg(feature = "system-media-integration")]
+    fn assert_pcm_wav_has_gapless_boundary(bytes: &[u8], capture_kind: &str) -> u64 {
+        assert!(
+            bytes.starts_with(b"RIFF"),
+            "{capture_kind} must provide a WAV file"
+        );
+        let mut channels = 0_u16;
+        let mut sample_rate = 0_u32;
+        let mut bits_per_sample = 0_u16;
+        let mut data = None;
+        let mut offset = 12;
+        while offset + 8 <= bytes.len() {
+            let tag = &bytes[offset..offset + 4];
+            let length =
+                u32::from_le_bytes(bytes[offset + 4..offset + 8].try_into().unwrap()) as usize;
+            let start = offset + 8;
+            let end = start.saturating_add(length);
+            assert!(end <= bytes.len(), "WAV chunk exceeds {capture_kind}");
+            if tag == b"fmt " {
+                assert!(length >= 16, "WAV format chunk is incomplete");
+                let format = u16::from_le_bytes(bytes[start..start + 2].try_into().unwrap());
+                if format == 0xfffe {
+                    assert!(length >= 40, "WAV extensible format chunk is incomplete");
+                    let subtype =
+                        u32::from_le_bytes(bytes[start + 24..start + 28].try_into().unwrap());
+                    assert_eq!(subtype, 1, "WAV extensible subtype should be PCM");
+                } else {
+                    assert_eq!(format, 1, "{capture_kind} should use PCM encoding");
+                }
+                channels = u16::from_le_bytes(bytes[start + 2..start + 4].try_into().unwrap());
+                sample_rate = u32::from_le_bytes(bytes[start + 4..start + 8].try_into().unwrap());
+                bits_per_sample =
+                    u16::from_le_bytes(bytes[start + 14..start + 16].try_into().unwrap());
+            } else if tag == b"data" {
+                data = Some(&bytes[start..end]);
+                break;
+            }
+            offset = end + (length & 1);
+        }
+        assert_eq!(channels, 1, "{capture_kind} should be mono");
+        assert_eq!(
+            sample_rate, 44_100,
+            "{capture_kind} sample rate should be stable"
+        );
+        assert_eq!(bits_per_sample, 16, "{capture_kind} should use PCM16");
+        let data = data.expect("WAV capture must contain audio samples");
+        assert_eq!(data.len() % 2, 0, "PCM16 must contain whole samples");
+        let samples = data
+            .chunks_exact(2)
+            .map(|sample| i16::from_le_bytes([sample[0], sample[1]]) as i32)
+            .collect::<Vec<_>>();
+        let window = sample_rate as usize / 200;
+        let quiet_windows = samples
+            .chunks(window)
+            .map(|chunk| {
+                let mean_square = chunk
+                    .iter()
+                    .map(|sample| i64::from(*sample) * i64::from(*sample))
+                    .sum::<i64>() as f64
+                    / chunk.len() as f64;
+                mean_square.sqrt() < 1_500.0
+            })
+            .collect::<Vec<_>>();
+        let first_active = quiet_windows
+            .iter()
+            .position(|quiet| !quiet)
+            .expect("capture must include the first queued track");
+        let last_active = quiet_windows
+            .iter()
+            .rposition(|quiet| !quiet)
+            .expect("capture must include the last queued track");
+        let frequency_window = sample_rate as usize / 10;
+        let first_start = first_active * window;
+        let last_end = ((last_active + 1) * window).min(samples.len());
+        assert!(
+            first_start + frequency_window <= samples.len()
+                && last_end >= frequency_window
+                && last_end - frequency_window >= first_start,
+            "{capture_kind} must include enough samples from both tracks"
+        );
+        let first_frequency = positive_zero_crossing_frequency(
+            &samples[first_start..first_start + frequency_window],
+            sample_rate,
+        );
+        let last_frequency = positive_zero_crossing_frequency(
+            &samples[last_end - frequency_window..last_end],
+            sample_rate,
+        );
+        assert!(
+            (350.0..=550.0).contains(&first_frequency),
+            "{capture_kind}'s first track should be the 440 Hz fixture; measured {first_frequency:.1} Hz"
+        );
+        assert!(
+            (750.0..=1_000.0).contains(&last_frequency),
+            "{capture_kind}'s second track should be the 880 Hz fixture; measured {last_frequency:.1} Hz"
+        );
+        let mut longest_silence_windows = 0;
+        let mut current_silence_windows = 0;
+        for quiet in &quiet_windows[first_active..=last_active] {
+            if *quiet {
+                current_silence_windows += 1;
+                longest_silence_windows = longest_silence_windows.max(current_silence_windows);
+            } else {
+                current_silence_windows = 0;
+            }
+        }
+        let active_span_ms = (last_active - first_active) as u64 * 5;
+        println!(
+            "gapless {capture_kind} sample_rate={sample_rate} sample_count={} first_track_hz={first_frequency:.1} second_track_hz={last_frequency:.1} active_span_ms={active_span_ms} longest_internal_silence_ms={}",
+            samples.len(),
+            longest_silence_windows * 5
+        );
+        assert!(
+            longest_silence_windows <= 4,
+            "{capture_kind} contains a track-boundary silence gap of {} ms",
+            longest_silence_windows * 5
+        );
+        active_span_ms
+    }
+
+    #[cfg(feature = "system-media-integration")]
+    fn positive_zero_crossing_frequency(samples: &[i32], sample_rate: u32) -> f64 {
+        let crossings = samples
+            .windows(2)
+            .filter(|pair| pair[0] <= 0 && pair[1] > 0)
+            .count();
+        crossings as f64 * f64::from(sample_rate) / samples.len() as f64
     }
 }
 

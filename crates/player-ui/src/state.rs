@@ -1,4 +1,7 @@
-use std::path::PathBuf;
+use std::{
+    path::PathBuf,
+    sync::{Arc, OnceLock},
+};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Action {
@@ -19,7 +22,6 @@ pub enum Action {
     ToggleFullscreen,
     Stop,
     Quit,
-    Playback(PlaybackControl),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -36,6 +38,8 @@ pub enum PlaybackControl {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Effect {
     Load(PathBuf),
+    LoadPlaylist(Arc<Vec<PathBuf>>),
+    PlayPlaylistIndex(usize),
     Pause(bool),
     Mute(bool),
     Seek(f64),
@@ -49,9 +53,9 @@ pub enum Effect {
     Engine(Vec<String>),
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct UiState {
-    pub playlist: Vec<PathBuf>,
+    pub playlist: Arc<Vec<PathBuf>>,
     pub loaded: bool,
     pub paused: bool,
     pub muted: bool,
@@ -61,9 +65,29 @@ pub struct UiState {
     pub fullscreen: bool,
 }
 
-impl Action {
+fn empty_playlist() -> Arc<Vec<PathBuf>> {
+    static EMPTY: OnceLock<Arc<Vec<PathBuf>>> = OnceLock::new();
+    Arc::clone(EMPTY.get_or_init(|| Arc::new(Vec::new())))
+}
+
+impl Default for UiState {
+    fn default() -> Self {
+        Self {
+            playlist: empty_playlist(),
+            loaded: false,
+            paused: false,
+            muted: false,
+            duration: 0.0,
+            selected: 0,
+            playlist_visible: false,
+            fullscreen: false,
+        }
+    }
+}
+
+impl PlaybackControl {
     /// Map only supported desktop controls; no arbitrary engine command input.
-    pub fn control(name: &str, value: f64) -> Option<Self> {
+    pub fn from_ui_action(name: &str, value: f64) -> Option<Self> {
         let control = match name {
             "frame-step" => PlaybackControl::FrameStep(false),
             "frame-back-step" => PlaybackControl::FrameStep(true),
@@ -89,7 +113,7 @@ impl Action {
             }
             _ => return None,
         };
-        Some(Self::Playback(control))
+        Some(control)
     }
 }
 
@@ -179,19 +203,25 @@ impl UiState {
         };
     }
 
+    pub fn sync_playlist_position(&mut self, index: usize) -> bool {
+        if index >= self.playlist.len() {
+            return false;
+        }
+        self.selected = index;
+        true
+    }
+
     #[inline]
     pub fn dispatch(&mut self, action: Action) -> Vec<Effect> {
         match action {
             Action::Open(files) => {
-                self.playlist = files;
+                if files.is_empty() {
+                    return Vec::new();
+                }
+                self.playlist = Arc::new(files);
                 self.selected = 0;
                 self.loaded = false;
-                self.playlist
-                    .first()
-                    .cloned()
-                    .map(Effect::Load)
-                    .into_iter()
-                    .collect()
+                vec![Effect::LoadPlaylist(self.playlist.clone())]
             }
             Action::TogglePause if self.loaded => vec![Effect::Pause(!self.paused)],
             Action::SetPaused(paused) if self.loaded => {
@@ -231,17 +261,20 @@ impl UiState {
                 vec![Effect::Stop]
             }
             Action::Quit => vec![Effect::Quit],
-            Action::Playback(control) if self.loaded => {
-                control.command().map(Effect::Engine).into_iter().collect()
-            }
             _ => Vec::new(),
         }
     }
 
+    pub fn dispatch_playback_control(&self, control: PlaybackControl) -> Vec<Effect> {
+        if !self.loaded {
+            return Vec::new();
+        }
+        control.command().map(Effect::Engine).into_iter().collect()
+    }
+
     fn select(&mut self, index: usize) -> Vec<Effect> {
         self.selected = index;
-        self.loaded = false;
-        vec![Effect::Load(self.playlist[index].clone())]
+        vec![Effect::PlayPlaylistIndex(index)]
     }
 }
 
@@ -249,6 +282,36 @@ impl UiState {
 mod tests {
     use super::{Action, Effect, UiState};
 
+    use std::sync::Arc;
+
+    #[test]
+    fn empty_playlist_open_has_no_load_effect_and_shares_empty_storage() {
+        let mut first = UiState::default();
+        let mut second = UiState::default();
+
+        assert!(first.dispatch(Action::Open(Vec::new())).is_empty());
+        assert!(second.dispatch(Action::Open(Vec::new())).is_empty());
+        assert!(Arc::ptr_eq(&first.playlist, &second.playlist));
+    }
+
+    #[test]
+    fn opening_an_empty_selection_does_not_discard_the_active_track() {
+        let mut state = UiState::default();
+        state.dispatch(Action::Open(vec!["playing.flac".into()]));
+        state.confirm_loaded(180.0);
+        state.paused = true;
+
+        assert!(state.dispatch(Action::Open(Vec::new())).is_empty());
+
+        assert_eq!(
+            state.playlist.as_ref(),
+            &[std::path::PathBuf::from("playing.flac")]
+        );
+        assert!(state.loaded);
+        assert!(state.paused);
+        assert_eq!(state.duration, 180.0);
+        assert_eq!(state.selected, 0);
+    }
     #[test]
     fn system_media_play_and_pause_wait_for_engine_confirmation() {
         let mut state = UiState::default();
@@ -270,5 +333,85 @@ mod tests {
 
         state.loaded = false;
         assert!(state.dispatch(Action::SetPaused(false)).is_empty());
+    }
+
+    #[test]
+    fn opening_a_playlist_schedules_every_track_for_contiguous_playback() {
+        let tracks = vec![
+            "first.flac".into(),
+            "second.flac".into(),
+            "third.flac".into(),
+        ];
+        let mut state = UiState::default();
+
+        let effects = state.dispatch(Action::Open(tracks.clone()));
+
+        assert_eq!(effects, vec![Effect::LoadPlaylist(state.playlist.clone())]);
+        assert_eq!(state.playlist.as_ref(), &tracks);
+        assert_eq!(state.selected, 0);
+        assert!(!state.loaded);
+    }
+
+    #[test]
+    fn opening_a_playlist_shares_the_queue_with_its_engine_effect() {
+        let tracks = vec!["first.flac".into(), "second.flac".into()];
+        let mut state = UiState::default();
+
+        let effects = state.dispatch(Action::Open(tracks));
+        let [Effect::LoadPlaylist(engine_queue)] = effects.as_slice() else {
+            panic!("Opening a nonempty playlist must schedule the queue");
+        };
+
+        assert!(std::sync::Arc::ptr_eq(&state.playlist, engine_queue));
+    }
+
+    #[test]
+    fn selecting_another_track_in_a_loaded_playlist_keeps_the_queue() {
+        let tracks = vec![
+            "first.flac".into(),
+            "second.flac".into(),
+            "third.flac".into(),
+        ];
+        let mut state = UiState::default();
+        state.dispatch(Action::Open(tracks.clone()));
+        state.confirm_loaded(12.0);
+
+        assert_eq!(
+            state.dispatch(Action::Next),
+            vec![Effect::PlayPlaylistIndex(1)]
+        );
+        assert_eq!(state.playlist.as_ref(), &tracks);
+        assert_eq!(state.selected, 1);
+        assert!(state.loaded);
+    }
+
+    #[test]
+    fn selecting_during_initial_load_keeps_the_queued_playlist() {
+        let tracks = vec!["first.flac".into(), "second.flac".into()];
+        let mut state = UiState::default();
+        state.dispatch(Action::Open(tracks.clone()));
+
+        assert_eq!(
+            state.dispatch(Action::Select(1)),
+            vec![Effect::PlayPlaylistIndex(1)]
+        );
+        assert_eq!(state.playlist.as_ref(), &tracks);
+        assert_eq!(state.selected, 1);
+        assert!(!state.loaded);
+    }
+
+    #[test]
+    fn automatic_playlist_advance_updates_selection_without_reloading() {
+        let tracks = vec!["first.flac".into(), "second.flac".into()];
+        let mut state = UiState::default();
+        state.dispatch(Action::Open(tracks.clone()));
+        state.confirm_loaded(12.0);
+
+        assert!(state.sync_playlist_position(1));
+        assert_eq!(state.selected, 1);
+        assert!(!state.sync_playlist_position(2));
+        assert_eq!(state.selected, 1);
+        assert_eq!(state.playlist.as_ref(), &tracks);
+        assert!(state.loaded);
     }
 }

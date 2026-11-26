@@ -1,5 +1,5 @@
 #![cfg(feature = "desktop")]
-use crate::{Action, Effect, UiState};
+use crate::{Effect, PlaybackControl, UiState};
 use serde_json::json;
 use std::{
     fs,
@@ -70,13 +70,20 @@ fn desktop_menu_commands_are_accepted_by_the_native_media_engine() {
     ];
     let mut requests = Vec::new();
     for (name, value, property, expected) in scenarios {
-        let effects = state.dispatch(Action::control(name, value).unwrap());
+        let effects =
+            state.dispatch_playback_control(PlaybackControl::from_ui_action(name, value).unwrap());
         let [Effect::Engine(command)] = effects.as_slice() else {
             panic!("Control did not reach engine");
         };
         requests
             .push(json!({"name":name,"command":command,"property":property,"expected":expected}));
     }
+    requests.push(json!({
+        "name": "stop-preserves-queue",
+        "command": ["stop", "keep-playlist"],
+        "property": "playlist-count",
+        "expected": 1
+    }));
     let requests_path = probe.directory.join("requests.json");
     let output_path = probe.directory.join("result.json");
     fs::write(&requests_path, serde_json::to_vec(&requests).unwrap()).unwrap();
@@ -93,6 +100,7 @@ fn desktop_menu_commands_are_accepted_by_the_native_media_engine() {
             .args([
                 "--no-config",
                 "--load-scripts=no",
+                "--idle=yes",
                 "--vo=null",
                 "--ao=null",
                 "--hwdec=no",

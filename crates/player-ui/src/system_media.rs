@@ -258,11 +258,11 @@ mod tests {
     #[test]
     fn publishes_current_track_metadata_and_transport_capabilities() {
         let mut state = UiState {
-            playlist: vec![
+            playlist: std::sync::Arc::new(vec![
                 PathBuf::from("first.mp3"),
                 PathBuf::from("current.mp3"),
                 PathBuf::from("next.mp3"),
-            ],
+            ]),
             selected: 1,
             ..UiState::default()
         };

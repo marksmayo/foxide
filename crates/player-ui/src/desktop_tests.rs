@@ -921,6 +921,12 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
         ("audio-track", 1.0),
         ("subtitle-track", 1.0),
         ("subtitle-track", 0.0),
+        ("rotation", 90.0),
+        ("flip-vertical", 0.0),
+        ("replaygain", 2.0),
+        ("deband", 1.0),
+        ("equalizer", 1.0),
+        ("secondary-subtitle", 2.0),
         ("frame-step", 0.0),
     ] {
         controls.borrow_mut().confirm_loaded(120.0);

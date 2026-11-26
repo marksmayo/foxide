@@ -7,7 +7,7 @@ use clap::Parser;
 use player_cast::{CastController, CastEvent, CastOptions, CertificatePin};
 use player_render::{Engine, Snapshot};
 use player_settings::Preferences;
-use player_ui::{Action, Effect, UiState};
+use player_ui::{Action, Effect, PlaybackControl, UiState};
 use slint::{ComponentHandle, ModelRc, VecModel};
 use std::{
     cell::{Cell, RefCell},
@@ -138,6 +138,27 @@ fn update_queue(ui: &PlayerWindow, state: &UiState) {
     ui.set_queue(ModelRc::new(VecModel::from(rows)));
 }
 
+fn dispatch_playback_control(
+    ui: &PlayerWindow,
+    state: &Rc<RefCell<UiState>>,
+    engine: &Option<Rc<Engine>>,
+    control: PlaybackControl,
+) {
+    for effect in state.borrow().dispatch_playback_control(control) {
+        let Effect::Engine(args) = effect else {
+            continue;
+        };
+        match engine {
+            Some(engine) => {
+                if let Err(error) = engine.command(args) {
+                    ui.set_status(error.into());
+                }
+            }
+            None => ui.set_status("Playback engine unavailable — see setup instructions".into()),
+        }
+    }
+}
+
 fn dispatch(
     ui: &PlayerWindow,
     state: &Rc<RefCell<UiState>>,
@@ -164,8 +185,35 @@ fn dispatch(
                 .is_some_and(|path| path.is_file() && supported_cast_extension(path)),
     );
     for effect in effects {
+        if let Effect::LoadPlaylist(paths) = &effect {
+            match engine {
+                Some(engine) => {
+                    for (index, path) in paths.iter().enumerate() {
+                        let mode = if index == 0 { "replace" } else { "append" };
+                        if let Err(error) = engine.command(vec![
+                            "loadfile".into(),
+                            player_core::external_path(path.clone())
+                                .to_string_lossy()
+                                .into_owned(),
+                            mode.into(),
+                        ]) {
+                            ui.set_status(error.into());
+                            break;
+                        }
+                    }
+                }
+                None => {
+                    ui.set_status("Playback engine unavailable — see setup instructions".into())
+                }
+            }
+            continue;
+        }
         let args: Vec<String> = match effect {
             Effect::Engine(command) => command,
+            Effect::LoadPlaylist(_) => unreachable!("handled before command mapping"),
+            Effect::PlayPlaylistIndex(index) => {
+                vec!["set".into(), "playlist-pos".into(), index.to_string()]
+            }
             Effect::Load(path) => vec![
                 "loadfile".into(),
                 player_core::external_path(path)
@@ -199,7 +247,7 @@ fn dispatch(
                     value.to_string()
                 },
             ],
-            Effect::Stop => vec!["stop".into()],
+            Effect::Stop => vec!["stop".into(), "keep-playlist".into()],
             Effect::Quit => {
                 let _ = slint::quit_event_loop();
                 continue;
@@ -258,6 +306,12 @@ fn refresh(
 ) {
     if snapshot == previous {
         return;
+    }
+    if snapshot.loaded && snapshot.playlist_position != previous.playlist_position {
+        let mut state = state.borrow_mut();
+        if state.sync_playlist_position(snapshot.playlist_position) {
+            ui.set_selected_row(state.selected as i32);
+        }
     }
     let expected = state
         .borrow()
@@ -1158,10 +1212,14 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
             "fullscreen" => Action::ToggleFullscreen,
             "quit" => Action::Quit,
             "mute" => Action::ToggleMute,
-            _ => match Action::control(name.as_str(), value as f64) {
-                Some(action) => action,
-                None => return,
-            },
+            _ => {
+                let Some(control) = PlaybackControl::from_ui_action(name.as_str(), value as f64)
+                else {
+                    return;
+                };
+                dispatch_playback_control(&ui, &controller, &playback, control);
+                return;
+            }
         };
         dispatch(&ui, &controller, &playback, action);
     });
