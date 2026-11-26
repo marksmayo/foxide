@@ -6,7 +6,7 @@ use super::*;
 use cadence_window::CadenceWindow;
 use slint::ComponentHandle;
 use std::{
-    cell::RefCell,
+    cell::{Cell, RefCell},
     collections::{HashMap, HashSet},
     hash::{Hash, Hasher},
     rc::Rc,
@@ -112,6 +112,8 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
     let engine = Rc::new(Engine::new().unwrap());
     let thumbnails = Arc::new(crate::ThumbnailController::new());
     let samples = Rc::new(RefCell::new(Samples::default()));
+    let pip_active = Rc::new(Cell::new(false));
+    let pip_frame_count = Rc::new(Cell::new(0_usize));
     let ready_buckets = Rc::new(RefCell::new(HashSet::<u64>::new()));
     let displayed_bucket = Rc::new(std::cell::Cell::new(None::<u64>));
     let second_requested = Rc::new(std::cell::Cell::new(false));
@@ -128,6 +130,8 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
     let observer_buckets = ready_buckets.clone();
     let observer_displayed_bucket = displayed_bucket.clone();
     let observer_second_requested = second_requested.clone();
+    let observer_pip_active = pip_active.clone();
+    let observer_pip_frames = pip_frame_count.clone();
     let observer_fixture = fixture.clone();
     attach_inner(
         ui.window(),
@@ -142,10 +146,16 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
                 })
                 .unwrap_or((1, 1))
         },
-        || false,
-        move |frame, _pip_frame| {
+        move || observer_pip_active.get(),
+        move |frame, pip_frame| {
             if let Some(w) = weak_image.upgrade() {
                 w.set_frame(frame);
+            }
+            if let Some(pip_frame) = pip_frame {
+                let size = pip_frame.size();
+                assert_eq!(size.width, 520, "PiP readback width must stay bounded");
+                assert_eq!(size.height, 294, "PiP readback height must stay bounded");
+                observer_pip_frames.set(observer_pip_frames.get() + 1);
             }
         },
         {
@@ -349,16 +359,22 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
     let timer = slint::Timer::default();
     let sample_clock = samples.clone();
     let timer_buckets = ready_buckets.clone();
+    let timer_pip_active = pip_active.clone();
+    let timer_pip_frames = pip_frame_count.clone();
     timer.start(
         slint::TimerMode::Repeated,
         Duration::from_millis(20),
         move || {
             let elapsed = started.elapsed();
-            if (sample_clock.borrow().timing.finished(elapsed)
+            let video_and_thumbnails_ready = sample_clock.borrow().timing.finished(elapsed)
                 && timer_buckets.borrow().contains(&1)
-                && timer_buckets.borrow().contains(&2))
-                || elapsed >= Duration::from_secs(20)
-            {
+                && timer_buckets.borrow().contains(&2);
+            if video_and_thumbnails_ready {
+                timer_pip_active.set(true);
+                if timer_pip_frames.get() > 0 || elapsed >= Duration::from_secs(20) {
+                    slint::quit_event_loop().unwrap();
+                }
+            } else if elapsed >= Duration::from_secs(20) {
                 slint::quit_event_loop().unwrap();
             }
         },
@@ -467,9 +483,14 @@ fn composited_video_is_upright_and_advances_at_video_cadence() {
         samples.thumbnail_frames.contains_key(&1) && samples.thumbnail_frames.contains_key(&2),
         "real-media pixels were not captured for both requested time buckets"
     );
+    assert!(
+        pip_frame_count.get() > 0,
+        "picture-in-picture did not publish its bounded CPU readback frame"
+    );
     assert_ne!(
         samples.thumbnail_frames.get(&1),
         samples.thumbnail_frames.get(&2),
         "hovering at different time buckets reused the same composited thumbnail frame"
     );
 }
+
