@@ -664,6 +664,146 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
             .video_site_helper(),
         None
     );
+    struct SubtitleFixture;
+    impl player_services::HttpClient for SubtitleFixture {
+        fn get(
+            &self,
+            url: &player_services::Url,
+            _cancel: &std::sync::atomic::AtomicBool,
+        ) -> Result<Vec<u8>, String> {
+            if url.host_str() == Some("cdn.example") {
+                return Ok(b"WEBVTT\n\n00:00:01.000 --> 00:00:02.000\nHello\n".to_vec());
+            }
+            Ok(br#"{"data":[{"attributes":{"language":"en","release":"Film.2025.1080p","download_count":42,"feature_details":{"title":"Film"},"files":[{"file_id":123,"file_name":"Film.en.vtt"}]}}]}"#.to_vec())
+        }
+        fn get_with_headers(
+            &self,
+            url: &player_services::Url,
+            headers: &[(&str, &str)],
+            cancel: &std::sync::atomic::AtomicBool,
+        ) -> Result<Vec<u8>, String> {
+            assert!(
+                headers
+                    .iter()
+                    .any(|(name, value)| *name == "Api-Key" && *value == "test-key")
+            );
+            self.get(url, cancel)
+        }
+        fn post_json(
+            &self,
+            _url: &player_services::Url,
+            headers: &[(&str, &str)],
+            body: &[u8],
+            _cancel: &std::sync::atomic::AtomicBool,
+        ) -> Result<Vec<u8>, String> {
+            assert!(
+                headers
+                    .iter()
+                    .any(|(name, value)| *name == "Api-Key" && *value == "test-key")
+            );
+            assert_eq!(body, br#"{"file_id":123}"#);
+            Ok(br#"{"link":"https://cdn.example/subtitle.vtt"}"#.to_vec())
+        }
+    }
+    let subtitles_dir =
+        std::env::temp_dir().join(format!("foxide-ui-subtitles-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&subtitles_dir);
+    std::fs::create_dir_all(&subtitles_dir).unwrap();
+    let media_path = subtitles_dir.join("Film.mkv");
+    std::fs::write(&media_path, b"fixture").unwrap();
+    let subtitle_state = Rc::new(RefCell::new(UiState::default()));
+    subtitle_state
+        .borrow_mut()
+        .dispatch(Action::Open(vec![media_path.clone()]));
+    let _subtitles = network_ui::install_subtitles(&ui, Arc::new(SubtitleFixture), subtitle_state);
+    ui.set_panel("subtitles".into());
+    ui.set_subtitle_api_key("test-key".into());
+    ui.set_subtitle_query("Film".into());
+    let added_subtitle = Rc::new(RefCell::new(None::<String>));
+    let added_subtitle_callback = added_subtitle.clone();
+    ui.on_subtitle_added(move |path| {
+        *added_subtitle_callback.borrow_mut() = Some(path.to_string())
+    });
+    ui.invoke_subtitle_search("Film".into(), "en".into(), "test-key".into());
+    let pump_subtitles = || {
+        let deadline = std::time::Instant::now() + Duration::from_secs(5);
+        while ui.get_subtitle_busy() && std::time::Instant::now() < deadline {
+            if let Ok(event) = event_receiver.recv_timeout(Duration::from_millis(20)) {
+                event();
+            }
+        }
+        assert!(
+            !ui.get_subtitle_busy(),
+            "Subtitle request must finish or cancel"
+        );
+    };
+    pump_subtitles();
+    assert_eq!(ui.get_subtitle_results().row_count(), 1);
+    let subtitle_row = ui.get_subtitle_results().row_data(0).unwrap();
+    assert_eq!(subtitle_row.title, "Film");
+    ui.invoke_subtitle_download(subtitle_row.file_id);
+    pump_subtitles();
+    let subtitle_path = added_subtitle
+        .borrow()
+        .clone()
+        .expect("download must be forwarded to playback");
+    assert_eq!(
+        PathBuf::from(&subtitle_path),
+        subtitles_dir.join("Film.en.vtt")
+    );
+    assert!(
+        std::fs::read_to_string(&subtitle_path)
+            .unwrap()
+            .starts_with("WEBVTT")
+    );
+    ui.window().request_redraw();
+    rendered_window.draw_if_needed(|renderer| {
+        let size = ui.window().size();
+        let mut pixels = vec![slint::Rgb8Pixel::default(); (size.width * size.height) as usize];
+        renderer.render(&mut pixels, size.width as usize);
+    });
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerPressed {
+            position: slint::LogicalPosition::new(500.0, 215.0),
+            button: slint::platform::PointerEventButton::Left,
+        });
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::PointerReleased {
+            position: slint::LogicalPosition::new(500.0, 215.0),
+            button: slint::platform::PointerEventButton::Left,
+        });
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::KeyPressed { text: "x".into() });
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::KeyReleased { text: "x".into() });
+    assert_eq!(
+        ui.get_subtitle_api_key(),
+        "test-keyx",
+        "The regression must focus the subtitle API-key field"
+    );
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::KeyPressed {
+            text: slint::platform::Key::Escape.into(),
+        });
+    ui.window()
+        .dispatch_event(slint::platform::WindowEvent::KeyReleased {
+            text: slint::platform::Key::Escape.into(),
+        });
+    ui.window().request_redraw();
+    rendered_window.draw_if_needed(|renderer| {
+        let size = ui.window().size();
+        let mut pixels = vec![slint::Rgb8Pixel::default(); (size.width * size.height) as usize];
+        renderer.render(&mut pixels, size.width as usize);
+    });
+    assert!(
+        ui.get_panel().is_empty(),
+        "Escape must close the subtitle panel"
+    );
+    assert!(
+        ui.get_subtitle_api_key().is_empty(),
+        "Closing the panel must clear the session key"
+    );
+    let _ = std::fs::remove_dir_all(&subtitles_dir);
     struct RadioFixture;
     impl player_services::HttpClient for RadioFixture {
         fn get(

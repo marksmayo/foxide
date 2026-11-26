@@ -1,6 +1,6 @@
 use std::{
     ffi::OsString,
-    io::Read,
+    io::{Read, Write},
     path::{Path, PathBuf},
     process::{Child, Command, Stdio},
     sync::{
@@ -74,6 +74,16 @@ pub fn run_bounded(
     limits: RunLimits,
     cancel: &AtomicBool,
 ) -> Result<ToolOutput, String> {
+    run_bounded_with_input(executable, args, limits, cancel, None)
+}
+
+pub fn run_bounded_with_input(
+    executable: &Path,
+    args: &[OsString],
+    limits: RunLimits,
+    cancel: &AtomicBool,
+    input: Option<&[u8]>,
+) -> Result<ToolOutput, String> {
     if cancel.load(Ordering::Acquire) {
         return Err("Operation cancelled".into());
     }
@@ -84,7 +94,11 @@ pub fn run_bounded(
     let mut command = Command::new(executable);
     command
         .args(args)
-        .stdin(Stdio::null())
+        .stdin(if input.is_some() {
+            Stdio::piped()
+        } else {
+            Stdio::null()
+        })
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
     #[cfg(windows)]
@@ -93,6 +107,10 @@ pub fn run_bounded(
         command.creation_flags(0x08000000);
     } // CREATE_NO_WINDOW
     let mut child = OwnedChild(command.spawn().map_err(|e| e.to_string())?);
+    if let Some(input) = input {
+        let mut stdin = child.0.stdin.take().ok_or("Missing input pipe")?;
+        stdin.write_all(input).map_err(|e| e.to_string())?;
+    }
     let (sender, receiver) = mpsc::channel();
     let mut readers = Vec::new();
     for (stdout, pipe, limit) in [

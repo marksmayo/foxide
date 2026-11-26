@@ -1,5 +1,11 @@
 # Customization acceptance
 
+## Online subtitles implementation checkpoint
+
+The draft desktop workflow uses the official [OpenSubtitles REST API](https://opensubtitles.stoplight.io/docs/opensubtitles-api) with a per-session application key. The service validates query/language/key input, caps results and response sizes, maps authentication and rate-limit errors, downloads only HTTPS links, accepts only SRT/ASS/SSA/WebVTT, rejects malformed or non-UTF-8 content, prevents overwrite, and forwards the saved subtitle to the playback engine. The desktop integration test exercises the visible result list, download, saved VTT file and add-to-playback callback through a fake provider. Service tests cover key and origin validation, cancellation, metadata filtering, safe filenames, supported formats, malformed downloads and actionable HTTP failures. The new subtitle module has 96.54% line coverage in local `cargo llvm-cov` output. This is implementation evidence only: live provider credentials, account limits and visual playback on real media remain pending, so the gap stays in progress and no medal is claimed.
+
+Implementation source: f957f4da08af3a4a1171f3ac5f5475068ba6d887.
+
 Implementation source: f957f4da08af3a4a1171f3ac5f5475068ba6d887.
 
 [Three-platform desktop acceptance](https://github.com/marksmayo/foxide/actions/runs/43972156451), [platform checks and coverage gates](https://github.com/marksmayo/foxide/actions/runs/43972156649), [native playback controls](https://github.com/marksmayo/foxide/actions/runs/43972156518), [compositor regression](https://github.com/marksmayo/foxide/actions/runs/43972156442), Windows packaging and [CodSpeed](https://github.com/marksmayo/foxide/actions/runs/43972156363) pass for the implementation source.

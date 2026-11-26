@@ -1,6 +1,7 @@
 import { Slider, ScrollView, LineEdit, Palette, ComboBox } from "std-widgets.slint";
 export struct RadioRow { id: string, name: string, url: string, detail: string }
 export struct CastReceiverRow { name: string, endpoint: string, fingerprint: string }
+export struct SubtitleRow { file-id: string, file-name: string, title: string, release: string, language: string, downloads: string }
 export struct BindingRow { key: string, action: string }
 export global Appearance {
     in-out property <bool> light: false;
@@ -113,6 +114,16 @@ export component PlayerWindow inherits Window {
     in-out property <string> radio-query;
     in-out property <string> radio-error;
     in-out property <[RadioRow]> radio-stations;
+    in-out property <string> subtitle-query;
+    in-out property <string> subtitle-language: "en";
+    in-out property <string> subtitle-api-key;
+    in-out property <bool> subtitle-busy: false;
+    in-out property <string> subtitle-error;
+    in-out property <[SubtitleRow]> subtitle-results;
+    callback subtitle-search(string, string, string);
+    callback subtitle-download(string);
+    callback cancel-subtitle-jobs();
+    callback subtitle-added(string);
     in-out property <string> active-radio-name;
     in-out property <string> active-radio-url;
     callback radio-search(string);
@@ -136,7 +147,20 @@ export component PlayerWindow inherits Window {
     callback cast-select(string, string, string);
     callback cast-remember(string, string, string);
     callback cast-forget(string);
-    changed panel => { if (root.panel != "radio") { root.cancel-services(); } }
+    function close-panel() {
+        if (root.panel == "subtitles") {
+            root.subtitle-api-key = "";
+            root.cancel-subtitle-jobs();
+        }
+        root.panel = "";
+    }
+    changed panel => {
+        if (root.panel != "radio") { root.cancel-services(); }
+        if (root.panel != "subtitles" && (root.subtitle-api-key != "" || root.subtitle-busy || root.subtitle-results.length > 0)) {
+            root.cancel-subtitle-jobs();
+            root.subtitle-api-key = "";
+        }
+    }
     in-out property <bool> light-theme: false;
     in-out property <color> accent-color: #ef955f;
     in-out property <color> accent-text: #171a20;
@@ -293,6 +317,8 @@ export component PlayerWindow inherits Window {
             }
             MenuItem { title: "Fullscreen"; checked: root.fullscreen-mode; activated => { root.action("fullscreen", 0); } } }
         Menu { title: "Subtitles";
+            MenuItem { title: "Search online…"; enabled: root.loaded; activated => { root.panel = "subtitles"; } }
+            MenuSeparator {}
             Menu { title: "Secondary subtitles";
                 MenuItem { title: "Off"; enabled: root.loaded; activated => { root.action("secondary-subtitle", 0); } }
                 for track in root.subtitle-tracks: MenuItem { title: track.label; enabled: root.loaded; activated => { root.action("secondary-subtitle", track.id); } }
@@ -318,7 +344,7 @@ export component PlayerWindow inherits Window {
         }
     }
     keys := FocusScope { width: parent.width; height: parent.height; key-pressed(event) => {
-        if (event.text == Key.Escape && root.panel != "") { root.panel = ""; return accept; }
+        if (event.text == Key.Escape && root.panel != "") { root.close-panel(); return accept; }
         if (event.text == Key.Escape && root.picture-in-picture) { root.action("picture-in-picture", 0); return accept; }
         if (root.panel != "") { return reject; }
         if (event.text == Key.Escape && root.fullscreen-mode) { root.action("fullscreen", 0); return accept; }
@@ -468,17 +494,17 @@ export component PlayerWindow inherits Window {
         }
     }
     if (root.panel != ""): Rectangle { background: #050a13bb;
-        TouchArea { clicked => { root.panel = ""; } }
-        Rectangle { width: min(parent.width - 60px, 550px); height: root.panel == "preferences" || root.panel == "radio" ? min(parent.height - 30px, 620px) : root.panel == "url" ? 300px : root.panel == "cast" ? min(parent.height - 30px, 680px) : 330px; x: (parent.width - self.width) / 2; y: (parent.height - self.height) / 2;
+        TouchArea { clicked => { root.close-panel(); } }
+        Rectangle { width: min(parent.width - 60px, 550px); height: root.panel == "preferences" || root.panel == "radio" || root.panel == "subtitles" ? min(parent.height - 30px, 620px) : root.panel == "url" ? 300px : root.panel == "cast" ? min(parent.height - 30px, 680px) : 330px; x: (parent.width - self.width) / 2; y: (parent.height - self.height) / 2;
             background: Appearance.dialog; border-radius: 14px; border-width: 1px; border-color: Appearance.border;
             VerticalLayout { padding: 24px; spacing: 18px;
                 HorizontalLayout {
-                    Text { text: root.panel == "radio" ? "Internet radio" : root.panel == "preferences" ? "Preferences" : root.panel == "url" ? "Open a network stream" : root.panel == "information" ? "Playback information" : root.panel == "shortcuts" ? "Keyboard shortcuts" : root.panel == "cast" ? "Cast to a receiver" : "Foxide"; color: Appearance.text; font-size: 20px; font-weight: 600; vertical-alignment: center; }
-                    ToolButton { label: "×"; description: "Close dialog"; clicked => { root.panel = ""; } }
+                    Text { text: root.panel == "radio" ? "Internet radio" : root.panel == "subtitles" ? "Search online subtitles" : root.panel == "preferences" ? "Preferences" : root.panel == "url" ? "Open a network stream" : root.panel == "information" ? "Playback information" : root.panel == "shortcuts" ? "Keyboard shortcuts" : root.panel == "cast" ? "Cast to a receiver" : "Foxide"; color: Appearance.text; font-size: 20px; font-weight: 600; vertical-alignment: center; }
+                    ToolButton { label: "×"; description: "Close dialog"; clicked => { root.close-panel(); } }
                 }
                 if (root.panel == "url"): VerticalLayout { spacing: 14px;
-                    LineEdit { text <=> root.url; placeholder-text: "https://… or rtsp://…"; accepted => { root.open-url(root.url); root.panel = ""; } }
-                    ToolButton { label: "Open stream"; width: 130px; primary: true; clicked => { root.open-url(root.url); root.panel = ""; } }
+                    LineEdit { text <=> root.url; placeholder-text: "https://… or rtsp://…"; accepted => { root.open-url(root.url); root.close-panel(); } }
+                    ToolButton { label: "Open stream"; width: 130px; primary: true; clicked => { root.open-url(root.url); root.close-panel(); } }
                 }
                 if (root.panel == "updates"): VerticalLayout { spacing: 14px;
                     Text { text: root.staged-update-version == "" ? root.update-status : "Version " + root.staged-update-version + " is downloaded and checksum-checked. Restart Foxide to install it."; color: Appearance.secondary; wrap: word-wrap; }
@@ -536,6 +562,33 @@ export component PlayerWindow inherits Window {
                     }
                     Text { text: "Directory: Radio Browser · Streams supplied by their broadcasters"; color: Appearance.muted; font-size: 11px; wrap: word-wrap; }
                 }
+                if (root.panel == "subtitles"): VerticalLayout { spacing: 10px; vertical-stretch: 1;
+                    Text { text: "Search subtitles for the current file. A free OpenSubtitles application API key is required; it is used for this session only."; color: Appearance.secondary; wrap: word-wrap; font-size: 12px; }
+                    LineEdit { text <=> root.subtitle-api-key; input-type: password; placeholder-text: "OpenSubtitles application API key"; key-pressed(event) => { if (event.text == Key.Escape) { root.close-panel(); return accept; } return reject; } }
+                    HorizontalLayout { spacing: 8px;
+                        LineEdit { text <=> root.subtitle-query; placeholder-text: "Title or release name"; accepted => { if (!root.subtitle-busy) { root.subtitle-search(root.subtitle-query, root.subtitle-language, root.subtitle-api-key); } } key-pressed(event) => { if (event.text == Key.Escape) { root.close-panel(); return accept; } return reject; } }
+                        ComboBox { model: ["en", "es", "fr", "de", "it", "ja", "ko", "pt", "ru", "zh"]; current-value <=> root.subtitle-language; }
+                    }
+                    HorizontalLayout { spacing: 8px;
+                        ToolButton { label: "Search"; width: 80px; primary: true; available: !root.subtitle-busy; clicked => { root.subtitle-search(root.subtitle-query, root.subtitle-language, root.subtitle-api-key); } }
+                        ToolButton { label: "Cancel"; width: 75px; available: root.subtitle-busy; clicked => { root.cancel-subtitle-jobs(); } }
+                        Text { text: root.subtitle-busy ? "Searching…" : root.subtitle-error; color: Appearance.secondary; horizontal-stretch: 1; wrap: word-wrap; }
+                    }
+                    ScrollView { vertical-stretch: 1;
+                        VerticalLayout { spacing: 8px;
+                            for subtitle in root.subtitle-results: Rectangle { height: 72px; background: Appearance.sidebar; border-radius: 8px;
+                                HorizontalLayout { padding: 9px; spacing: 8px;
+                                    VerticalLayout { horizontal-stretch: 1;
+                                        Text { text: subtitle.title + " · " + subtitle.language; color: Appearance.text; overflow: elide; }
+                                        Text { text: subtitle.release + " · " + subtitle.downloads + " downloads · " + subtitle.file-name; color: Appearance.muted; font-size: 11px; overflow: elide; }
+                                    }
+                                    ToolButton { label: "Download"; width: 100px; primary: true; available: !root.subtitle-busy; clicked => { root.subtitle-download(subtitle.file-id); } }
+                                }
+                            }
+                        }
+                    }
+                    Text { text: "Downloads are validated and saved beside the video. Subtitle provider account terms and rate limits apply."; color: Appearance.muted; font-size: 11px; wrap: word-wrap; }
+                }
                 if (root.panel == "preferences"): ScrollView { vertical-stretch: 1;
                     VerticalLayout { spacing: 12px; padding-right: 12px;
                         Text { text: "APPEARANCE"; color: Appearance.muted; font-size: 11px; }
@@ -569,10 +622,11 @@ export component PlayerWindow inherits Window {
                     }
                 }
                 if (root.panel == "shortcuts"): ScrollView { vertical-stretch: 1; Text { text: root.shortcut-help + "\nEscape  —  Close dialog / leave fullscreen"; color: Appearance.secondary; wrap: word-wrap; } }
-                if (root.panel != "url" && root.panel != "preferences" && root.panel != "shortcuts" && root.panel != "radio" && root.panel != "cast" && root.panel != "updates"): Text { text: root.panel == "information" ? root.diagnostics + "\n\nGPU shaders\n" + root.shader-notice + "\n\nDisplay color profile\n" + root.color-profile-notice : root.panel == "shortcuts" ? root.shortcut-help : "A little less between you and your media.\n\nFoxide desktop preview\nBuilt with Rust, Slint, and libmpv.\n\nPlayback and GPU diagnostics are available\nunder View → Playback information."; color: Appearance.secondary; wrap: word-wrap; font-size: 14px; }
+                if (root.panel != "url" && root.panel != "preferences" && root.panel != "shortcuts" && root.panel != "radio" && root.panel != "subtitles" && root.panel != "cast" && root.panel != "updates"): Text { text: root.panel == "information" ? root.diagnostics + "\n\nGPU shaders\n" + root.shader-notice + "\n\nDisplay color profile\n" + root.color-profile-notice : root.panel == "shortcuts" ? root.shortcut-help : "A little less between you and your media.\n\nFoxide desktop preview\nBuilt with Rust, Slint, and libmpv.\n\nPlayback and GPU diagnostics are available\nunder View → Playback information."; color: Appearance.secondary; wrap: word-wrap; font-size: 14px; }
                 if (root.panel != "preferences" && root.panel != "shortcuts" && root.panel != "radio"): Rectangle { vertical-stretch: 1; background: transparent; }
             }
         }
     }
     }
 }
+

@@ -1,6 +1,6 @@
 use crate::{
     HttpClient,
-    process::{RunLimits, run_bounded, trusted_executable},
+    process::{RunLimits, run_bounded, run_bounded_with_input, trusted_executable},
     public_http_url,
 };
 use std::{
@@ -138,7 +138,19 @@ impl CurlClient {
 }
 impl HttpClient for CurlClient {
     fn get(&self, url: &Url, cancel: &AtomicBool) -> Result<Vec<u8>, String> {
+        self.get_bounded(url, super::radio::RESPONSE_LIMIT, cancel)
+    }
+
+    fn get_bounded(
+        &self,
+        url: &Url,
+        max_bytes: usize,
+        cancel: &AtomicBool,
+    ) -> Result<Vec<u8>, String> {
         public_http_url(url.as_str())?;
+        if max_bytes == 0 || max_bytes > super::radio::RESPONSE_LIMIT {
+            return Err("HTTP response size limit is invalid".into());
+        }
         let mut args: Vec<std::ffi::OsString> = [
             "--disable",
             "--silent",
@@ -157,16 +169,17 @@ impl HttpClient for CurlClient {
             "5",
             "--max-time",
             "15",
-            "--max-filesize",
-            "2097152",
-            "--user-agent",
-            "Foxide/0.0.1",
-            "--output",
-            "-",
         ]
         .into_iter()
         .map(Into::into)
         .collect();
+        args.extend(["--max-filesize".into(), max_bytes.to_string().into()]);
+        args.extend([
+            "--user-agent".into(),
+            "Foxide/0.0.1".into(),
+            "--output".into(),
+            "-".into(),
+        ]);
         let loopback = match url.host() {
             Some(url::Host::Domain("localhost")) => true,
             Some(url::Host::Ipv4(ip)) => ip.is_loopback(),
@@ -177,7 +190,207 @@ impl HttpClient for CurlClient {
             args.extend(["--noproxy".into(), "*".into()]);
         }
         args.extend(["--url".into(), url.as_str().into()]);
-        run_bounded(&self.executable, &args, RunLimits::default(), cancel)
-            .map(|result| result.stdout)
+        run_bounded(
+            &self.executable,
+            &args,
+            RunLimits {
+                timeout: std::time::Duration::from_secs(15),
+                stdout: max_bytes,
+                stderr: 8192,
+            },
+            cancel,
+        )
+        .map(|result| result.stdout)
+    }
+
+    fn get_with_headers(
+        &self,
+        url: &Url,
+        headers: &[(&str, &str)],
+        cancel: &AtomicBool,
+    ) -> Result<Vec<u8>, String> {
+        authenticated_request(self, url, headers, None, cancel)
+    }
+
+    fn post_json(
+        &self,
+        url: &Url,
+        headers: &[(&str, &str)],
+        body: &[u8],
+        cancel: &AtomicBool,
+    ) -> Result<Vec<u8>, String> {
+        if body.is_empty() || body.len() > 64 * 1024 || !std::str::from_utf8(body).is_ok() {
+            return Err("Invalid JSON request body".into());
+        }
+        authenticated_request(self, url, headers, Some(body), cancel)
+    }
+}
+
+fn authenticated_request(
+    client: &CurlClient,
+    url: &Url,
+    headers: &[(&str, &str)],
+    body: Option<&[u8]>,
+    cancel: &AtomicBool,
+) -> Result<Vec<u8>, String> {
+    if url.scheme() != "https"
+        || url.host_str().is_none()
+        || !url.username().is_empty()
+        || url.password().is_some()
+        || headers.len() > 8
+    {
+        return Err("Authenticated subtitle requests require a credential-free HTTPS URL".into());
+    }
+    let mut config = String::new();
+    for (name, value) in headers {
+        if name.is_empty()
+            || name.len() > 64
+            || value.len() > 512
+            || !name
+                .bytes()
+                .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
+            || value.bytes().any(|byte| byte.is_ascii_control())
+        {
+            return Err("Invalid HTTP header".into());
+        }
+        let escaped = value.replace('\\', "\\\\").replace('"', "\\\"");
+        config.push_str(&format!("header = \"{name}: {escaped}\"\n"));
+    }
+    let mut args: Vec<std::ffi::OsString> = [
+        "--disable",
+        "--silent",
+        "--show-error",
+        "--fail",
+        "--globoff",
+        "--proto",
+        "=https",
+        "--tlsv1.2",
+        "--connect-timeout",
+        "5",
+        "--max-time",
+        "20",
+        "--max-filesize",
+        "2097152",
+        "--user-agent",
+        "Foxide/0.0.1",
+        "--config",
+        "-",
+        "--output",
+        "-",
+    ]
+    .into_iter()
+    .map(Into::into)
+    .collect();
+    if let Some(body) = body {
+        args.push("--data-binary".into());
+        args.push(std::ffi::OsString::from(
+            String::from_utf8_lossy(body).into_owned(),
+        ));
+    }
+    args.extend(["--url".into(), url.as_str().into()]);
+    run_bounded_with_input(
+        &client.executable,
+        &args,
+        RunLimits {
+            timeout: std::time::Duration::from_secs(25),
+            stdout: 2 * 1024 * 1024,
+            stderr: 8192,
+        },
+        cancel,
+        Some(config.as_bytes()),
+    )
+    .map(|result| result.stdout)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::CurlClient;
+    use crate::HttpClient;
+    use std::{path::PathBuf, sync::atomic::AtomicBool};
+    use url::Url;
+
+    struct Scratch(PathBuf);
+
+    impl Drop for Scratch {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
+    #[test]
+    fn authenticated_redirect_does_not_forward_api_key() {
+        let root = std::env::temp_dir().join(format!(
+            "foxide-auth-redirect-test-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir(&root).unwrap();
+        let _scratch = Scratch(root.clone());
+        let executable = root.join(if cfg!(windows) {
+            "curl-fixture.exe"
+        } else {
+            "curl-fixture"
+        });
+        let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures/authenticated_redirect_curl.rs");
+        let compiled =
+            std::process::Command::new(std::env::var_os("RUSTC").unwrap_or_else(|| "rustc".into()))
+                .arg(fixture)
+                .arg("-o")
+                .arg(&executable)
+                .status()
+                .unwrap();
+        assert!(compiled.success());
+
+        let key = "secret-test-api-key";
+        let url = url::Url::parse("https://api.example.test/search?case=redirect-test").unwrap();
+        let client = CurlClient::new(&executable).unwrap();
+        let result = client.get_with_headers(&url, &[("Api-Key", key)], &AtomicBool::new(false));
+
+        assert!(result.is_err(), "a redirect response must be rejected");
+        assert!(
+            !result.unwrap_err().contains(key),
+            "the API key must not be forwarded to a redirected host"
+        );
+    }
+
+    #[test]
+    fn bounded_get_stops_capturing_at_the_requested_response_size() {
+        let root = std::env::temp_dir().join(format!(
+            "foxide-bounded-get-test-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir(&root).unwrap();
+        let _scratch = Scratch(root.clone());
+        let executable = root.join(if cfg!(windows) {
+            "curl-fixture.exe"
+        } else {
+            "curl-fixture"
+        });
+        let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures/authenticated_redirect_curl.rs");
+        let compiled =
+            std::process::Command::new(std::env::var_os("RUSTC").unwrap_or_else(|| "rustc".into()))
+                .arg(fixture)
+                .arg("-o")
+                .arg(&executable)
+                .status()
+                .unwrap();
+        assert!(compiled.success());
+
+        let url = Url::parse("https://cdn.example.test/size-limit-test").unwrap();
+        let client = CurlClient::new(&executable).unwrap();
+        let error = client
+            .get_bounded(&url, 1024, &AtomicBool::new(false))
+            .unwrap_err();
+
+        assert!(error.contains("exceeded its limit"));
     }
 }
