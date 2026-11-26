@@ -19,6 +19,20 @@ const ATTACH_RETRY_INTERVAL: Duration = Duration::from_secs(1);
 pub(super) enum AttachOutcome {
     Attached(SystemMediaSession),
     RetryableNotReady,
+    RetryableFailure(String),
+    PermanentFailure(String),
+}
+
+enum AttachFailure {
+    Retryable(String),
+    Permanent(String),
+}
+
+fn classify_attach_error(error: playwire::Error) -> AttachFailure {
+    match error {
+        playwire::Error::Unavailable(message) => AttachFailure::Retryable(message),
+        error => AttachFailure::Permanent(error.to_string()),
+    }
 }
 
 pub(super) struct AttachRetry {
@@ -105,13 +119,20 @@ pub(super) fn attach(
         return Ok(AttachOutcome::RetryableNotReady);
     };
     let (sender, receiver) = mpsc::channel();
-    let controls = MediaControls::new(config, move |event| {
+    let controls = match MediaControls::new(config, move |event| {
         let Some(command) = command_for_event(event) else {
             return;
         };
         let _ = sender.send(command);
-    })
-    .map_err(|error| error.to_string())?;
+    }) {
+        Ok(controls) => controls,
+        Err(error) => {
+            return Ok(match classify_attach_error(error) {
+                AttachFailure::Retryable(message) => AttachOutcome::RetryableFailure(message),
+                AttachFailure::Permanent(message) => AttachOutcome::PermanentFailure(message),
+            });
+        }
+    };
     let weak = ui.as_weak();
     let state = state.clone();
     let engine = engine.clone();
@@ -232,6 +253,22 @@ mod tests {
         path::PathBuf,
         time::{Duration, Instant},
     };
+
+    #[test]
+    fn unavailable_media_service_is_retryable_but_invalid_configuration_is_not() {
+        assert!(matches!(
+            super::classify_attach_error(playwire::Error::Unavailable("session bus not ready".into())),
+            super::AttachFailure::Retryable(_)
+        ));
+        assert!(matches!(
+            super::classify_attach_error(playwire::Error::Config("missing window handle".into())),
+            super::AttachFailure::Permanent(_)
+        ));
+        assert!(matches!(
+            super::classify_attach_error(playwire::Error::Unsupported),
+            super::AttachFailure::Permanent(_)
+        ));
+    }
 
     #[test]
     fn retryable_window_not_ready_state_is_rate_limited() {
