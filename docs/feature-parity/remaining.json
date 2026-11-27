@@ -34,8 +34,8 @@
       "id": "chromecast_output",
       "name": "Chromecast video output",
       "group": "Casting",
-      "stage": "queued",
-      "acceptance": "Pinned transport, restricted file serving and owned playback APIs pass real TLS/HTTP fixtures. Owner-confirmed silent H.264 playback and pause/seek/resume/stop passed on two receivers during a 30-second window. The desktop Cast menu supports manual local-address entry, bounded in-app certificate inspection, explicit pin review, opt-in bounded mDNS discovery, worker controls and loaded local media with supported audio containers. Remember/forget for up to 32 explicitly reviewed local receiver pins is implemented in local user preferences. Physical desktop UI/discovery use and audio playback remain unverified; codecs beyond tested H.264 remain unverified. No casting gold is claimed."
+      "stage": "in_progress",
+      "acceptance": "Pinned transport, restricted file serving and owned playback APIs pass real TLS/HTTP fixtures. Owner-confirmed silent H.264 playback and pause/seek/resume/stop passed on two receivers during a 30-second window. The desktop Cast menu supports manual local-address entry, bounded in-app certificate inspection, explicit pin review, opt-in bounded mDNS discovery, worker controls and loaded local media with supported audio containers. Remember/forget for up to 32 explicitly reviewed local receiver pins is implemented in local user preferences. Physical desktop UI/discovery use and audible playback remain unverified; codecs beyond tested H.264 remain unverified. Keep in progress and claim no casting medal until those acceptance checks are complete."
     },
     {
       "id": "airplay_video_output",
@@ -293,8 +293,8 @@
       "id": "webdav_browse",
       "name": "Browse WebDAV media shares",
       "group": "Network",
-      "stage": "queued",
-      "acceptance": "Needs a credentialed WebDAV client, safe XML/path handling and server fixtures."
+      "stage": "in_progress",
+      "acceptance": "Implementation is in draft PR #40 at head 5c49bb8. The desktop browser uses bounded PROPFIND responses and rejects cross-origin, nested, parent, credential-bearing, and encoded-separator paths. Optional credentials remain ephemeral; they are sent only over HTTPS or loopback using bounded stdin configuration, and the password field clears when the panel closes. Service tests, 29 desktop tests, formatting, strict workspace Clippy, and the 90.58% workspace coverage gate passed locally. Hosted CI and interaction with a real WebDAV server remain pending; no medal is claimed."
     },
     {
       "id": "nfs_browse",
