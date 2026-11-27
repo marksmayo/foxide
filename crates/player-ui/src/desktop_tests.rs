@@ -1511,6 +1511,25 @@ fn online_intro_marker_requires_matching_episode_identity_and_playback_range() {
 }
 
 #[test]
+fn online_intro_marker_is_not_available_at_its_end_boundary() {
+    let snapshot = Snapshot {
+        loaded: true,
+        position: 58.0,
+        duration: 120.0,
+        imdb_id: "tt0903747".into(),
+        season: "1".into(),
+        episode: "2".into(),
+        ..Snapshot::default()
+    };
+
+    assert_eq!(
+        online_intro_skip_target(&snapshot, "tt0903747", 1, 2, 2.5, 58.0),
+        None,
+        "the skip action should disappear once playback reaches the marker end"
+    );
+}
+
+#[test]
 fn introdb_marker_cannot_enable_skip_after_playback_stops() {
     assert!(intro_segment_is_active(true, 20.0, 120.0, 2.5, 58.0));
     assert!(!intro_segment_is_active(false, 20.0, 120.0, 2.5, 58.0));

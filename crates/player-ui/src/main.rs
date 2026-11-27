@@ -185,7 +185,7 @@ fn intro_segment_is_active(
         && end > start
         && end <= duration
         && position >= start
-        && position <= end
+        && position < end
 }
 
 fn intro_skip_action(
