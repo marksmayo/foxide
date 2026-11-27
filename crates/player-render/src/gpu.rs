@@ -683,4 +683,3 @@ fn publish_thumbnail_frame(frame: slint::Image, image: &impl Fn(slint::Image, bo
 #[cfg(all(test, feature = "gpu-integration"))]
 #[path = "gpu_integration.rs"]
 mod integration;
-
