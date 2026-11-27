@@ -294,7 +294,7 @@
       "name": "Browse WebDAV media shares",
       "group": "Network",
       "stage": "in_progress",
-      "acceptance": "Implementation is in draft PR #40 at head 5c49bb8. The desktop browser uses bounded PROPFIND responses and rejects cross-origin, nested, parent, credential-bearing, and encoded-separator paths. Optional credentials remain ephemeral; they are sent only over HTTPS or loopback using bounded stdin configuration, and the password field clears when the panel closes. Service tests, 29 desktop tests, formatting, strict workspace Clippy, and the 90.58% workspace coverage gate passed locally. Hosted CI and interaction with a real WebDAV server remain pending; no medal is claimed."
+      "acceptance": "Implementation is in draft PR #40 at exact head 5c49bb8. The desktop browser uses bounded PROPFIND responses and rejects cross-origin, nested, parent, credential-bearing, and encoded-separator paths. Optional credentials remain ephemeral; they are sent only over HTTPS or loopback using bounded stdin configuration, and the password field clears when the panel closes. Service tests, 29 desktop tests, formatting, strict workspace Clippy, and the 90.58% workspace coverage gate passed locally. All seven exact-head hosted workflows passed: Code checks, Windows packaging, compositor, Desktop UI, CodSpeed, Native playback controls, and native helper. Real WebDAV server interaction remains pending; no medal is claimed."
     },
     {
       "id": "nfs_browse",
