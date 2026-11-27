@@ -9,6 +9,7 @@ use std::{
 const MAX_LOG_BYTES: u64 = 512 * 1024;
 
 #[derive(Clone, Copy)]
+#[allow(dead_code)] // The path resolver is tested for all supported OSes on each host.
 enum LogPlatform {
     Windows,
     MacOs,
@@ -128,17 +129,17 @@ fn system_log_command_for(platform: LogPlatform, path: &std::path::Path) -> Comm
     let mut command = match platform {
         LogPlatform::Windows => {
             let mut command = Command::new("explorer.exe");
-            command.arg(&path);
+            command.arg(path);
             command
         }
         LogPlatform::MacOs => {
             let mut command = Command::new("open");
-            command.arg(&path);
+            command.arg(path);
             command
         }
         LogPlatform::Linux => {
             let mut command = Command::new("xdg-open");
-            command.arg(&path);
+            command.arg(path);
             command
         }
     };
@@ -291,3 +292,4 @@ mod tests {
         );
     }
 }
+
