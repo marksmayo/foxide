@@ -336,7 +336,7 @@
       "name": "Skip detected episode intros",
       "group": "Playback",
       "stage": "in_progress",
-      "acceptance": "PR #29 implements chapter/provider-based Skip Intro and PR #44 cancels stale IntroDB requests. PR #47 head 4fc3bdf adds red/green regressions for the exact marker-end boundary and the visible desktop menu state: after the provider returns an intro marker, advancing the refreshed playback snapshot to the marker end hides Skip intro. The original focused test failed before the end-exclusive fix and passes after it; full local Windows player-ui desktop tests pass 53/53, with formatting/diff checks passing. Exact-head CI has not yet appeared in the Actions listing. Live-provider availability and real-episode playback remain pending; keep in progress and do not award a medal."
+      "acceptance": "PR #29 implements chapter/provider-based Skip Intro and PR #44 cancels stale IntroDB requests. PR #47 head 4fc3bdf adds red/green regressions for the exact marker-end boundary and visible desktop menu state: after IntroDB returns a marker, advancing the refreshed playback snapshot to the marker end hides Skip intro. The focused test failed before the end-exclusive fix and passes after it; full local Windows player-ui desktop tests pass 53/53, with formatting and diff checks passing. The repository-defined default-feature workspace coverage gate passes at 92.99% (3,901/4,195 lines); desktop UI tests run separately. Exact-head hosted CI has not yet appeared in the Actions listing. Live-provider availability and real-episode playback remain pending; keep in progress and do not award a medal."
     },
     {
       "id": "audio_visualization",
