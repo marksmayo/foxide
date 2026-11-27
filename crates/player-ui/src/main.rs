@@ -1293,11 +1293,40 @@ fn install_cast_with_discovery(
     });
 }
 
+type IntroLookupService = Arc<
+    dyn Fn(
+            player_services::EpisodeIdentity,
+            Arc<AtomicBool>,
+        ) -> Result<Option<player_services::IntroSegment>, String>
+        + Send
+        + Sync,
+>;
+
 fn install_controls(
     ui: &PlayerWindow,
     state: &Rc<RefCell<UiState>>,
     engine: &Option<Rc<Engine>>,
     intro_lookup_cancel: Rc<RefCell<Option<Arc<AtomicBool>>>>,
+) {
+    install_controls_with_intro_lookup(
+        ui,
+        state,
+        engine,
+        intro_lookup_cancel,
+        Arc::new(|identity, cancellation| {
+            player_services::CurlClient::system().and_then(|client| {
+                player_services::IntroDb::public().lookup_intro(&client, &identity, &cancellation)
+            })
+        }),
+    );
+}
+
+fn install_controls_with_intro_lookup(
+    ui: &PlayerWindow,
+    state: &Rc<RefCell<UiState>>,
+    engine: &Option<Rc<Engine>>,
+    intro_lookup_cancel: Rc<RefCell<Option<Arc<AtomicBool>>>>,
+    intro_lookup: IntroLookupService,
 ) {
     let pip_mode = Rc::new(RefCell::new(picture_in_picture::PictureInPictureMode::Main));
     let filter_state = state.clone();
@@ -1308,12 +1337,13 @@ fn install_controls(
             update_queue(&ui, &filter_state.borrow());
         }
     });
-    let (weak, controller, playback, pip_mode, intro_lookup_cancel) = (
+    let (weak, controller, playback, pip_mode, intro_lookup_cancel, intro_lookup) = (
         ui.as_weak(),
         state.clone(),
         engine.clone(),
         pip_mode,
         intro_lookup_cancel,
+        intro_lookup,
     );
     ui.on_action(move |name, value| {
         let Some(ui) = weak.upgrade() else { return };
@@ -1362,11 +1392,16 @@ fn install_controls(
                 if ui.get_introdb_busy() {
                     return;
                 }
-                let Some(snapshot) = playback.as_ref().and_then(|engine| engine.snapshot()) else {
+                if !ui.get_loaded() {
                     ui.set_introdb_status("No episode is loaded".into());
                     return;
-                };
-                let Some(identity) = introdb_identity(&snapshot) else {
+                }
+                let Some(identity) = player_services::EpisodeIdentity::new(
+                    ui.get_current_imdb_id().as_str(),
+                    ui.get_current_season().max(0) as u32,
+                    ui.get_current_episode().max(0) as u32,
+                )
+                .ok() else {
                     ui.set_introdb_status(
                         "Add IMDb ID, season and episode tags to look up markers".into(),
                     );
@@ -1380,16 +1415,15 @@ fn install_controls(
                 );
                 let weak = weak.clone();
                 let cancellation = begin_intro_lookup(&intro_lookup_cancel);
+                let intro_lookup = intro_lookup.clone();
                 ui.set_introdb_busy(true);
                 ui.set_introdb_status("Looking up episode markers…".into());
                 std::thread::spawn(move || {
-                    let result = player_services::CurlClient::system().and_then(|client| {
-                        player_services::IntroDb::public().lookup_intro(
-                            &client,
-                            &player_services::EpisodeIdentity::new(&imdb_id, season, episode)?,
-                            &cancellation,
-                        )
-                    });
+                    let result = intro_lookup(
+                        player_services::EpisodeIdentity::new(&imdb_id, season, episode)
+                            .expect("captured identity was validated before starting lookup"),
+                        cancellation.clone(),
+                    );
                     let cancellation_for_callback = cancellation.clone();
                     let _ = weak.upgrade_in_event_loop(move |ui| {
                         if cancellation_for_callback.load(Ordering::Acquire)
