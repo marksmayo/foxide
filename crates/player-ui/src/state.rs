@@ -417,4 +417,3 @@ mod tests {
         assert!(state.dispatch(Action::SetPaused(false)).is_empty());
     }
 }
-
