@@ -1515,4 +1515,3 @@ fn introdb_marker_cannot_enable_skip_after_playback_stops() {
     assert!(intro_segment_is_active(true, 20.0, 120.0, 2.5, 58.0));
     assert!(!intro_segment_is_active(false, 20.0, 120.0, 2.5, 58.0));
 }
-
