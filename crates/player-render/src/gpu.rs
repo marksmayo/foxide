@@ -6,6 +6,7 @@ use libloading::Library;
 use std::{
     collections::HashMap,
     ffi::{CStr, CString, c_char, c_void},
+    rc::Rc,
     sync::{
         Arc,
         atomic::{AtomicBool, Ordering},
@@ -95,7 +96,7 @@ struct Renderer {
     size: (u32, u32),
     thumbnail_targets: Vec<Option<GpuTarget>>,
     thumbnail_cache: ThumbnailCache,
-    _resolver: Arc<Resolver>,
+    _resolver: Rc<Resolver>,
     callback: Box<Arc<dyn Fn() + Send + Sync>>,
 }
 impl Renderer {
@@ -128,13 +129,13 @@ impl Renderer {
             .into_iter()
             .filter_map(|name| unsafe { Library::new(name).ok() })
             .collect();
-        let resolver = Arc::new(Resolver { known, libraries });
+        let resolver = Rc::new(Resolver { known, libraries });
         Self::with_resolver(api, gl, resolver, callback)
     }
 
     fn new_shared(
         api: Arc<Api>,
-        resolver: Arc<Resolver>,
+        resolver: Rc<Resolver>,
         callback: Arc<dyn Fn() + Send + Sync>,
     ) -> Result<Self, String> {
         // SAFETY: rendering setup runs while the same Slint OpenGL context is current;
@@ -151,12 +152,12 @@ impl Renderer {
     fn with_resolver(
         api: Arc<Api>,
         gl: glow::Context,
-        resolver: Arc<Resolver>,
+        resolver: Rc<Resolver>,
         callback: Arc<dyn Fn() + Send + Sync>,
     ) -> Result<Self, String> {
         let mut init = Init {
             get_proc,
-            context: Arc::as_ptr(&resolver).cast_mut().cast(),
+            context: Rc::as_ptr(&resolver).cast_mut().cast(),
         };
         let mut params = [
             Param {
@@ -500,6 +501,7 @@ pub fn attach(
     attach_observed(window, engine, size, image, error, wakeup, |_, _| {})
 }
 
+#[allow(clippy::too_many_arguments)] // The call site supplies renderer and thumbnail callbacks.
 pub fn attach_with_thumbnails(
     window: &slint::Window,
     engine: &Engine,
@@ -546,6 +548,7 @@ pub fn attach_observed(
     )
 }
 
+#[allow(clippy::too_many_arguments)] // Slint owns these independent render callbacks.
 fn attach_inner(
     window: &slint::Window,
     engine: &Engine,
@@ -572,7 +575,7 @@ fn attach_inner(
     let mut renderer: Option<Renderer> = None;
     let mut preview_renderer: Option<Renderer> = None;
     let mut preview_engine: Option<Arc<Engine>> = None;
-    let mut resolver: Option<Arc<Resolver>> = None;
+    let mut resolver: Option<Rc<Resolver>> = None;
     let preview_notify = notify.clone();
     window
         .set_rendering_notifier(move |state, graphics| {
@@ -613,20 +616,18 @@ fn attach_inner(
                             let needs_preview_renderer = preview_engine
                                 .as_ref()
                                 .is_none_or(|current| !Arc::ptr_eq(current, &engine));
-                            if needs_preview_renderer {
-                                if let Some(resolver) = resolver.as_ref() {
-                                    match Renderer::new_shared(
-                                        engine.api.clone(),
-                                        resolver.clone(),
-                                        preview_notify.clone(),
-                                    ) {
-                                        Ok(next) => {
-                                            preview_renderer = Some(next);
-                                            preview_engine = Some(engine.clone());
-                                            engine.ready.store(true, Ordering::Release);
-                                        }
-                                        Err(message) => error(message),
+                            if needs_preview_renderer && let Some(resolver) = resolver.as_ref() {
+                                match Renderer::new_shared(
+                                    engine.api.clone(),
+                                    resolver.clone(),
+                                    preview_notify.clone(),
+                                ) {
+                                    Ok(next) => {
+                                        preview_renderer = Some(next);
+                                        preview_engine = Some(engine.clone());
+                                        engine.ready.store(true, Ordering::Release);
                                     }
+                                    Err(message) => error(message),
                                 }
                             }
                             if let Some(preview_renderer) = preview_renderer.as_mut() {
@@ -682,3 +683,4 @@ fn publish_thumbnail_frame(frame: slint::Image, image: &impl Fn(slint::Image, bo
 #[cfg(all(test, feature = "gpu-integration"))]
 #[path = "gpu_integration.rs"]
 mod integration;
+
