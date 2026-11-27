@@ -1613,4 +1613,47 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     format!("System media controls unavailable: {error}").into(),
                                 );
                             }
-                      
+                        }
+                    }
+                    if let Some(session) = session_for_refresh.borrow_mut().as_mut() {
+                        match session.publish(&snapshot, &controller.borrow()) {
+                            Ok(()) => session.last_error = None,
+                            Err(error) if session.last_error.as_deref() != Some(error.as_str()) => {
+                                session.last_error = Some(error.clone());
+                                ui.set_status(
+                                    format!("System media controls unavailable: {error}").into(),
+                                );
+                            }
+                            Err(_) => {}
+                        }
+                    }
+                } else {
+                    // A transient try-lock miss must not lose an idle update.
+                    let _ = ui
+                        .as_weak()
+                        .upgrade_in_event_loop(|ui| ui.invoke_native_snapshot_ready());
+                }
+            }
+        });
+        let weak = ui.as_weak();
+        playback.set_snapshot_notifier(Arc::new(move || {
+            let _ = weak.upgrade_in_event_loop(|ui| ui.invoke_native_snapshot_ready());
+        }));
+    }
+    let exit_timer = slint::Timer::default();
+    if let Some(seconds) = args.quit_after {
+        exit_timer.start(
+            slint::TimerMode::SingleShot,
+            Duration::from_secs(seconds),
+            || {
+                let _ = slint::quit_event_loop();
+            },
+        );
+    }
+    ui.run()?;
+    Ok(())
+}
+
+#[cfg(test)]
+#[path = "desktop_tests.rs"]
+mod tests;
