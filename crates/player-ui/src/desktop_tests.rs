@@ -979,6 +979,12 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
         ),
         Some(Action::SeekAbsolute(58.0))
     );
+    snapshot.position = 58.0;
+    refresh(&ui, &state, &preview_generation, &snapshot, &mut previous);
+    assert!(
+        !ui.get_skip_intro_available(),
+        "the desktop menu must hide Skip intro when playback reaches the marker end"
+    );
     ui.invoke_open_url("file:///not-an-online-stream".into());
     assert!(ui.get_status().contains("HTTP"));
     ui.invoke_open_url("https://example.org/movie.mp4".into());
