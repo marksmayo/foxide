@@ -1305,3 +1305,57 @@ fn invalid_navigation_does_not_clear_active_visualization() {
     assert!(state.audio_visualization);
     assert_eq!(state.selected, 0);
 }
+
+#[test]
+fn stopping_clears_active_visualization_before_stopping_engine() {
+    let mut state = UiState {
+        playlist: vec!["current.flac".into(), "next.flac".into()],
+        selected: 0,
+        loaded: true,
+        audio_visualization: true,
+        ..UiState::default()
+    };
+
+    assert_eq!(
+        dispatch_action(&mut state, Action::Stop),
+        [
+            Effect::Engine(vec!["set".into(), "lavfi-complex".into(), String::new()]),
+            Effect::Stop,
+        ]
+    );
+    assert!(!state.audio_visualization);
+    assert!(!state.loaded);
+}
+
+#[test]
+fn opening_a_queue_clears_active_visualization_before_loading() {
+    let mut state = UiState {
+        playlist: vec!["current.flac".into()],
+        loaded: true,
+        audio_visualization: true,
+        ..UiState::default()
+    };
+
+    assert_eq!(
+        dispatch_action(&mut state, Action::Open(vec!["replacement.flac".into()])),
+        [
+            Effect::Engine(vec!["set".into(), "lavfi-complex".into(), String::new()]),
+            Effect::Load("replacement.flac".into()),
+        ]
+    );
+    assert!(!state.audio_visualization);
+    assert!(!state.loaded);
+}
+
+#[test]
+fn invalid_selection_keeps_the_visualization_filter_active() {
+    let mut state = UiState {
+        playlist: vec!["current.flac".into()],
+        audio_visualization: true,
+        ..UiState::default()
+    };
+
+    assert!(dispatch_action(&mut state, Action::Select(4)).is_empty());
+    assert!(state.audio_visualization);
+    assert_eq!(state.selected, 0);
+}
