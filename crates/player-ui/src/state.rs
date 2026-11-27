@@ -113,12 +113,14 @@ impl DiscKind {
 
         use std::io::{Read, Seek, SeekFrom};
         let mut file = std::fs::File::open(source).map_err(|_| "Could not read the disc image")?;
-        let mut iso9660 = [0_u8; 7];
+        let mut iso9660 = [0_u8; 2_048];
         let has_iso9660 = file
             .seek(SeekFrom::Start(16 * 2_048))
             .and_then(|_| file.read_exact(&mut iso9660))
             .is_ok()
-            && iso9660 == [1, b'C', b'D', b'0', b'0', b'1', 1];
+            && iso9660[0] == 1
+            && iso9660[1..6] == *b"CD001"
+            && iso9660[6] == 1;
 
         let mut udf_anchor = [0_u8; 16];
         let has_udf_anchor = file
@@ -482,7 +484,7 @@ mod tests {
 
         let iso9660 = root.join("dvd.ISO");
         let mut file = std::fs::File::create(&iso9660).unwrap();
-        file.set_len(16 * 2_048 + 7).unwrap();
+        file.set_len(16 * 2_048 + 2_048).unwrap();
         file.seek(SeekFrom::Start(16 * 2_048)).unwrap();
         file.write_all(&[1, b'C', b'D', b'0', b'0', b'1', 1])
             .unwrap();
@@ -508,6 +510,30 @@ mod tests {
         );
 
         std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn disc_iso_validation_rejects_a_truncated_iso9660_descriptor() {
+        use std::io::{Seek, SeekFrom, Write};
+
+        let path = std::env::temp_dir().join(format!(
+            "foxide-disc-truncated-iso-{}-{}.iso",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let mut file = std::fs::File::create(&path).unwrap();
+        file.set_len(16 * 2_048 + 7).unwrap();
+        file.seek(SeekFrom::Start(16 * 2_048)).unwrap();
+        file.write_all(&[1, b'C', b'D', b'0', b'0', b'1', 1])
+            .unwrap();
+        drop(file);
+
+        assert!(DiscKind::Dvd.validate_source(&path).is_err());
+
+        std::fs::remove_file(path).unwrap();
     }
 
     #[test]
