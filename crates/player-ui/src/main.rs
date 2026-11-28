@@ -188,18 +188,8 @@ fn dispatch(
         if let Effect::LoadPlaylist(paths) = &effect {
             match engine {
                 Some(engine) => {
-                    for (index, path) in paths.iter().enumerate() {
-                        let mode = if index == 0 { "replace" } else { "append" };
-                        if let Err(error) = engine.command(vec![
-                            "loadfile".into(),
-                            player_core::external_path(path.clone())
-                                .to_string_lossy()
-                                .into_owned(),
-                            mode.into(),
-                        ]) {
-                            ui.set_status(error.into());
-                            break;
-                        }
+                    if let Err(error) = engine.load_playlist(paths.clone()) {
+                        ui.set_status(error.into());
                     }
                 }
                 None => {

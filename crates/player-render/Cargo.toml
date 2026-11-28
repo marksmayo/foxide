@@ -10,9 +10,10 @@ live-service-integration = ["video-site-integration"]
 video-site-integration = ["desktop"]
 system-media-integration = ["desktop"]
 gpu-integration = ["desktop", "slint/backend-winit", "slint/renderer-femtovg", "slint/renderer-software"]
-desktop = ["dep:player-services", "dep:slint", "dep:glow", "dep:libloading", "dep:serde_json"]
+desktop = ["dep:player-core", "dep:player-services", "dep:slint", "dep:glow", "dep:libloading", "dep:serde_json"]
 
 [dependencies]
+player-core = { path = "../player-core", optional = true }
 player-services = { path = "../player-services", optional = true }
 slint = { version = "=1.18.1", default-features = false, features = ["std", "compat-1-18"], optional = true }
 glow = { version = "0.16", optional = true }
