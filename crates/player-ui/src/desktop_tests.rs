@@ -1252,4 +1252,52 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
         }
     }
     assert_eq!(ui.get_update_status(), "Foxide is up to date.");
+
+    assert_gapless_queue_advance_updates_the_desktop_selection(&ui);
+}
+
+fn assert_gapless_queue_advance_updates_the_desktop_selection(ui: &PlayerWindow) {
+    let first = PathBuf::from("gapless-first.wav");
+    let second = PathBuf::from("gapless-second.wav");
+    let state = Rc::new(RefCell::new(UiState::default()));
+    state.borrow_mut().playlist = vec![first.clone(), second.clone()].into();
+    state.borrow_mut().confirm_loaded(2.0);
+    ui.set_selected_row(0);
+
+    let mut previous = Snapshot::default();
+    let preview_generation = Cell::new(0);
+    let first_snapshot = Snapshot {
+        loaded: true,
+        path: player_core::external_path(first).to_string_lossy().into_owned(),
+        duration: 2.0,
+        playlist_position: 0,
+        ..Snapshot::default()
+    };
+    refresh(
+        ui,
+        &state,
+        &preview_generation,
+        &first_snapshot,
+        &mut previous,
+    );
+    assert_eq!(ui.get_selected_row(), 0);
+
+    let second_snapshot = Snapshot {
+        loaded: true,
+        path: player_core::external_path(second)
+            .to_string_lossy()
+            .into_owned(),
+        duration: 2.0,
+        playlist_position: 1,
+        ..Snapshot::default()
+    };
+    refresh(
+        ui,
+        &state,
+        &preview_generation,
+        &second_snapshot,
+        &mut previous,
+    );
+    assert_eq!(state.borrow().selected, 1);
+    assert_eq!(ui.get_selected_row(), 1);
 }
