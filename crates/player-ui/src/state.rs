@@ -186,6 +186,9 @@ impl UiState {
     pub fn dispatch(&mut self, action: Action) -> Vec<Effect> {
         match action {
             Action::Open(files) => {
+                if files.is_empty() {
+                    return Vec::new();
+                }
                 self.audio_visualization = false;
                 self.playlist = files;
                 self.selected = 0;
