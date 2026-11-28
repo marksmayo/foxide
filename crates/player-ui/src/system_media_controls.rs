@@ -81,5 +81,9 @@ mod tests {
             Some(Action::Seek(-5.0))
         );
         assert_eq!(action_for_command(MediaCommand::SeekBy(f64::NAN)), None);
+        assert_eq!(
+            action_for_command(MediaCommand::SeekBy(f64::INFINITY)),
+            None
+        );
     }
 }
