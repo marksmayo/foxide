@@ -72,7 +72,10 @@ mod tests {
         );
         assert_eq!(action_for_command(MediaCommand::SeekTo(-1.0)), None);
         assert_eq!(action_for_command(MediaCommand::SeekTo(f64::NAN)), None);
-        assert_eq!(action_for_command(MediaCommand::SeekTo(f64::INFINITY)), None);
+        assert_eq!(
+            action_for_command(MediaCommand::SeekTo(f64::INFINITY)),
+            None
+        );
         assert_eq!(
             action_for_command(MediaCommand::SeekBy(-5.0)),
             Some(Action::Seek(-5.0))
