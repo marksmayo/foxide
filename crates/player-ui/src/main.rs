@@ -145,6 +145,11 @@ fn dispatch(
     action: Action,
 ) {
     let queue_changed = matches!(action, Action::Open(_));
+    let passthrough_request = match &action {
+        Action::SetAudioPassthrough(enabled) => Some(*enabled),
+        _ => None,
+    };
+    let mut passthrough_commands_accepted = passthrough_request.is_some();
     let mut state = state.borrow_mut();
     let effects = state.dispatch(action);
     if queue_changed {
@@ -209,11 +214,23 @@ fn dispatch(
         match engine {
             Some(engine) => {
                 if let Err(error) = engine.command(args) {
+                    if passthrough_request.is_some() {
+                        passthrough_commands_accepted = false;
+                    }
                     ui.set_status(error.into());
                 }
             }
-            None => ui.set_status("Playback engine unavailable — see setup instructions".into()),
+            None => {
+                if passthrough_request.is_some() {
+                    passthrough_commands_accepted = false;
+                }
+                ui.set_status("Playback engine unavailable — see setup instructions".into());
+            }
         }
+    }
+    if let Some(enabled) = passthrough_request.filter(|_| passthrough_commands_accepted) {
+        state.confirm_audio_passthrough(enabled);
+        ui.set_audio_passthrough(enabled);
     }
 }
 

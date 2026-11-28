@@ -219,7 +219,6 @@ impl UiState {
             }
             Action::AudioTrack(id) if self.loaded && id > 0 => vec![Effect::AudioTrack(id)],
             Action::SetAudioPassthrough(enabled) if self.loaded => {
-                self.audio_passthrough = enabled;
                 vec![
                     Effect::Engine(vec![
                         "set".into(),
@@ -259,6 +258,10 @@ impl UiState {
         }
     }
 
+    pub fn confirm_audio_passthrough(&mut self, enabled: bool) {
+        self.audio_passthrough = enabled;
+    }
+
     fn select(&mut self, index: usize) -> Vec<Effect> {
         self.selected = index;
         self.loaded = false;
@@ -289,8 +292,15 @@ mod tests {
         assert!(state.dispatch(Action::SetAudioPassthrough(true)).is_empty());
         state.confirm_loaded(30.0);
         assert_eq!(state.dispatch(Action::SetAudioPassthrough(true)), enabled);
+        assert!(
+            !state.audio_passthrough,
+            "the menu reflects engine-accepted state, not the requested action"
+        );
+        state.confirm_audio_passthrough(true);
         assert!(state.audio_passthrough);
         assert_eq!(state.dispatch(Action::SetAudioPassthrough(false)), disabled);
+        assert!(state.audio_passthrough);
+        state.confirm_audio_passthrough(false);
         assert!(!state.audio_passthrough);
     }
 
