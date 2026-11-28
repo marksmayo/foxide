@@ -7,7 +7,7 @@ use clap::Parser;
 use player_cast::{CastController, CastEvent, CastOptions, CertificatePin};
 use player_render::{Engine, Snapshot};
 use player_settings::Preferences;
-use player_ui::{Action, Effect, UiState};
+use player_ui::{Action, DiscKind, DiscNavigationAction, Effect, UiState};
 use slint::{ComponentHandle, ModelRc, VecModel};
 use std::{
     cell::{Cell, RefCell},
@@ -138,15 +138,70 @@ fn update_queue(ui: &PlayerWindow, state: &UiState) {
     ui.set_queue(ModelRc::new(VecModel::from(rows)));
 }
 
+fn send_disc_commands(ui: &PlayerWindow, engine: &Option<Rc<Engine>>, effects: Vec<Effect>) {
+    for effect in effects {
+        let Effect::Engine(args) = effect else {
+            debug_assert!(false, "disc actions must produce engine commands only");
+            continue;
+        };
+        match engine {
+            Some(engine) => {
+                if let Err(error) = engine.command(args) {
+                    ui.set_status(error.into());
+                }
+            }
+            None => ui.set_status("Playback engine unavailable — see setup instructions".into()),
+        }
+    }
+}
+
+fn dispatch_disc_open(
+    ui: &PlayerWindow,
+    state: &Rc<RefCell<UiState>>,
+    engine: &Option<Rc<Engine>>,
+    kind: DiscKind,
+    device: PathBuf,
+) {
+    let mut state = state.borrow_mut();
+    let effects = state.open_disc(kind, device);
+    ui.set_disc_playback(true);
+    ui.set_queue_filter("".into());
+    update_queue(ui, &state);
+    ui.set_status("Opening media…".into());
+    ui.set_selected_row(state.selected as i32);
+    ui.set_queue_visible(state.playlist_visible);
+    ui.set_fullscreen_mode(state.fullscreen);
+    ui.set_loaded(state.loaded);
+    ui.set_cast_available(false);
+    send_disc_commands(ui, engine, effects);
+}
+
+fn dispatch_disc_navigation(
+    ui: &PlayerWindow,
+    state: &Rc<RefCell<UiState>>,
+    engine: &Option<Rc<Engine>>,
+    action: DiscNavigationAction,
+) {
+    let effects = state.borrow().disc_navigation(action);
+    send_disc_commands(ui, engine, effects);
+}
+
 fn dispatch(
     ui: &PlayerWindow,
     state: &Rc<RefCell<UiState>>,
     engine: &Option<Rc<Engine>>,
     action: Action,
 ) {
+    let disc_playback = match &action {
+        Action::Open(_) | Action::Select(_) | Action::Stop => Some(false),
+        _ => None,
+    };
     let queue_changed = matches!(action, Action::Open(_));
     let mut state = state.borrow_mut();
     let effects = state.dispatch(action);
+    if let Some(disc_playback) = disc_playback {
+        ui.set_disc_playback(disc_playback);
+    }
     if queue_changed {
         ui.set_queue_filter("".into());
         update_queue(ui, &state);
@@ -246,6 +301,51 @@ fn open_dialog(weak: slint::Weak<PlayerWindow>, subtitle: bool) {
                 }
             });
         }
+    });
+}
+
+fn open_disc_dialog(weak: slint::Weak<PlayerWindow>, kind: DiscKind) {
+    std::thread::spawn(move || {
+        let title = match kind {
+            DiscKind::Dvd => "Choose a DVD folder",
+            DiscKind::BluRay => "Choose a Blu-ray folder",
+        };
+        let folder = futures_lite::future::block_on(
+            rfd::AsyncFileDialog::new().set_title(title).pick_folder(),
+        );
+        let Some(folder) = folder else { return };
+        let path = folder.path().to_path_buf();
+        let _ = weak.upgrade_in_event_loop(move |ui| {
+            if let Some(path) = path.to_str() {
+                ui.invoke_disc_picked(matches!(kind, DiscKind::BluRay), path.into());
+            } else {
+                ui.set_status("Disc folder path must be valid Unicode".into());
+            }
+        });
+    });
+}
+
+fn open_disc_image_dialog(weak: slint::Weak<PlayerWindow>, kind: DiscKind) {
+    std::thread::spawn(move || {
+        let title = match kind {
+            DiscKind::Dvd => "Choose a DVD ISO image",
+            DiscKind::BluRay => "Choose a Blu-ray ISO image",
+        };
+        let file = futures_lite::future::block_on(
+            rfd::AsyncFileDialog::new()
+                .set_title(title)
+                .add_filter("ISO disc image", &["iso"])
+                .pick_file(),
+        );
+        let Some(file) = file else { return };
+        let path = file.path().to_path_buf();
+        let _ = weak.upgrade_in_event_loop(move |ui| {
+            if let Some(path) = path.to_str() {
+                ui.invoke_disc_picked(matches!(kind, DiscKind::BluRay), path.into());
+            } else {
+                ui.set_status("Disc image path must be valid Unicode".into());
+            }
+        });
     });
 }
 
@@ -368,7 +468,7 @@ fn refresh(
         || snapshot.error != previous.error
         || ui.get_diagnostics() == "No media loaded"
     {
-        ui.set_diagnostics(format!("Video renderer: shared OpenGL texture\nRequested decoder: auto-safe\nActive decoder: {}\n\nHardware decoding does not by itself certify zero-copy.\nNative GPU/power acceptance remains platform-specific.\n\n{}", if snapshot.hwdec.is_empty() { "not active" } else { &snapshot.hwdec }, snapshot.error).into());
+        ui.set_diagnostics(format!("Video renderer: shared OpenGL texture\r\nRequested decoder: auto-safe\r\nActive decoder: {}\r\n\r\nHardware decoding does not by itself certify zero-copy.\r\nNative GPU/power acceptance remains platform-specific.\r\n\r\n{}", if snapshot.hwdec.is_empty() { "not active" } else { &snapshot.hwdec }, snapshot.error).into());
     }
     *previous = snapshot.clone();
 }
@@ -424,9 +524,9 @@ fn apply_preferences(
         .bindings()
         .map(|(key, action)| format!("{key}  —  {action}"))
         .collect::<Vec<_>>()
-        .join("\n");
+        .join("\r\n");
     shortcut_help.push_str(
-        "\n\nGame controller\nD-pad: move focus · South (A/Cross): select · East/Select: back\nStart: play/pause · Left/right shoulder: previous/next",
+        "\r\n\r\nGame controller\r\nD-pad: move focus · South (A/Cross): select · East/Select: back\r\nStart: play/pause · Left/right shoulder: previous/next",
     );
     ui.set_shortcut_help(shortcut_help.into());
     if ui.get_compact_mode() != preferences.compact() {
@@ -1125,6 +1225,12 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
         (ui.as_weak(), state.clone(), engine.clone(), pip_mode);
     ui.on_action(move |name, value| {
         let Some(ui) = weak.upgrade() else { return };
+        if let Some(navigation) = DiscNavigationAction::from_ui_action(name.as_str()) {
+            if ui.get_loaded() && ui.get_disc_playback() {
+                dispatch_disc_navigation(&ui, &controller, &playback, navigation);
+            }
+            return;
+        }
         if name == "picture-in-picture" {
             toggle_picture_in_picture(&ui, &pip_mode);
             return;
@@ -1141,6 +1247,22 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
             }
             "open" | "subtitle-file" => {
                 open_dialog(weak.clone(), name == "subtitle-file");
+                return;
+            }
+            "open-dvd-folder" => {
+                open_disc_dialog(weak.clone(), DiscKind::Dvd);
+                return;
+            }
+            "open-bluray-folder" => {
+                open_disc_dialog(weak.clone(), DiscKind::BluRay);
+                return;
+            }
+            "open-dvd-image" => {
+                open_disc_image_dialog(weak.clone(), DiscKind::Dvd);
+                return;
+            }
+            "open-bluray-image" => {
+                open_disc_image_dialog(weak.clone(), DiscKind::BluRay);
                 return;
             }
             "pause" => Action::TogglePause,
@@ -1204,6 +1326,21 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
                 dispatch(&ui, &controller, &playback, Action::Open(paths));
             }
         }
+    });
+    let (weak, controller, playback) = (ui.as_weak(), state.clone(), engine.clone());
+    ui.on_disc_picked(move |is_bluray, path| {
+        let Some(ui) = weak.upgrade() else { return };
+        let kind = if is_bluray {
+            DiscKind::BluRay
+        } else {
+            DiscKind::Dvd
+        };
+        let device = PathBuf::from(path.as_str());
+        if let Err(error) = kind.validate_source(&device) {
+            ui.set_status(error.into());
+            return;
+        }
+        dispatch_disc_open(&ui, &controller, &playback, kind, device);
     });
 }
 

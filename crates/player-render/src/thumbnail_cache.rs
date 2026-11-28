@@ -91,11 +91,9 @@ impl SlotReservation {
 
 impl ThumbnailCache {
     pub(crate) fn new(byte_budget: usize, bytes_per_thumbnail: usize) -> Self {
-        let capacity = if bytes_per_thumbnail == 0 {
-            0
-        } else {
-            byte_budget / bytes_per_thumbnail
-        };
+        let capacity = byte_budget
+            .checked_div(bytes_per_thumbnail)
+            .unwrap_or_default();
         Self {
             slots: vec![None; capacity],
             entries: HashMap::with_capacity(capacity),
@@ -121,15 +119,14 @@ impl ThumbnailCache {
 
         let slot = if let Some(slot) = self.slots.iter().position(Option::is_none) {
             slot
-        } else if let Some(slot) = self.least_recently_used.pop_front() {
+        } else {
+            let slot = self.least_recently_used.pop_front()?;
             let previous = self.slots[slot].take();
             if let Some(previous) = previous.as_ref() {
                 self.entries.remove(previous);
                 self.ready.remove(previous);
             }
             slot
-        } else {
-            return None;
         };
 
         self.slots[slot] = Some(key.clone());

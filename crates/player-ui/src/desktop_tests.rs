@@ -214,6 +214,89 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
     ui.set_panel("".into());
     let state = Rc::new(RefCell::new(UiState::default()));
     install_controls(&ui, &state, &None);
+    use std::io::{Seek, SeekFrom, Write};
+    let disc_root = std::env::temp_dir().join(format!(
+        "foxide-disc-ui-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let dvd = disc_root.join("dvd");
+    let bluray = disc_root.join("bluray");
+    let wrong = disc_root.join("wrong");
+    std::fs::create_dir_all(dvd.join("VIDEO_TS")).unwrap();
+    std::fs::write(dvd.join("VIDEO_TS/VIDEO_TS.IFO"), b"DVDVIDEO-VMG").unwrap();
+    std::fs::create_dir_all(bluray.join("BDMV")).unwrap();
+    std::fs::write(bluray.join("BDMV/index.bdmv"), b"INDX0200").unwrap();
+    std::fs::create_dir_all(wrong.join("VIDEO_TS")).unwrap();
+    std::fs::File::create(wrong.join("VIDEO_TS/VIDEO_TS.IFO")).unwrap();
+    std::fs::create_dir_all(wrong.join("BDMV")).unwrap();
+    std::fs::File::create(wrong.join("BDMV/index.bdmv")).unwrap();
+    ui.invoke_disc_picked(false, wrong.to_string_lossy().into_owned().into());
+    assert!(state.borrow().playlist.is_empty());
+    assert!(ui.get_status().contains("DVD VIDEO_TS.IFO"));
+    assert!(!ui.get_disc_playback());
+    let truncated_iso = disc_root.join("truncated.iso");
+    let mut image = std::fs::File::create(&truncated_iso).unwrap();
+    image.set_len(16 * 2_048 + 7).unwrap();
+    image.seek(SeekFrom::Start(16 * 2_048)).unwrap();
+    image
+        .write_all(&[1, b'C', b'D', b'0', b'0', b'1', 1])
+        .unwrap();
+    ui.invoke_disc_picked(false, truncated_iso.to_string_lossy().into_owned().into());
+    assert!(state.borrow().playlist.is_empty());
+    assert_eq!(ui.get_queue_count(), 0);
+    assert!(!ui.get_disc_playback());
+    assert!(ui.get_status().contains("no supported ISO9660 or UDF"));
+    ui.invoke_disc_picked(false, dvd.to_string_lossy().into_owned().into());
+    assert_eq!(state.borrow().playlist, vec![dvd]);
+    assert_eq!(ui.get_queue_count(), 1);
+    assert!(ui.get_disc_playback());
+    assert!(ui.get_status().contains("Playback engine unavailable"));
+    ui.invoke_disc_picked(true, bluray.to_string_lossy().into_owned().into());
+    assert_eq!(state.borrow().playlist, vec![bluray]);
+    assert_eq!(ui.get_queue_count(), 1);
+    assert!(ui.get_disc_playback());
+    let dvd_iso = disc_root.join("dvd.iso");
+    let mut image = std::fs::File::create(&dvd_iso).unwrap();
+    image.set_len(16 * 2_048 + 2_048).unwrap();
+    image.seek(std::io::SeekFrom::Start(16 * 2_048)).unwrap();
+    let mut descriptor = [0_u8; 2_048];
+    descriptor[0] = 1;
+    descriptor[1..6].copy_from_slice(b"CD001");
+    descriptor[6] = 1;
+    image.write_all(&descriptor).unwrap();
+    ui.invoke_disc_picked(false, dvd_iso.to_string_lossy().into_owned().into());
+    assert_eq!(state.borrow().playlist, vec![dvd_iso]);
+    assert_eq!(ui.get_queue_count(), 1);
+    assert!(ui.get_disc_playback());
+    let bluray_iso = disc_root.join("bluray.iso");
+    let mut image = std::fs::File::create(&bluray_iso).unwrap();
+    image.set_len(256 * 2_048 + 16).unwrap();
+    image.seek(SeekFrom::Start(256 * 2_048)).unwrap();
+    let mut anchor = [0_u8; 16];
+    anchor[0..2].copy_from_slice(&2_u16.to_le_bytes());
+    anchor[12..16].copy_from_slice(&256_u32.to_le_bytes());
+    image.write_all(&anchor).unwrap();
+    ui.invoke_disc_picked(true, bluray_iso.to_string_lossy().into_owned().into());
+    assert_eq!(state.borrow().playlist, vec![bluray_iso]);
+    assert_eq!(ui.get_queue_count(), 1);
+    assert!(ui.get_disc_playback());
+    assert!(ui.get_status().contains("Playback engine unavailable"));
+    state.borrow_mut().confirm_loaded(120.0);
+    ui.set_loaded(true);
+    ui.invoke_action("disc-menu".into(), 0.0);
+    assert!(ui.get_status().contains("Playback engine unavailable"));
+    dispatch(
+        &ui,
+        &state,
+        &None,
+        Action::Open(vec![PathBuf::from("movie.mkv")]),
+    );
+    assert!(!ui.get_disc_playback());
+    std::fs::remove_dir_all(disc_root).unwrap();
     ui.set_loaded(true);
     ui.set_has_video(true);
     ui.invoke_action("picture-in-picture".into(), 0.0);

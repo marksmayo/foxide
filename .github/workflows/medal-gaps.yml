@@ -20,11 +20,14 @@ concurrency:
 jobs:
   native-controls:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 40
     env:
       FOXIDE_MPV: /usr/bin/mpv
       FOXIDE_CONTROL_FIXTURE: ${{ github.workspace }}/results/local/control-probe.mp4
       FOXIDE_SYSTEM_MEDIA_FIXTURE: ${{ github.workspace }}/results/local/system-media-metadata.mp4
+      FOXIDE_DVD_ROOT: ${{ github.workspace }}/results/local/dvd-root
+      FOXIDE_DVD_VOB: ${{ github.workspace }}/results/local/test-title.vob
+      FOXIDE_DVD_ISO: ${{ github.workspace }}/results/local/test-disc.iso
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
@@ -32,14 +35,25 @@ jobs:
         with:
           key: desktop-ui
       - name: Install native playback dependencies
-        run: sudo apt-get update && sudo apt-get install -y mpv libmpv2 ffmpeg libfontconfig1-dev libxkbcommon-dev libwayland-dev libegl1-mesa-dev libudev-dev
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends mpv libmpv2 ffmpeg dvdauthor genisoimage libdvdnav4 libfontconfig1-dev libxkbcommon-dev libwayland-dev libegl1-mesa-dev libudev-dev
       - name: Generate deterministic video with audio
         run: |
           mkdir -p results/local
           ffmpeg -v error -f lavfi -i testsrc2=size=128x72:rate=30:duration=10 -f lavfi -i sine=frequency=440:duration=10 -metadata title="Foxide system media fixture" -metadata artist="Foxide CI" -metadata album="System media controls" -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest "$FOXIDE_CONTROL_FIXTURE"
           cp "$FOXIDE_CONTROL_FIXTURE" "$FOXIDE_SYSTEM_MEDIA_FIXTURE"
+      - name: Generate a playable DVD video ISO
+        env:
+          VIDEO_FORMAT: NTSC
+        run: |
+          mkdir -p "$FOXIDE_DVD_ROOT"
+          ffmpeg -hide_banner -v error -f lavfi -i testsrc2=size=720x480:rate=25:duration=4 -f lavfi -i sine=frequency=440:duration=4 -target ntsc-dvd -aspect 4:3 -c:v mpeg2video -b:v 2500k -c:a ac3 -b:a 192k -shortest -f dvd "$FOXIDE_DVD_VOB"
+          dvdauthor -o "$FOXIDE_DVD_ROOT" -t "$FOXIDE_DVD_VOB"
+          dvdauthor -o "$FOXIDE_DVD_ROOT" -T
+          genisoimage -quiet -dvd-video -o "$FOXIDE_DVD_ISO" "$FOXIDE_DVD_ROOT"
       - name: Verify immutable snapshot sharing
         run: cargo test -p player-render --features desktop --lib --locked cloning_snapshot
+      - name: Verify generated DVD ISO playback advances through a title
+        run: cargo test -p player-render --features system-media-integration --lib --locked native_dvd_iso_advances_through_a_title -- --ignored --nocapture
       - name: Verify native metadata reaches player snapshots
         run: cargo test -p player-render --features system-media-integration --lib --locked native_snapshot_exposes_embedded_track_metadata -- --ignored --nocapture
       - name: Verify desktop menu commands on the native engine
