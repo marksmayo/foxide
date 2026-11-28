@@ -375,31 +375,25 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
     let recorded = actions.clone();
     ui.on_action(move |name, value| recorded.borrow_mut().push((name.to_string(), value)));
     ui.set_loaded(false);
-    controller_navigation::apply_action(
+    controller_navigation::dispatch_events_for_ui(
         &ui,
         &controller_state,
         &None,
-        controller_navigation::ControllerAction::FocusNext,
-    );
-    controller_navigation::apply_action(
-        &ui,
-        &controller_state,
-        &None,
-        controller_navigation::ControllerAction::Activate,
+        [
+            controller_navigation::ControllerEvent::ButtonPressed(gilrs::Button::DPadDown),
+            controller_navigation::ControllerEvent::ButtonPressed(gilrs::Button::South),
+        ],
     );
     assert_eq!(actions.borrow().last(), Some(&("open".into(), 0.0)));
     actions.borrow_mut().clear();
-    controller_navigation::apply_action(
+    controller_navigation::dispatch_events_for_ui(
         &ui,
         &controller_state,
         &None,
-        controller_navigation::ControllerAction::FocusNext,
-    );
-    controller_navigation::apply_action(
-        &ui,
-        &controller_state,
-        &None,
-        controller_navigation::ControllerAction::Activate,
+        [
+            controller_navigation::ControllerEvent::ButtonPressed(gilrs::Button::DPadDown),
+            controller_navigation::ControllerEvent::ButtonPressed(gilrs::Button::South),
+        ],
     );
     assert_eq!(actions.borrow().last(), Some(&("playlist".into(), 0.0)));
     actions.borrow_mut().clear();

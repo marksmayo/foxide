@@ -73,7 +73,7 @@ The desktop video surface maps horizontal trackpad scroll and horizontal pointer
 
 ## Game controller navigation implementation checkpoint
 
-The desktop now polls standardized gamepad events and routes D-pad focus traversal, confirm/back, playback toggle and previous/next through Slint or the shared playback action path. It surfaces controller connection and disconnection events without publishing device names. Mapping tests cover supported and ignored controls. Linux CI explicitly installs libudev development headers for the gilrs backend. This remains in progress until physical hot-plug and focus-order behavior is verified on supported desktop platforms.
+The desktop now polls standardized gamepad events and routes D-pad focus traversal, confirm/back, playback toggle and previous/next through Slint or the shared playback action path. It surfaces controller connection and disconnection events without publishing device names. Mapping tests cover supported and ignored controls; an unsupported driver event is skipped without delaying a later controller event in the same poll. A desktop integration test injects D-pad-down and South events through the shared normalized event dispatcher and confirms the focused Open then Playlist actions fire. Linux CI explicitly installs libudev development headers for the gilrs backend. This is software-injected UI evidence; physical hot-plug and focus-order behavior remains pending on supported desktop platforms.
 
 ## Windows physical interface acceptance checklist
 

@@ -20,10 +20,11 @@ pub(super) enum ControllerAction {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum ControllerEvent {
+pub(super) enum ControllerEvent {
     Connected,
     Disconnected,
     ButtonPressed(Button),
+    ButtonRepeated(Button),
 }
 
 fn translate_event(event: EventType) -> Option<ControllerEvent> {
@@ -31,7 +32,19 @@ fn translate_event(event: EventType) -> Option<ControllerEvent> {
         EventType::Connected => Some(ControllerEvent::Connected),
         EventType::Disconnected => Some(ControllerEvent::Disconnected),
         EventType::ButtonPressed(button, _) => Some(ControllerEvent::ButtonPressed(button)),
+        EventType::ButtonRepeated(button, _) => Some(ControllerEvent::ButtonRepeated(button)),
         _ => None,
+    }
+}
+
+fn next_controller_event(
+    mut next_event: impl FnMut() -> Option<EventType>,
+) -> Option<ControllerEvent> {
+    loop {
+        let event = next_event()?;
+        if let Some(event) = translate_event(event) {
+            return Some(event);
+        }
     }
 }
 
@@ -98,13 +111,27 @@ fn process_events(
         match event {
             ControllerEvent::Connected => set_status("Game controller connected"),
             ControllerEvent::Disconnected => set_status("Game controller disconnected"),
-            ControllerEvent::ButtonPressed(button) => {
+            ControllerEvent::ButtonPressed(button) | ControllerEvent::ButtonRepeated(button) => {
                 if let Some(action) = action_for_button(button) {
                     perform_action(action);
                 }
             }
         }
     }
+}
+
+pub(super) fn dispatch_events_for_ui(
+    ui: &PlayerWindow,
+    state: &Rc<RefCell<UiState>>,
+    engine: &Option<Rc<Engine>>,
+    events: impl IntoIterator<Item = ControllerEvent>,
+) {
+    let mut events = events.into_iter();
+    process_events(
+        || events.next(),
+        |status| ui.set_status(status.into()),
+        |action| apply_action(ui, state, engine, action),
+    );
 }
 
 pub(super) fn apply_action(
@@ -135,22 +162,16 @@ pub(super) fn install(
     };
     let weak = ui.as_weak();
     timer.start(TimerMode::Repeated, Duration::from_millis(16), move || {
-        process_events(
-            || {
-                gilrs
-                    .next_event()
-                    .and_then(|event| translate_event(event.event))
-            },
-            |status| {
-                if let Some(ui) = weak.upgrade() {
-                    ui.set_status(status.into());
-                }
-            },
-            |action| {
-                if let Some(ui) = weak.upgrade() {
-                    apply_action(&ui, &state, &engine, action);
-                }
-            },
+        let Some(ui) = weak.upgrade() else {
+            return;
+        };
+        dispatch_events_for_ui(
+            &ui,
+            &state,
+            &engine,
+            std::iter::from_fn(|| {
+                next_controller_event(|| gilrs.next_event().map(|event| event.event))
+            }),
         );
     });
     timer
@@ -159,8 +180,8 @@ pub(super) fn install(
 #[cfg(test)]
 mod tests {
     use super::{
-        ControllerAction, ControllerEvent, action_for_button, execute_action, process_events,
-        translate_event,
+        ControllerAction, ControllerEvent, action_for_button, execute_action,
+        next_controller_event, process_events, translate_event,
     };
     use gilrs::{Button, EventType};
     use player_ui::Action;
@@ -288,6 +309,26 @@ mod tests {
             Some(ControllerEvent::Disconnected)
         );
         assert_eq!(translate_event(EventType::Dropped), None);
+    }
+
+    #[test]
+    fn repeated_controller_buttons_repeat_the_mapped_navigation_action() {
+        let mut events = [ControllerEvent::ButtonRepeated(Button::DPadDown)].into_iter();
+        let mut actions = Vec::new();
+
+        process_events(|| events.next(), |_| {}, |action| actions.push(action));
+
+        assert_eq!(actions, [ControllerAction::FocusNext]);
+    }
+
+    #[test]
+    fn unsupported_driver_events_do_not_block_later_controller_events() {
+        let mut events = [EventType::Dropped, EventType::Connected].into_iter();
+
+        assert_eq!(
+            next_controller_event(|| events.next()),
+            Some(ControllerEvent::Connected)
+        );
     }
 
     #[test]
