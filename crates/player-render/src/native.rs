@@ -1097,7 +1097,7 @@ mod snapshot_allocation_tests {
         let second_track = test_tone(880.0, 4_410);
         let mut contiguous = vec![0_i16; 441];
         contiguous.extend_from_slice(&first_track);
-        contiguous.extend(std::iter::repeat_n(0_i16, 220));
+        contiguous.extend(std::iter::repeat_n(0_i16, 100));
         contiguous.extend_from_slice(&second_track);
         contiguous.extend(std::iter::repeat_n(0_i16, 441));
         let active_span_ms =
@@ -1117,6 +1117,22 @@ mod snapshot_allocation_tests {
                 assert_pcm_wav_has_gapless_boundary(&test_pcm_wav(&with_gap), "synthetic capture");
             })
             .is_err()
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "system-media-integration")]
+    fn gapless_loopback_analyzer_rejects_a_five_millisecond_internal_dropout() {
+        let mut samples = test_tone(440.0, 4_400);
+        samples.extend(std::iter::repeat_n(0_i16, 220));
+        samples.extend_from_slice(&test_tone(880.0, 4_410));
+
+        assert!(
+            std::panic::catch_unwind(|| {
+                assert_pcm_wav_has_gapless_boundary(&test_pcm_wav(&samples), "synthetic capture");
+            })
+            .is_err(),
+            "a complete 5 ms silent window between tracks must fail gapless acceptance"
         );
     }
 
@@ -1265,7 +1281,7 @@ mod snapshot_allocation_tests {
             longest_silence_windows * 5
         );
         assert!(
-            longest_silence_windows <= 4,
+            longest_silence_windows == 0,
             "{capture_kind} contains a track-boundary silence gap of {} ms",
             longest_silence_windows * 5
         );
