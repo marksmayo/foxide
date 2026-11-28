@@ -158,6 +158,17 @@ mod tests {
         }
     }
 
+    struct CancelsDuringRead {
+        body: Vec<u8>,
+    }
+
+    impl HttpClient for CancelsDuringRead {
+        fn get(&self, _: &Url, cancel: &AtomicBool) -> Result<Vec<u8>, String> {
+            cancel.store(true, Ordering::Release);
+            Ok(self.body.clone())
+        }
+    }
+
     #[test]
     fn lookup_uses_explicit_episode_identity_and_returns_intro_segment() {
         let requested = Arc::new(std::sync::Mutex::new(Vec::new()));
@@ -231,6 +242,22 @@ mod tests {
         );
         assert!(cancel.load(Ordering::Acquire));
         assert!(requested.lock().unwrap().is_empty());
+    }
+
+    #[test]
+    fn cancellation_during_http_read_discards_a_valid_response() {
+        let client = CancelsDuringRead {
+            body: br#"{"imdb_id":"tt0903747","season":1,"episode":2,"intro":{"start_sec":2.5,"end_sec":58}}"#.to_vec(),
+        };
+        let identity = EpisodeIdentity::new("tt0903747", 1, 2).unwrap();
+        let cancel = AtomicBool::new(false);
+
+        let error = IntroDb::public()
+            .lookup_intro(&client, &identity, &cancel)
+            .unwrap_err();
+
+        assert_eq!(error, "Intro lookup cancelled");
+        assert!(cancel.load(Ordering::Acquire));
     }
 
     #[test]

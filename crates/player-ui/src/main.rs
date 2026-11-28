@@ -13,7 +13,10 @@ use std::{
     cell::{Cell, RefCell},
     path::PathBuf,
     rc::Rc,
-    sync::Arc,
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
     time::Duration,
 };
 // Only pinned Slint compiler output may use its generated vtable unsafe code.
@@ -199,6 +202,35 @@ fn intro_skip_action(
     Some(Action::SeekAbsolute(target))
 }
 
+fn begin_intro_lookup(slot: &RefCell<Option<Arc<AtomicBool>>>) -> Arc<AtomicBool> {
+    cancel_intro_lookup(slot);
+    let cancellation = Arc::new(AtomicBool::new(false));
+    *slot.borrow_mut() = Some(cancellation.clone());
+    cancellation
+}
+
+fn cancel_intro_lookup(slot: &RefCell<Option<Arc<AtomicBool>>>) {
+    if let Some(cancellation) = slot.borrow_mut().take() {
+        cancellation.store(true, Ordering::Release);
+    }
+}
+
+fn cancel_intro_lookup_if_context_invalidated(
+    snapshot: &Snapshot,
+    previous: &Snapshot,
+    slot: &RefCell<Option<Arc<AtomicBool>>>,
+) -> bool {
+    let changed = (previous.loaded && !snapshot.loaded)
+        || snapshot.path != previous.path
+        || snapshot.imdb_id != previous.imdb_id
+        || snapshot.season != previous.season
+        || snapshot.episode != previous.episode;
+    if changed {
+        cancel_intro_lookup(slot);
+    }
+    changed
+}
+
 fn is_intro_marker(title: &str) -> bool {
     let mut previous = "";
     for word in title.split(|character: char| !character.is_alphanumeric()) {
@@ -352,6 +384,7 @@ fn open_dialog(weak: slint::Weak<PlayerWindow>, subtitle: bool) {
     });
 }
 
+#[cfg(test)]
 fn refresh(
     ui: &PlayerWindow,
     state: &Rc<RefCell<UiState>>,
@@ -359,14 +392,29 @@ fn refresh(
     snapshot: &Snapshot,
     previous: &mut Snapshot,
 ) {
+    refresh_inner(ui, state, preview_generation, snapshot, None, previous);
+}
+
+fn refresh_inner(
+    ui: &PlayerWindow,
+    state: &Rc<RefCell<UiState>>,
+    preview_generation: &Cell<u64>,
+    snapshot: &Snapshot,
+    intro_lookup_cancel: Option<&RefCell<Option<Arc<AtomicBool>>>>,
+    previous: &mut Snapshot,
+) {
     if snapshot == previous {
         return;
     }
-    if snapshot.path != previous.path
-        || snapshot.imdb_id != previous.imdb_id
-        || snapshot.season != previous.season
-        || snapshot.episode != previous.episode
-    {
+    let media_changed = intro_lookup_cancel
+        .map(|slot| cancel_intro_lookup_if_context_invalidated(snapshot, previous, slot))
+        .unwrap_or_else(|| {
+            snapshot.path != previous.path
+                || snapshot.imdb_id != previous.imdb_id
+                || snapshot.season != previous.season
+                || snapshot.episode != previous.episode
+        });
+    if media_changed {
         ui.set_media_generation(ui.get_media_generation().wrapping_add(1));
         ui.set_introdb_imdb_id("".into());
         ui.set_introdb_season(0);
@@ -1245,7 +1293,41 @@ fn install_cast_with_discovery(
     });
 }
 
-fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Option<Rc<Engine>>) {
+type IntroLookupService = Arc<
+    dyn Fn(
+            player_services::EpisodeIdentity,
+            Arc<AtomicBool>,
+        ) -> Result<Option<player_services::IntroSegment>, String>
+        + Send
+        + Sync,
+>;
+
+fn install_controls(
+    ui: &PlayerWindow,
+    state: &Rc<RefCell<UiState>>,
+    engine: &Option<Rc<Engine>>,
+    intro_lookup_cancel: Rc<RefCell<Option<Arc<AtomicBool>>>>,
+) {
+    install_controls_with_intro_lookup(
+        ui,
+        state,
+        engine,
+        intro_lookup_cancel,
+        Arc::new(|identity, cancellation| {
+            player_services::CurlClient::system().and_then(|client| {
+                player_services::IntroDb::public().lookup_intro(&client, &identity, &cancellation)
+            })
+        }),
+    );
+}
+
+fn install_controls_with_intro_lookup(
+    ui: &PlayerWindow,
+    state: &Rc<RefCell<UiState>>,
+    engine: &Option<Rc<Engine>>,
+    intro_lookup_cancel: Rc<RefCell<Option<Arc<AtomicBool>>>>,
+    intro_lookup: IntroLookupService,
+) {
     let pip_mode = Rc::new(RefCell::new(picture_in_picture::PictureInPictureMode::Main));
     let filter_state = state.clone();
     let filter_window = ui.as_weak();
@@ -1255,8 +1337,14 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
             update_queue(&ui, &filter_state.borrow());
         }
     });
-    let (weak, controller, playback, pip_mode) =
-        (ui.as_weak(), state.clone(), engine.clone(), pip_mode);
+    let (weak, controller, playback, pip_mode, intro_lookup_cancel, intro_lookup) = (
+        ui.as_weak(),
+        state.clone(),
+        engine.clone(),
+        pip_mode,
+        intro_lookup_cancel,
+        intro_lookup,
+    );
     ui.on_action(move |name, value| {
         let Some(ui) = weak.upgrade() else { return };
         if name == "picture-in-picture" {
@@ -1304,11 +1392,16 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
                 if ui.get_introdb_busy() {
                     return;
                 }
-                let Some(snapshot) = playback.as_ref().and_then(|engine| engine.snapshot()) else {
+                if !ui.get_loaded() {
                     ui.set_introdb_status("No episode is loaded".into());
                     return;
-                };
-                let Some(identity) = introdb_identity(&snapshot) else {
+                }
+                let Some(identity) = player_services::EpisodeIdentity::new(
+                    ui.get_current_imdb_id().as_str(),
+                    ui.get_current_season().max(0) as u32,
+                    ui.get_current_episode().max(0) as u32,
+                )
+                .ok() else {
                     ui.set_introdb_status(
                         "Add IMDb ID, season and episode tags to look up markers".into(),
                     );
@@ -1321,18 +1414,20 @@ fn install_controls(ui: &PlayerWindow, state: &Rc<RefCell<UiState>>, engine: &Op
                     ui.get_media_generation(),
                 );
                 let weak = weak.clone();
+                let cancellation = begin_intro_lookup(&intro_lookup_cancel);
+                let intro_lookup = intro_lookup.clone();
                 ui.set_introdb_busy(true);
                 ui.set_introdb_status("Looking up episode markers…".into());
                 std::thread::spawn(move || {
-                    let result = player_services::CurlClient::system().and_then(|client| {
-                        player_services::IntroDb::public().lookup_intro(
-                            &client,
-                            &player_services::EpisodeIdentity::new(&imdb_id, season, episode)?,
-                            &std::sync::atomic::AtomicBool::new(false),
-                        )
-                    });
+                    let result = intro_lookup(
+                        player_services::EpisodeIdentity::new(&imdb_id, season, episode)
+                            .expect("captured identity was validated before starting lookup"),
+                        cancellation.clone(),
+                    );
+                    let cancellation_for_callback = cancellation.clone();
                     let _ = weak.upgrade_in_event_loop(move |ui| {
-                        if ui.get_media_generation() != generation
+                        if cancellation_for_callback.load(Ordering::Acquire)
+                            || ui.get_media_generation() != generation
                             || ui.get_current_imdb_id().as_str() != imdb_id
                             || ui.get_current_season().max(0) as u32 != season
                             || ui.get_current_episode().max(0) as u32 != episode
@@ -1677,7 +1772,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         });
     }
-    install_controls(&ui, &state, &engine);
+    let intro_lookup_cancel = Rc::new(RefCell::new(None));
+    install_controls(&ui, &state, &engine, intro_lookup_cancel.clone());
     let _controller_timer = controller_navigation::install(&ui, state.clone(), engine.clone());
     shader_ui::install(&ui, &engine);
     profile_ui::install(&ui, &engine);
@@ -1700,6 +1796,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let media_attach_retry = Rc::new(RefCell::new(system_media::AttachRetry::default()));
         let retry_for_refresh = media_attach_retry.clone();
         let generation_for_refresh = preview_generation.clone();
+        let intro_lookup_for_refresh = intro_lookup_cancel.clone();
         ui.on_native_snapshot_ready(move || {
             if let Some(ui) = weak.upgrade() {
                 if let Some(snapshot) = status_source.snapshot() {
@@ -1707,11 +1804,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         thumbnails.clear();
                         ui.set_thumbnail_available(false);
                     }
-                    refresh(
+                    refresh_inner(
                         &ui,
                         &controller,
                         &generation_for_refresh,
                         &snapshot,
+                        Some(&intro_lookup_for_refresh),
                         &mut previous.borrow_mut(),
                     );
                     if retry_for_refresh
