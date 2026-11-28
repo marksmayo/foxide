@@ -51,6 +51,9 @@ class WindowsPackagingTests(unittest.TestCase):
             self.assertEqual(info['source_commit'], 'a'*40)
             self.assertEqual(info['executable_sha256'], package_windows.sha256(self.binary))
             self.assertNotIn(str(self.root), json.dumps(info))
+        notes = (self.root/'dist/RELEASE_NOTES.md').read_text(encoding='utf-8')
+        self.assertIn('SHA-256-pinned runtime archive and standalone extractor', notes)
+        self.assertNotIn('Python 3.11+', notes)
         self.assertEqual((self.root/'dist/SHA256SUMS.txt').read_text().split()[0], package_windows.sha256(archive))
         with self.assertRaises(FileExistsError):
             self.build()
