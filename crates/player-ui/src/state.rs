@@ -154,9 +154,18 @@ impl DiscKind {
         ]
         .iter()
         .any(|path| has_signature(path, b"DVDVIDEO-VMG"));
+        let has_bluray_header = |path: &Path| {
+            let Ok(mut file) = std::fs::File::open(path) else {
+                return false;
+            };
+            let mut header = [0; 8];
+            file.read_exact(&mut header).is_ok()
+                && &header[..4] == b"INDX"
+                && header[4..].iter().all(u8::is_ascii_digit)
+        };
         let has_bluray_index = [device.join("BDMV/index.bdmv"), device.join("index.bdmv")]
             .iter()
-            .any(|path| has_signature(path, b"INDX"));
+            .any(|path| has_bluray_header(path));
         match self {
             Self::Dvd if has_dvd_video => Ok(()),
             Self::BluRay if has_bluray_index => Ok(()),
@@ -499,6 +508,29 @@ mod tests {
         std::fs::File::create(bluray.join("index.bdmv")).unwrap();
 
         assert!(DiscKind::Dvd.validate_folder(&root.join("dvd")).is_err());
+        assert!(
+            DiscKind::BluRay
+                .validate_folder(&root.join("bluray"))
+                .is_err()
+        );
+
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn disc_folder_validation_rejects_truncated_bluray_index_headers() {
+        let root = std::env::temp_dir().join(format!(
+            "foxide-disc-truncated-index-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let bluray = root.join("bluray/BDMV");
+        std::fs::create_dir_all(&bluray).unwrap();
+        std::fs::write(bluray.join("index.bdmv"), b"INDX").unwrap();
+
         assert!(
             DiscKind::BluRay
                 .validate_folder(&root.join("bluray"))
