@@ -28,7 +28,6 @@ def package(binary, metadata, output, version, commit):
             bundle.write(path, name + '/' + destination)
         add(binary, 'Foxide.exe')
         add(ROOT / 'LICENSE', 'LICENSE')
-        add(ROOT / 'scripts/install-libmpv.py', 'scripts/install-libmpv.py')
         add(ROOT / 'packaging/Install-PlaybackRuntime.ps1', 'Install-PlaybackRuntime.ps1')
         add(ROOT / 'packaging/WINDOWS-README.txt', 'README.txt')
         for dependency in dependencies:
@@ -63,7 +62,7 @@ def package(binary, metadata, output, version, commit):
     (output / 'BUILD-INFO.json').write_text(json.dumps(provenance, indent=2)+'\n', encoding='utf-8')
     (output / 'RELEASE_NOTES.md').write_text(
         '# Foxide ' + version + ' — Windows x64 preview\n\n'
-        'Choose the Windows setup installer or ZIP download. The setup installs for the current user and adds Start Menu shortcuts; either download needs the separate playback-runtime setup before media playback. Python 3.11+ and 7-Zip are required for that setup.\n\n'
+        'Choose the Windows setup installer or ZIP download. The setup installs for the current user and adds Start Menu shortcuts; either download needs the separate playback-runtime setup before media playback. The setup downloads a SHA-256-pinned runtime archive and standalone extractor, verifies both hashes, and removes temporary files. Internet access is required; Python and a system 7-Zip install are not.\n\n'
         'Both downloads include Foxide, runtime setup scripts, source provenance and dependency notices. The playback DLL is downloaded separately because its redistribution audit remains open. The installer and ZIP are unsigned and must be reviewed before publication.\n\n'
         'Source commit: ' + commit + '\n', encoding='utf-8')
     return archive

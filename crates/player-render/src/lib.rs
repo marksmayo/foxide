@@ -13,6 +13,8 @@ pub use gpu::attach;
 pub use gpu::attach_observed;
 #[cfg(feature = "desktop")]
 pub use gpu::attach_with_thumbnails;
+#[cfg(all(feature = "desktop", windows))]
+pub use native::windows_runtime_missing;
 #[cfg(feature = "desktop")]
 pub use native::{Engine, Snapshot, Track};
 #[cfg(feature = "desktop")]

@@ -21,6 +21,19 @@ pub(crate) fn windows_libraries(executable: &Path) -> Vec<PathBuf> {
     paths
 }
 
+pub(crate) fn windows_runtime_missing(
+    executable: &Path,
+    explicit_runtime: Option<&Path>,
+    mut is_file: impl FnMut(&Path) -> bool,
+) -> bool {
+    if explicit_runtime.is_some() {
+        return false;
+    }
+    !windows_libraries(executable)
+        .iter()
+        .any(|path| is_file(path))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -41,5 +54,26 @@ mod tests {
                     .join("tools/libmpv/libmpv-2.dll")
             ]
         );
+    }
+
+    #[test]
+    fn missing_runtime_is_reported_only_when_every_engine_path_is_absent() {
+        let executable = Path::new("C:/installed/Foxide/Foxide.exe");
+        let paths = windows_libraries(executable);
+
+        assert!(windows_runtime_missing(executable, None, |_| false));
+        assert!(!windows_runtime_missing(executable, None, |path| path == paths[1]));
+    }
+
+    #[test]
+    fn explicit_runtime_override_never_triggers_the_install_offer() {
+        let executable = Path::new("C:/installed/Foxide/Foxide.exe");
+        let override_path = Path::new("C:/custom/libmpv.dll");
+
+        assert!(!windows_runtime_missing(
+            executable,
+            Some(override_path),
+            |_| false
+        ));
     }
 }
