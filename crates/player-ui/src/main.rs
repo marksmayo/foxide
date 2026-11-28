@@ -143,7 +143,8 @@ fn dispatch_action(state: &mut UiState, action: Action) -> Vec<Effect> {
     // renderer-specific filter reset that must precede a track replacement.
     let clear_visualization = state.audio_visualization
         && match &action {
-            Action::Open(_) | Action::Stop => true,
+            Action::Open(files) => !files.is_empty(),
+            Action::Stop => true,
             Action::Next => state
                 .selected
                 .checked_add(1)
