@@ -181,8 +181,8 @@
       "id": "hd_audio_passthrough",
       "name": "HD audio bitstream passthrough",
       "group": "Audio",
-      "stage": "queued",
-      "acceptance": "Needs a compatible physical receiver and audio route; cannot be certified by hosted null output."
+      "stage": "in_progress",
+      "acceptance": "The Audio menu exposes an explicit session request for AC3, EAC3, DTS, DTS-HD and TrueHD passthrough with exclusive output, and an off action clears both settings. Unit tests verify engine commands and the unloaded guard; Windows desktop compilation passes. Actual receiver format confirmation and audio-route acceptance remain pending; no feature medal is claimed."
     },
     {
       "id": "video_360",

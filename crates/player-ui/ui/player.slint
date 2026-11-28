@@ -193,6 +193,7 @@ export component PlayerWindow inherits Window {
     in-out property <bool> queue-visible: false;
     in-out property <bool> fullscreen-mode: false;
     in-out property <bool> muted: false;
+    in-out property <bool> audio-passthrough: false;
     in-out property <float> position: 0;
     in-out property <float> duration: 0;
     in-out property <float> volume: 80;
@@ -256,6 +257,7 @@ export component PlayerWindow inherits Window {
             MenuItem { title: "Stop casting"; enabled: root.cast-active; activated => { root.cast-control("stop"); } }
         }
         Menu { title: "Audio";
+            MenuItem { title: "HD bitstream passthrough"; checked: root.audio-passthrough; enabled: root.loaded; activated => { root.action("audio-passthrough", root.audio-passthrough ? 0 : 1); } }
             Menu { title: "ReplayGain";
                 MenuItem { title: "Off"; enabled: root.loaded; activated => { root.action("replaygain", 0); } }
                 MenuItem { title: "Track gain"; enabled: root.loaded; activated => { root.action("replaygain", 1); } }

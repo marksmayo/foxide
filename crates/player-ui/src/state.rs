@@ -14,6 +14,7 @@ pub enum Action {
     SeekAbsolute(f64),
     Volume(f64),
     AudioTrack(u32),
+    SetAudioPassthrough(bool),
     SubtitleTrack(u32),
     TogglePlaylist,
     ToggleFullscreen,
@@ -55,6 +56,7 @@ pub struct UiState {
     pub loaded: bool,
     pub paused: bool,
     pub muted: bool,
+    pub audio_passthrough: bool,
     pub duration: f64,
     pub selected: usize,
     pub playlist_visible: bool,
@@ -216,6 +218,24 @@ impl UiState {
                 vec![Effect::Volume(value)]
             }
             Action::AudioTrack(id) if self.loaded && id > 0 => vec![Effect::AudioTrack(id)],
+            Action::SetAudioPassthrough(enabled) if self.loaded => {
+                vec![
+                    Effect::Engine(vec![
+                        "set".into(),
+                        "audio-spdif".into(),
+                        if enabled {
+                            "ac3,eac3,dts,dts-hd,truehd".into()
+                        } else {
+                            "no".into()
+                        },
+                    ]),
+                    Effect::Engine(vec![
+                        "set".into(),
+                        "audio-exclusive".into(),
+                        if enabled { "yes" } else { "no" }.into(),
+                    ]),
+                ]
+            }
             Action::SubtitleTrack(id) if self.loaded => vec![Effect::SubtitleTrack(id)],
             Action::TogglePlaylist => {
                 self.playlist_visible = !self.playlist_visible;
@@ -238,6 +258,10 @@ impl UiState {
         }
     }
 
+    pub fn confirm_audio_passthrough(&mut self, enabled: bool) {
+        self.audio_passthrough = enabled;
+    }
+
     fn select(&mut self, index: usize) -> Vec<Effect> {
         self.selected = index;
         self.loaded = false;
@@ -248,6 +272,37 @@ impl UiState {
 #[cfg(test)]
 mod tests {
     use super::{Action, Effect, UiState};
+
+    #[test]
+    fn hd_audio_passthrough_is_explicit_and_requires_loaded_media() {
+        let enabled = vec![
+            Effect::Engine(vec![
+                "set".into(),
+                "audio-spdif".into(),
+                "ac3,eac3,dts,dts-hd,truehd".into(),
+            ]),
+            Effect::Engine(vec!["set".into(), "audio-exclusive".into(), "yes".into()]),
+        ];
+        let disabled = vec![
+            Effect::Engine(vec!["set".into(), "audio-spdif".into(), "no".into()]),
+            Effect::Engine(vec!["set".into(), "audio-exclusive".into(), "no".into()]),
+        ];
+        let mut state = UiState::default();
+
+        assert!(state.dispatch(Action::SetAudioPassthrough(true)).is_empty());
+        state.confirm_loaded(30.0);
+        assert_eq!(state.dispatch(Action::SetAudioPassthrough(true)), enabled);
+        assert!(
+            !state.audio_passthrough,
+            "the menu reflects engine-accepted state, not the requested action"
+        );
+        state.confirm_audio_passthrough(true);
+        assert!(state.audio_passthrough);
+        assert_eq!(state.dispatch(Action::SetAudioPassthrough(false)), disabled);
+        assert!(state.audio_passthrough);
+        state.confirm_audio_passthrough(false);
+        assert!(!state.audio_passthrough);
+    }
 
     #[test]
     fn system_media_play_and_pause_wait_for_engine_confirmation() {

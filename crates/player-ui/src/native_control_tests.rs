@@ -77,6 +77,21 @@ fn desktop_menu_commands_are_accepted_by_the_native_media_engine() {
         requests
             .push(json!({"name":name,"command":command,"property":property,"expected":expected}));
     }
+    let mut passthrough_state = UiState::default();
+    passthrough_state.confirm_loaded(10.0);
+    for enabled in [true, false] {
+        for effect in passthrough_state.dispatch(Action::SetAudioPassthrough(enabled)) {
+            let Effect::Engine(command) = effect else {
+                panic!("Audio passthrough did not produce a native command");
+            };
+            requests.push(json!({
+                "name": if enabled { "enable-hd-audio-passthrough" } else { "disable-hd-audio-passthrough" },
+                "command": command,
+                "property": "",
+                "expected": null
+            }));
+        }
+    }
     let requests_path = probe.directory.join("requests.json");
     let output_path = probe.directory.join("result.json");
     fs::write(&requests_path, serde_json::to_vec(&requests).unwrap()).unwrap();
