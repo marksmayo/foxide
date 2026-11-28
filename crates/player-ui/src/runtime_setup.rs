@@ -36,7 +36,7 @@ pub(super) fn offer_install_if_missing() -> Result<(), String> {
                         .set_level(MessageLevel::Warning)
                         .set_title("Foxide playback runtime missing")
                         .set_description(
-                            "Foxide needs its Windows playback runtime before it can open media.\n\nInstall it now? Setup downloads a pinned libmpv runtime and requires Python 3.11+ and 7-Zip. It does not require administrator access.",
+                            "Foxide needs its Windows playback runtime before it can open media.\n\nInstall it now? Setup downloads the pinned runtime and a verified standalone extractor. It does not require administrator access.",
                         )
                         .set_buttons(MessageButtons::YesNo)
                         .show()
@@ -94,7 +94,7 @@ fn install_windows_runtime() -> Result<(), String> {
     let details = details.trim();
     if details.is_empty() {
         Err(format!(
-            "Playback runtime installation exited with {}. Install Python 3.11+ and 7-Zip, then retry from Start Menu > Foxide > Install playback runtime.",
+            "Playback runtime installation exited with {}. Retry from Start Menu > Foxide > Install playback runtime.",
             output.status
         ))
     } else {

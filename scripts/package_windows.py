@@ -28,7 +28,6 @@ def package(binary, metadata, output, version, commit):
             bundle.write(path, name + '/' + destination)
         add(binary, 'Foxide.exe')
         add(ROOT / 'LICENSE', 'LICENSE')
-        add(ROOT / 'scripts/install-libmpv.py', 'scripts/install-libmpv.py')
         add(ROOT / 'packaging/Install-PlaybackRuntime.ps1', 'Install-PlaybackRuntime.ps1')
         add(ROOT / 'packaging/WINDOWS-README.txt', 'README.txt')
         for dependency in dependencies:

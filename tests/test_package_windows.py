@@ -44,6 +44,7 @@ class WindowsPackagingTests(unittest.TestCase):
             names = bundle.namelist()
             self.assertTrue(any(n.endswith('/Foxide.exe') for n in names))
             self.assertTrue(any(n.endswith('/Install-PlaybackRuntime.ps1') for n in names))
+            self.assertFalse(any(n.endswith('/scripts/install-libmpv.py') for n in names))
             self.assertTrue(any('/notices/' in n and n.endswith('/LICENSE') for n in names))
             self.assertFalse(any(n.endswith('.dll') for n in names))
             info = json.loads(bundle.read(next(n for n in names if n.endswith('/BUILD-INFO.json'))))

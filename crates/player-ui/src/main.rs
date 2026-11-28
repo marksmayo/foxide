@@ -1340,7 +1340,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .set_level(rfd::MessageLevel::Error)
                 .set_title("Foxide could not install the playback runtime")
                 .set_description(format!(
-                    "The runtime installer did not complete. Install Python 3.11+ and 7-Zip if needed, then retry from Start Menu > Foxide > Install playback runtime or run Install-PlaybackRuntime.ps1 beside Foxide.exe.\n\n{error}"
+                    "The runtime installer did not complete. Retry from Start Menu > Foxide > Install playback runtime or run Install-PlaybackRuntime.ps1 beside Foxide.exe.\n\n{error}"
                 ))
                 .set_buttons(rfd::MessageButtons::Ok)
                 .show(),
