@@ -24,6 +24,7 @@ pub(super) enum ControllerEvent {
     Connected,
     Disconnected,
     ButtonPressed(Button),
+    ButtonRepeated(Button),
 }
 
 fn translate_event(event: EventType) -> Option<ControllerEvent> {
@@ -31,6 +32,7 @@ fn translate_event(event: EventType) -> Option<ControllerEvent> {
         EventType::Connected => Some(ControllerEvent::Connected),
         EventType::Disconnected => Some(ControllerEvent::Disconnected),
         EventType::ButtonPressed(button, _) => Some(ControllerEvent::ButtonPressed(button)),
+        EventType::ButtonRepeated(button, _) => Some(ControllerEvent::ButtonRepeated(button)),
         _ => None,
     }
 }
@@ -109,7 +111,7 @@ fn process_events(
         match event {
             ControllerEvent::Connected => set_status("Game controller connected"),
             ControllerEvent::Disconnected => set_status("Game controller disconnected"),
-            ControllerEvent::ButtonPressed(button) => {
+            ControllerEvent::ButtonPressed(button) | ControllerEvent::ButtonRepeated(button) => {
                 if let Some(action) = action_for_button(button) {
                     perform_action(action);
                 }
@@ -307,6 +309,16 @@ mod tests {
             Some(ControllerEvent::Disconnected)
         );
         assert_eq!(translate_event(EventType::Dropped), None);
+    }
+
+    #[test]
+    fn repeated_controller_buttons_repeat_the_mapped_navigation_action() {
+        let mut events = [ControllerEvent::ButtonRepeated(Button::DPadDown)].into_iter();
+        let mut actions = Vec::new();
+
+        process_events(|| events.next(), |_| {}, |action| actions.push(action));
+
+        assert_eq!(actions, [ControllerAction::FocusNext]);
     }
 
     #[test]
