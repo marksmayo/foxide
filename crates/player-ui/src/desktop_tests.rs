@@ -1,6 +1,48 @@
 use super::*;
 
 #[test]
+fn audio_visualization_refresh_only_runs_for_media_or_track_changes() {
+    let audio_track = player_render::Track {
+        id: 1,
+        label: "Audio".into(),
+        kind: "audio".into(),
+        selected: true,
+    };
+    let current = Snapshot {
+        path: "song.flac".into(),
+        tracks: vec![audio_track.clone()].into(),
+        loaded: true,
+        position: 1.0,
+        ..Snapshot::default()
+    };
+    let next_tick = Snapshot {
+        position: 2.0,
+        ..current.clone()
+    };
+
+    assert!(!audio_visualization_source_changed(&current, &next_tick));
+
+    let next_media = Snapshot {
+        path: "next.flac".into(),
+        ..next_tick.clone()
+    };
+    assert!(audio_visualization_source_changed(&current, &next_media));
+
+    let next_audio_track = Snapshot {
+        tracks: vec![player_render::Track {
+            id: 2,
+            ..audio_track
+        }]
+        .into(),
+        ..next_tick
+    };
+    assert!(audio_visualization_source_changed(
+        &current,
+        &next_audio_track
+    ));
+}
+
+#[test]
 fn benchmark_startup_is_explicit_and_preserves_speed_and_pause() {
     let args = Args::try_parse_from([
         "foxide-desktop",
@@ -1302,6 +1344,75 @@ fn invalid_navigation_does_not_clear_active_visualization() {
     };
 
     assert!(dispatch_action(&mut state, Action::Next).is_empty());
+    assert!(state.audio_visualization);
+    assert_eq!(state.selected, 0);
+}
+
+#[test]
+fn stopping_clears_active_visualization_before_stopping_engine() {
+    let mut state = UiState {
+        playlist: vec!["current.flac".into(), "next.flac".into()],
+        selected: 0,
+        loaded: true,
+        audio_visualization: true,
+        ..UiState::default()
+    };
+
+    assert_eq!(
+        dispatch_action(&mut state, Action::Stop),
+        [
+            Effect::Engine(vec!["set".into(), "lavfi-complex".into(), String::new()]),
+            Effect::Stop,
+        ]
+    );
+    assert!(!state.audio_visualization);
+    assert!(!state.loaded);
+}
+
+#[test]
+fn opening_a_queue_clears_active_visualization_before_loading() {
+    let mut state = UiState {
+        playlist: vec!["current.flac".into()],
+        loaded: true,
+        audio_visualization: true,
+        ..UiState::default()
+    };
+
+    assert_eq!(
+        dispatch_action(&mut state, Action::Open(vec!["replacement.flac".into()])),
+        [
+            Effect::Engine(vec!["set".into(), "lavfi-complex".into(), String::new()]),
+            Effect::Load("replacement.flac".into()),
+        ]
+    );
+    assert!(!state.audio_visualization);
+    assert!(!state.loaded);
+}
+
+#[test]
+fn opening_an_empty_queue_keeps_the_active_visualization() {
+    let mut state = UiState {
+        playlist: vec!["current.flac".into()],
+        loaded: true,
+        audio_visualization: true,
+        ..UiState::default()
+    };
+
+    assert!(dispatch_action(&mut state, Action::Open(Vec::new())).is_empty());
+    assert!(state.audio_visualization);
+    assert!(state.loaded);
+    assert_eq!(state.playlist.as_slice(), &[PathBuf::from("current.flac")]);
+}
+
+#[test]
+fn invalid_selection_keeps_the_visualization_filter_active() {
+    let mut state = UiState {
+        playlist: vec!["current.flac".into()],
+        audio_visualization: true,
+        ..UiState::default()
+    };
+
+    assert!(dispatch_action(&mut state, Action::Select(4)).is_empty());
     assert!(state.audio_visualization);
     assert_eq!(state.selected, 0);
 }

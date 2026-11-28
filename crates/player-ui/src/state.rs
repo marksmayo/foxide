@@ -186,6 +186,9 @@ impl UiState {
     pub fn dispatch(&mut self, action: Action) -> Vec<Effect> {
         match action {
             Action::Open(files) => {
+                if files.is_empty() {
+                    return Vec::new();
+                }
                 self.audio_visualization = false;
                 self.playlist = files;
                 self.selected = 0;
@@ -344,7 +347,7 @@ mod tests {
     }
 
     #[test]
-    fn navigating_to_another_item_clears_the_visualization_filter() {
+    fn navigating_to_another_item_clears_visualization_state_without_engine_work() {
         let mut state = UiState {
             playlist: vec!["first.flac".into(), "second.flac".into()],
             ..UiState::default()
@@ -358,6 +361,37 @@ mod tests {
         assert_eq!(
             state.dispatch(Action::Next),
             [Effect::Load("second.flac".into())]
+        );
+        assert!(!state.audio_visualization);
+        assert!(!state.loaded);
+    }
+
+    #[test]
+    fn stopping_clears_visualization_state_without_engine_work() {
+        let mut state = UiState::default();
+        state.confirm_loaded(12.0);
+        state.dispatch(Action::SetAudioVisualization {
+            enabled: true,
+            audio_track_id: 1,
+        });
+
+        assert_eq!(state.dispatch(Action::Stop), [Effect::Stop]);
+        assert!(!state.audio_visualization);
+        assert!(!state.loaded);
+    }
+
+    #[test]
+    fn opening_a_new_queue_clears_visualization_state_without_engine_work() {
+        let mut state = UiState::default();
+        state.confirm_loaded(12.0);
+        state.dispatch(Action::SetAudioVisualization {
+            enabled: true,
+            audio_track_id: 1,
+        });
+
+        assert_eq!(
+            state.dispatch(Action::Open(vec!["replacement.flac".into()])),
+            [Effect::Load("replacement.flac".into())]
         );
         assert!(!state.audio_visualization);
         assert!(!state.loaded);

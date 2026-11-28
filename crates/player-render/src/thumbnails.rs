@@ -13,6 +13,8 @@ use std::{
 
 const THUMBNAIL_INTERVAL_SECONDS: f64 = 2.0;
 const ENGINE_POLL: Duration = Duration::from_millis(80);
+type WakeupCallback = Arc<dyn Fn() + Send + Sync>;
+type SharedWakeup = Arc<Mutex<Option<WakeupCallback>>>;
 
 #[derive(Clone, Debug)]
 pub(crate) struct ThumbnailRequest {
@@ -30,7 +32,7 @@ pub struct ThumbnailController {
     queue: Arc<LatestRequest<Work>>,
     current: Arc<Mutex<Option<ThumbnailRequest>>>,
     engine: Arc<Mutex<Option<Arc<Engine>>>>,
-    wakeup: Arc<Mutex<Option<Arc<dyn Fn() + Send + Sync>>>>,
+    wakeup: SharedWakeup,
     stop: Arc<AtomicBool>,
 }
 
@@ -39,7 +41,7 @@ impl ThumbnailController {
         let queue = Arc::new(LatestRequest::new());
         let current = Arc::new(Mutex::new(None));
         let engine = Arc::new(Mutex::new(None));
-        let wakeup = Arc::new(Mutex::new(None::<Arc<dyn Fn() + Send + Sync>>));
+        let wakeup = Arc::new(Mutex::new(None::<WakeupCallback>));
         let stop = Arc::new(AtomicBool::new(false));
         let worker_queue = queue.clone();
         let worker_current = current.clone();
@@ -106,7 +108,7 @@ impl ThumbnailController {
         self.engine.lock().ok().and_then(|engine| engine.clone())
     }
 
-    pub(crate) fn set_wakeup(&self, wakeup: Arc<dyn Fn() + Send + Sync>) {
+    pub(crate) fn set_wakeup(&self, wakeup: WakeupCallback) {
         if let Ok(mut slot) = self.wakeup.lock() {
             *slot = Some(wakeup.clone());
         }
@@ -133,7 +135,7 @@ fn thumbnail_worker(
     queue: Arc<LatestRequest<Work>>,
     current: Arc<Mutex<Option<ThumbnailRequest>>>,
     engine_slot: Arc<Mutex<Option<Arc<Engine>>>>,
-    wakeup: Arc<Mutex<Option<Arc<dyn Fn() + Send + Sync>>>>,
+    wakeup: SharedWakeup,
     stop: Arc<AtomicBool>,
 ) {
     let mut engine: Option<Arc<Engine>> = None;
