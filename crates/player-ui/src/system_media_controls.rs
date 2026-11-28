@@ -20,7 +20,7 @@ pub fn action_for_command(command: MediaCommand) -> Option<Action> {
         MediaCommand::Stop => Some(Action::Stop),
         MediaCommand::Next => Some(Action::Next),
         MediaCommand::Previous => Some(Action::Previous),
-        MediaCommand::SeekTo(position) if position.is_finite() => {
+        MediaCommand::SeekTo(position) if position.is_finite() && position >= 0.0 => {
             Some(Action::SeekAbsolute(position))
         }
         MediaCommand::SeekTo(_) => None,
@@ -67,9 +67,23 @@ mod tests {
             Some(Action::SeekAbsolute(12.5))
         );
         assert_eq!(
+            action_for_command(MediaCommand::SeekTo(0.0)),
+            Some(Action::SeekAbsolute(0.0))
+        );
+        assert_eq!(action_for_command(MediaCommand::SeekTo(-1.0)), None);
+        assert_eq!(action_for_command(MediaCommand::SeekTo(f64::NAN)), None);
+        assert_eq!(
+            action_for_command(MediaCommand::SeekTo(f64::INFINITY)),
+            None
+        );
+        assert_eq!(
             action_for_command(MediaCommand::SeekBy(-5.0)),
             Some(Action::Seek(-5.0))
         );
         assert_eq!(action_for_command(MediaCommand::SeekBy(f64::NAN)), None);
+        assert_eq!(
+            action_for_command(MediaCommand::SeekBy(f64::INFINITY)),
+            None
+        );
     }
 }
