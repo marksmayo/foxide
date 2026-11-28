@@ -88,7 +88,7 @@ fn capture_customization(ui: &PlayerWindow, window: &MinimalSoftwareWindow, name
 }
 
 #[test]
-fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
+fn desktop_ui_reports_diagnostics_preserves_playback_and_dispatches_intro_skip() {
     let rendered_window = MinimalSoftwareWindow::new(RepaintBufferType::NewBuffer);
     let (event_sender, event_receiver) = std::sync::mpsc::channel();
     slint::platform::set_platform(Box::new(TestPlatform(
@@ -107,6 +107,7 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
         .borrow_mut()
         .playlist
         .push(PathBuf::from("episode.mkv"));
+    state.borrow_mut().confirm_loaded(120.0);
     let episode = Snapshot {
         loaded: true,
         path,
@@ -239,8 +240,51 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
     );
     ui.set_panel("".into());
     let state = Rc::new(RefCell::new(UiState::default()));
-    install_controls(&ui, &state, &None, Rc::new(RefCell::new(None)));
+    state
+        .borrow_mut()
+        .playlist
+        .push(PathBuf::from("episode.mkv"));
+    state.borrow_mut().confirm_loaded(120.0);
+    let dispatched_actions = Rc::new(RefCell::new(Vec::new()));
+    let captured_actions = dispatched_actions.clone();
+    let dispatch_window = ui.as_weak();
+    let dispatch_state = state.clone();
+    install_controls_with_intro_snapshot_and_dispatch(
+        &ui,
+        &state,
+        &None,
+        Rc::new(RefCell::new(None)),
+        Arc::new(|_, _| Ok(None)),
+        Rc::new(|| {
+            Some(Snapshot {
+                loaded: true,
+                path: "episode.mkv".into(),
+                duration: 120.0,
+                position: 24.0,
+                imdb_id: "tt0903747".into(),
+                season: "1".into(),
+                episode: "2".into(),
+                ..Snapshot::default()
+            })
+        }),
+        Rc::new(move |action| {
+            captured_actions.borrow_mut().push(action.clone());
+            if let Some(ui) = dispatch_window.upgrade() {
+                dispatch(&ui, &dispatch_state, &None, action);
+            }
+        }),
+    );
     ui.set_loaded(true);
+    ui.set_skip_intro_available(true);
+    ui.set_introdb_imdb_id("tt0903747".into());
+    ui.set_introdb_season(1);
+    ui.set_introdb_episode(2);
+    ui.set_online_intro_start(20.0);
+    ui.set_online_intro_end(58.0);
+    ui.invoke_action("skip-intro".into(), 0.0);
+    assert_eq!(&*dispatched_actions.borrow(), &[Action::SeekAbsolute(58.0)]);
+    assert!(ui.get_status().contains("Playback engine unavailable"));
+    ui.set_status("".into());
     ui.set_has_video(true);
     ui.invoke_action("picture-in-picture".into(), 0.0);
     assert!(ui.get_picture_in_picture());

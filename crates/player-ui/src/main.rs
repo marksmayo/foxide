@@ -1301,6 +1301,8 @@ type IntroLookupService = Arc<
         + Send
         + Sync,
 >;
+type IntroSnapshotService = Rc<dyn Fn() -> Option<Snapshot>>;
+type IntroActionDispatchService = Rc<dyn Fn(Action)>;
 
 fn install_controls(
     ui: &PlayerWindow,
@@ -1328,6 +1330,38 @@ fn install_controls_with_intro_lookup(
     intro_lookup_cancel: Rc<RefCell<Option<Arc<AtomicBool>>>>,
     intro_lookup: IntroLookupService,
 ) {
+    let snapshot_engine = engine.clone();
+    let dispatch_window = ui.as_weak();
+    let dispatch_state = state.clone();
+    let dispatch_engine = engine.clone();
+    install_controls_with_intro_snapshot_and_dispatch(
+        ui,
+        state,
+        engine,
+        intro_lookup_cancel,
+        intro_lookup,
+        Rc::new(move || {
+            snapshot_engine
+                .as_ref()
+                .and_then(|engine| engine.snapshot())
+        }),
+        Rc::new(move |action| {
+            if let Some(ui) = dispatch_window.upgrade() {
+                dispatch(&ui, &dispatch_state, &dispatch_engine, action);
+            }
+        }),
+    );
+}
+
+fn install_controls_with_intro_snapshot_and_dispatch(
+    ui: &PlayerWindow,
+    state: &Rc<RefCell<UiState>>,
+    engine: &Option<Rc<Engine>>,
+    intro_lookup_cancel: Rc<RefCell<Option<Arc<AtomicBool>>>>,
+    intro_lookup: IntroLookupService,
+    intro_snapshot: IntroSnapshotService,
+    intro_action_dispatch: IntroActionDispatchService,
+) {
     let pip_mode = Rc::new(RefCell::new(picture_in_picture::PictureInPictureMode::Main));
     let filter_state = state.clone();
     let filter_window = ui.as_weak();
@@ -1337,13 +1371,13 @@ fn install_controls_with_intro_lookup(
             update_queue(&ui, &filter_state.borrow());
         }
     });
-    let (weak, controller, playback, pip_mode, intro_lookup_cancel, intro_lookup) = (
+    let (weak, pip_mode, intro_lookup_cancel, intro_lookup, intro_snapshot, intro_action_dispatch) = (
         ui.as_weak(),
-        state.clone(),
-        engine.clone(),
         pip_mode,
         intro_lookup_cancel,
         intro_lookup,
+        intro_snapshot,
+        intro_action_dispatch,
     );
     ui.on_action(move |name, value| {
         let Some(ui) = weak.upgrade() else { return };
@@ -1373,7 +1407,7 @@ fn install_controls_with_intro_lookup(
             "seek" => Action::SeekAbsolute(value as f64),
             "speed" => Action::SetSpeed(value as f64),
             "skip-intro" => {
-                let snapshot = playback.as_ref().and_then(|engine| engine.snapshot());
+                let snapshot = intro_snapshot();
                 let action = intro_skip_action(
                     snapshot.as_ref(),
                     ui.get_introdb_imdb_id().as_str(),
@@ -1474,7 +1508,7 @@ fn install_controls_with_intro_lookup(
                 None => return,
             },
         };
-        dispatch(&ui, &controller, &playback, action);
+        intro_action_dispatch(action);
     });
     let (weak, controller, playback) = (ui.as_weak(), state.clone(), engine.clone());
     ui.on_open_url(move |url| {
