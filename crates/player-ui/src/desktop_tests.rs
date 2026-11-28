@@ -1,6 +1,48 @@
 use super::*;
 
 #[test]
+fn audio_visualization_refresh_only_runs_for_media_or_track_changes() {
+    let audio_track = player_render::Track {
+        id: 1,
+        label: "Audio".into(),
+        kind: "audio".into(),
+        selected: true,
+    };
+    let current = Snapshot {
+        path: "song.flac".into(),
+        tracks: vec![audio_track.clone()].into(),
+        loaded: true,
+        position: 1.0,
+        ..Snapshot::default()
+    };
+    let next_tick = Snapshot {
+        position: 2.0,
+        ..current.clone()
+    };
+
+    assert!(!audio_visualization_source_changed(&current, &next_tick));
+
+    let next_media = Snapshot {
+        path: "next.flac".into(),
+        ..next_tick.clone()
+    };
+    assert!(audio_visualization_source_changed(&current, &next_media));
+
+    let next_audio_track = Snapshot {
+        tracks: vec![player_render::Track {
+            id: 2,
+            ..audio_track
+        }]
+        .into(),
+        ..next_tick
+    };
+    assert!(audio_visualization_source_changed(
+        &current,
+        &next_audio_track
+    ));
+}
+
+#[test]
 fn benchmark_startup_is_explicit_and_preserves_speed_and_pause() {
     let args = Args::try_parse_from([
         "foxide-desktop",
