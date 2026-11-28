@@ -1268,7 +1268,9 @@ fn assert_gapless_queue_advance_updates_the_desktop_selection(ui: &PlayerWindow)
     let preview_generation = Cell::new(0);
     let first_snapshot = Snapshot {
         loaded: true,
-        path: player_core::external_path(first).to_string_lossy().into_owned(),
+        path: player_core::external_path(first)
+            .to_string_lossy()
+            .into_owned(),
         duration: 2.0,
         playlist_position: 0,
         ..Snapshot::default()
