@@ -227,10 +227,13 @@ fn desktop_ui_reports_diagnostic_log_failure_and_preserves_playback_state() {
     let bluray = disc_root.join("bluray");
     let wrong = disc_root.join("wrong");
     std::fs::create_dir_all(dvd.join("VIDEO_TS")).unwrap();
-    std::fs::write(dvd.join("VIDEO_TS/VIDEO_TS.IFO"), b"fixture").unwrap();
+    std::fs::write(dvd.join("VIDEO_TS/VIDEO_TS.IFO"), b"DVDVIDEO-VMG").unwrap();
     std::fs::create_dir_all(bluray.join("BDMV")).unwrap();
-    std::fs::write(bluray.join("BDMV/index.bdmv"), b"fixture").unwrap();
-    std::fs::create_dir_all(&wrong).unwrap();
+    std::fs::write(bluray.join("BDMV/index.bdmv"), b"INDX0200").unwrap();
+    std::fs::create_dir_all(wrong.join("VIDEO_TS")).unwrap();
+    std::fs::File::create(wrong.join("VIDEO_TS/VIDEO_TS.IFO")).unwrap();
+    std::fs::create_dir_all(wrong.join("BDMV")).unwrap();
+    std::fs::File::create(wrong.join("BDMV/index.bdmv")).unwrap();
     ui.invoke_disc_picked(false, wrong.to_string_lossy().into_owned().into());
     assert!(state.borrow().playlist.is_empty());
     assert!(ui.get_status().contains("DVD VIDEO_TS.IFO"));
