@@ -1348,6 +1348,21 @@ fn opening_a_queue_clears_active_visualization_before_loading() {
 }
 
 #[test]
+fn opening_an_empty_queue_keeps_the_active_visualization() {
+    let mut state = UiState {
+        playlist: vec!["current.flac".into()],
+        loaded: true,
+        audio_visualization: true,
+        ..UiState::default()
+    };
+
+    assert!(dispatch_action(&mut state, Action::Open(Vec::new())).is_empty());
+    assert!(state.audio_visualization);
+    assert!(state.loaded);
+    assert_eq!(state.playlist.as_slice(), &[PathBuf::from("current.flac")]);
+}
+
+#[test]
 fn invalid_selection_keeps_the_visualization_filter_active() {
     let mut state = UiState {
         playlist: vec!["current.flac".into()],
