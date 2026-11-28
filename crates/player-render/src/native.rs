@@ -497,6 +497,7 @@ pub struct Snapshot {
 }
 enum Request {
     Command(Vec<String>),
+    Playlist(Arc<Vec<PathBuf>>),
     Shaders(Vec<player_services::ShaderFile>),
 }
 
@@ -627,6 +628,26 @@ impl Engine {
                                 }
                             }
                             tracks = Arc::from([]);
+                        }
+                        Ok(Request::Playlist(paths)) => {
+                            file_loaded = false;
+                            requested_path = paths.first().map_or_else(
+                                || Arc::from(""),
+                                |path| {
+                                    Arc::from(
+                                        player_core::external_path(path.clone())
+                                            .to_string_lossy()
+                                            .into_owned(),
+                                    )
+                                },
+                            );
+                            error.clear();
+                            command_error.clear();
+                            last_path.clear();
+                            tracks = Arc::from([]);
+                            if let Err(e) = send_playlist(&paths, |args| client.send(args)) {
+                                error = e;
+                            }
                         }
                         Err(mpsc::RecvTimeoutError::Disconnected) => break,
                         Err(mpsc::RecvTimeoutError::Timeout) => {}
@@ -784,6 +805,10 @@ impl Engine {
             .try_send(Request::Command(args))
             .map_err(|e| format!("Player is busy: {e}"))
     }
+    /// Replace the playback queue with a playlist in one bounded worker request.
+    pub fn load_playlist(&self, paths: Arc<Vec<PathBuf>>) -> Result<(), String> {
+        enqueue_playlist(&self.sender, paths)
+    }
     /// Replace the session shader stack; only explicitly validated files are accepted.
     pub fn set_shaders(&self, shaders: Vec<player_services::ShaderFile>) -> Result<(), String> {
         if shaders.len() > 8 {
@@ -815,6 +840,33 @@ impl Engine {
         self.snapshot.try_lock().ok().map(|s| s.clone())
     }
 }
+
+fn enqueue_playlist(sender: &SyncSender<Request>, paths: Arc<Vec<PathBuf>>) -> Result<(), String> {
+    if paths.is_empty() {
+        return Ok(());
+    }
+    sender
+        .try_send(Request::Playlist(paths))
+        .map_err(|e| format!("Player is busy: {e}"))
+}
+
+fn send_playlist(
+    paths: &[PathBuf],
+    mut send: impl FnMut(&[String]) -> Result<(), String>,
+) -> Result<(), String> {
+    for (index, path) in paths.iter().enumerate() {
+        let args = vec![
+            "loadfile".into(),
+            player_core::external_path(path.clone())
+                .to_string_lossy()
+                .into_owned(),
+            if index == 0 { "replace" } else { "append" }.into(),
+        ];
+        send(&args)?;
+    }
+    Ok(())
+}
+
 impl Drop for Engine {
     fn drop(&mut self) {
         self.stop.store(true, Ordering::Release);
@@ -856,6 +908,42 @@ mod snapshot_allocation_tests {
             snapshot.tracks.as_ptr(),
             "A position update must not allocate and clone immutable track strings"
         );
+    }
+
+    #[test]
+    fn a_playlist_larger_than_the_command_queue_is_enqueued_as_one_request() {
+        let (sender, receiver) = mpsc::sync_channel(1);
+        let paths = Arc::new(
+            (0..64)
+                .map(|index| PathBuf::from(format!("track-{index}.flac")))
+                .collect::<Vec<_>>(),
+        );
+
+        enqueue_playlist(&sender, paths.clone()).unwrap();
+
+        let Request::Playlist(queued_paths) = receiver.try_recv().unwrap() else {
+            panic!("A playlist must be queued as a single worker request");
+        };
+        assert!(Arc::ptr_eq(&queued_paths, &paths));
+    }
+
+    #[test]
+    fn playlist_worker_replaces_first_track_and_appends_every_remaining_track() {
+        let paths = (0..64)
+            .map(|index| PathBuf::from(format!("track-{index}.flac")))
+            .collect::<Vec<_>>();
+        let mut commands = Vec::new();
+
+        send_playlist(&paths, |command| {
+            commands.push(command.to_vec());
+            Ok(())
+        })
+        .unwrap();
+
+        assert_eq!(commands.len(), 64);
+        assert_eq!(commands[0], ["loadfile", "track-0.flac", "replace"]);
+        assert_eq!(commands[63], ["loadfile", "track-63.flac", "append"]);
+        assert!(commands[1..63].iter().all(|command| command[2] == "append"));
     }
 
     #[test]

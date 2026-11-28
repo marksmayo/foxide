@@ -3853,6 +3853,7 @@ version = "0.0.1"
 dependencies = [
  "glow 0.16.0",
  "libloading",
+ "player-core",
  "player-services",
  "serde_json",
  "slint",
