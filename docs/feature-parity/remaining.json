@@ -287,7 +287,7 @@
       "name": "Game controller UI navigation",
       "group": "Interface",
       "stage": "in_progress",
-      "acceptance": "The desktop polls standardized gilrs gamepad events and maps D-pad left/up and right/down to backward/forward focus traversal, South to activate, East/Select to back, Start to play/pause, and the left/right shoulders to previous/next. Connection and disconnection events are surfaced in the player status. Automated mapping tests and hosted platform checks pass; physical-controller hot-plug and focus-order acceptance remain pending, so no feature medal is claimed."
+      "acceptance": "The desktop polls standardized gilrs gamepad events and maps D-pad left/up and right/down to backward/forward focus traversal, South to activate, East/Select to back, Start to play/pause, and the left/right shoulders to previous/next. Connection and disconnection events are surfaced in the player status. A desktop UI test feeds normalized D-pad-down and South events through the shared dispatcher used by the 16 ms poller and observes the focused Open and Playlist actions. A regression test confirms unsupported driver events do not delay later controller events in the same poll. Automated mapping tests and hosted platform checks pass; physical-controller hot-plug and focus-order acceptance remain pending, so no feature medal is claimed."
     },
     {
       "id": "webdav_browse",
