@@ -399,6 +399,10 @@ fn refresh(
     *previous = snapshot.clone();
 }
 
+fn audio_visualization_source_changed(previous: &Snapshot, current: &Snapshot) -> bool {
+    previous.path != current.path || previous.tracks != current.tracks
+}
+
 fn refresh_audio_visualization(
     ui: &PlayerWindow,
     state: &Rc<RefCell<UiState>>,
@@ -1578,7 +1582,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             if let Some(ui) = weak.upgrade() {
                 if let Some(snapshot) = status_source.snapshot() {
                     let media_changed = snapshot.path != previous.borrow().path;
-                    let tracks_changed = snapshot.tracks != previous.borrow().tracks;
+                    let visualization_source_changed =
+                        audio_visualization_source_changed(&previous.borrow(), &snapshot);
                     if media_changed {
                         thumbnails.clear();
                         ui.set_thumbnail_available(false);
@@ -1590,7 +1595,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         &snapshot,
                         &mut previous.borrow_mut(),
                     );
-                    if media_changed || tracks_changed {
+                    if visualization_source_changed {
                         refresh_audio_visualization(
                             &ui,
                             &controller,
