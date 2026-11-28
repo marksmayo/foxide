@@ -140,10 +140,23 @@ impl DiscKind {
         if !device.is_dir() {
             return Err("Choose an existing disc folder");
         }
-        let has_dvd_video =
-            device.join("VIDEO_TS/VIDEO_TS.IFO").is_file() || device.join("VIDEO_TS.IFO").is_file();
-        let has_bluray_index =
-            device.join("BDMV/index.bdmv").is_file() || device.join("index.bdmv").is_file();
+        use std::io::Read;
+        let has_signature = |path: &Path, signature: &[u8]| {
+            let Ok(mut file) = std::fs::File::open(path) else {
+                return false;
+            };
+            let mut prefix = vec![0; signature.len()];
+            file.read_exact(&mut prefix).is_ok() && prefix == signature
+        };
+        let has_dvd_video = [
+            device.join("VIDEO_TS/VIDEO_TS.IFO"),
+            device.join("VIDEO_TS.IFO"),
+        ]
+        .iter()
+        .any(|path| has_signature(path, b"DVDVIDEO-VMG"));
+        let has_bluray_index = [device.join("BDMV/index.bdmv"), device.join("index.bdmv")]
+            .iter()
+            .any(|path| has_signature(path, b"INDX"));
         match self {
             Self::Dvd if has_dvd_video => Ok(()),
             Self::BluRay if has_bluray_index => Ok(()),
@@ -451,9 +464,9 @@ mod tests {
         let dvd = root.join("dvd");
         let bluray = root.join("bluray");
         std::fs::create_dir_all(dvd.join("VIDEO_TS")).unwrap();
-        std::fs::write(dvd.join("VIDEO_TS/VIDEO_TS.IFO"), b"fixture").unwrap();
+        std::fs::write(dvd.join("VIDEO_TS/VIDEO_TS.IFO"), b"DVDVIDEO-VMG").unwrap();
         std::fs::create_dir_all(bluray.join("BDMV")).unwrap();
-        std::fs::write(bluray.join("BDMV/index.bdmv"), b"fixture").unwrap();
+        std::fs::write(bluray.join("BDMV/index.bdmv"), b"INDX0200").unwrap();
 
         assert!(DiscKind::Dvd.validate_folder(&dvd).is_ok());
         assert!(DiscKind::BluRay.validate_folder(&bluray).is_ok());
@@ -462,6 +475,33 @@ mod tests {
         assert!(
             DiscKind::Dvd
                 .validate_folder(&root.join("missing"))
+                .is_err()
+        );
+
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn disc_folder_validation_rejects_empty_structure_markers() {
+        let root = std::env::temp_dir().join(format!(
+            "foxide-disc-empty-markers-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let dvd = root.join("dvd/VIDEO_TS");
+        let bluray = root.join("bluray/BDMV");
+        std::fs::create_dir_all(&dvd).unwrap();
+        std::fs::create_dir_all(&bluray).unwrap();
+        std::fs::File::create(dvd.join("VIDEO_TS.IFO")).unwrap();
+        std::fs::File::create(bluray.join("index.bdmv")).unwrap();
+
+        assert!(DiscKind::Dvd.validate_folder(&root.join("dvd")).is_err());
+        assert!(
+            DiscKind::BluRay
+                .validate_folder(&root.join("bluray"))
                 .is_err()
         );
 
